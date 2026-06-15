@@ -23,7 +23,7 @@ configurations, uniformly stratified over the FOS band [0.5, 6.0].
 ## Usage
 
 The analysis pipeline is a single Google Colab notebook:
-**`Slope_FOS_pipeline.ipynb`**
+**`surrogate_guided_sampling.ipynb`**
 
 1. Download the four CSV files from the dataset archive: [\[Zenodo\]](https://doi.org/10.5281/zenodo.20690924)
 2. Open the notebook in Google Colab (free, no installation required)
