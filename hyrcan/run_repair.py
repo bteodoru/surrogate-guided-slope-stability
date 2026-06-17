@@ -1,34 +1,22 @@
 import hyrcan as hy
-import numpy as np
-import math, csv, io, contextlib, os
+import math, csv, os, shutil
 
-INFILE  = 'pilot_50.csv'                  # source CSV with FOS results to diagnose
-OUTFILE = 'at_boundary_diagnostic.csv'    # diagnostic output CSV
-METHOD  = 'Spencer'                       # slope stability method passed to the solver
+INFILE = 'pilot_50.csv'
+METHOD = 'Spencer'
 
-# Geometry rescaling factors to retry for cases flagged At_Boundary=True
-GEOMETRY_VARIANTS = {
-    'original':  {'ext_factor': None,  'depth_factor': None},
-    'ext_2x':    {'ext_factor': 2.0,   'depth_factor': None},
-    'depth_2x':  {'ext_factor': None,  'depth_factor': 2.0},
-    'both_1_5x':   {'ext_factor': 1.5,   'depth_factor': 1.5},
-    'both_2x':   {'ext_factor': 2.0,   'depth_factor': 2.0},
-    'both_3x':   {'ext_factor': 3.0,   'depth_factor': 3.0},
-}
-
-# Columns written to the diagnostic output CSV
-DIAG_COLS = [
-    'case_idx', 'angle', 'phi', 'c', 'gamma', 'H', 'fos_original_csv',
-    'variant', 'ext_factor', 'depth_factor',
-    'fos', 'delta_fos', 'cx', 'cy', 'r',
-    'slope_length', 'extension', 'depth',
-    'at_boundary', 'boundary_flags', 'solver_output', 'error'
+# Variante incercate in ordine pana la rezolvare
+REPAIR_VARIANTS = [
+    {'ext_factor': None,  'depth_factor': None},
+    {'ext_factor': 2.0,   'depth_factor': None},
+    {'ext_factor': None,  'depth_factor': 2.0},
+    {'ext_factor': 1.5,  'depth_factor': 1.5},   # both_1_5x
+    {'ext_factor': 2.0,  'depth_factor': 2.0},   # both_2x
+    {'ext_factor': 3.0,  'depth_factor': 3.0},   # both_3x — last resort
 ]
 
 
-# ── Geometry ──────────────────────────────────────────────────────────────────
+# ── Geometrie (identica cu scriptul de generare) ──────────────────────────────
 def model_dims(H, angle, ext_factor=None, depth_factor=None):
-    """Derive slope ratio, slope length, extension and excavation depth from H and angle."""
     slope        = math.tan(angle * math.pi / 180)
     slope_length = H / slope
     extension    = max(1.5 * H, slope_length * 0.5)
@@ -40,8 +28,7 @@ def model_dims(H, angle, ext_factor=None, depth_factor=None):
     return slope, slope_length, extension, depth
 
 
-def build_cmd(H, angle, phi, c, gamma, ext_factor=None, depth_factor=None):
-    """Build the solver command script for the given geometry/material parameters."""
+def initialize_model(H, angle, phi, c, gamma, ext_factor=None, depth_factor=None):
     slope, slope_length, extension, depth = model_dims(
         H, angle, ext_factor, depth_factor)
     cmd = f"""
@@ -53,194 +40,194 @@ def build_cmd(H, angle, phi, c, gamma, ext_factor=None, depth_factor=None):
     definelimits('limit',-{depth},{H/3/slope},'limit2',{2*H/3/slope},{slope_length + extension})
     set('Method','{METHOD}','on')
     """
-    return cmd, slope_length, extension, depth
+    return cmd
 
 
-# ── QC ───────────────────────────────────────────────────────────────────────
+# ── QC suprafata critica ──────────────────────────────────────────────────────
+def find_intersection(cx, cy, r, y):
+    if abs(cy - y) > r:
+        return None
+    dx = math.sqrt(max(r**2 - (cy - y)**2, 0))
+    return (cx - dx, cx + dx)
+
+
 def check_boundary(cx, cy, r, H, angle, ext_factor=None, depth_factor=None):
-    """Check whether the critical slip surface touches the model's left, right or bottom boundary."""
     _, slope_length, extension, depth = model_dims(H, angle, ext_factor, depth_factor)
-    tol   = 0.01 * H
+    tol = 0.01 * H
     flags = []
 
-    def intersect(y):
-        if abs(cy - y) > r:
-            return None
-        dx = math.sqrt(max(r**2 - (cy - y)**2, 0))
-        return (cx - dx, cx + dx)
-
-    gi = intersect(0)
+    gi = find_intersection(cx, cy, r, 0)
     if gi and abs(gi[0] - (-depth)) < tol:
-        flags.append(f'left_lower: x={gi[0]:.3f} vs -{depth:.3f}')
+        flags.append('stanga_limita_inf')
 
-    ti = intersect(H)
+    ti = find_intersection(cx, cy, r, H)
     if ti and abs(ti[1] - (slope_length + extension)) < tol:
-        flags.append(f'right_upper: x={ti[1]:.3f} vs {slope_length+extension:.3f}')
+        flags.append('dreapta_limita_sup')
 
     if cy - r < -depth:
-        flags.append(f'below_domain: cy-r={cy-r:.3f} vs -{depth:.3f}')
+        flags.append('sub_domeniu')
 
     return bool(flags), flags
 
 
-# ── CSV reading without pandas ─────────────────────────────────────────────────
+# ── Calcul ────────────────────────────────────────────────────────────────────
+def run_hyrcan(angle, phi, c, gamma, H, ext_factor=None, depth_factor=None):
+    """Returneaza (fos, cx, cy, r, slope_length, extension, depth) sau None."""
+    try:
+        _, slope_length, extension, depth = model_dims(
+            H, angle, ext_factor, depth_factor)
+        hy.command(initialize_model(H, angle, phi, c, gamma, ext_factor, depth_factor))
+        hy.command("compute('silence')")
+        fos    = hy.min_fos(METHOD)
+        center = hy.surf_center_min_fos(METHOD)
+        cx, cy = center[0], center[1]
+        r      = hy.surf_radius_min_fos(METHOD)
+        return fos, cx, cy, r, slope_length, extension, depth
+    except Exception as e:
+        print(f'    EROARE Hyrcan: {e}')
+        import traceback; traceback.print_exc()
+        return None
+
+
+# ── CSV helpers ───────────────────────────────────────────────────────────────
 def read_csv(path):
-    """Read a CSV file into a list of dicts (one per row)."""
-    rows = []
     with open(path, newline='') as f:
         reader = csv.DictReader(f)
-        for row in reader:
-            rows.append(row)
-    return rows
+        return list(reader), list(reader.fieldnames)
+
+
+def write_csv(path, rows, fieldnames):
+    with open(path, 'w', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
 
 
 def to_float(val, default=None):
-    """Convert val to float, returning default if conversion fails."""
     try:
         return float(val)
     except (TypeError, ValueError):
         return default
 
 
-# ── Run variant ────────────────────────────────────────────────────────────────
-def run_variant(angle, phi, c, gamma, H, ext_factor, depth_factor, variant_name):
-    """Run the solver with one geometry variant and return its FOS, surface and boundary results."""
-    res = {
-        'variant':        variant_name,
-        'ext_factor':     ext_factor or 'auto',
-        'depth_factor':   depth_factor or 'auto',
-        'fos':            None, 'cx': None, 'cy': None, 'r': None,
-        'slope_length':   None, 'extension': None, 'depth': None,
-        'at_boundary':    None, 'boundary_flags': '',
-        'solver_output':  '', 'error': '',
-    }
-    try:
-        cmd, slope_length, extension, depth = build_cmd(
-            H, angle, phi, c, gamma, ext_factor, depth_factor)
-        res.update({
-            'slope_length': round(slope_length, 3),
-            'extension':    round(extension, 3),
-            'depth':        round(depth, 3),
-        })
-
-        buf = io.StringIO()
-        with contextlib.redirect_stdout(buf):
-            hy.command(cmd)
-            hy.command("compute('silence')")
-            fos    = hy.min_fos(METHOD)
-            center = hy.surf_center_min_fos(METHOD)
-            cx, cy = center[0], center[1]
-            r      = hy.surf_radius_min_fos(METHOD)
-
-        res['solver_output'] = buf.getvalue().strip().replace('\n', ' | ')
-        res['fos'] = round(fos, 5)
-        res['cx']  = round(cx, 4)
-        res['cy']  = round(cy, 4)
-        res['r']   = round(r, 4)
-
-        at_b, flags = check_boundary(cx, cy, r, H, angle, ext_factor, depth_factor)
-        res['at_boundary']    = at_b
-        res['boundary_flags'] = '; '.join(flags)
-
-    except Exception as e:
-        import traceback
-        res['error'] = f'{type(e).__name__}: {e} | {traceback.format_exc()}'
-
-    return res
-
-
-# ── Main ──────────────────────────────────────────────────────────────────────
+# ── Reparare ──────────────────────────────────────────────────────────────────
 def main():
-    """Rerun every At_Boundary=True case from INFILE with each geometry variant and write a diagnostic CSV."""
-    all_rows = read_csv(INFILE)
-
-    # filter rows with At_Boundary=True and a valid FOS
-    bad = []
-    for i, row in enumerate(all_rows):
-        fos_val = to_float(row.get('FOS'))
-        at_b    = str(row.get('At_Boundary', '')).strip().lower() == 'true'
-        if fos_val is not None and at_b:
-            bad.append((i, row, fos_val))
-
-    if not bad:
-        print('No cases with At_Boundary=True. Nothing to diagnose.')
+    if not os.path.exists(INFILE):
+        print(f'Fisier negasit: {INFILE}')
         return
 
-    print(f'{len(bad)} cases with At_Boundary=True — rerunning with '
-          f'{len(GEOMETRY_VARIANTS)} geometry variants.\n')
+    backup = INFILE.replace('.csv', '_backup.csv')
+    shutil.copy(INFILE, backup)
+    print(f'Backup creat: {backup}\n')
 
-    with open(OUTFILE, 'w', newline='') as f:
-        writer = csv.DictWriter(f, fieldnames=DIAG_COLS)
-        writer.writeheader()
+    rows, fieldnames = read_csv(INFILE)
 
-        for orig_idx, row, fos_csv in bad:
-            angle = to_float(row['angle']); phi   = to_float(row['phi'])
-            c     = to_float(row['c']);     gamma = to_float(row['gamma'])
-            H     = to_float(row['H'])
+    # adauga coloanele de metadate daca lipsesc
+    for col in ['repair_variant', 'excluded']:
+        if col not in fieldnames:
+            fieldnames.append(col)
+    for row in rows:
+        row.setdefault('repair_variant', '')
+        row.setdefault('excluded', '')
 
-            print(f'─── Case #{orig_idx}: angle={angle:.1f}° φ={phi:.1f}° '
-                  f'c={c:.1f} γ={gamma:.1f} H={H:.1f}m  FOS_csv={fos_csv:.3f}')
+    # identifica problemele
+    problems = [(i, r) for i, r in enumerate(rows)
+                if str(r.get('At_Boundary', '')).strip().lower() == 'true'
+                and to_float(r.get('FOS')) is not None]
 
-            for vname, vp in GEOMETRY_VARIANTS.items():
-                res = run_variant(angle, phi, c, gamma, H,
-                                  vp['ext_factor'], vp['depth_factor'], vname)
+    # raporteaza si erorile solver (FOS gol) — nu le repara, doar le marcheaza
+    solver_errors = [(i, r) for i, r in enumerate(rows)
+                     if to_float(r.get('FOS')) is None]
+    for i, r in solver_errors:
+        rows[i]['excluded'] = 'eroare_solver'
 
-                delta = (round(res['fos'] - fos_csv, 5)
-                         if res['fos'] is not None else '')
+    if not problems:
+        print('Niciun caz At_Boundary=True de reparat.')
+        if solver_errors:
+            print(f'{len(solver_errors)} cazuri cu eroare solver — marcate excluded.')
+            write_csv(INFILE, rows, fieldnames)
+        return
 
-                if res['error']:
-                    status = '✗ ERROR'
-                elif res['at_boundary']:
-                    status = '✗ still_boundary'
-                else:
-                    status = '✓ RESOLVED'
-
-                print(f'  [{vname:12s}] FOS={str(res["fos"]):>9}  '
-                      f'ΔFOS={str(delta):>9}  '
-                      f'at_boundary={res["at_boundary"]}  {status}')
-                if res['boundary_flags']:
-                    print(f'               flags: {res["boundary_flags"]}')
-                if res['solver_output']:
-                    print(f'               solver: {res["solver_output"][:120]}')
-                if res['error']:
-                    print(f'               error: {res["error"][:200]}')
-
-                writer.writerow({
-                    'case_idx':         orig_idx,
-                    'angle':            angle, 'phi': phi, 'c': c,
-                    'gamma':            gamma, 'H': H,
-                    'fos_original_csv': fos_csv,
-                    'delta_fos':        delta,
-                    **{k: res[k] for k in [
-                        'variant', 'ext_factor', 'depth_factor',
-                        'fos', 'cx', 'cy', 'r',
-                        'slope_length', 'extension', 'depth',
-                        'at_boundary', 'boundary_flags',
-                        'solver_output', 'error'
-                    ]},
-                })
-
-            print()
-
-    # ── Summary from written CSV (no pandas) ──────────────────────────────────
-    diag_rows = read_csv(OUTFILE)
-    print('=' * 60)
-    print('SUMMARY — resolved cases per variant:')
-    print(f'  {"variant":<14} {"total":>6} {"resolved":>9} {"ΔFOS_mean":>10} {"ΔFOS_max":>10}')
-    for vname in GEOMETRY_VARIANTS:
-        vrows = [r for r in diag_rows if r['variant'] == vname and not r['error']]
-        if not vrows:
-            continue
-        n_tot = len(vrows)
-        n_res = sum(1 for r in vrows if str(r['at_boundary']).lower() == 'false')
-        deltas = [abs(to_float(r['delta_fos'], 0)) for r in vrows if r['delta_fos'] != '']
-        d_mean = sum(deltas) / len(deltas) if deltas else 0
-        d_max  = max(deltas) if deltas else 0
-        print(f'  {vname:<14} {n_tot:>6} {n_res:>9} {d_mean:>10.4f} {d_max:>10.4f}')
-
+    print(f'{len(problems)} cazuri At_Boundary=True de reparat.')
+    if solver_errors:
+        print(f'{len(solver_errors)} cazuri cu eroare solver — marcate excluded, nereparate.')
     print()
-    print('Negative ΔFOS = the wider variant finds a less favorable surface (expected).')
-    print(f'Full output: {OUTFILE}')
+
+    n_repaired = 0
+    n_unresolved = 0
+
+    for i, row in problems:
+        angle = to_float(row['angle']); phi   = to_float(row['phi'])
+        c     = to_float(row['c']);     gamma = to_float(row['gamma'])
+        H     = to_float(row['H']);     fos_orig = to_float(row['FOS'])
+
+        print(f'─── Rand {i+1}: angle={angle:.1f}° φ={phi:.1f}° '
+              f'c={c:.1f} γ={gamma:.1f} H={H:.1f}m  FOS_orig={fos_orig:.4f}')
+
+        resolved = False
+        for vp in REPAIR_VARIANTS:
+            ef = vp['ext_factor']
+            df = vp['depth_factor']
+            label = f"ext{ef or 1}x_depth{df or 1}x"
+            print(f'  Incerc {label} ...', end=' ')
+
+            result = run_hyrcan(angle, phi, c, gamma, H, ef, df)
+            if result is None:
+                print('eroare solver.')
+                continue
+
+            fos, cx, cy, r, sl, ext, depth = result
+            still_boundary, flags = check_boundary(cx, cy, r, H, angle, ef, df)
+            delta = fos - fos_orig
+
+            if not still_boundary:
+                print(f'REZOLVAT. FOS={fos:.4f} (ΔFOS={delta:+.4f})')
+                rows[i].update({
+                    'FOS':            round(fos, 5),
+                    'Center_X':       round(cx, 4),
+                    'Center_Y':       round(cy, 4),
+                    'Radius':         round(r, 4),
+                    'At_Boundary':    False,
+                    'slope_length':   round(sl, 3),
+                    'extension':      round(ext, 3),
+                    'depth':          round(depth, 3),
+                    'repair_variant': label,
+                    'excluded':       '',
+                })
+                resolved = True
+                n_repaired += 1
+                break
+            else:
+                print(f'still_boundary ({", ".join(flags)}). '
+                      f'FOS={fos:.4f} (ΔFOS={delta:+.4f})')
+
+        if not resolved:
+            print('  Nicio varianta nu a rezolvat — marcat excluded.')
+            rows[i]['excluded'] = 'nerezolvat'
+            n_unresolved += 1
+
+        print()
+
+    write_csv(INFILE, rows, fieldnames)
+
+    # ── Sumar final ───────────────────────────────────────────────────────────
+    total    = len(rows)
+    valid    = sum(1 for r in rows
+                   if str(r.get('At_Boundary', '')).strip().lower() == 'false'
+                   and not r.get('excluded'))
+    excluded = sum(1 for r in rows if r.get('excluded'))
+
+    print('=' * 55)
+    print('SUMAR REPARARE')
+    print('=' * 55)
+    print(f'Total randuri:               {total}')
+    print(f'Valide pentru antrenament:   {valid}')
+    print(f'Reparate cu succes:          {n_repaired}')
+    print(f'Nerezolvate (excluded):      {n_unresolved}')
+    print(f'Erori solver (excluded):     {len(solver_errors)}')
+    print(f'\nCSV actualizat: {INFILE}')
+    print(f'Original intact: {backup}')
+    print('\nFiltrare la antrenament: pastreaza doar randurile cu excluded gol.')
 
 
 if __name__ == '__main__':
