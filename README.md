@@ -25,7 +25,7 @@ configurations, uniformly stratified over the FOS band [0.5, 6.0].
 The analysis pipeline is a single Google Colab notebook:
 **`surrogate_guided_sampling.ipynb`**
 
-1. Download the CSV files from the dataset archive: [\[Zenodo\]](https://doi.org/10.5281/zenodo.20690924)
+1. Download the CSV files from the dataset archive: [\[Zenodo\]](https://doi.org/10.5281/zenodo.20706202)
 2. Open the notebook in Google Colab (free, no installation required)
 3. Upload the CSV files to the Colab session (`/content/`)
 4. Run all cells in order: Runtime → Run all
