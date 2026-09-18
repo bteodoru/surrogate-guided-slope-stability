@@ -1,7 +1,7 @@
 import hyrcan as hy
 import math, csv, os, shutil
 
-INFILE = 'pilot_50.csv'
+INFILE = 'results_test_natural_300.csv'
 METHOD = 'Spencer'
 
 # Variante incercate in ordine pana la rezolvare
