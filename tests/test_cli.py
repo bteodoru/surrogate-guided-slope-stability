@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from sgs import cli, config, data, solver
@@ -82,4 +84,38 @@ def test_results_from_another_design_are_refused(fake_solver):
     entry = data.read_metadata()["datasets"]["seed"]
     data.record("datasets", "seed", {**entry, "design_sha256": "0" * 64})
     with pytest.raises(cli.GenerateError, match="different design"):
+        cli.generate("seed")
+
+
+def test_learning_curve_exits_cleanly_when_unimplemented(capsys):
+    with pytest.raises(SystemExit) as excinfo:
+        cli.main(["learning-curve"])
+    assert excinfo.value.code == 2
+    assert "not implemented" in capsys.readouterr().err
+
+
+def test_generate_is_idempotent_in_run_metadata(fake_solver, monkeypatch):
+    cli.generate("seed")
+    path = config.metadata_path()
+    before = path.read_bytes()
+
+    class _Later:
+        @staticmethod
+        def now(tz):
+            import datetime as real_dt
+            return real_dt.datetime.now(tz) + real_dt.timedelta(hours=1)
+
+    monkeypatch.setattr(cli, "_dt", type("_dt", (), {"datetime": _Later, "timezone": cli._dt.timezone}))
+    cli.generate("seed")
+    after = path.read_bytes()
+    assert before == after
+
+
+def test_missing_metadata_entry_is_reported_as_no_record(fake_solver):
+    cli.generate("seed")
+    meta = data.read_metadata()
+    del meta["datasets"]["seed"]
+    path = config.metadata_path()
+    path.write_text(json.dumps(meta))
+    with pytest.raises(cli.GenerateError, match="no record"):
         cli.generate("seed")

@@ -46,6 +46,9 @@ def generate(role: str, *, workers: int = 1, force: bool = False) -> dict:
     previous = data.read_metadata().get("datasets", {}).get(role, {})
     solved = False
     if results_path.exists() and not force:
+        if not previous:
+            raise GenerateError(f"there is no record of {results_path.name} for {role!r}; "
+                                f"rerun with --force to solve it again")
         if previous.get("design_sha256") != design_sha:
             raise GenerateError(f"{results_path.name} was solved from a different design; "
                                 f"rerun with --force to solve {role!r} again")
@@ -69,8 +72,10 @@ def generate(role: str, *, workers: int = 1, force: bool = False) -> dict:
     entry = {"n": spec.n, **info, "design_sha256": design_sha,
              "results_sha256": data.sha256_file(results_path),
              "final_sha256": data.sha256_file(final_path), "repair": repair,
-             "environment": data.environment(),
-             "updated": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")}
+             "environment": data.environment()}
+    unchanged = previous and {k: v for k, v in previous.items() if k != "updated"} == entry
+    entry["updated"] = (previous["updated"] if unchanged
+                        else _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"))
     data.record("datasets", role, entry)
     return entry
 
@@ -97,9 +102,8 @@ def _report(args):
 
 
 def _learning_curve(args):
-    from sgs import evaluate, models
-    models.learning_curve(force=args.force)
-    evaluate.run_learning_curve()
+    print("sgs learning-curve is not implemented in this version (plan Task 13)", file=sys.stderr)
+    raise SystemExit(2)
 
 
 def _all(args):

@@ -33,7 +33,8 @@ python3.14 -m venv .venv
 .venv/bin/sgs report                 # tables and figures
 ```
 
-`sgs all --workers 2` runs the four in order. `sgs learning-curve` is optional.
+`sgs all --workers 2` runs the four in order. `sgs learning-curve` is not yet
+implemented (plan Task 13).
 A command reuses outputs that already exist and stops, naming the cause, if a
 design, a results file or a fit no longer matches the current configuration or
 data; `--force` regenerates. All scientific parameters live in
