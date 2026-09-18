@@ -1,3 +1,14 @@
 .DS_Store
 __pycache__/
 *.pyc
+*.egg-info/
+.venv/
+.pytest_cache/
+.superpowers/
+
+# Regenerable payloads. data/run_metadata.json and outputs/ stay tracked.
+data/**/*.csv
+artifacts/
+
+# In-flight writes.
+**/.*.tmp

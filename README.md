@@ -1,37 +1,49 @@
-# Surrogate-Guided Sampling for Slope Stability Surrogates
+# Surrogate-guided sampling for slope-stability surrogates
 
-## Overview
+Research code for a study of how a fixed budget of physics-based slope-stability
+analyses should be allocated. A preliminary random forest, trained on a Latin
+hypercube seed, screens a large candidate pool; the remaining budget goes to
+candidates chosen for uniform coverage of the factor-of-safety (FOS) selection
+range [0.5, 6.0]. The claim is tested in a budget-fair comparison against
+continued Latin hypercube sampling.
 
-This repository contains the complete, deterministic pipeline used to
-generate, select, train, and evaluate surrogate models for slope stability
-prediction. The study proposes a surrogate-guided sampling methodology that
-controls the distribution of the target variable (factor of safety, FOS)
-directly, rather than sampling uniformly in the input parameter space.
+Data are generated with xslope 0.5.2 (Bishop's simplified method), homogeneous
+drained slopes without a water table.
 
-The pipeline compares four experimental arms in a budget-fair design:
+| Arm | Training data                  | Solver budget       |
+|-----|--------------------------------|---------------------|
+| A   | seed LHS-300                   | 300                 |
+| B   | seed LHS-300 + LHS-300         | 600                 |
+| C   | seed LHS-300 + guided-300      | 600                 |
+| C₀  | guided-300 only                | ablation, no budget |
 
-| Arm | Training data                          | Solver budget |
-| --- | -------------------------------------- | ------------- |
-| A   | LHS seed (300)                         | 300           |
-| B   | LHS seed + continued LHS (300)         | 600           |
-| C₀  | Surrogate-guided only (300) — ablation | —             |
-| C   | LHS seed + surrogate-guided (300)      | 600           |
+Two test sets represent two deployment scenarios: `test-natural` (input-space
+LHS, 300) and `test-stratified` (random selection within predicted-FOS bins,
+150), each disjoint from every other set.
 
-All arms are evaluated on a common independent test set of 150
-configurations, uniformly stratified over the FOS band [0.5, 6.0].
+## Running the pipeline
 
-## Usage
+```bash
+python3.14 -m venv .venv
+.venv/bin/pip install -r requirements.lock
+.venv/bin/pip install --no-deps -e .
+.venv/bin/sgs generate --workers 2   # five data sets, about an hour of solver time
+.venv/bin/sgs fit                    # 8 fits, 48 grid searches with the nested CV; hours
+.venv/bin/sgs evaluate               # seconds
+.venv/bin/sgs report                 # tables and figures
+```
 
-The analysis pipeline is a single Google Colab notebook:
-**`surrogate_guided_sampling.ipynb`**
+`sgs all --workers 2` runs the four in order. `sgs learning-curve` is optional.
+A command reuses outputs that already exist and stops, naming the cause, if a
+design, a results file or a fit no longer matches the current configuration or
+data; `--force` regenerates. All scientific parameters live in
+`sgs/config.py`; none are accepted on the command line.
 
-1. Download the CSV files from the dataset archive: [\[Zenodo\]](https://doi.org/10.5281/zenodo.20706202)
-2. Open the notebook in Google Colab (free, no installation required)
-3. Upload the CSV files to the Colab session (`/content/`)
-4. Run all cells in order: Runtime → Run all
+## Data
 
-All results are deterministic (random seed 42).
+Dataset: [Zenodo, concept DOI 10.5281/zenodo.20706202](https://doi.org/10.5281/zenodo.20706202).
+See `data/README.md` for the mapping between file names in the deposit and in
+the pipeline.
 
-The data generator used in an earlier version of this study required
-HYRCAN and was replaced by xslope 0.5.2 with Bishop's simplified method,
-for open-source reproducibility.
+The HYRCAN generator used in an earlier version of this study is preserved at
+the git tag `hyrcan-final`.
