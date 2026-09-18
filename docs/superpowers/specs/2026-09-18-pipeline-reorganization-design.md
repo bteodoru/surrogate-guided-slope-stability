@@ -167,6 +167,18 @@ one learns to ignore.
 A stage that finds changed inputs **fails and names what changed**. `--force` is
 the only way past it.
 
+### Imported artifacts
+
+The existing CSV files and the existing screener were not produced by this
+pipeline, so they have no manifest, while the contract above requires a sidecar
+for every artifact. They receive manifests of kind `imported`, which record the
+content hash and the library and interpreter versions believed to have produced
+the payload, and which state that the provenance is **declared, not verified**.
+Any stage consuming an imported artifact says so in its own manifest, so the
+distinction propagates instead of being laundered at the first hop. Phase 9
+replaces every imported manifest with a generated one; until then, an imported
+manifest is what lets `check` bind a file to something at all.
+
 ### Receipt
 
 `sgs check` is a stage, not a function called from inside other stages, so that
@@ -195,8 +207,6 @@ splitting that into two independent seeds would change the draws.
 ```python
 SEEDS = {
     "seed_lhs_design":            42,
-    "screener_fit":               42,   # random_state of the preliminary RF
-    "screener_cv":                42,   # KFold for the diagnostic OOF
     "guided_stream":              42,   # pool AND selection, one stream, in that order
     "lhs_extension_design":       20260917,
     "test_stratified_pool":       20260918,
@@ -207,8 +217,11 @@ SEEDS = {
 }
 ```
 
-`screener_fit` and `screener_cv` share the value 42 with `guided_stream` but are
-independent of that stream, so naming them separately changes no result.
+The screener's own seeds live in the screener registry below, not here: a role
+names its screener, so what that name resolves to — training role, family,
+hyper-parameters, seeds — must be defined in one place rather than read from
+globals. Those seeds share the value 42 with `guided_stream` but are independent
+of that stream, so naming them separately changes no result.
 
 The order contract for `guided_stream` is stated in a comment **and verified**:
 a test generates the role twice within one run and compares hashes, so any
@@ -218,6 +231,20 @@ future reordering of the calls fails.
 therefore affect no existing number. Learning-curve repetitions draw per-repeat
 seeds from `SeedSequence(base).spawn()` keyed on `(n, repeat)`, so two
 repetitions at different `n` cannot share a subsample.
+
+### Screeners
+
+```python
+SCREENERS = {
+  "primary": Screener(trained_on="seed", family="rf",
+                      params={"n_estimators": 500},
+                      seeds={"fit": 42, "cv": 42}),
+}
+```
+
+The preliminary surrogate is fitted with fixed hyper-parameters, not by a tuned
+search: it is a screening instrument for the candidate pool, not one of the
+models under comparison.
 
 ### Roles
 
@@ -428,14 +455,30 @@ Each phase begins with its tests.
 environment and check that it selects the same hyper-parameters as the earlier
 Colab runs. Python 3.14.4 is pinned rather than tested: every existing CSV was
 generated on it. The environment risk is in the scikit-learn stack, not in
-xslope. Precondition: the reference hyper-parameters must be extracted from the
-current notebook's stored outputs **before** phase 7 rewrites it.
+xslope.
+
+Three details, because the phase runs before the package exists:
+
+- *What code runs*: the existing local code — the tuning cells lifted out of the
+  notebook — not `sgs fit`, which does not exist yet.
+- *On what data*: the current CSV files, before the boundary repair, since the
+  point is to compare against numbers that were produced on exactly those.
+- *Where the reference hyper-parameters go*: their own file,
+  `docs/environment-probe-2026-09.md`, extracted from the notebook's stored
+  outputs before phase 8 rewrites it. Not `CLAUDE.md`, which is stripped of
+  history and results in phase 1. The file is deleted at the end of phase 5,
+  once it has served its comparison.
 
 **Phase 1 — repository restructure.** Commit the pending HYRCAN modifications,
 tag `hyrcan-final`, delete the directory, move the contents of `xslope/` to
 their new locations at the repository root and remove that directory together
 with its stray `git init`, add `pyproject.toml`, `config.py`, `manifest.py` and the CLI
 skeleton, rename the data files and write `data/README.md`.
+
+The renamed files land directly in `data/final/`, as imported state with
+imported manifests, because that is the directory the analysis consumes and the
+current files are already post-repair for the one set that needed it.
+`data/results/` stays empty until phase 3, and `data/designs/` until phase 4.
 
 `CLAUDE.md` is cleaned in this phase: the results section is **deleted**, not
 marked stale; the HYRCAN material goes — both the justification for the switch
@@ -446,9 +489,27 @@ results.
 **Phase 2 — `check`.** Per-hash receipt and disjointness assertions. It will
 fail on the eleven boundary rows, which is the correct outcome.
 
-**Phase 3 — `solve` and `repair`.** Completes `data/final/` and turns the
-receipt green. Published numbers change here: eleven labels in the B, guided and
-natural-300 sets are currently boundary-truncated and are not true minima.
+**Phase 3 — `solve` and `repair`.** Rebuilds the chain from its start rather
+than patching in place: the affected sets are re-solved into `data/results/`,
+`repair` writes `data/final/`, and the imported manifests for those sets are
+replaced by generated ones. The receipt turns green.
+
+Published numbers change here. Eleven rows are boundary-truncated, and their FOS
+values are therefore not true minima. Their distribution is verified, not
+assumed: three in the LHS extension, four in the guided set, four in
+natural-300, **none in the seed set** (whose two boundary rows were repaired
+previously) and none in target-stratified-150.
+
+That distribution is what keeps phase 4 independent of phase 3. The screener
+trains on the seed set, which phase 3 does not touch, so the screener is
+unchanged and the guided *design* — the parameter combinations — is unchanged
+with it. What changes in the guided set is four labels, not which points were
+selected.
+
+*Corollary.* After the repair, the hyper-parameters selected by the search may
+legitimately differ from the Colab ones, because the data differ. From this
+point the acceptance target is no longer agreement with Colab but determinism of
+the local run.
 
 **Phase 4 — `fit-screener` and `design`.** Delivers the screener artifact and
 deterministic regeneration of every design role.
@@ -456,17 +517,23 @@ deterministic regeneration of every design role.
 **Phase 5 — `protocol` and `fitting`.** The 48 searches; artifacts with raw
 residuals. Runs once, takes hours.
 
-**Phase 6 — `evaluate` and `learning-curve`.** Metrics as JSON, with the five
-corrections of section 7.
+**Phase 6 — `evaluate`.** Metrics as JSON, with the five corrections of
+section 7. Cheap: it reads fit artifacts and a test set and runs in seconds.
 
-**Phase 7 — `report` and notebook.** Booktabs tables, figures, README.
+**Phase 7 — `learning-curve`.** Its own phase, because it is not cheap. It
+refits across sizes x repetitions x arms x families, which is hours of work
+comparable to phase 5, and grouping it with evaluation would misrepresent when
+the budget is spent. Its cache is separate from `artifacts/fits/` so that
+invalidating one does not touch the other.
 
-**Phase 8 — full regeneration.** `run-all` from scratch before submission.
+**Phase 8 — `report` and notebook.** Booktabs tables, figures, README.
+
+**Phase 9 — full regeneration.** `run-all` from scratch before submission. Every
+imported manifest is replaced by a generated one; from this point the pipeline
+describes its data without a declared-provenance gap.
 
 ## 11. Open items
 
-- The reference hyper-parameters from the Colab runs must be captured before
-  the notebook is rewritten, or phase 0 loses its comparison target.
 - `N_TEST_POOL` and `MIN_DISTANCE` become declared parameters and need a
   sentence each in Methods.
 - The corrected data from phase 3 shifts every published figure; the results
