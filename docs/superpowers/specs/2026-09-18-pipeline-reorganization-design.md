@@ -28,16 +28,18 @@ fitting, evaluation and reporting.
 | No workflow engine (Snakemake, DVC) | Six stages with near-linear dependencies; hash manifests written by hand are sufficient, a workflow engine is a second system to learn |
 | No `Makefile` | Stage order lives in `sgs run-all`; timestamp invalidation is strictly weaker than content hashing |
 | No scientific parameters on the command line | Two sources of truth for one value is the failure that produced an invalid arm B once already; changing a seed must be visible in git, not in a shell history that does not exist |
-| No frozen reference CSVs in the repository | Reference copies live outside the repository and are checked descriptively by the author; determinism is tested by generating twice within one run |
+| `data/` starts empty and everything in it is produced by the pipeline | No artifact without provenance can exist, so there is no declared-but-unverified state to track or launder; copies of the current data move to a reference directory outside the repository and are compared descriptively by the author |
 | Full grid search retained for GBM | Procedure and implementation do not change in the same step; `scoring` and search kind remain configuration axes for a later sensitivity check |
 | Python pinned at 3.14.4 | Every current CSV was generated on it, so it is empirically validated; 3.12 is a fallback only if a future dependency refuses 3.14 |
 
 ### Out of scope
 
 Changes to the experimental design itself: the arms, the selection range, the
-test sets and the tuning protocol are carried over unchanged. The one exception
-is the boundary repair of section 10, phase 3, which corrects known-wrong
-labels rather than changing the design.
+test sets and the tuning protocol are carried over unchanged. The data are
+regenerated, but from the same seeds and the same procedures, so the regenerated
+sets are expected to match the reference copies except where the previous run
+left boundary-truncated rows unrepaired. Verifying that expectation is the
+author's descriptive comparison, not a pipeline test.
 
 ## 3. Repository layout
 
@@ -77,6 +79,13 @@ surrogate-guided-slope-stability/
 └── docs/superpowers/specs/
 ```
 
+`data/` starts empty and every file in it is produced by a stage. Copies of the
+current CSV files move to a reference directory outside the repository, where
+the author compares them descriptively — n, min, max, median FOS, bin occupancy
+— against what the pipeline regenerates. Nothing is imported into the pipeline,
+so no artifact can exist without a manifest naming the configuration and the
+inputs that produced it.
+
 CSV payloads under `data/` and model artifacts under `artifacts/` are not
 tracked: they are regenerable, they are published on Zenodo, and the repository
 is not a data store. Their `*.manifest.json` sidecars **are** tracked, because
@@ -95,7 +104,8 @@ all.
 
 ### File naming
 
-Role-named files replace the current names, which actively mislead —
+These are the names the pipeline produces, and they replace the current ones,
+which actively mislead —
 `results_uniform_bishop.csv` holds the *guided* set and `results_test_bishop.csv`
 holds the *natural* test.
 
@@ -166,18 +176,6 @@ one learns to ignore.
 
 A stage that finds changed inputs **fails and names what changed**. `--force` is
 the only way past it.
-
-### Imported artifacts
-
-The existing CSV files and the existing screener were not produced by this
-pipeline, so they have no manifest, while the contract above requires a sidecar
-for every artifact. They receive manifests of kind `imported`, which record the
-content hash and the library and interpreter versions believed to have produced
-the payload, and which state that the provenance is **declared, not verified**.
-Any stage consuming an imported artifact says so in its own manifest, so the
-distinction propagates instead of being laundered at the first hop. Phase 9
-replaces every imported manifest with a generated one; until then, an imported
-manifest is what lets `check` bind a file to something at all.
 
 ### Receipt
 
@@ -444,12 +442,11 @@ computation. For Colab, the first cell installs the package and downloads the
 data from Zenodo, which makes Colab a consumer of the pipeline rather than a
 second execution environment.
 
-Where `fits/` lives at publication remains undecided; it is regenerable, and the
-decision does not block this work.
-
 ## 10. Implementation phases
 
-Each phase begins with its tests.
+Each phase begins with its tests. The expensive work is not concentrated in one
+place: phases 2, 4, 6 and 8 each cost hours, and two of them are solver runs
+that execute unattended.
 
 **Phase 0 — environment probe.** Install scikit-learn into the local
 environment and check that it selects the same hyper-parameters as the earlier
@@ -461,81 +458,80 @@ Three details, because the phase runs before the package exists:
 
 - *What code runs*: the existing local code — the tuning cells lifted out of the
   notebook — not `sgs fit`, which does not exist yet.
-- *On what data*: the current CSV files, before the boundary repair, since the
-  point is to compare against numbers that were produced on exactly those.
+- *On what data*: the current CSV files, in the external reference directory,
+  since the point is to compare against numbers produced on exactly those.
 - *Where the reference hyper-parameters go*: their own file,
   `docs/environment-probe-2026-09.md`, extracted from the notebook's stored
-  outputs before phase 8 rewrites it. Not `CLAUDE.md`, which is stripped of
-  history and results in phase 1. The file is deleted at the end of phase 5,
+  outputs before phase 9 rewrites it. Not `CLAUDE.md`, which is stripped of
+  history and results in phase 1. The file is deleted at the end of phase 6,
   once it has served its comparison.
 
 **Phase 1 — repository restructure.** Commit the pending HYRCAN modifications,
 tag `hyrcan-final`, delete the directory, move the contents of `xslope/` to
 their new locations at the repository root and remove that directory together
-with its stray `git init`, add `pyproject.toml`, `config.py`, `manifest.py` and the CLI
-skeleton, rename the data files and write `data/README.md`.
+with its stray `git init`, add `pyproject.toml`, `config.py`, `manifest.py` and
+the CLI skeleton, write `data/README.md`.
 
-The renamed files land directly in `data/final/`, as imported state with
-imported manifests, because that is the directory the analysis consumes and the
-current files are already post-repair for the one set that needed it.
-`data/results/` stays empty until phase 3, and `data/designs/` until phase 4.
+The current CSV files move to the external reference directory in this phase.
+`data/` is created empty.
 
-`CLAUDE.md` is cleaned in this phase: the results section is **deleted**, not
-marked stale; the HYRCAN material goes — both the justification for the switch
-and the solver-agreement figures; the seed rule stays as a rule, without the
-arm-B anecdote. The file describes the protocol, not the past and not the
-results.
+`CLAUDE.md` is cleaned here: the results section is **deleted**, not marked
+stale; the HYRCAN material goes — both the justification for the switch and the
+solver-agreement figures; the seed rule stays as a rule, without the arm-B
+anecdote. The file describes the protocol, not the past and not the results.
 
-**Phase 2 — `check`.** Per-hash receipt and disjointness assertions. It will
-fail on the eleven boundary rows, which is the correct outcome.
+**Phase 2 — `design`, `solve`, `repair`; the seed chain.** Implements the three
+stages and runs them for the `seed` role. **Expensive: ~300 solver analyses**,
+plus the repair re-runs for whatever rows come back boundary-truncated. Runs
+unattended; `--resume` exists for exactly this.
 
-**Phase 3 — `solve` and `repair`.** Rebuilds the chain from its start rather
-than patching in place: the affected sets are re-solved into `data/results/`,
-`repair` writes `data/final/`, and the imported manifests for those sets are
-replaced by generated ones. The receipt turns green.
+**Phase 3 — `fit-screener`.** Produces `artifacts/screener.joblib` from the
+repaired seed set. Cheap.
 
-Published numbers change here. Eleven rows are boundary-truncated, and their FOS
-values are therefore not true minima. Their distribution is verified, not
-assumed: three in the LHS extension, four in the guided set, four in
-natural-300, **none in the seed set** (whose two boundary rows were repaired
-previously) and none in target-stratified-150.
+**Phase 4 — the remaining four roles.** New code: the two screener-driven design
+procedures, `guided-maxmin` and `stratified-random`. Then the chain runs for
+`lhs-extension`, `guided`, `test-natural` and `test-stratified`.
+**Expensive: ~1050 solver analyses**, unattended, the largest single block of
+machine time in the project.
 
-That distribution is what keeps phase 4 independent of phase 3. The screener
-trains on the seed set, which phase 3 does not touch, so the screener is
-unchanged and the guided *design* — the parameter combinations — is unchanged
-with it. What changes in the guided set is four labels, not which points were
-selected.
+For scale: the previous run left eleven boundary-truncated rows across these
+four sets, so the repair re-runs are a small fraction of the total.
 
-*Corollary.* After the repair, the hyper-parameters selected by the search may
-legitimately differ from the Colab ones, because the data differ. From this
-point the acceptance target is no longer agreement with Colab but determinism of
-the local run.
+**Phase 5 — `check`.** Per-hash receipt and pairwise disjointness assertions,
+running on the data phases 2 and 4 produced. Its unit tests run on small
+fixtures; this is where it runs for real. No failure is expected here, because
+`repair` has already treated the boundary rows in the chain — a red receipt at
+this point means something upstream is wrong, not that data are pending.
 
-**Phase 4 — `fit-screener` and `design`.** Delivers the screener artifact and
-deterministic regeneration of every design role.
+**Phase 6 — `protocol` and `fitting`.** The 48 searches; artifacts with raw
+per-fold residuals. **Expensive: hours.** Runs once, and nothing downstream
+refits.
 
-**Phase 5 — `protocol` and `fitting`.** The 48 searches; artifacts with raw
-residuals. Runs once, takes hours.
+*Corollary.* The hyper-parameters selected here may legitimately differ from the
+Colab ones, because the data were regenerated and the boundary rows repaired.
+From this point the acceptance target is no longer agreement with Colab but
+determinism of the local run. `docs/environment-probe-2026-09.md` is deleted at
+the end of this phase.
 
-**Phase 6 — `evaluate`.** Metrics as JSON, with the five corrections of
+**Phase 7 — `evaluate`.** Metrics as JSON, with the five corrections of
 section 7. Cheap: it reads fit artifacts and a test set and runs in seconds.
 
-**Phase 7 — `learning-curve`.** Its own phase, because it is not cheap. It
-refits across sizes x repetitions x arms x families, which is hours of work
-comparable to phase 5, and grouping it with evaluation would misrepresent when
-the budget is spent. Its cache is separate from `artifacts/fits/` so that
-invalidating one does not touch the other.
+**Phase 8 — `learning-curve`.** Its own phase, because it is not cheap. It
+refits across sizes x repetitions x arms x families, **hours comparable to
+phase 6**, and grouping it with evaluation would misrepresent when the budget is
+spent. Its cache is separate from `artifacts/fits/` so that invalidating one
+does not touch the other.
 
-**Phase 8 — `report` and notebook.** Booktabs tables, figures, README.
-
-**Phase 9 — full regeneration.** `run-all` from scratch before submission. Every
-imported manifest is replaced by a generated one; from this point the pipeline
-describes its data without a declared-provenance gap.
+**Phase 9 — `report` and notebook.** Booktabs tables, figures, README.
 
 ## 11. Open items
 
 - `N_TEST_POOL` and `MIN_DISTANCE` become declared parameters and need a
   sentence each in Methods.
-- The corrected data from phase 3 shifts every published figure; the results
-  section of `CLAUDE.md` is deleted in phase 1 precisely so that no stale number
-  survives the interval.
+- Every published figure is regenerated from the new data, so the numbers
+  currently in circulation are not a pipeline reference; they are compared
+  descriptively against the external reference copies and otherwise retired.
+  The results section of `CLAUDE.md` is deleted in phase 1 precisely so that no
+  stale number survives the interval.
+- Where `fits/` lives at publication is still undecided; it is regenerable and
+  the decision blocks nothing.
