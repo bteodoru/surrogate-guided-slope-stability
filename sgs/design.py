@@ -74,8 +74,9 @@ def assert_disjoint(frame: pd.DataFrame, references: Mapping[str, pd.DataFrame],
 # --- screener -----------------------------------------------------------------------
 
 def screener_model(*, oob: bool) -> RandomForestRegressor:
+    # n_jobs=1: parallel prediction sums tree outputs in thread-completion order, which changes FOS_pred in the last bit and with it the design hash.
     return RandomForestRegressor(n_estimators=config.SCREENER["n_estimators"], oob_score=oob,
-                                 random_state=config.SEEDS["screener_fit"], n_jobs=-1)
+                                 random_state=config.SEEDS["screener_fit"], n_jobs=1)
 
 
 def fit_screener(frame: pd.DataFrame):
