@@ -135,24 +135,35 @@ def fig_zone_rmse(metrics: dict, family: str):
     return fig
 
 
-def fig_learning_curve(lc: dict, test: str):
-    rows = [r for r in lc["rows"] if r["test"] == test]
-    fig, axes = plt.subplots(1, 2, figsize=(10, 3.8), sharex=True)
+def fig_learning_curve(lc: dict, test: str, family: str):
+    """FOS-scale RMSE (global, selection range), log-scale RMSE (the trained response)
+    and RMSE in the highest zone, where FOS-scale errors are largest."""
+    rows = [r for r in lc["rows"] if r["test"] == test and r["family"] == family]
+    top_zone = rows[0]["zones"][-1]["zone"]
+    panels = [
+        ("Global RMSE", "RMSE (FOS)", lambda r: (r["rmse_mean"], r["rmse_std"])),
+        ("RMSE in the selection range", "RMSE (FOS)",
+         lambda r: (r["rmse_selection_mean"], r["rmse_selection_std"])),
+        ("Global RMSE of log(FOS)", "RMSE (log FOS)", lambda r: (r["log_rmse_mean"], r["log_rmse_std"])),
+        (f"RMSE in zone {top_zone}", "RMSE (FOS)",
+         lambda r: (r["zones"][-1]["rmse_mean"], r["zones"][-1]["rmse_std"])),
+    ]
+    fig, axes = plt.subplots(2, 2, figsize=(10, 7), sharex=True)
     for curve in sorted({r["curve"] for r in rows}):
         points = sorted((r for r in rows if r["curve"] == curve), key=lambda r: r["budget"])
         budgets = [r["budget"] for r in points]
-        for ax, key in zip(axes, ("rmse", "rmse_selection")):
-            mean = np.array([r[f"{key}_mean"] for r in points])
-            std = np.array([r[f"{key}_std"] for r in points])
+        for ax, (_, _, value) in zip(axes.flat, panels):
+            mean, std = (np.array(v, dtype=float) for v in zip(*(value(r) for r in points)))
             ax.plot(budgets, mean, "o-", label=curve)
             ax.fill_between(budgets, mean - std, mean + std, alpha=0.15)
-    axes[0].set_title("Global RMSE")
-    axes[1].set_title("RMSE in the selection range")
-    for ax in axes:
-        ax.set_xlabel("Solver budget")
+    for ax, (title, ylabel, _) in zip(axes.flat, panels):
+        ax.set_title(title)
+        ax.set_ylabel(ylabel)
         ax.grid(alpha=0.3)
-    axes[0].set_ylabel(f"RMSE on {test} (RF, fixed hyper-parameters)")
-    axes[0].legend(frameon=False)
+    for ax in axes[1]:
+        ax.set_xlabel("Solver budget")
+    axes[0, 0].legend(frameon=False)
+    fig.suptitle(f"{test}, {family.upper()} with fixed hyper-parameters")
     fig.tight_layout()
     return fig
 
@@ -200,5 +211,7 @@ def run() -> None:
     if config.learning_curve_metrics_path().exists():
         lc = load_learning_curve()
         for test in config.TEST_ROLES:
-            _save_figure(figures / f"learning_curve__{test}.pdf", fig_learning_curve(lc, test))
+            for family in sorted({r["family"] for r in lc["rows"]}):
+                _save_figure(figures / f"learning_curve__{test}__{family}.pdf",
+                             fig_learning_curve(lc, test, family))
     print(f"[report] wrote {tables} and {figures}")

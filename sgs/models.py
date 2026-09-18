@@ -183,15 +183,14 @@ def fit_all(*, force: bool = False, units=None) -> None:
         })
 
 
-# --- learning curve (optional; RF with fixed hyper-parameters) ---------------------------
+# --- learning curve (optional; fixed hyper-parameters, both families) --------------------
 
 SHARED = "seed-only"
 
 
-def lc_estimator() -> RandomForestRegressor:
-    """ESTIMATOR_FIXED['rf'] plus scikit-learn defaults; not tuned (spec §8)."""
-    return RandomForestRegressor(**config.ESTIMATOR_FIXED["rf"],
-                                 random_state=config.SEEDS["protocol_estimator"], n_jobs=-1)
+def lc_estimator(family: str):
+    """The protocol estimator with the fixed LC_PARAMS of its family; not tuned (spec §8)."""
+    return estimator(family).set_params(**config.LC_PARAMS[family])
 
 
 def unit_rng(budget: int, repeat: int) -> np.random.Generator:
@@ -231,8 +230,8 @@ def lc_roles() -> list[str]:
     return [config.LC_BASE_ROLE, *config.LC_STRATEGIES.values(), *config.TEST_ROLES]
 
 
-def lc_state() -> dict:
-    return {"fingerprint": config.learning_curve_fingerprint(),
+def lc_state(family: str) -> dict:
+    return {"fingerprint": config.learning_curve_fingerprint(family),
             "data": {role: data.sha256_file(config.final_path(role)) for role in lc_roles()}}
 
 
@@ -256,18 +255,18 @@ def lc_sizes() -> tuple[int, dict[str, int]]:
     return n_seed, n_extra
 
 
-def run_lc_budget(key, budget, repeats, seed_df, extras, tests) -> dict:
+def run_lc_budget(family, key, budget, repeats, seed_df, extras, tests) -> dict:
     units = []
     for repeat in range(repeats):
         extra = seed_df.iloc[:0] if key == SHARED else extras[key]
         frame = subsample(seed_df, extra, budget, unit_rng(budget, repeat))
-        model = lc_estimator().fit(frame[list(config.FEATURES)], np.log(frame["FOS"].to_numpy(float)))
+        model = lc_estimator(family).fit(frame[list(config.FEATURES)], np.log(frame["FOS"].to_numpy(float)))
         units.append({
             "repeat": repeat, "n_train": int(len(frame)), "train_ids": frame["row_id"].to_numpy(str),
             "predictions": {name: {"ids": test.ids, "y_pred": np.exp(model.predict(test.X))}
                             for name, test in tests.items()},
         })
-    return {"key": key, "budget": budget, "units": units}
+    return {"family": family, "key": key, "budget": budget, "units": units}
 
 
 def learning_curve(*, force: bool = False) -> None:
@@ -278,31 +277,35 @@ def learning_curve(*, force: bool = False) -> None:
     tests = {role: data.load_test(role) for role in config.TEST_ROLES}
     n_extra = {strategy: len(extra) for strategy, extra in extras.items()}
     _check_lc_budgets(len(seed_df), n_extra)
-    state = lc_state()
-    for key, budget, repeats in lc_plan(len(seed_df), n_extra):
-        path = config.learning_curve_path(key, budget)
-        if path.exists():
-            if joblib.load(path)["state"] == state:
-                print(f"[learning-curve] {path.name}: up to date")
-                continue
-            if not force:
-                raise StaleFit(f"{path.name} was fitted under another configuration or other data; "
-                               "rerun with --force")
-        print(f"[learning-curve] {key} n={budget} x{repeats}", flush=True)
-        _dump(path, {**run_lc_budget(key, budget, repeats, seed_df, extras, tests), "state": state})
+    for family in config.LC_FAMILIES:
+        state = lc_state(family)
+        for key, budget, repeats in lc_plan(len(seed_df), n_extra):
+            path = config.learning_curve_path(family, key, budget)
+            if path.exists():
+                if joblib.load(path)["state"] == state:
+                    print(f"[learning-curve] {path.name}: up to date")
+                    continue
+                if not force:
+                    raise StaleFit(f"{path.name} was fitted under another configuration or other data; "
+                                   "rerun with --force")
+            print(f"[learning-curve] {family} {key} n={budget} x{repeats}", flush=True)
+            _dump(path, {**run_lc_budget(family, key, budget, repeats, seed_df, extras, tests),
+                         "state": state})
 
 
 def load_lc_units() -> dict:
-    state = lc_state()
+    """{(family, curve, budget): units}; budgets up to the seed size are shared by both curves."""
     n_seed, n_extra = lc_sizes()
     out = {}
-    for key, budget, _ in lc_plan(n_seed, n_extra):
-        path = config.learning_curve_path(key, budget)
-        if not path.exists():
-            raise FileNotFoundError(f"{path.name} is missing; run `sgs learning-curve`")
-        stored = joblib.load(path)
-        if stored["state"] != state:
-            raise StaleFit(f"{path.name} is stale; run `sgs learning-curve --force`")
-        for curve in (tuple(config.LC_STRATEGIES) if key == SHARED else (key,)):
-            out[(curve, budget)] = stored["units"]
+    for family in config.LC_FAMILIES:
+        state = lc_state(family)
+        for key, budget, _ in lc_plan(n_seed, n_extra):
+            path = config.learning_curve_path(family, key, budget)
+            if not path.exists():
+                raise FileNotFoundError(f"{path.name} is missing; run `sgs learning-curve`")
+            stored = joblib.load(path)
+            if stored["state"] != state:
+                raise StaleFit(f"{path.name} is stale; run `sgs learning-curve --force`")
+            for curve in (tuple(config.LC_STRATEGIES) if key == SHARED else (key,)):
+                out[(family, curve, budget)] = stored["units"]
     return out

@@ -83,8 +83,10 @@ response and the multiplicative intervals; this is declared in Methods.
 `scoring` is a configuration axis (`config.ACTIVE_SCORINGS`) so the FOS-scale
 sensitivity check is a partial rerun.
 
-The learning curve is the one exception: RF only, fixed hyper-parameters,
-declared as such (spec §8).
+The learning curve is the one exception: fixed hyper-parameters, not tuned per
+point, declared as such (spec §8). RF uses library defaults (what the grid
+selects on every arm anyway); GBM uses the grid point selected by CV on the seed
+alone (`config.LC_PARAMS`), since the seed is shared by both curves.
 
 ## Statistics
 

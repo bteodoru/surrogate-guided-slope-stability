@@ -4,7 +4,7 @@
   sgs fit             tuned searches with nested OOF residuals, cached
   sgs evaluate        metrics on the test sets (seconds)
   sgs report          booktabs tables and figures
-  sgs learning-curve  optional; RF with fixed hyper-parameters
+  sgs learning-curve  optional; RF and GBM with fixed hyper-parameters
   sgs all             generate, fit, evaluate, report
 
 Scientific parameters live in sgs/config.py; the command line only selects a
@@ -135,7 +135,7 @@ def build_parser() -> argparse.ArgumentParser:
     command("fit", _fit, "tuned searches with nested OOF residuals", force=True)
     command("evaluate", _evaluate, "metrics on the test sets")
     command("report", _report, "booktabs tables and figures from outputs/metrics")
-    command("learning-curve", _learning_curve, "optional: RF learning curve with fixed hyper-parameters",
+    command("learning-curve", _learning_curve, "optional: RF and GBM learning curves with fixed hyper-parameters",
             force=True)
     command("all", _all, "generate, fit, evaluate, report", workers=True, force=True)
     return parser

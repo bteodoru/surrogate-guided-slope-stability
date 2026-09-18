@@ -34,7 +34,7 @@ python3.14 -m venv .venv
 ```
 
 `sgs all --workers 2` runs the four in order. `sgs learning-curve` runs the
-optional RF learning curve (fixed hyper-parameters, not part of `sgs all`).
+optional RF and GBM learning curves (fixed hyper-parameters, not part of `sgs all`).
 A command reuses outputs that already exist and stops, naming the cause, if a
 design, a results file or a fit no longer matches the current configuration or
 data; `--force` regenerates. All scientific parameters live in

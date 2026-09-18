@@ -313,34 +313,54 @@ def run() -> None:
 
 # --- learning curve -------------------------------------------------------------------------
 
-LEARNING_CURVE_PROCEDURE = ("Random forest with fixed hyper-parameters (config.ESTIMATOR_FIXED['rf'] "
-                            "plus scikit-learn defaults), not tuned; declared in Methods.")
+LEARNING_CURVE_PROCEDURE = ("Fixed hyper-parameters per family, not tuned per point; declared in Methods. "
+                            "RF: scikit-learn defaults. GBM: the grid point selected by CV on the seed "
+                            "alone (config.LC_PARAMS).")
 
 
-def learning_curve_metrics(units: Mapping, tests: Mapping[str, data.TestSet], *, selection_range) -> dict:
-    """Mean and spread of RMSE over repeats, per (curve, budget, test)."""
+def learning_curve_metrics(units: Mapping, tests: Mapping[str, data.TestSet], *, selection_range,
+                           edges) -> dict:
+    """Mean and spread over repeats, per (family, curve, budget, test): RMSE on the FOS
+    scale (global, selection range, per zone) and on the log scale the model is trained on.
+    FOS-scale RMSE is dominated by the few highest-FOS test points; the log scale and the
+    zones show whether a change is global or confined to the tail."""
     rows = []
-    for (curve, budget), unit_list in sorted(units.items()):
+    for (family, curve, budget), unit_list in sorted(units.items()):
         for name, test in tests.items():
-            mask = subset_mask(test.y, "selection-range", selection_range)
-            overall, inside = [], []
+            inside = subset_mask(test.y, "selection-range", selection_range)
+            zone_masks = [(label, _zone_mask(test.y, lo, hi)) for label, lo, hi in zones(edges)]
+            scores = {"rmse": [], "rmse_selection": [], "log_rmse": [], "log_rmse_selection": []}
+            per_zone = {label: [] for label, _ in zone_masks}
             for unit in unit_list:
                 pred = unit["predictions"][name]
                 if not np.array_equal(pred["ids"], test.ids):
                     raise MisalignedPair(f"learning-curve predictions for {name} are not aligned with the test set")
-                overall.append(rmse(test.y, pred["y_pred"]))
-                inside.append(rmse(test.y[mask], pred["y_pred"][mask]))
-            rows.append({"family": "rf", "curve": curve, "budget": int(budget), "test": name,
-                         "n_repeats": len(unit_list),
-                         "rmse_mean": float(np.mean(overall)), "rmse_std": float(np.std(overall)),
-                         "rmse_selection_mean": float(np.mean(inside)),
-                         "rmse_selection_std": float(np.std(inside))})
+                p = pred["y_pred"]
+                scores["rmse"].append(rmse(test.y, p))
+                scores["rmse_selection"].append(rmse(test.y[inside], p[inside]))
+                scores["log_rmse"].append(rmse(np.log(test.y), np.log(p)))
+                scores["log_rmse_selection"].append(rmse(np.log(test.y[inside]), np.log(p[inside])))
+                for label, mask in zone_masks:
+                    if mask.any():
+                        per_zone[label].append(rmse(test.y[mask], p[mask]))
+            row = {"family": family, "curve": curve, "budget": int(budget), "test": name,
+                   "n_repeats": len(unit_list)}
+            for key, values in scores.items():
+                row[f"{key}_mean"], row[f"{key}_std"] = float(np.mean(values)), float(np.std(values))
+            row["zones"] = []
+            for label, mask in zone_masks:
+                values = per_zone[label]
+                row["zones"].append({"zone": label, "n": int(mask.sum()),
+                                     "rmse_mean": float(np.mean(values)) if values else None,
+                                     "rmse_std": float(np.std(values)) if values else None})
+            rows.append(row)
     return {"procedure": LEARNING_CURVE_PROCEDURE, "rows": rows}
 
 
 def run_learning_curve() -> None:
     tests = {role: data.load_test(role) for role in config.TEST_ROLES}
-    result = learning_curve_metrics(models.load_lc_units(), tests, selection_range=config.SELECTION_RANGE)
+    result = learning_curve_metrics(models.load_lc_units(), tests, selection_range=config.SELECTION_RANGE,
+                                    edges=config.ZONE_EDGES)
     path = config.learning_curve_metrics_path()
     _write_json(path, result)
     print(f"[evaluate] wrote {path.name}")

@@ -124,6 +124,7 @@ def tiny_curve(root, monkeypatch):
     for i, role in enumerate(("seed", "lhs-extension", "guided", "test-natural", "test-stratified")):
         write_final(role, synthetic_final(config.ROLES[role].n, 300 + i))
     monkeypatch.setattr(config, "ESTIMATOR_FIXED", {"rf": {"n_estimators": 20}, "gbm": {}})
+    monkeypatch.setitem(config.LC_PARAMS, "gbm", {**config.LC_PARAMS["gbm"], "max_iter": 20})
     monkeypatch.setattr(config, "LC_BUDGETS", (20, 40, 60))
     monkeypatch.setattr(config, "LC_REPEATS", 2)
 
@@ -170,23 +171,31 @@ def test_unit_rng_is_keyed_on_budget_and_repeat():
 
 
 def test_lc_estimator_is_fixed_and_seeded():
-    rf = models.lc_estimator()
+    rf = models.lc_estimator("rf")
     assert rf.random_state == config.SEEDS["protocol_estimator"]
     assert rf.max_features == 1.0 and rf.min_samples_leaf == 1
+    gbm = models.lc_estimator("gbm")
+    assert gbm.random_state == config.SEEDS["protocol_estimator"]
+    assert {k: gbm.get_params()[k] for k in config.LC_PARAMS["gbm"]} == config.LC_PARAMS["gbm"]
+    assert gbm.early_stopping is False
 
 
 def test_learning_curve_writes_one_file_per_budget_and_refuses_stale(tiny_curve, monkeypatch):
     models.learning_curve()
     names = sorted(p.name for p in (config.ROOT / "artifacts" / "learning_curve").glob("*.joblib"))
-    assert names == ["rf__guided__n60.joblib", "rf__lhs__n60.joblib",
-                     "rf__seed-only__n20.joblib", "rf__seed-only__n40.joblib"]
+    assert names == sorted(f"{family}__{key}.joblib" for family in ("rf", "gbm")
+                           for key in ("guided__n60", "lhs__n60", "seed-only__n20", "seed-only__n40"))
     units = models.load_lc_units()
-    assert units[("lhs", 20)] is units[("guided", 20)]
-    assert len(units[("lhs", 40)]) == 1 and len(units[("lhs", 60)]) == 2
+    for family in ("rf", "gbm"):
+        assert units[(family, "lhs", 20)] is units[(family, "guided", 20)]
+        assert len(units[(family, "lhs", 40)]) == 1 and len(units[(family, "lhs", 60)]) == 2
+    rf_pred = units[("rf", "lhs", 60)][0]["predictions"]["test-natural"]["y_pred"]
+    gbm_pred = units[("gbm", "lhs", 60)][0]["predictions"]["test-natural"]["y_pred"]
+    assert not np.allclose(rf_pred, gbm_pred)
     monkeypatch.setattr(config, "LC_REPEATS", 3)
     with pytest.raises(models.StaleFit, match="--force"):
         models.learning_curve()
     with pytest.raises(models.StaleFit):
         models.load_lc_units()
     models.learning_curve(force=True)
-    assert len(models.load_lc_units()[("lhs", 60)]) == 3
+    assert len(models.load_lc_units()[("gbm", "lhs", 60)]) == 3

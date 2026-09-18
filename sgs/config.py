@@ -246,12 +246,24 @@ COMPARISONS = (
 )
 
 
-# --- learning curve (optional; RF with fixed hyper-parameters) ----------------------
+# --- learning curve (optional; fixed hyper-parameters, both families) ---------------
 
 LC_BASE_ROLE = "seed"
 LC_STRATEGIES = {"lhs": "lhs-extension", "guided": "guided"}
 LC_BUDGETS = (100, 200, 300, 400, 500, 600)
 LC_REPEATS = 10
+LC_FAMILIES = ("rf", "gbm")
+
+# Fixed hyper-parameters of the learning curve, on top of ESTIMATOR_FIXED; not
+# tuned per point. RF: scikit-learn defaults, which are also what the grid
+# selects on every arm. GBM: the grid point selected by CV on the seed alone
+# (arm A). The seed is shared by both curves, so the choice favours neither
+# strategy; GBM library defaults (max_iter=100, min_samples_leaf=20) are not
+# neutral at small n.
+LC_PARAMS = {
+    "rf": {},
+    "gbm": {"learning_rate": 0.06, "max_iter": 600, "max_leaf_nodes": 7, "min_samples_leaf": 3},
+}
 
 
 # --- fingerprints -------------------------------------------------------------------
@@ -271,10 +283,10 @@ def fit_fingerprint(family: str, scoring: str) -> str:
     })
 
 
-def learning_curve_fingerprint() -> str:
+def learning_curve_fingerprint(family: str) -> str:
     return _digest({
-        "base": LC_BASE_ROLE, "strategies": LC_STRATEGIES, "budgets": LC_BUDGETS,
-        "repeats": LC_REPEATS, "fixed": ESTIMATOR_FIXED["rf"],
+        "family": family, "base": LC_BASE_ROLE, "strategies": LC_STRATEGIES, "budgets": LC_BUDGETS,
+        "repeats": LC_REPEATS, "fixed": ESTIMATOR_FIXED[family], "params": LC_PARAMS[family],
         "seeds": {k: SEEDS[k] for k in ("protocol_estimator", "learning_curve_subsampling")},
         "target": TARGET, "features": FEATURES,
     })
@@ -306,8 +318,8 @@ def fit_path(family: str, arm: str, scoring: str) -> Path:
     return ROOT / "artifacts" / "fits" / f"{family}__{arm}__{scoring}.joblib"
 
 
-def learning_curve_path(key: str, budget: int) -> Path:
-    return ROOT / "artifacts" / "learning_curve" / f"rf__{key}__n{budget}.joblib"
+def learning_curve_path(family: str, key: str, budget: int) -> Path:
+    return ROOT / "artifacts" / "learning_curve" / f"{family}__{key}__n{budget}.joblib"
 
 
 def metrics_path(test: str, scoring: str) -> Path:

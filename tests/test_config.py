@@ -96,9 +96,25 @@ def test_evaluation_settings_do_not_enter_the_fit_fingerprint(monkeypatch):
 
 
 def test_learning_curve_fingerprint_follows_its_settings(monkeypatch):
-    before = config.learning_curve_fingerprint()
+    before = config.learning_curve_fingerprint("rf")
     monkeypatch.setattr(config, "LC_REPEATS", 3)
-    assert config.learning_curve_fingerprint() != before
+    assert config.learning_curve_fingerprint("rf") != before
+
+
+def test_learning_curve_fingerprint_is_per_family(monkeypatch):
+    rf, gbm = config.learning_curve_fingerprint("rf"), config.learning_curve_fingerprint("gbm")
+    assert rf != gbm
+    monkeypatch.setitem(config.LC_PARAMS, "gbm", {**config.LC_PARAMS["gbm"], "learning_rate": 0.1})
+    assert config.learning_curve_fingerprint("gbm") != gbm
+    assert config.learning_curve_fingerprint("rf") == rf
+
+
+def test_learning_curve_params_are_grid_points():
+    """Fixed LC hyper-parameters must be a point the tuning grid could select."""
+    assert set(config.LC_FAMILIES) <= set(config.FAMILIES)
+    for family in config.LC_FAMILIES:
+        for name, value in config.LC_PARAMS[family].items():
+            assert value in config.GRIDS[family][name], (family, name)
 
 
 def test_paths_follow_root(tmp_path, monkeypatch):

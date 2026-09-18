@@ -51,12 +51,16 @@ def test_every_results_table_includes_the_ablation(root):
 
 
 def test_learning_curve_figure_reads_the_rows():
-    rows = [{"family": "rf", "curve": curve, "budget": b, "test": "test-natural", "n_repeats": 2,
+    rows = [{"family": family, "curve": curve, "budget": b, "test": "test-natural", "n_repeats": 2,
              "rmse_mean": 1.0 / b, "rmse_std": 0.01, "rmse_selection_mean": 0.5 / b,
-             "rmse_selection_std": 0.01}
-            for curve in ("lhs", "guided") for b in (100, 200)]
-    fig = report.fig_learning_curve({"rows": rows}, "test-natural")
-    assert len(fig.axes[0].lines) == 2
+             "rmse_selection_std": 0.01, "log_rmse_mean": 0.1 / b, "log_rmse_std": 0.001,
+             "log_rmse_selection_mean": 0.05 / b, "log_rmse_selection_std": 0.001,
+             "zones": [{"zone": "FOS < 1", "n": 5, "rmse_mean": 0.2, "rmse_std": 0.0},
+                       {"zone": "FOS ≥ 6", "n": 3, "rmse_mean": 2.0 / b, "rmse_std": 0.1}]}
+            for family in ("rf", "gbm") for curve in ("lhs", "guided") for b in (100, 200)]
+    fig = report.fig_learning_curve({"rows": rows}, "test-natural", "gbm")
+    assert len(fig.axes) == 4 and all(len(ax.lines) == 2 for ax in fig.axes)
+    assert "GBM" in fig.get_suptitle() and "FOS ≥ 6" in fig.axes[3].get_title()
 
 
 def test_run_writes_tables_and_figures(root):

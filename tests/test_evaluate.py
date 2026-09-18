@@ -192,15 +192,25 @@ def test_learning_curve_metrics_average_over_repeats():
     test = stub_test(20)
     good = {"repeat": 0, "predictions": {"test-natural": {"ids": test.ids, "y_pred": test.y}}}
     off = {"repeat": 1, "predictions": {"test-natural": {"ids": test.ids, "y_pred": test.y + 1.0}}}
-    rows = evaluate.learning_curve_metrics({("lhs", 100): [good, off]}, {"test-natural": test},
-                                           selection_range=config.SELECTION_RANGE)["rows"]
-    assert len(rows) == 1 and rows[0]["n_repeats"] == 2 and rows[0]["family"] == "rf"
+    rows = evaluate.learning_curve_metrics({("gbm", "lhs", 100): [good, off]}, {"test-natural": test},
+                                           selection_range=config.SELECTION_RANGE,
+                                           edges=config.ZONE_EDGES)["rows"]
+    assert len(rows) == 1 and rows[0]["n_repeats"] == 2 and rows[0]["family"] == "gbm"
     assert rows[0]["rmse_mean"] == pytest.approx(0.5) and rows[0]["rmse_std"] == pytest.approx(0.5)
+    log_off = evaluate.rmse(np.log(test.y), np.log(test.y + 1.0))
+    assert rows[0]["log_rmse_mean"] == pytest.approx(log_off / 2)
+    zones = rows[0]["zones"]
+    assert [z["zone"] for z in zones] == [label for label, _, _ in evaluate.zones(config.ZONE_EDGES)]
+    assert sum(z["n"] for z in zones) == len(test.y)
+    for z in zones:
+        assert (z["rmse_mean"] is None) == (z["n"] == 0)
+        if z["n"]:
+            assert z["rmse_mean"] == pytest.approx(0.5)
 
 
 def test_learning_curve_metrics_refuse_misaligned_predictions():
     test = stub_test(20)
     unit = {"repeat": 0, "predictions": {"test-natural": {"ids": test.ids[::-1], "y_pred": test.y}}}
     with pytest.raises(evaluate.MisalignedPair):
-        evaluate.learning_curve_metrics({("lhs", 100): [unit]}, {"test-natural": test},
-                                        selection_range=config.SELECTION_RANGE)
+        evaluate.learning_curve_metrics({("rf", "lhs", 100): [unit]}, {"test-natural": test},
+                                        selection_range=config.SELECTION_RANGE, edges=config.ZONE_EDGES)
