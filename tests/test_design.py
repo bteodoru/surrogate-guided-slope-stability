@@ -1,0 +1,186 @@
+import hashlib
+
+import numpy as np
+import pandas as pd
+import pytest
+
+from sgs import config, data, design
+from tests.helpers import FormulaModel, shrink_roles, synthetic_final, write_final
+
+
+def _hash(frame):
+    return hashlib.sha256(frame.to_csv(index=False).encode()).hexdigest()
+
+
+def _write_design(role, frame):
+    path = config.design_path(role)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    frame.to_csv(path, index=False)
+
+
+# --- LHS and disjointness -------------------------------------------------------------
+
+def test_lhs_uses_the_seed_keyword_semantics():
+    # First row of the published seed design. Pins SciPy's `seed=` stream; a
+    # change of keyword (`rng=`) or of SciPy's LHS draws fails here.
+    _, frame = design.lhs(300, 42)
+    np.testing.assert_allclose(
+        frame.iloc[0].to_numpy(),
+        [24.70810805776474, 33.64879751536226, 12.628212513088526,
+         17.341403519225082, 4.832465812168988], rtol=0, atol=1e-12)
+
+
+def test_lhs_is_stratified_and_in_domain():
+    unit, frame = design.lhs(50, 7)
+    assert design.lhs_strata_complete(unit)
+    for p, (lo, hi) in config.DOMAIN.items():
+        assert frame[p].between(lo, hi).all()
+
+
+def test_strata_check_detects_a_collapsed_column():
+    unit, _ = design.lhs(20, 7)
+    unit[:, 2] = 0.5
+    assert not design.lhs_strata_complete(unit)
+
+
+def test_assert_disjoint_names_the_offending_set():
+    _, a = design.lhs(20, 1)
+    with pytest.raises(design.DesignError, match="'twin'"):
+        design.assert_disjoint(a, {"twin": a.copy()}, 1e-3)
+
+
+def test_assert_disjoint_catches_internal_duplicates():
+    _, a = design.lhs(20, 1)
+    doubled = pd.concat([a, a.iloc[:1]], ignore_index=True)
+    with pytest.raises(design.DesignError, match="inside the set"):
+        design.assert_disjoint(doubled, {}, 1e-3)
+
+
+def test_build_lhs_roles(root):
+    frame, info = design.build("seed")
+    assert len(frame) == 300 and info == {"seeds": {"seed_lhs_design": 42}}
+    assert _hash(design.build("seed")[0]) == _hash(frame)
+    with pytest.raises(FileNotFoundError, match="seed_lhs_300.csv"):
+        design.build("lhs-extension")
+    _write_design("seed", frame)
+    extension, _ = design.build("lhs-extension")
+    assert design.nearest_distance(extension, frame).min() > config.MIN_DISTANCE
+
+
+# --- screener -------------------------------------------------------------------------
+
+@pytest.fixture
+def small_screener(monkeypatch):
+    monkeypatch.setitem(config.SCREENER, "n_estimators", 20)
+    monkeypatch.setitem(config.SCREENER, "cv_folds", 3)
+
+
+def test_screener_uses_named_seeds(small_screener):
+    model = design.screener_model(oob=True)
+    assert model.random_state == config.SEEDS["screener_fit"] and model.oob_score
+
+
+def test_fit_screener_is_deterministic_and_reports_diagnostics(small_screener):
+    frame = data.add_features(synthetic_final(80, 5))
+    a, diagnostics = design.fit_screener(frame)
+    b, _ = design.fit_screener(frame)
+    X = data.add_features(synthetic_final(10, 9))[list(config.FEATURES)]
+    np.testing.assert_array_equal(a.predict(X), b.predict(X))
+    assert diagnostics["n_train"] == 80 and 0 < diagnostics["oob_r2_log"] <= 1
+    assert {"oof_rmse", "oof_rmse_selection_range", "oof_spearman"} <= set(diagnostics)
+
+
+# --- guided max-min ---------------------------------------------------------------------
+
+def _guided(rng_seed=42):
+    return design.guided_maxmin(FormulaModel(), rng=np.random.default_rng(rng_seed), n_pool=6000,
+                                n_bins=5, per_bin=4, drawn_per_bin=6, selection_range=(0.5, 6.0))
+
+
+def test_guided_fills_every_bin_with_predicted_fos_inside_it():
+    frame = _guided()
+    assert frame["bin"].value_counts().sort_index().tolist() == [4] * 5
+    edges = design.bin_edges(5, (0.5, 6.0))
+    for b, group in frame.groupby("bin"):
+        assert group["FOS_pred"].gt(edges[b]).all() and group["FOS_pred"].le(edges[b + 1]).all()
+
+
+def test_guided_draws_the_pool_first_from_the_stream():
+    # The order contract of `guided_stream`: every selected point is a row of
+    # the pool drawn first from a fresh generator with the same seed.
+    frame = _guided(42)
+    pool = design.uniform_pool(np.random.default_rng(42), 6000)
+    merged = frame.merge(pool, on=list(config.PARAMS), how="left", indicator=True)
+    assert (merged["_merge"] == "both").all()
+
+
+def test_guided_is_deterministic_and_seed_sensitive():
+    assert _hash(_guided(42)) == _hash(_guided(42))
+    assert _hash(_guided(42)) != _hash(_guided(43))
+
+
+def test_guided_refuses_thin_bins():
+    with pytest.raises(design.DesignError, match="fewer than"):
+        design.guided_maxmin(FormulaModel(), rng=np.random.default_rng(0), n_pool=200, n_bins=5,
+                             per_bin=4, drawn_per_bin=60, selection_range=(0.5, 6.0))
+
+
+def test_greedy_maxmin_picks_spread_points():
+    X = np.array([[0.0, 0.0], [0.01, 0.0], [1.0, 1.0], [0.0, 1.0]])
+    chosen = design.greedy_maxmin(X, 3, np.random.default_rng(0))
+    assert len(set(chosen.tolist())) == 3
+
+
+# --- stratified random ------------------------------------------------------------------
+
+def _stratified(pool_seed=1, selection_seed=2, references=None):
+    return design.stratified_random(FormulaModel(), pool_rng=np.random.default_rng(pool_seed),
+                                    selection_rng=np.random.default_rng(selection_seed), n_pool=6000,
+                                    n_bins=5, per_bin=3, selection_range=(0.5, 6.0),
+                                    references=references or {}, min_distance=1e-3)
+
+
+def test_stratified_fills_bins_with_closed_first_bin():
+    frame = _stratified()
+    assert frame["bin"].value_counts().sort_index().tolist() == [3] * 5
+    assert frame["FOS_pred"].between(0.5, 6.0).all()
+
+
+def test_stratified_uses_both_streams_independently():
+    base = _hash(_stratified(1, 2))
+    assert _hash(_stratified(1, 2)) == base
+    assert _hash(_stratified(1, 3)) != base
+    assert _hash(_stratified(9, 2)) != base
+
+
+def test_stratified_filters_candidates_near_references():
+    first = _stratified()
+    again = _stratified(references={"previous": first})
+    assert design.nearest_distance(again, first).min() > 1e-3
+
+
+# --- screener roles through build() -------------------------------------------------------
+
+@pytest.fixture
+def small_designs(root, monkeypatch, small_screener):
+    monkeypatch.setattr(config, "N_GUIDED_POOL", 6000)
+    monkeypatch.setattr(config, "N_TEST_POOL", 6000)
+    monkeypatch.setattr(config, "N_BINS", 5)
+    monkeypatch.setattr(config, "GUIDED_PER_BIN", 4)
+    monkeypatch.setattr(config, "GUIDED_DRAWN_PER_BIN", 6)
+    monkeypatch.setattr(config, "TEST_PER_BIN", 3)
+    shrink_roles(monkeypatch, {"guided": 20, "test-stratified": 15})
+    seed_design, _ = design.build("seed")
+    _write_design("seed", seed_design)
+    write_final("seed", synthetic_final(300, 1))
+
+
+def test_screener_roles_are_deterministic_and_record_the_screener(small_designs):
+    guided, info = design.build("guided")
+    assert _hash(design.build("guided")[0]) == _hash(guided)
+    assert info["seeds"] == {"guided_stream": 42}
+    assert info["screener"]["trained_on_sha256"] == data.sha256_file(config.final_path("seed"))
+    for role in ("guided", "lhs-extension", "test-natural"):
+        _write_design(role, design.build(role)[0])
+    stratified, _ = design.build("test-stratified")
+    assert len(stratified) == 15 and set(stratified.columns) == {*config.PARAMS, "FOS_pred", "bin"}
