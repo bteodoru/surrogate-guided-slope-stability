@@ -129,9 +129,28 @@ def tiny_curve(root, monkeypatch):
 
 
 def test_lc_plan_shares_budgets_up_to_the_seed_size():
-    assert models.lc_plan(300) == [("seed-only", 100, 10), ("seed-only", 200, 10), ("seed-only", 300, 1),
-                                   ("lhs", 400, 10), ("guided", 400, 10), ("lhs", 500, 10),
-                                   ("guided", 500, 10), ("lhs", 600, 10), ("guided", 600, 10)]
+    assert models.lc_plan(300, {"lhs": 300, "guided": 300}) == [
+        ("seed-only", 100, 10), ("seed-only", 200, 10), ("seed-only", 300, 1),
+        ("lhs", 400, 10), ("guided", 400, 10), ("lhs", 500, 10), ("guided", 500, 10),
+        ("lhs", 600, 1), ("guided", 600, 1)]
+
+
+def test_lc_plan_gives_one_repeat_when_a_budget_takes_the_whole_pool(monkeypatch):
+    """A budget that exhausts a strategy's own pool (seed + all of its extra
+    rows) would draw the identical row set on every repeat, same as the seed
+    size; only that strategy drops to one repeat at that budget."""
+    monkeypatch.setattr(config, "LC_BUDGETS", (50, 80, 100))
+    monkeypatch.setattr(config, "LC_REPEATS", 5)
+    assert models.lc_plan(50, {"lhs": 30, "guided": 50}) == [
+        ("seed-only", 50, 1),
+        ("lhs", 80, 1), ("guided", 80, 5),
+        ("lhs", 100, 5), ("guided", 100, 1)]
+
+
+def test_lc_sizes_refuses_a_budget_beyond_the_usable_pool(tiny_curve, monkeypatch):
+    monkeypatch.setattr(config, "LC_BUDGETS", (20, 40, 60, 200))
+    with pytest.raises(ValueError, match="lhs-extension"):
+        models.lc_sizes()
 
 
 def test_subsample_semantics():

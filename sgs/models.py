@@ -210,16 +210,20 @@ def subsample(seed_df, extra_df, budget: int, rng):
     return pd.concat([seed_df, take], ignore_index=True)
 
 
-def lc_plan(n_seed: int) -> list[tuple[str, int, int]]:
+def lc_plan(n_seed: int, n_extra: dict[str, int]) -> list[tuple[str, int, int]]:
     """Budgets up to the seed size do not depend on the strategy: fitted once.
-    At the seed size every repeat would be identical: one repeat."""
+    At the seed size, or at a strategy's full pool (seed plus all of that
+    strategy's extra rows), every repeat would draw the identical row set:
+    one repeat, for that strategy only."""
     out = []
     for budget in config.LC_BUDGETS:
-        repeats = 1 if budget == n_seed else config.LC_REPEATS
         if budget <= n_seed:
+            repeats = 1 if budget == n_seed else config.LC_REPEATS
             out.append((SHARED, budget, repeats))
         else:
-            out.extend((strategy, budget, repeats) for strategy in config.LC_STRATEGIES)
+            for strategy in config.LC_STRATEGIES:
+                repeats = 1 if budget == n_seed + n_extra[strategy] else config.LC_REPEATS
+                out.append((strategy, budget, repeats))
     return out
 
 
@@ -230,6 +234,26 @@ def lc_roles() -> list[str]:
 def lc_state() -> dict:
     return {"fingerprint": config.learning_curve_fingerprint(),
             "data": {role: data.sha256_file(config.final_path(role)) for role in lc_roles()}}
+
+
+def _check_lc_budgets(n_seed: int, n_extra: dict[str, int]) -> None:
+    """A budget beyond a strategy's usable pool (seed + its extra rows) would
+    ask subsample() for more rows than exist."""
+    needed = max(config.LC_BUDGETS)
+    for strategy, extra in n_extra.items():
+        usable = n_seed + extra
+        if usable < needed:
+            role = config.LC_STRATEGIES[strategy]
+            raise ValueError(f"{role!r} has {usable} usable rows (seed {n_seed} + extra {extra}); "
+                             f"the largest learning-curve budget ({needed}) needs more")
+
+
+def lc_sizes() -> tuple[int, dict[str, int]]:
+    """Row counts backing the plan, guarded against a budget the data cannot fill."""
+    n_seed = len(data.load_role(config.LC_BASE_ROLE))
+    n_extra = {strategy: len(data.load_role(role)) for strategy, role in config.LC_STRATEGIES.items()}
+    _check_lc_budgets(n_seed, n_extra)
+    return n_seed, n_extra
 
 
 def run_lc_budget(key, budget, repeats, seed_df, extras, tests) -> dict:
@@ -252,8 +276,10 @@ def learning_curve(*, force: bool = False) -> None:
     seed_df = data.load_role(config.LC_BASE_ROLE)
     extras = {strategy: data.load_role(role) for strategy, role in config.LC_STRATEGIES.items()}
     tests = {role: data.load_test(role) for role in config.TEST_ROLES}
+    n_extra = {strategy: len(extra) for strategy, extra in extras.items()}
+    _check_lc_budgets(len(seed_df), n_extra)
     state = lc_state()
-    for key, budget, repeats in lc_plan(len(seed_df)):
+    for key, budget, repeats in lc_plan(len(seed_df), n_extra):
         path = config.learning_curve_path(key, budget)
         if path.exists():
             if joblib.load(path)["state"] == state:
@@ -268,8 +294,9 @@ def learning_curve(*, force: bool = False) -> None:
 
 def load_lc_units() -> dict:
     state = lc_state()
+    n_seed, n_extra = lc_sizes()
     out = {}
-    for key, budget, _ in lc_plan(len(data.load_role(config.LC_BASE_ROLE))):
+    for key, budget, _ in lc_plan(n_seed, n_extra):
         path = config.learning_curve_path(key, budget)
         if not path.exists():
             raise FileNotFoundError(f"{path.name} is missing; run `sgs learning-curve`")
