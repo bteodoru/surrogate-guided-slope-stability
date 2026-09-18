@@ -102,8 +102,9 @@ def _report(args):
 
 
 def _learning_curve(args):
-    print("sgs learning-curve is not implemented in this version (plan Task 13)", file=sys.stderr)
-    raise SystemExit(2)
+    from sgs import evaluate, models
+    models.learning_curve(force=args.force)
+    evaluate.run_learning_curve()
 
 
 def _all(args):

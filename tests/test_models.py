@@ -108,3 +108,66 @@ def test_fit_all_validates_the_training_sets(tiny_protocol):
 
 def test_all_units_cover_the_declared_axes():
     assert len(models.all_units()) == len(config.FAMILIES) * len(config.ARMS) * len(config.ACTIVE_SCORINGS)
+
+
+# --- learning curve ---------------------------------------------------------------------
+
+import pandas as pd
+
+from tests.helpers import shrink_roles
+
+
+@pytest.fixture
+def tiny_curve(root, monkeypatch):
+    shrink_roles(monkeypatch, {"seed": 40, "lhs-extension": 60, "guided": 60,
+                               "test-natural": 30, "test-stratified": 30})
+    for i, role in enumerate(("seed", "lhs-extension", "guided", "test-natural", "test-stratified")):
+        write_final(role, synthetic_final(config.ROLES[role].n, 300 + i))
+    monkeypatch.setattr(config, "ESTIMATOR_FIXED", {"rf": {"n_estimators": 20}, "gbm": {}})
+    monkeypatch.setattr(config, "LC_BUDGETS", (20, 40, 60))
+    monkeypatch.setattr(config, "LC_REPEATS", 2)
+
+
+def test_lc_plan_shares_budgets_up_to_the_seed_size():
+    assert models.lc_plan(300) == [("seed-only", 100, 10), ("seed-only", 200, 10), ("seed-only", 300, 1),
+                                   ("lhs", 400, 10), ("guided", 400, 10), ("lhs", 500, 10),
+                                   ("guided", 500, 10), ("lhs", 600, 10), ("guided", 600, 10)]
+
+
+def test_subsample_semantics():
+    seed_df = pd.DataFrame({"row_id": [f"s{i}" for i in range(10)]})
+    extra = pd.DataFrame({"row_id": [f"e{i}" for i in range(10)]})
+    small = models.subsample(seed_df, extra, 4, models.unit_rng(4, 0))
+    assert len(small) == 4 and small["row_id"].str.startswith("s").all()
+    assert models.subsample(seed_df, extra, 10, models.unit_rng(10, 0)) is seed_df
+    large = models.subsample(seed_df, extra, 13, models.unit_rng(13, 0))
+    assert len(large) == 13 and set(seed_df["row_id"]) <= set(large["row_id"])
+
+
+def test_unit_rng_is_keyed_on_budget_and_repeat():
+    draw = lambda b, r: models.unit_rng(b, r).integers(0, 10**9)
+    assert draw(100, 0) == draw(100, 0)
+    assert len({draw(100, 0), draw(100, 1), draw(200, 0)}) == 3
+
+
+def test_lc_estimator_is_fixed_and_seeded():
+    rf = models.lc_estimator()
+    assert rf.random_state == config.SEEDS["protocol_estimator"]
+    assert rf.max_features == 1.0 and rf.min_samples_leaf == 1
+
+
+def test_learning_curve_writes_one_file_per_budget_and_refuses_stale(tiny_curve, monkeypatch):
+    models.learning_curve()
+    names = sorted(p.name for p in (config.ROOT / "artifacts" / "learning_curve").glob("*.joblib"))
+    assert names == ["rf__guided__n60.joblib", "rf__lhs__n60.joblib",
+                     "rf__seed-only__n20.joblib", "rf__seed-only__n40.joblib"]
+    units = models.load_lc_units()
+    assert units[("lhs", 20)] is units[("guided", 20)]
+    assert len(units[("lhs", 40)]) == 1 and len(units[("lhs", 60)]) == 2
+    monkeypatch.setattr(config, "LC_REPEATS", 3)
+    with pytest.raises(models.StaleFit, match="--force"):
+        models.learning_curve()
+    with pytest.raises(models.StaleFit):
+        models.load_lc_units()
+    models.learning_curve(force=True)
+    assert len(models.load_lc_units()[("lhs", 60)]) == 3

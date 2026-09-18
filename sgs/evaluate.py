@@ -309,3 +309,38 @@ def run() -> None:
             path = config.metrics_path(test_role, scoring)
             _write_json(path, payload)
             print(f"[evaluate] wrote {path.name}")
+
+
+# --- learning curve -------------------------------------------------------------------------
+
+LEARNING_CURVE_PROCEDURE = ("Random forest with fixed hyper-parameters (config.ESTIMATOR_FIXED['rf'] "
+                            "plus scikit-learn defaults), not tuned; declared in Methods.")
+
+
+def learning_curve_metrics(units: Mapping, tests: Mapping[str, data.TestSet], *, selection_range) -> dict:
+    """Mean and spread of RMSE over repeats, per (curve, budget, test)."""
+    rows = []
+    for (curve, budget), unit_list in sorted(units.items()):
+        for name, test in tests.items():
+            mask = subset_mask(test.y, "selection-range", selection_range)
+            overall, inside = [], []
+            for unit in unit_list:
+                pred = unit["predictions"][name]
+                if not np.array_equal(pred["ids"], test.ids):
+                    raise MisalignedPair(f"learning-curve predictions for {name} are not aligned with the test set")
+                overall.append(rmse(test.y, pred["y_pred"]))
+                inside.append(rmse(test.y[mask], pred["y_pred"][mask]))
+            rows.append({"family": "rf", "curve": curve, "budget": int(budget), "test": name,
+                         "n_repeats": len(unit_list),
+                         "rmse_mean": float(np.mean(overall)), "rmse_std": float(np.std(overall)),
+                         "rmse_selection_mean": float(np.mean(inside)),
+                         "rmse_selection_std": float(np.std(inside))})
+    return {"procedure": LEARNING_CURVE_PROCEDURE, "rows": rows}
+
+
+def run_learning_curve() -> None:
+    tests = {role: data.load_test(role) for role in config.TEST_ROLES}
+    result = learning_curve_metrics(models.load_lc_units(), tests, selection_range=config.SELECTION_RANGE)
+    path = config.learning_curve_metrics_path()
+    _write_json(path, result)
+    print(f"[evaluate] wrote {path.name}")

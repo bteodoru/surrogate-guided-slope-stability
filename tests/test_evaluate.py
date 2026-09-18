@@ -184,3 +184,23 @@ def test_run_writes_metrics_with_provenance(root, monkeypatch):
         assert metrics["test"] == test and set(metrics["arms"]["gbm"]) == {"A", "B", "C", "C0"}
         assert set(metrics["provenance"]["final_sha256"]) == set(config.ROLE_ORDER)
         assert set(metrics["provenance"]["fit_fingerprints"]) == {"rf__log-rmse", "gbm__log-rmse"}
+
+
+# --- learning-curve metrics -------------------------------------------------------------
+
+def test_learning_curve_metrics_average_over_repeats():
+    test = stub_test(20)
+    good = {"repeat": 0, "predictions": {"test-natural": {"ids": test.ids, "y_pred": test.y}}}
+    off = {"repeat": 1, "predictions": {"test-natural": {"ids": test.ids, "y_pred": test.y + 1.0}}}
+    rows = evaluate.learning_curve_metrics({("lhs", 100): [good, off]}, {"test-natural": test},
+                                           selection_range=config.SELECTION_RANGE)["rows"]
+    assert len(rows) == 1 and rows[0]["n_repeats"] == 2 and rows[0]["family"] == "rf"
+    assert rows[0]["rmse_mean"] == pytest.approx(0.5) and rows[0]["rmse_std"] == pytest.approx(0.5)
+
+
+def test_learning_curve_metrics_refuse_misaligned_predictions():
+    test = stub_test(20)
+    unit = {"repeat": 0, "predictions": {"test-natural": {"ids": test.ids[::-1], "y_pred": test.y}}}
+    with pytest.raises(evaluate.MisalignedPair):
+        evaluate.learning_curve_metrics({("lhs", 100): [unit]}, {"test-natural": test},
+                                        selection_range=config.SELECTION_RANGE)

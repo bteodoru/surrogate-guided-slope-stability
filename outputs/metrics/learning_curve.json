@@ -1,0 +1,269 @@
+{
+  "procedure": "Random forest with fixed hyper-parameters (config.ESTIMATOR_FIXED['rf'] plus scikit-learn defaults), not tuned; declared in Methods.",
+  "rows": [
+    {
+      "family": "rf",
+      "curve": "guided",
+      "budget": 100,
+      "test": "test-natural",
+      "n_repeats": 10,
+      "rmse_mean": 0.9503613938117852,
+      "rmse_std": 0.10102449182010538,
+      "rmse_selection_mean": 0.5360666475162672,
+      "rmse_selection_std": 0.030219375296986813
+    },
+    {
+      "family": "rf",
+      "curve": "guided",
+      "budget": 100,
+      "test": "test-stratified",
+      "n_repeats": 10,
+      "rmse_mean": 1.050113080727844,
+      "rmse_std": 0.12172896461544822,
+      "rmse_selection_mean": 0.6299298721447233,
+      "rmse_selection_std": 0.042715013696957016
+    },
+    {
+      "family": "rf",
+      "curve": "guided",
+      "budget": 200,
+      "test": "test-natural",
+      "n_repeats": 10,
+      "rmse_mean": 0.6974775377603875,
+      "rmse_std": 0.07686322025595893,
+      "rmse_selection_mean": 0.41943503954222106,
+      "rmse_selection_std": 0.027400695481242937
+    },
+    {
+      "family": "rf",
+      "curve": "guided",
+      "budget": 200,
+      "test": "test-stratified",
+      "n_repeats": 10,
+      "rmse_mean": 0.9278785561751872,
+      "rmse_std": 0.0914461811524805,
+      "rmse_selection_mean": 0.4673160902035719,
+      "rmse_selection_std": 0.04224503515697806
+    },
+    {
+      "family": "rf",
+      "curve": "guided",
+      "budget": 300,
+      "test": "test-natural",
+      "n_repeats": 1,
+      "rmse_mean": 0.5723241307485599,
+      "rmse_std": 0.0,
+      "rmse_selection_mean": 0.3495578760140465,
+      "rmse_selection_std": 0.0
+    },
+    {
+      "family": "rf",
+      "curve": "guided",
+      "budget": 300,
+      "test": "test-stratified",
+      "n_repeats": 1,
+      "rmse_mean": 0.8315380493062252,
+      "rmse_std": 0.0,
+      "rmse_selection_mean": 0.3745427723653816,
+      "rmse_selection_std": 0.0
+    },
+    {
+      "family": "rf",
+      "curve": "guided",
+      "budget": 400,
+      "test": "test-natural",
+      "n_repeats": 10,
+      "rmse_mean": 0.4663379318534261,
+      "rmse_std": 0.030835073604862623,
+      "rmse_selection_mean": 0.28393839902422197,
+      "rmse_selection_std": 0.017342072245097505
+    },
+    {
+      "family": "rf",
+      "curve": "guided",
+      "budget": 400,
+      "test": "test-stratified",
+      "n_repeats": 10,
+      "rmse_mean": 0.6685346914866244,
+      "rmse_std": 0.05567242095617855,
+      "rmse_selection_mean": 0.3563856947513437,
+      "rmse_selection_std": 0.0391027861679855
+    },
+    {
+      "family": "rf",
+      "curve": "guided",
+      "budget": 500,
+      "test": "test-natural",
+      "n_repeats": 10,
+      "rmse_mean": 0.4100916772072803,
+      "rmse_std": 0.012044718070499947,
+      "rmse_selection_mean": 0.231544928387103,
+      "rmse_selection_std": 0.0085134032287851
+    },
+    {
+      "family": "rf",
+      "curve": "guided",
+      "budget": 500,
+      "test": "test-stratified",
+      "n_repeats": 10,
+      "rmse_mean": 0.4896634443774087,
+      "rmse_std": 0.02678222201157895,
+      "rmse_selection_mean": 0.28650004013950736,
+      "rmse_selection_std": 0.013812543626281279
+    },
+    {
+      "family": "rf",
+      "curve": "guided",
+      "budget": 600,
+      "test": "test-natural",
+      "n_repeats": 10,
+      "rmse_mean": 0.3804799718642974,
+      "rmse_std": 0.0028852855176611176,
+      "rmse_selection_mean": 0.212944044786226,
+      "rmse_selection_std": 0.0012942349074267722
+    },
+    {
+      "family": "rf",
+      "curve": "guided",
+      "budget": 600,
+      "test": "test-stratified",
+      "n_repeats": 10,
+      "rmse_mean": 0.4316191129050246,
+      "rmse_std": 0.0026751590459317244,
+      "rmse_selection_mean": 0.2607987736916101,
+      "rmse_selection_std": 0.0023395708276775264
+    },
+    {
+      "family": "rf",
+      "curve": "lhs",
+      "budget": 100,
+      "test": "test-natural",
+      "n_repeats": 10,
+      "rmse_mean": 0.9503613938117852,
+      "rmse_std": 0.10102449182010538,
+      "rmse_selection_mean": 0.5360666475162672,
+      "rmse_selection_std": 0.030219375296986813
+    },
+    {
+      "family": "rf",
+      "curve": "lhs",
+      "budget": 100,
+      "test": "test-stratified",
+      "n_repeats": 10,
+      "rmse_mean": 1.050113080727844,
+      "rmse_std": 0.12172896461544822,
+      "rmse_selection_mean": 0.6299298721447233,
+      "rmse_selection_std": 0.042715013696957016
+    },
+    {
+      "family": "rf",
+      "curve": "lhs",
+      "budget": 200,
+      "test": "test-natural",
+      "n_repeats": 10,
+      "rmse_mean": 0.6974775377603875,
+      "rmse_std": 0.07686322025595893,
+      "rmse_selection_mean": 0.41943503954222106,
+      "rmse_selection_std": 0.027400695481242937
+    },
+    {
+      "family": "rf",
+      "curve": "lhs",
+      "budget": 200,
+      "test": "test-stratified",
+      "n_repeats": 10,
+      "rmse_mean": 0.9278785561751872,
+      "rmse_std": 0.0914461811524805,
+      "rmse_selection_mean": 0.4673160902035719,
+      "rmse_selection_std": 0.04224503515697806
+    },
+    {
+      "family": "rf",
+      "curve": "lhs",
+      "budget": 300,
+      "test": "test-natural",
+      "n_repeats": 1,
+      "rmse_mean": 0.5723241307485599,
+      "rmse_std": 0.0,
+      "rmse_selection_mean": 0.3495578760140465,
+      "rmse_selection_std": 0.0
+    },
+    {
+      "family": "rf",
+      "curve": "lhs",
+      "budget": 300,
+      "test": "test-stratified",
+      "n_repeats": 1,
+      "rmse_mean": 0.8315380493062252,
+      "rmse_std": 0.0,
+      "rmse_selection_mean": 0.3745427723653816,
+      "rmse_selection_std": 0.0
+    },
+    {
+      "family": "rf",
+      "curve": "lhs",
+      "budget": 400,
+      "test": "test-natural",
+      "n_repeats": 10,
+      "rmse_mean": 0.502194785779834,
+      "rmse_std": 0.02474500337504432,
+      "rmse_selection_mean": 0.3031940338492051,
+      "rmse_selection_std": 0.010791710591088119
+    },
+    {
+      "family": "rf",
+      "curve": "lhs",
+      "budget": 400,
+      "test": "test-stratified",
+      "n_repeats": 10,
+      "rmse_mean": 0.6829873281219876,
+      "rmse_std": 0.04449032199367855,
+      "rmse_selection_mean": 0.3453914851115195,
+      "rmse_selection_std": 0.00783956508805997
+    },
+    {
+      "family": "rf",
+      "curve": "lhs",
+      "budget": 500,
+      "test": "test-natural",
+      "n_repeats": 10,
+      "rmse_mean": 0.48464413314555593,
+      "rmse_std": 0.02820612801912684,
+      "rmse_selection_mean": 0.28102731516069446,
+      "rmse_selection_std": 0.011806131334148947
+    },
+    {
+      "family": "rf",
+      "curve": "lhs",
+      "budget": 500,
+      "test": "test-stratified",
+      "n_repeats": 10,
+      "rmse_mean": 0.6161474379400718,
+      "rmse_std": 0.05638032212278057,
+      "rmse_selection_mean": 0.31136114870123316,
+      "rmse_selection_std": 0.011925117714127397
+    },
+    {
+      "family": "rf",
+      "curve": "lhs",
+      "budget": 600,
+      "test": "test-natural",
+      "n_repeats": 10,
+      "rmse_mean": 0.4620902295159589,
+      "rmse_std": 0.006805128343692979,
+      "rmse_selection_mean": 0.26305924796108615,
+      "rmse_selection_std": 0.0023401203641451305
+    },
+    {
+      "family": "rf",
+      "curve": "lhs",
+      "budget": 600,
+      "test": "test-stratified",
+      "n_repeats": 10,
+      "rmse_mean": 0.5479435993209063,
+      "rmse_std": 0.004850305435192951,
+      "rmse_selection_mean": 0.2856884665406973,
+      "rmse_selection_std": 0.00267167835508404
+    }
+  ]
+}

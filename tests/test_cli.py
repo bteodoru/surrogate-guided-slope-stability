@@ -87,11 +87,14 @@ def test_results_from_another_design_are_refused(fake_solver):
         cli.generate("seed")
 
 
-def test_learning_curve_exits_cleanly_when_unimplemented(capsys):
-    with pytest.raises(SystemExit) as excinfo:
-        cli.main(["learning-curve"])
-    assert excinfo.value.code == 2
-    assert "not implemented" in capsys.readouterr().err
+def test_learning_curve_fits_then_evaluates(monkeypatch):
+    from sgs import evaluate, models
+
+    calls = []
+    monkeypatch.setattr(models, "learning_curve", lambda *, force: calls.append(("learning_curve", force)))
+    monkeypatch.setattr(evaluate, "run_learning_curve", lambda: calls.append(("run_learning_curve",)))
+    cli.main(["learning-curve", "--force"])
+    assert calls == [("learning_curve", True), ("run_learning_curve",)]
 
 
 def test_generate_is_idempotent_in_run_metadata(fake_solver, monkeypatch):
