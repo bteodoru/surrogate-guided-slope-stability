@@ -114,6 +114,43 @@ def conformal_frame(metrics: dict) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def scoring_frame(by_scoring: dict[str, dict]) -> pd.DataFrame:
+    """The selection-criterion sensitivity check on one test set: global RMSE, minimax
+    and within-family rank of every arm under each scoring."""
+    rows = []
+    for family in config.FAMILIES:
+        ranks = {}
+        for scoring, metrics in by_scoring.items():
+            rmse = {arm: metrics["arms"][family][arm]["global"]["rmse"] for arm in config.ARMS}
+            ranks[scoring] = {arm: 1 + sorted(rmse.values()).index(value) for arm, value in rmse.items()}
+        for arm in config.ARMS:
+            row = {"family": family, "arm": arm_label(arm)}
+            for scoring, metrics in by_scoring.items():
+                m = metrics["arms"][family][arm]
+                row[f"RMSE {scoring}"] = m["global"]["rmse"]
+                row[f"minimax {scoring}"] = m["minimax"]["rmse"]
+                row[f"rank {scoring}"] = ranks[scoring][arm]
+            rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def _params(params: dict) -> str:
+    return ", ".join(f"{k}={v:g}" if isinstance(v, (int, float)) else f"{k}={v}"
+                     for k, v in sorted(params.items()))
+
+
+def scoring_params_frame(by_scoring: dict[str, dict]) -> pd.DataFrame:
+    """Hyper-parameters selected under each scoring; they do not depend on the test set."""
+    rows = []
+    for family in config.FAMILIES:
+        for arm in config.ARMS:
+            row = {"family": family, "arm": arm_label(arm)}
+            for scoring, metrics in by_scoring.items():
+                row[scoring] = _params(metrics["arms"][family][arm]["best_params"])
+            rows.append(row)
+    return pd.DataFrame(rows)
+
+
 def budget_frame() -> pd.DataFrame:
     return pd.DataFrame([{"arm": arm, "training sets": " + ".join(spec.roles), "solver budget": spec.budget}
                          for arm, spec in config.ARMS.items() if not spec.ablation])
@@ -207,6 +244,21 @@ def run() -> None:
                     zone_frame(metrics, family), caption=f"Zone RMSE on {test}, {family}.",
                     label=f"tab:{stem}:zones:{family}"))
                 _save_figure(figures / f"{stem}__zones_{family}.pdf", fig_zone_rmse(metrics, family))
+
+    if len(config.ACTIVE_SCORINGS) > 1:
+        by_test = {test: {s: load_metrics(test, s) for s in config.ACTIVE_SCORINGS
+                          if config.metrics_path(test, s).exists()} for test in config.TEST_ROLES}
+        complete = {t: m for t, m in by_test.items() if len(m) == len(config.ACTIVE_SCORINGS)}
+        for test, by_scoring in complete.items():
+            _save_table(tables / f"{test}__scorings.tex", booktabs(
+                scoring_frame(by_scoring), caption=f"Selection-criterion sensitivity on {test}: "
+                "global RMSE, minimax and within-family rank under each scoring.",
+                label=f"tab:{test}:scorings"))
+        if complete:
+            _save_table(tables / "scorings_params.tex", booktabs(
+                scoring_params_frame(next(iter(complete.values()))),
+                caption="Hyper-parameters selected by CV under each scoring.",
+                label="tab:scorings:params"))
 
     if config.learning_curve_metrics_path().exists():
         lc = load_learning_curve()

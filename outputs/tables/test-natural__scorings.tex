@@ -1,0 +1,19 @@
+\begin{table}[htbp]
+\centering
+\caption{Selection-criterion sensitivity on test-natural: global RMSE, minimax and within-family rank under each scoring.}
+\label{tab:test-natural:scorings}
+\begin{tabular}{lrrrrrrr}
+\toprule
+family & arm & RMSE log-rmse & minimax log-rmse & rank log-rmse & RMSE fos-rmse & minimax fos-rmse & rank fos-rmse \\
+\midrule
+rf & A & 0.572 & 1.650 & 3 & 0.587 & 1.703 & 3 \\
+rf & B & 0.455 & 1.345 & 2 & 0.455 & 1.345 & 2 \\
+rf & C & 0.385 & 1.162 & 1 & 0.385 & 1.162 & 1 \\
+rf & C0 (ablation) & 1.453 & 5.072 & 4 & 1.453 & 5.072 & 4 \\
+gbm & A & 0.432 & 1.291 & 3 & 0.419 & 1.236 & 3 \\
+gbm & B & 0.308 & 0.950 & 1 & 0.359 & 1.145 & 2 \\
+gbm & C & 0.335 & 1.080 & 2 & 0.323 & 1.032 & 1 \\
+gbm & C0 (ablation) & 1.405 & 4.908 & 4 & 1.411 & 4.926 & 4 \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,0 +1,19 @@
+\begin{table}[htbp]
+\centering
+\caption{Global metrics on test-natural.}
+\label{tab:test-natural__fos-rmse:global}
+\begin{tabular}{lrrrrrrrr}
+\toprule
+family & arm & R2 & RMSE & MAE & bias & max |e| & minimax & worst zone \\
+\midrule
+rf & A & 0.948 & 0.587 & 0.341 & -0.070 & 4.006 & 1.703 & FOS ≥ 6 \\
+rf & B & 0.969 & 0.455 & 0.234 & -0.046 & 3.394 & 1.345 & FOS ≥ 6 \\
+rf & C & 0.978 & 0.385 & 0.218 & -0.030 & 2.284 & 1.162 & FOS ≥ 6 \\
+rf & C0 (ablation) & 0.682 & 1.453 & 0.455 & -0.289 & 14.399 & 5.072 & FOS ≥ 6 \\
+gbm & A & 0.973 & 0.419 & 0.235 & -0.069 & 2.729 & 1.236 & FOS ≥ 6 \\
+gbm & B & 0.981 & 0.359 & 0.174 & -0.050 & 2.528 & 1.145 & FOS ≥ 6 \\
+gbm & C & 0.984 & 0.323 & 0.165 & -0.062 & 2.663 & 1.032 & FOS ≥ 6 \\
+gbm & C0 (ablation) & 0.700 & 1.411 & 0.429 & -0.276 & 14.286 & 4.926 & FOS ≥ 6 \\
+\bottomrule
+\end{tabular}
+\end{table}

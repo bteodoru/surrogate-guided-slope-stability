@@ -195,7 +195,7 @@ CV_FOLDS = 5
 # declared choice; "fos-rmse" is the sensitivity check. Each scoring has its
 # own fit files.
 SCORINGS = ("log-rmse", "fos-rmse")
-ACTIVE_SCORINGS = ("log-rmse",)
+ACTIVE_SCORINGS = ("log-rmse", "fos-rmse")
 
 
 @dataclass(frozen=True)

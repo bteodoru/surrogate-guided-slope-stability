@@ -1,0 +1,19 @@
+\begin{table}[htbp]
+\centering
+\caption{Selection-criterion sensitivity on test-stratified: global RMSE, minimax and within-family rank under each scoring.}
+\label{tab:test-stratified:scorings}
+\begin{tabular}{lrrrrrrr}
+\toprule
+family & arm & RMSE log-rmse & minimax log-rmse & rank log-rmse & RMSE fos-rmse & minimax fos-rmse & rank fos-rmse \\
+\midrule
+rf & A & 0.832 & 1.934 & 4 & 0.843 & 1.956 & 4 \\
+rf & B & 0.548 & 1.226 & 3 & 0.548 & 1.226 & 3 \\
+rf & C & 0.437 & 0.941 & 1 & 0.437 & 0.941 & 1 \\
+rf & C0 (ablation) & 0.464 & 0.982 & 2 & 0.464 & 0.982 & 2 \\
+gbm & A & 0.604 & 1.423 & 4 & 0.544 & 1.249 & 4 \\
+gbm & B & 0.346 & 0.756 & 2 & 0.309 & 0.656 & 2 \\
+gbm & C & 0.268 & 0.552 & 1 & 0.284 & 0.600 & 1 \\
+gbm & C0 (ablation) & 0.377 & 0.722 & 3 & 0.377 & 0.724 & 3 \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -174,16 +174,19 @@ def test_evaluate_refuses_mixed_scorings():
 
 def test_run_writes_metrics_with_provenance(root, monkeypatch):
     write_all_finals(monkeypatch)
-    for family in config.FAMILIES:
-        for arm, scale in ARM_SCALES.items():
-            models.save_fit(stub_fit(family, arm, scale))
+    for scoring in config.ACTIVE_SCORINGS:
+        for family in config.FAMILIES:
+            for arm, scale in ARM_SCALES.items():
+                models.save_fit(stub_fit(family, arm, scale, scoring=scoring))
     monkeypatch.setattr(config, "N_BOOTSTRAP", 200)
     evaluate.run()
-    for test in config.TEST_ROLES:
-        metrics = json.loads(config.metrics_path(test, "log-rmse").read_text())
-        assert metrics["test"] == test and set(metrics["arms"]["gbm"]) == {"A", "B", "C", "C0"}
-        assert set(metrics["provenance"]["final_sha256"]) == set(config.ROLE_ORDER)
-        assert set(metrics["provenance"]["fit_fingerprints"]) == {"rf__log-rmse", "gbm__log-rmse"}
+    for scoring in config.ACTIVE_SCORINGS:
+        for test in config.TEST_ROLES:
+            metrics = json.loads(config.metrics_path(test, scoring).read_text())
+            assert metrics["test"] == test and metrics["scoring"] == scoring
+            assert set(metrics["arms"]["gbm"]) == {"A", "B", "C", "C0"}
+            assert set(metrics["provenance"]["final_sha256"]) == set(config.ROLE_ORDER)
+            assert set(metrics["provenance"]["fit_fingerprints"]) == {f"rf__{scoring}", f"gbm__{scoring}"}
 
 
 # --- learning-curve metrics -------------------------------------------------------------

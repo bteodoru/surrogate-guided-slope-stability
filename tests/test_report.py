@@ -71,3 +71,31 @@ def test_run_writes_tables_and_figures(root):
             "test-natural__log-rmse__conformal.tex", "test-natural__log-rmse__zones_rf.tex"} <= tables
     figure = config.figures_dir() / "test-natural__log-rmse__zones_gbm.pdf"
     assert figure.read_bytes()[:4] == b"%PDF"
+
+
+def test_scoring_frames_compare_the_selection_criteria():
+    log = evaluate.evaluate({**stub_fits("rf"), **stub_fits("gbm")}, stub_test(), **EVAL_KWARGS).to_json()
+    fos = evaluate.evaluate({**stub_fits("rf", scoring="fos-rmse"), **stub_fits("gbm", scoring="fos-rmse")},
+                            stub_test(), **EVAL_KWARGS).to_json()
+    frame = report.scoring_frame({"log-rmse": log, "fos-rmse": fos})
+    assert len(frame) == len(config.FAMILIES) * len(config.ARMS)
+    assert "C0 (ablation)" in frame["arm"].tolist()
+    for scoring in ("log-rmse", "fos-rmse"):
+        for family in config.FAMILIES:
+            ranks = frame.loc[frame["family"] == family, f"rank {scoring}"]
+            assert sorted(ranks) == list(range(1, len(config.ARMS) + 1))
+    params = report.scoring_params_frame({"log-rmse": log, "fos-rmse": fos})
+    assert list(params.columns) == ["family", "arm", "log-rmse", "fos-rmse"]
+
+
+def test_run_writes_scoring_tables_when_both_scorings_are_active(root, monkeypatch):
+    monkeypatch.setattr(config, "ACTIVE_SCORINGS", ("log-rmse", "fos-rmse"))
+    for scoring in config.ACTIVE_SCORINGS:
+        fits = {**stub_fits("rf", scoring=scoring), **stub_fits("gbm", scoring=scoring)}
+        path = config.metrics_path("test-natural", scoring)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(evaluate.evaluate(fits, stub_test(), **EVAL_KWARGS).to_json()))
+    report.run()
+    tables = {p.name for p in config.tables_dir().glob("*.tex")}
+    assert {"test-natural__scorings.tex", "scorings_params.tex"} <= tables
+    assert "test-stratified__scorings.tex" not in tables
