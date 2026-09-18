@@ -48,3 +48,20 @@ def shrink_roles(monkeypatch, sizes):
     for role, n in sizes.items():
         roles[role] = dataclasses.replace(roles[role], n=n)
     monkeypatch.setattr(config, "ROLES", roles)
+
+
+def fake_analyse(combo):
+    """Stands in for solver.analyse: a solved, boundary-free row. Module level
+    so that a spawned worker can import it."""
+    angle, phi, c, gamma, H = combo
+    row = {column: "" for column in data.RESULT_COLUMNS}
+    row.update(angle=angle, phi=phi, c=c, gamma=gamma, H=H, FOS=round(c / H, 6),
+               At_Boundary=False, Search_Converged=True, Runtime_s=0.0)
+    return row
+
+
+def boundary_row(fos="1.5", boundary="False", c=10.0):
+    """A results row as read back from CSV (all strings)."""
+    row = {column: "" for column in data.RESULT_COLUMNS}
+    row.update(angle="45.0", phi="30.0", c=str(c), gamma="18.0", H="10.0", FOS=fos, At_Boundary=boundary)
+    return row
