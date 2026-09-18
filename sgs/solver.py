@@ -87,6 +87,7 @@ def initialize_model(H, angle, phi, c, gamma, ext_factor=None, depth_factor=None
     from xslope.generators import generate_starting_circles
     from xslope.mesh import build_polygons
 
+    settings = config.SOLVER
     slope, slope_length, extension, depth = model_dims(H, angle, ext_factor, depth_factor)
     model = deepcopy(get_base_model())
 
@@ -119,8 +120,8 @@ def initialize_model(H, angle, phi, c, gamma, ext_factor=None, depth_factor=None
     # Toe-side exit range and crest-side entry range.
     geometry = {
         "slope": slope, "slope_length": slope_length, "extension": extension, "depth": depth,
-        "exit_range": (-depth, slope_length / 3.0),
-        "entry_range": (2.0 * slope_length / 3.0, slope_length + extension),
+        "exit_range": (-depth, settings.exit_range_l_frac * slope_length),
+        "entry_range": (settings.entry_range_l_frac * slope_length, slope_length + extension),
     }
     return model, geometry
 

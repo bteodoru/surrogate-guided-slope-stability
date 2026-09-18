@@ -54,6 +54,11 @@ class SolverSettings:
     extension_h_factor: float = 1.5
     extension_l_factor: float = 0.5
     depth_l_factor: float = 0.5
+    # Circular-search window, as fractions of L measured from the toe:
+    #   exit range  = (-depth, exit_range_l_frac * L)             toe side
+    #   entry range = (entry_range_l_frac * L, L + extension)     crest side
+    exit_range_l_frac: float = 1 / 3
+    entry_range_l_frac: float = 2 / 3
     # A critical surface within this fraction of H of a domain edge is
     # treated as truncated by the model extent.
     boundary_tol_h_frac: float = 0.01
