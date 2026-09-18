@@ -1,7 +1,6 @@
 # CLAUDE.md
 
-Context for working on this repository. Read fully before changing code. The
-design of the pipeline is in `docs/superpowers/specs/2026-09-18-pipeline-reorganization-design.md`.
+Context for working on this repository. Read fully before changing code.
 
 ## What this project is
 

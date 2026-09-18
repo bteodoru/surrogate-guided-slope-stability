@@ -5,6 +5,8 @@ __pycache__/
 .venv
 .pytest_cache/
 .superpowers/
+docs/superpowers/
+CLAUDE.local.md
 
 # Regenerable payloads. data/run_metadata.json and outputs/ stay tracked.
 data/**/*.csv
