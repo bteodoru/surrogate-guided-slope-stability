@@ -136,8 +136,8 @@ the *guided* set, and `results_test_bishop.csv` holds the *natural* test.
 | old name (Zenodo ≤ previous version) | new name                   | role                        |
 |--------------------------------------|----------------------------|-----------------------------|
 | `initial_lhs_300_bishop.csv`         | `seed_lhs_300.csv`         | seed, arm A                 |
-| `results_lhs_bishop.csv`             | `lhs_extension_300.csv`    | LHS extension, arm B        |
-| `results_uniform_bishop.csv`         | `guided_300.csv`           | guided selection, C and C₀  |
+| `results_lhs_bishop.csv`             | `lhs_continued_300.csv`    | LHS extension, arm B        |
+| `results_uniform_bishop.csv`         | `surrogate_guided_300.csv` | guided selection, C and C₀  |
 | `results_test_bishop.csv`            | `test_natural_300.csv`     | natural-300 test            |
 | `results_test_150_bishop.csv`        | `test_stratified_150.csv`  | target-stratified-150 test  |
 
@@ -535,7 +535,7 @@ def test_learning_curve_fingerprint_follows_its_settings(monkeypatch):
 
 def test_paths_follow_root(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "ROOT", tmp_path)
-    assert config.final_path("guided") == tmp_path / "data" / "final" / "guided_300.csv"
+    assert config.final_path("guided") == tmp_path / "data" / "final" / "surrogate_guided_300.csv"
     assert config.fit_path("rf", "C0", "log-rmse") == tmp_path / "artifacts" / "fits" / "rf__C0__log-rmse.joblib"
     assert config.metadata_path() == tmp_path / "data" / "run_metadata.json"
 
@@ -793,9 +793,9 @@ class SetRole:
 ROLES = {
     "seed": SetRole(n=300, design="lhs", seeds=("seed_lhs_design",), stem="seed_lhs_300"),
     "lhs-extension": SetRole(n=300, design="lhs", seeds=("lhs_extension_design",),
-                             stem="lhs_extension_300", disjoint_from=("seed",)),
+                             stem="lhs_continued_300", disjoint_from=("seed",)),
     "guided": SetRole(n=300, design="guided-maxmin", seeds=("guided_stream",),
-                      stem="guided_300", screener=True, disjoint_from=("seed",)),
+                      stem="surrogate_guided_300", screener=True, disjoint_from=("seed",)),
     "test-natural": SetRole(n=300, design="lhs", seeds=("test_natural_design",),
                             stem="test_natural_300",
                             disjoint_from=("seed", "lhs-extension", "guided")),

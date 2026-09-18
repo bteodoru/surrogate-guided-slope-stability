@@ -92,8 +92,8 @@ Zenodo.
 | current | new | role |
 |---|---|---|
 | `initial_lhs_300_bishop.csv` | `seed_lhs_300.csv` | seed, arm A |
-| `results_lhs_bishop.csv` | `lhs_extension_300.csv` | LHS extension, arm B |
-| `results_uniform_bishop.csv` | `guided_300.csv` | guided selection, C and C₀ |
+| `results_lhs_bishop.csv` | `lhs_continued_300.csv` | LHS extension, arm B |
+| `results_uniform_bishop.csv` | `surrogate_guided_300.csv` | guided selection, C and C₀ |
 | `results_test_bishop.csv` | `test_natural_300.csv` | natural-300 test |
 | `results_test_150_bishop.csv` | `test_stratified_150.csv` | target-stratified-150 test |
 
