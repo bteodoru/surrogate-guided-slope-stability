@@ -32,7 +32,6 @@ The analysis pipeline is a single Google Colab notebook:
 
 All results are deterministic (random seed 42).
 
-HYRCAN scripts (`hyrcan/`) are provided for transparency and
-reproducibility of the data generation step. They require HYRCAN
-and are not needed to reproduce the analysis results —
-the complete dataset is available on Zenodo.
+The data generator used in an earlier version of this study required
+HYRCAN and was replaced by xslope 0.5.2 with Bishop's simplified method,
+for open-source reproducibility.
