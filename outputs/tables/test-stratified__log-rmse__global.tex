@@ -1,0 +1,19 @@
+\begin{table}[htbp]
+\centering
+\caption{Global metrics on test-stratified.}
+\label{tab:test-stratified__log-rmse:global}
+\begin{tabular}{lrrrrrrrr}
+\toprule
+family & arm & R2 & RMSE & MAE & bias & max |e| & minimax & worst zone \\
+\midrule
+rf & A & 0.844 & 0.832 & 0.505 & -0.306 & 3.756 & 1.934 & FOS ≥ 6 \\
+rf & B & 0.932 & 0.548 & 0.330 & -0.178 & 2.708 & 1.226 & FOS ≥ 6 \\
+rf & C & 0.957 & 0.437 & 0.279 & -0.150 & 1.782 & 0.941 & FOS ≥ 6 \\
+rf & C0 (ablation) & 0.951 & 0.464 & 0.312 & -0.130 & 1.840 & 0.982 & FOS ≥ 6 \\
+gbm & A & 0.918 & 0.604 & 0.346 & -0.257 & 2.742 & 1.423 & FOS ≥ 6 \\
+gbm & B & 0.973 & 0.346 & 0.198 & -0.093 & 1.950 & 0.756 & FOS ≥ 6 \\
+gbm & C & 0.984 & 0.268 & 0.175 & -0.066 & 1.349 & 0.552 & FOS ≥ 6 \\
+gbm & C0 (ablation) & 0.968 & 0.377 & 0.275 & -0.062 & 1.314 & 0.722 & FOS ≥ 6 \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -47,3 +47,9 @@ the pipeline.
 
 The HYRCAN generator used in an earlier version of this study is preserved at
 the git tag `hyrcan-final`.
+
+## Notebook
+
+`notebooks/surrogate_guided_sampling.ipynb` holds the narrative and figures. It imports
+`sgs.report` and reads `outputs/metrics/`; it fits nothing and computes no metric. On
+Colab its first cell clones the repository, which already contains the metrics.

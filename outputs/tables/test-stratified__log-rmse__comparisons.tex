@@ -1,0 +1,27 @@
+\begin{table}[htbp]
+\centering
+\caption{Paired comparisons on test-stratified: Wilcoxon on d = |e1| - |e2| (smaller absolute errors) and bootstrap ΔRMSE.}
+\label{tab:test-stratified__log-rmse:comparisons}
+\begin{tabular}{lrrrrrrrrrr}
+\toprule
+family & subset & comparison & alternative & n & median d & P(d<0) & p & ΔRMSE & CI low & CI high \\
+\midrule
+gbm & all & C vs B & less & 150 & 0.002 & 0.493 & 0.576 & -0.077 & -0.147 & -0.001 \\
+gbm & selection-range & C vs B & less & 124 & 0.002 & 0.492 & 0.663 & -0.021 & -0.070 & 0.022 \\
+gbm & all & C vs A & less & 150 & -0.048 & 0.667 & 0.000 & -0.336 & -0.441 & -0.229 \\
+gbm & selection-range & C vs A & less & 124 & -0.026 & 0.613 & 0.004 & -0.082 & -0.133 & -0.031 \\
+gbm & all & C vs C0 & two-sided & 150 & -0.053 & 0.667 & 0.000 & -0.109 & -0.151 & -0.071 \\
+gbm & selection-range & C vs C0 & two-sided & 124 & -0.041 & 0.653 & 0.000 & -0.099 & -0.137 & -0.064 \\
+gbm & all & C0 vs B & two-sided & 150 & 0.074 & 0.333 & 0.000 & 0.032 & -0.050 & 0.116 \\
+gbm & selection-range & C0 vs B & two-sided & 124 & 0.074 & 0.323 & 0.000 & 0.078 & 0.021 & 0.131 \\
+rf & all & C vs B & less & 150 & -0.032 & 0.580 & 0.016 & -0.111 & -0.206 & -0.015 \\
+rf & selection-range & C vs B & less & 124 & -0.022 & 0.573 & 0.033 & -0.031 & -0.079 & 0.017 \\
+rf & all & C vs A & less & 150 & -0.077 & 0.707 & 0.000 & -0.395 & -0.531 & -0.257 \\
+rf & selection-range & C vs A & less & 124 & -0.039 & 0.645 & 0.000 & -0.117 & -0.161 & -0.073 \\
+rf & all & C vs C0 & two-sided & 150 & -0.023 & 0.600 & 0.004 & -0.027 & -0.050 & -0.004 \\
+rf & selection-range & C vs C0 & two-sided & 124 & -0.014 & 0.581 & 0.030 & -0.026 & -0.057 & 0.004 \\
+rf & all & C0 vs B & two-sided & 150 & 0.002 & 0.487 & 0.944 & -0.084 & -0.178 & 0.016 \\
+rf & selection-range & C0 vs B & two-sided & 124 & 0.003 & 0.476 & 0.623 & -0.005 & -0.057 & 0.046 \\
+\bottomrule
+\end{tabular}
+\end{table}
