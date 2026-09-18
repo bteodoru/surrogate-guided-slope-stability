@@ -1,10 +1,10 @@
-# Pipeline Reorganization Implementation Plan
+# Pipeline Reorganization Implementation Plan (simplified)
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace the monolithic notebook and the standalone xslope scripts with an installable package `sgs` whose stages (design → solve → repair → fit-screener → check → fit → learning-curve → evaluate → report) are explicit, carry hash manifests, and fail loudly on stale inputs.
+**Goal:** Replace the monolithic notebook and the standalone xslope scripts with a small installable package `sgs` and four commands (`generate`, `fit`, `evaluate`, `report`) that regenerate every data set, fit, table and figure of the study deterministically.
 
-**Architecture:** A library core (`sgs/*.py`) with one module per responsibility, a single `argparse` CLI (`sgs <stage>`), and a guarded producer (`stage.produce`) that every stage uses: it verifies input provenance, refuses stale outputs unless `--force`, writes payloads atomically and writes a `*.manifest.json` sidecar. `config.py` is the only source of scientific values, hashed by section so that a change invalidates only the artifacts that depend on it.
+**Architecture:** Eight modules under `sgs/`, one responsibility each. `config.py` is the only source of scientific values. Provenance is one tracked `data/run_metadata.json` plus a fingerprint stored inside each fit file. Commands reuse outputs that exist and refuse to mix states in three places: a changed design, results solved from another design, and stale fits. `--force` regenerates.
 
 **Tech Stack:** Python 3.14.4, numpy 2.5.3, pandas 3.0.5, scipy 1.18.1, scikit-learn 1.9.1, joblib 1.6.0, matplotlib 3.11.2, shapely 2.1.2, openpyxl 3.1.5, xslope 0.5.2, pytest 9.1.1.
 
@@ -13,31 +13,19 @@
 ## Global Constraints
 
 - Python reference environment: **3.14.4** (`.venv/bin/python`). Every command below uses `.venv/bin/...`.
-- No scientific value is defined outside `sgs/config.py`: seeds, ranges, grids, pool sizes, thresholds, zone edges, α. No scientific value is accepted on the command line; `--role` only selects a config entry.
-- Execution flags are exactly: `--dry-run`, `--force`, `--resume`, `--workers`, `--only-family`, `--only-arm`, `--only-scoring` (plus `--role`).
-- `data/` starts empty; every file in it is produced by a stage. CSV payloads under `data/` and `*.joblib`/`*.xlsx` under `artifacts/` are git-ignored; every `*.manifest.json` is tracked. `outputs/` is tracked.
-- `data/results/` is immutable raw solver output; `repair` never rewrites its input.
-- A stage that finds changed inputs fails and names what changed; `--force` is the only way past it.
-- Config is hashed per section: `domain`, `design`, `screener`, `protocol`, `evaluation`, `learning_curve`.
+- No scientific value is defined outside `sgs/config.py`: seeds, ranges, grids, pool sizes, thresholds, zone edges, α. The command line accepts only `--role` (selects a config entry), `--workers` and `--force`.
+- Modules read configuration as `from sgs import config` and use `config.X` at call time, never `from sgs.config import X`; tests monkeypatch `config`.
+- `data/` starts empty; every file in it is produced by `sgs generate`. CSV files under `data/` and everything under `artifacts/` are git-ignored. `data/run_metadata.json` and `outputs/` are tracked.
+- `data/results/` is raw solver output and is never rewritten by `repair`; `repair` writes `data/final/`.
 - Target is `log(FOS)` everywhere; exponentiation only at the evaluation boundary.
-- Estimators get `n_jobs=1`; the search gets `n_jobs=-1`.
+- Estimators inside a search get `n_jobs=1`; the search gets `n_jobs=-1`.
 - C₀ appears in every analysis. No threshold-misclassification code anywhere (no false-stable counts, no classification metrics, no comparison of a prediction against a fixed FOS).
 - Conformal quantile is an order statistic `k = min(ceil((n+1)(1-α)), n)`; call the procedure *cross-conformal-style*, never claim a guarantee.
 - Wilcoxon is on `d = |e₁| − |e₂|` with the per-pair alternative from `config.COMPARISONS`; phrase results as *smaller absolute errors*.
 - The FOS interval [0.5, 6.0] is the **selection range** in code and prose — never "band", "near failure" or "critical band".
-- `qmc.LatinHypercube` is always called with the `seed=` keyword. In SciPy 1.18 `seed=42` and `rng=42` produce different designs; the published ones were drawn with `seed=`.
-- Reference copies of the current data live outside the repo in `REF=/Users/bogdanteodoru/Documents/scoala/lucrari/FOS_by_ML/reference-data-2026-09`. Nothing in the pipeline reads from there; only `tools/` scripts do, for the author's descriptive comparison.
+- `qmc.LatinHypercube` is always called with the `seed=` keyword. In SciPy 1.18 `seed=42` and `rng=42` produce different designs.
+- Reference copies of the old data live outside the repo in `REF=/Users/bogdanteodoru/Documents/scoala/lucrari/FOS_by_ML/reference-data-2026-09`. Nothing in `sgs` reads from there.
 - Commit messages end with `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`.
-
-## Deviations from the spec (small, deliberate; review before starting)
-
-1. **Sixth config section `learning_curve`.** Budgets, repeats and the subsampling seed would otherwise live in `evaluation` or `protocol`, so changing α would invalidate hours of learning-curve fits — exactly the unrelated invalidation §4 argues against.
-2. **Two protocol seeds added to `SEEDS`**: `protocol_cv_split` (42) and `protocol_estimator` (42). The spec's `SEEDS` block omits them, but the KFold shuffling and estimator `random_state` are seeds and must be named by role.
-3. **`SetRole` gains `stem` and `disjoint_from`.** `stem` is the file name; `disjoint_from` lists the roles whose designs a role must stay away from. For `lhs` and `guided-maxmin` this is an assertion; for `stratified-random` it is the pre-selection filter the notebook applied. It also fixes the order in which designs have to be produced.
-4. **Two extra modules.** `sgs/stage.py` holds `Options` and the guarded `produce()` shared by every stage. `sgs/solve.py` holds the batch/resume/parallel runner, so `solver.py` stays a thin xslope wrapper.
-5. **Screener path is `artifacts/screeners/{name}.joblib`**, not `artifacts/screener.joblib`, because the registry is keyed by name.
-6. **`requires-python = ">=3.12"`** in `pyproject.toml`, while 3.14.4 is pinned by `.python-version` and `requirements.lock`, and the CLI warns on any other version. An exact `==3.14.4` would stop the Colab notebook from installing the package at all.
-7. **Learning curve is tuned with the same `searcher()`** as the arms (spec §10 phase 8 cost estimate implies this). The old notebook used an untuned RF. For budgets ≤ the seed size both curves share the same subsample, so those units are fitted once. At budget = seed size there is one repeat, because every repeat would be identical.
 
 ---
 
@@ -46,314 +34,50 @@
 ```
 pyproject.toml, requirements.lock, .python-version, .gitignore
 CLAUDE.md, README.md, data/README.md
-sgs/__init__.py        empty docstring; importing sgs imports nothing heavy
-sgs/config.py          scientific truth + section hashing + path helpers
-sgs/manifest.py        sha256, manifest read/write, staleness, provenance checks
-sgs/stage.py           Options, produce(): guarded, atomic, manifest-writing
-sgs/data.py            schema, derived feature, loading roles/arms/test sets
-sgs/design.py          lhs, guided-maxmin, stratified-random, design stage
-sgs/solver.py          xslope/Bishop wrapper (one analysis → one row)
-sgs/solve.py           solve stage: batches, resume, parallel parts, merge
-sgs/repair.py          repair stage
-sgs/screener.py        preliminary RF: fit once, load thereafter
-sgs/checks.py          per-set checks, pairwise disjointness, receipt
-sgs/protocol.py        FitArtifact, searcher(), fit_arm()
-sgs/fitting.py         fit stage, load_fit()
-sgs/learning_curve.py  learning-curve stage
-sgs/evaluate.py        pure metrics + evaluate stage
-sgs/report.py          booktabs tables, figures
-sgs/cli.py             subcommands, run-all
-tests/helpers.py       synthetic data, FormulaModel, fixture writers
-tests/conftest.py      `root` fixture (redirects config.ROOT to tmp)
-tests/test_*.py        one file per module + discipline + notebook purity
-tools/probe_environment.py   phase 0 only; deleted in Task 20
-tools/describe_sets.py       author's descriptive comparison vs reference copies
+sgs/__init__.py     empty docstring
+sgs/config.py       scientific values, fingerprints, path helpers
+sgs/data.py         schema, derived feature, loading, validate_sets, run metadata
+sgs/design.py       lhs, screener, guided max-min, stratified random, build(role)
+sgs/solver.py       xslope/Bishop wrapper, run_set, repair_rows, CSV row I/O
+sgs/models.py       searcher, fit_arm, fit cache, fit_all, learning curve
+sgs/evaluate.py     metric primitives, paired comparisons, evaluate(), run()
+sgs/report.py       booktabs tables and figures from outputs/metrics
+sgs/cli.py          generate() and the sgs subcommands
+tests/conftest.py   `root` and `tiny_protocol` fixtures
+tests/helpers.py    synthetic data, stub models and fits
+tests/test_*.py     one file per module, plus test_seeds.py
 notebooks/surrogate_guided_sampling.ipynb   narrative only
 ```
 
 ---
 
-## Phase 0 — environment probe
+## Task 1: Probe the local scikit-learn environment against the Colab results — DONE
 
-### Task 1: Probe the local scikit-learn environment against the Colab results
+Completed in commit `91191b1` on branch `pipeline-reorganization`. It added `tools/probe_environment.py` and `docs/environment-probe-2026-09.md`, and copied `xslope/` and the published notebook to `$REF`.
 
-**Files:**
-- Create: `tools/probe_environment.py`
-- Create: `docs/environment-probe-2026-09.md`
-- External: copy the whole of `xslope/` and `surrogate_guided_sampling.ipynb` to `$REF`
-
-**Interfaces:**
-- Consumes: reference CSVs in `$REF` (old names).
-- Produces: `docs/environment-probe-2026-09.md` with reference and observed hyper-parameters; the scikit-learn/joblib versions used in every later task.
-
-- [ ] **Step 1: Create a working branch**
-
-```bash
-git checkout -b pipeline-reorganization
-```
-
-- [ ] **Step 2: Copy the reference material out of the repository (copy, not move — Task 2 deletes the originals)**
-
-```bash
-REF=/Users/bogdanteodoru/Documents/scoala/lucrari/FOS_by_ML/reference-data-2026-09
-mkdir -p "$REF"
-rsync -a --exclude __pycache__ xslope/ "$REF/"
-cp surrogate_guided_sampling.ipynb "$REF/surrogate_guided_sampling_published.ipynb"
-ls "$REF"
-```
-Expected: the five `*_bishop.csv` data files, their `_part*`/`_backup`/` copy` residue, `run_analyses.py`, `run_repair.py`, `xslope_arrays.py`, `surrogate_guided_sampling_rev.ipynb`, `surrogate_guided_sampling_published.ipynb`, `xslope_simple1_v0.5.2.xlsx`.
-
-- [ ] **Step 3: Install the analysis stack into the reference venv**
-
-```bash
-.venv/bin/pip install scikit-learn==1.9.1 joblib==1.6.0 pytest==9.1.1
-.venv/bin/python -c "import sklearn, joblib; print(sklearn.__version__, joblib.__version__)"
-```
-Expected: `1.9.1 1.6.0`
-
-- [ ] **Step 4: Write the reference record, taken from the stored outputs of `xslope/surrogate_guided_sampling_rev.ipynb` cell 38**
-
-Create `docs/environment-probe-2026-09.md`:
-
-```markdown
-# Environment probe, September 2026
-
-Temporary record for phase 0 of the pipeline reorganization. Deleted at the end
-of phase 6 (Task 20), once the local fits have replaced the Colab ones.
-
-## Reference: hyper-parameters selected on Colab
-
-Source: stored output of cell 38 in `surrogate_guided_sampling_rev.ipynb`
-(reference copy in `reference-data-2026-09/`). One `GridSearchCV` per
-(family, arm), 5-fold `KFold(shuffle=True, random_state=42)`,
-`scoring="neg_root_mean_squared_error"` on log(FOS).
-
-| family | arm | n   | max_features | min_samples_leaf | learning_rate | max_iter | max_leaf_nodes |
-|--------|-----|-----|--------------|------------------|---------------|----------|----------------|
-| RF     | A   | 300 | 1.0          | 1                |               |          |                |
-| RF     | C0  | 300 | 1.0          | 2                |               |          |                |
-| RF     | C   | 600 | 1.0          | 1                |               |          |                |
-| RF     | B   | 600 | 1.0          | 1                |               |          |                |
-| GBM    | A   | 300 |              | 3                | 0.06          | 600      | 7              |
-| GBM    | C0  | 300 |              | 5                | 0.03          | 600      | 7              |
-| GBM    | C   | 600 |              | 3                | 0.06          | 600      | 7              |
-| GBM    | B   | 600 |              | 3                | 0.10          | 600      | 7              |
-
-## Observed locally
-
-Filled in from the output of `tools/probe_environment.py` (Task 1, step 6).
-```
-
-- [ ] **Step 5: Write the probe script**
-
-Create `tools/probe_environment.py`. It deliberately reproduces the notebook's code paths (not `sgs`, which does not exist yet), including its literals:
-
-```python
-"""Phase-0 environment probe. Temporary: deleted at the end of phase 6.
-
-Re-runs locally the two computations whose results are stored in the notebook:
-the hyper-parameter selection of the tuned searches, and the screener-driven
-designs. Reads the reference copies of the CSV files, never the repository.
-
-Usage: .venv/bin/python tools/probe_environment.py <reference-dir>
-"""
-
-import sys
-from pathlib import Path
-
-import numpy as np
-import pandas as pd
-import sklearn
-from scipy.spatial import cKDTree
-from scipy.stats import qmc
-from sklearn.ensemble import HistGradientBoostingRegressor, RandomForestRegressor
-from sklearn.model_selection import GridSearchCV, KFold
-
-REF = Path(sys.argv[1])
-PARAMS = ["angle", "phi", "c", "gamma", "H"]
-FEATURES = ["H", "angle", "phi", "c", "gamma", "gamma_H_c"]
-RANGES = {"angle": (10.0, 65.0), "phi": (5.0, 40.0), "c": (1.0, 75.0),
-          "gamma": (14.0, 22.0), "H": (1.0, 25.0)}
-LO = np.array([RANGES[p][0] for p in PARAMS])
-HI = np.array([RANGES[p][1] for p in PARAMS])
-
-EXPECTED = {
-    ("RF", "A"): {"max_features": 1.0, "min_samples_leaf": 1},
-    ("RF", "C0"): {"max_features": 1.0, "min_samples_leaf": 2},
-    ("RF", "C"): {"max_features": 1.0, "min_samples_leaf": 1},
-    ("RF", "B"): {"max_features": 1.0, "min_samples_leaf": 1},
-    ("GBM", "A"): {"learning_rate": 0.06, "max_iter": 600, "max_leaf_nodes": 7, "min_samples_leaf": 3},
-    ("GBM", "C0"): {"learning_rate": 0.03, "max_iter": 600, "max_leaf_nodes": 7, "min_samples_leaf": 5},
-    ("GBM", "C"): {"learning_rate": 0.06, "max_iter": 600, "max_leaf_nodes": 7, "min_samples_leaf": 3},
-    ("GBM", "B"): {"learning_rate": 0.10, "max_iter": 600, "max_leaf_nodes": 7, "min_samples_leaf": 3},
-}
-
-
-def load(name):
-    df = pd.read_csv(REF / name, dtype={"excluded": "string"})
-    if "excluded" in df.columns:
-        df = df[df["excluded"].fillna("").str.strip() == ""]
-    df = df[df["FOS"].notna()].reset_index(drop=True)
-    df["gamma_H_c"] = df["gamma"] * df["H"] / df["c"]
-    return df
-
-
-def normalize(frame):
-    return (frame[PARAMS].to_numpy(float) - LO) / (HI - LO)
-
-
-def greedy_maxmin(Xs, k, rng):
-    n = len(Xs)
-    if k >= n:
-        return np.arange(n)
-    sel = [int(rng.integers(n))]
-    dmin = np.linalg.norm(Xs - Xs[sel[0]], axis=1)
-    for _ in range(k - 1):
-        nxt = int(dmin.argmax())
-        sel.append(nxt)
-        dmin = np.minimum(dmin, np.linalg.norm(Xs - Xs[nxt], axis=1))
-    return np.array(sel)
-
-
-def compare_inputs(label, produced, reference):
-    diff = np.abs(produced[PARAMS].to_numpy(float) - reference[PARAMS].to_numpy(float))
-    print(f"  {label}: n={len(produced)} vs {len(reference)}, max |Δparam| = {diff.max():.2e}")
-
-
-print(f"scikit-learn {sklearn.__version__}")
-seed = load("initial_lhs_300_bishop.csv")
-lhs_ext = load("results_lhs_bishop.csv")
-guided = load("results_uniform_bishop.csv")
-test_natural_ref = load("results_test_bishop.csv")
-test_150_ref = load("results_test_150_bishop.csv")
-
-# --- 1. designs ---------------------------------------------------------------
-print("\n== Designs (reproduced vs reference inputs) ==")
-rf = RandomForestRegressor(n_estimators=500, oob_score=True, random_state=42, n_jobs=-1)
-rf.fit(seed[FEATURES], np.log(seed["FOS"]))
-print(f"  screener OOB R² (log): {rf.oob_score_:.4f}   (notebook: 0.9567)")
-
-rng = np.random.default_rng(42)
-pool = pd.DataFrame({k: rng.uniform(lo, hi, 200_000) for k, (lo, hi) in RANGES.items()})
-pool["gamma_H_c"] = pool["gamma"] * pool["H"] / pool["c"]
-pool["FOS_pred"] = np.exp(rf.predict(pool[FEATURES]))
-edges = np.linspace(0.5, 6.0, 16)
-mu, sd = pool[PARAMS].mean(), pool[PARAMS].std()
-train_idx = []
-for lo, hi in zip(edges[:-1], edges[1:]):
-    cand = pool[(pool["FOS_pred"] > lo) & (pool["FOS_pred"] <= hi)]
-    sel = cand.index.values[greedy_maxmin(((cand[PARAMS] - mu) / sd).values, 30, rng)]
-    perm = rng.permutation(len(sel))
-    train_idx += list(sel[perm[:20]])
-set_guided = pool.loc[train_idx, PARAMS].reset_index(drop=True)
-compare_inputs("guided", set_guided, pd.read_csv(REF / "results_uniform_bishop.csv"))
-
-set_lhs = pd.DataFrame(qmc.scale(qmc.LatinHypercube(d=5, seed=20260917).random(300), LO, HI), columns=PARAMS)
-compare_inputs("lhs-extension", set_lhs, pd.read_csv(REF / "results_lhs_bishop.csv"))
-set_natural = pd.DataFrame(qmc.scale(qmc.LatinHypercube(d=5, seed=20260920).random(300), LO, HI), columns=PARAMS)
-compare_inputs("test-natural", set_natural, pd.read_csv(REF / "results_test_bishop.csv"))
-
-for name, frame, refs in [
-    ("lhs-extension", set_lhs, [seed]),
-    ("guided", set_guided, [seed]),
-    ("test-natural", set_natural, [seed, set_guided, set_lhs]),
-]:
-    ref = pd.concat([r[PARAMS] for r in refs], ignore_index=True)
-    d = cKDTree(normalize(ref)).query(normalize(frame))[0]
-    print(f"  min normalized distance {name} -> earlier sets: {d.min():.5f}")
-
-pool_rng, sel_rng = np.random.default_rng(20260918), np.random.default_rng(20260919)
-tp = pd.DataFrame({p: pool_rng.uniform(*RANGES[p], 200_000) for p in PARAMS})
-tp["gamma_H_c"] = tp["gamma"] * tp["H"] / tp["c"]
-tp["FOS_pred"] = np.exp(rf.predict(tp[FEATURES]))
-tp = tp[tp["FOS_pred"].between(0.5, 6.0, inclusive="both")].reset_index(drop=True)
-ref = pd.concat([seed[PARAMS], set_guided, set_lhs, set_natural], ignore_index=True)
-tp = tp.loc[cKDTree(normalize(ref)).query(normalize(tp))[0] > 1e-3].reset_index(drop=True)
-chosen = []
-for b, (lo, hi) in enumerate(zip(edges[:-1], edges[1:])):
-    mask = (tp["FOS_pred"] >= lo) if b == 0 else (tp["FOS_pred"] > lo)
-    cand = tp.loc[mask & (tp["FOS_pred"] <= hi)]
-    chosen += cand.index.to_numpy()[sel_rng.choice(len(cand), 10, replace=False)].tolist()
-compare_inputs("test-stratified", tp.loc[chosen, PARAMS].reset_index(drop=True),
-               pd.read_csv(REF / "results_test_150_bishop.csv"))
-
-# --- 2. hyper-parameter selection -------------------------------------------------
-print("\n== Hyper-parameters (local vs Colab) ==")
-arms = {"A": seed, "C0": guided, "C": pd.concat([seed, guided], ignore_index=True),
-        "B": pd.concat([seed, lhs_ext], ignore_index=True)}
-cv = KFold(5, shuffle=True, random_state=42)
-grids = {
-    "RF": (RandomForestRegressor(n_estimators=500, random_state=42, n_jobs=1),
-           {"max_features": [0.3, 0.5, 1.0], "min_samples_leaf": [1, 2, 5]}),
-    "GBM": (HistGradientBoostingRegressor(random_state=42, early_stopping=False),
-            {"learning_rate": [0.03, 0.06, 0.10], "max_leaf_nodes": [7, 15, 31],
-             "min_samples_leaf": [3, 5, 10, 20], "max_iter": [300, 600]}),
-}
-agree = True
-for family, (est, grid) in grids.items():
-    for arm, df in arms.items():
-        gs = GridSearchCV(est, grid, cv=cv, scoring="neg_root_mean_squared_error", n_jobs=-1)
-        gs.fit(df[FEATURES], np.log(df["FOS"]))
-        same = gs.best_params_ == EXPECTED[(family, arm)]
-        agree &= same
-        print(f"  {family:3} {arm:2} n={len(df)}  {gs.best_params_}  {'==' if same else '!= ' + str(EXPECTED[(family, arm)])}")
-print(f"\nAll selections agree with Colab: {agree}")
-```
-
-- [ ] **Step 6: Run the probe**
-
-```bash
-.venv/bin/python tools/probe_environment.py "$REF" 2>&1 | tee /tmp/probe.txt
-```
-Expected, if the environment agrees:
-- `max |Δparam|` ≤ 5e-7 for all four designs. The reference inputs went through 6-decimal arrays, so 5e-7 is the rounding floor.
-- Every minimum normalized distance > 0.001.
-- `All selections agree with Colab: True`
-
-If a design differs by more than 5e-7, or a selection differs, **stop and report to the author**. Do not continue to Task 2. A design mismatch means the screener or the RNG path differs, and that would change every screener-driven set.
-
-- [ ] **Step 7: Record the outcome**
-
-Paste the full probe output under "Observed locally" in `docs/environment-probe-2026-09.md`, inside a fenced block. Then add one line stating the verdict, e.g. `Verdict: identical designs and hyper-parameter selections on scikit-learn 1.9.1 / Python 3.14.4.`
-
-- [ ] **Step 8: Commit**
-
-```bash
-git add tools/probe_environment.py docs/environment-probe-2026-09.md
-git commit -m "Probe the local scikit-learn environment against the Colab runs
-
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-```
+Outcome recorded in the probe document: the two pure LHS designs reproduce to rounding (max |Δparam| 5e-7 and 5e-11); the screener-driven designs (`guided`, `test-stratified`) and the GBM B/C `learning_rate` selections differ from Colab. The screener OOB R² is 0.9565 locally against 0.9567 on Colab, and that difference cascades through hard bin edges and greedy max-min. The author ruled that this does not block: the Colab run was exploratory and the acceptance target is determinism of the local run. The probe files are deleted in Task 10.
 
 ---
 
-## Phase 1 — repository restructure
-
-### Task 2: Restructure the tree, rewrite CLAUDE.md and README, add data/README.md
+## Task 2: Restructure the tree, rewrite CLAUDE.md and README, add data/README.md
 
 **Files:**
 - Delete: `xslope/` (untracked), `surrogate_guided_sampling.ipynb` (tracked)
-- Create: `data/README.md`, `.python-version`, `artifacts/solver/xslope_simple1_v0.5.2.xlsx` (untracked copy)
+- Create: `data/README.md`, `.python-version`, `artifacts/solver/xslope_simple1_v0.5.2.xlsx` (untracked cache)
 - Modify: `.gitignore`, `README.md`
 - Create (currently untracked, rewritten): `CLAUDE.md`
 
 **Interfaces:**
-- Produces: the directory layout of spec §3; ignore rules that every later task relies on.
-
-The HYRCAN part of spec phase 1 is already done: commit `de4b65a` removed `hyrcan/`, and the tag `hyrcan-final` exists. The stray `git init` inside `xslope/` is already gone. Verify before continuing:
-
-```bash
-git tag -l hyrcan-final        # prints hyrcan-final
-test ! -e hyrcan && test ! -e xslope/.git && echo ok
-```
+- Produces: the directory layout of spec §4 and the ignore rules later tasks rely on.
 
 - [ ] **Step 1: Confirm the reference copy is complete before deleting anything**
 
 ```bash
 REF=/Users/bogdanteodoru/Documents/scoala/lucrari/FOS_by_ML/reference-data-2026-09
 diff <(cd xslope && ls | grep -v __pycache__ | sort) <(ls "$REF" | grep -v published | sort)
+git tag -l hyrcan-final
 ```
-Expected: no output.
+Expected: no output from `diff`; `hyrcan-final` printed by `git tag`.
 
 - [ ] **Step 2: Remove the old material and create the empty layout**
 
@@ -362,10 +86,10 @@ mkdir -p artifacts/solver
 cp xslope/xslope_simple1_v0.5.2.xlsx artifacts/solver/
 rm -rf xslope
 git rm -q surrogate_guided_sampling.ipynb
-mkdir -p sgs tests tools notebooks data/designs data/results data/final data/checks outputs/metrics outputs/tables outputs/figures
+mkdir -p sgs tests notebooks data outputs/metrics outputs/tables outputs/figures
 echo "3.14.4" > .python-version
 ```
-The `.xlsx` copy is only a cache. `solver.ensure_template()` (Task 9) checks it against the pinned SHA-256 and downloads it again if it is missing or wrong.
+The `.xlsx` copy is only a cache. `solver.ensure_template()` (Task 6) checks it against the pinned SHA-256 and downloads it again if it is missing or wrong.
 
 - [ ] **Step 3: Replace `.gitignore`**
 
@@ -376,16 +100,14 @@ __pycache__/
 *.egg-info/
 .venv/
 .pytest_cache/
+.superpowers/
 
-# Regenerable payloads; their *.manifest.json sidecars stay tracked.
+# Regenerable payloads. data/run_metadata.json and outputs/ stay tracked.
 data/**/*.csv
-artifacts/**/*.joblib
-artifacts/**/*.xlsx
+artifacts/
 
-# In-flight stage outputs and resume parts.
-data/**/.*.tmp*
-artifacts/**/.*.tmp*
-outputs/**/.*.tmp*
+# In-flight writes.
+**/.*.tmp
 ```
 
 - [ ] **Step 4: Write `data/README.md`**
@@ -393,17 +115,17 @@ outputs/**/.*.tmp*
 ```markdown
 # data/
 
-Everything in this directory is produced by a pipeline stage (`sgs ...`). Each
-payload has a `*.manifest.json` sidecar recording its content hash, the hashes
-of the configuration sections and input files that produced it, library
-versions and wall time. Payloads are not tracked in git; manifests are.
+Everything in this directory is produced by `sgs generate`. CSV files are not
+tracked in git; `run_metadata.json` is. For every set it records the seeds,
+the SHA-256 of the design, results and final files, the repair summary, the
+screener diagnostics where a screener was used, and the Python and library
+versions.
 
-| directory   | stage    | content                                              |
-|-------------|----------|------------------------------------------------------|
-| `designs/`  | `design` | parameter sets, before the solver                    |
-| `results/`  | `solve`  | raw xslope/Bishop output, never modified afterwards  |
-| `final/`    | `repair` | boundary rows repaired; consumed by the analysis     |
-| `checks/`   | `check`  | `receipt.json`: per-set and pairwise validation      |
+| directory   | content                                              |
+|-------------|------------------------------------------------------|
+| `designs/`  | parameter sets, before the solver                    |
+| `results/`  | raw xslope/Bishop output, never modified by repair   |
+| `final/`    | boundary rows repaired; consumed by the analysis     |
 
 ## File names and the Zenodo deposit
 
@@ -438,11 +160,11 @@ continued Latin hypercube sampling.
 Data are generated with xslope 0.5.2 (Bishop's simplified method), homogeneous
 drained slopes without a water table.
 
-| Arm | Training data                  | Solver budget      |
-|-----|--------------------------------|--------------------|
-| A   | seed LHS-300                   | 300                |
-| B   | seed LHS-300 + LHS-300         | 600                |
-| C   | seed LHS-300 + guided-300      | 600                |
+| Arm | Training data                  | Solver budget       |
+|-----|--------------------------------|---------------------|
+| A   | seed LHS-300                   | 300                 |
+| B   | seed LHS-300 + LHS-300         | 600                 |
+| C   | seed LHS-300 + guided-300      | 600                 |
 | C₀  | guided-300 only                | ablation, no budget |
 
 Two test sets represent two deployment scenarios: `test-natural` (input-space
@@ -455,14 +177,17 @@ LHS, 300) and `test-stratified` (random selection within predicted-FOS bins,
 python3.14 -m venv .venv
 .venv/bin/pip install -r requirements.lock
 .venv/bin/pip install --no-deps -e .
-.venv/bin/sgs run-all --dry-run      # show what would run
-.venv/bin/sgs run-all --workers 6    # everything; solver stages take hours
+.venv/bin/sgs generate --workers 2   # five data sets, about an hour of solver time
+.venv/bin/sgs fit                    # 8 fits, 48 grid searches with the nested CV; hours
+.venv/bin/sgs evaluate               # seconds
+.venv/bin/sgs report                 # tables and figures
 ```
 
-Stages can also be run one at a time; `sgs --help` lists them. Every stage
-refuses to overwrite a stale artifact without `--force` and names what changed.
-All scientific parameters live in `sgs/config.py`; none are accepted on the
-command line.
+`sgs all --workers 2` runs the four in order. `sgs learning-curve` is optional.
+A command reuses outputs that already exist and stops, naming the cause, if a
+design, a results file or a fit no longer matches the current configuration or
+data; `--force` regenerates. All scientific parameters live in
+`sgs/config.py`; none are accepted on the command line.
 
 ## Data
 
@@ -518,8 +243,8 @@ test-stratified) are declared in `config.ARMS` and `config.ROLES`. C₀ is an
 ablation, not a budget arm (`budget=None, ablation=True`).
 
 The two test sets are two deployment scenarios, not two tests of the same
-thing. Both are disjoint from every other set by normalized distance; `sgs
-check` asserts it.
+thing. Both are disjoint from every other set by normalized distance;
+`data.validate_sets` asserts it before every fit and evaluation.
 
 ## Non-negotiable disciplines
 
@@ -530,13 +255,11 @@ check` asserts it.
    regression study; an engineer treats FOS 0.9 and 1.1 as effectively the
    same, and a binary count penalises a 0.05 error like a 0.5 one. Zone RMSE,
    minimax and conformal coverage/width in the low-FOS zone carry the
-   engineering argument instead. `tests/test_discipline.py` enforces this.
+   engineering argument instead. If you find such code, delete it.
 3. **Never duplicate a design call.** Every seed lives in `config.SEEDS`, named
-   by role, and is referenced nowhere else as a literal.
-   `tests/test_discipline.py` fails on integer literals assigned to or passed
-   as a seed/random_state outside `config.py`. Always call
-   `qmc.LatinHypercube(..., seed=...)`, never `rng=`: in SciPy 1.18 they
-   produce different designs.
+   by role, and is referenced nowhere else as a literal; `tests/test_seeds.py`
+   enforces it. Always call `qmc.LatinHypercube(..., seed=...)`, never `rng=`:
+   in SciPy 1.18 they produce different designs.
 4. **No claim of model-agnosticism.** Two tuned tree ensembles support
    "consistent across two independently tuned tree-ensemble families" and
    nothing stronger.
@@ -545,7 +268,9 @@ check` asserts it.
    model. Call it _cross-conformal-style_ and report coverage empirically. A
    CV+ implementation (Barber et al. 2023) would earn a citable guarantee.
 6. **No scientific parameter on the command line.** `--role` selects a config
-   entry; everything else is execution control.
+   entry; `--workers` and `--force` are execution control.
+7. **The notebook computes nothing.** It reads `outputs/` and holds narrative
+   and figures; no `sklearn` import, no `fit`.
 
 ## Tuning protocol (must stay symmetric)
 
@@ -563,6 +288,9 @@ response and the multiplicative intervals; this is declared in Methods.
 `scoring` is a configuration axis (`config.ACTIVE_SCORINGS`) so the FOS-scale
 sensitivity check is a partial rerun.
 
+The learning curve is the one exception: RF only, fixed hyper-parameters,
+declared as such (spec §8).
+
 ## Statistics
 
 - Wilcoxon on `d = |e₁| − |e₂|`, reporting median d, P(d<0) and the per-pair
@@ -574,17 +302,17 @@ sensitivity check is a partial rerun.
 
 ## Pipeline
 
-`sgs <stage>`; see `README.md`. Every artifact has a `*.manifest.json`; a stage
-whose inputs or config sections changed fails and names the change; `--force`
-is the only way past. `data/results/` is immutable; `repair` writes
-`data/final/`. `evaluate` is pure and reads fits and a test set passed as
-arguments. `report` reads only `outputs/metrics/`. The notebook imports from
-`sgs` and holds narrative and figures only — no computation.
+`sgs generate | fit | evaluate | report` (see `README.md`). `data/results/` is
+raw solver output; `repair` writes `data/final/`. Fit files store a fingerprint
+of their protocol configuration and training data and fail loudly when either
+changed. `evaluate` is pure and reads fits and a test set passed as arguments.
+`report` reads only `outputs/metrics/`. Provenance lives in
+`data/run_metadata.json`.
 
 ## Performance notes
 
 Estimators get `n_jobs=1`; the search gets `n_jobs=-1`. The reverse
-oversubscribes cores. The 48 searches of `sgs fit` are test-independent, so
+oversubscribes cores. The searches of `sgs fit` are test-independent, so
 evaluating on a new test set costs seconds.
 
 ## Publishing
@@ -600,7 +328,7 @@ with a note on the old one and the name mapping in `data/README.md`. Where
 ```bash
 git status --short
 ```
-Expected: `D surrogate_guided_sampling.ipynb`, modified `.gitignore` and `README.md`, untracked `CLAUDE.md`, `.python-version`, `data/README.md`; nothing under `artifacts/`, because the `.xlsx` is ignored.
+Expected: `D surrogate_guided_sampling.ipynb`, modified `.gitignore` and `README.md`, untracked `CLAUDE.md`, `.python-version`, `data/README.md`; nothing under `artifacts/`.
 
 ```bash
 git add -A .gitignore README.md CLAUDE.md .python-version data/README.md surrogate_guided_sampling.ipynb
@@ -615,14 +343,15 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 ---
 
-### Task 3: Package skeleton and `config.py`
+## Task 3: Package skeleton, `config.py` and the seed test
 
 **Files:**
 - Create: `pyproject.toml`, `requirements.lock`, `sgs/__init__.py`, `sgs/config.py`
-- Create: `tests/__init__.py` (empty), `tests/conftest.py`, `tests/test_config.py`
+- Create: `tests/__init__.py` (empty), `tests/conftest.py`, `tests/test_config.py`, `tests/test_seeds.py`
 
 **Interfaces:**
-- Produces (used by every later task): everything named in `config.py` below. In particular `config.ROOT` (monkeypatched by tests), `config.sections()`, `config.section_hash(name) -> str`, and the path helpers `design_path(role)`, `results_path(role)`, `final_path(role)`, `receipt_path()`, `screener_path(name)`, `solver_template_path()`, `fit_path(family, arm, scoring)`, `learning_curve_path(family, key, scoring, budget)`, `metrics_path(test, scoring)`, `learning_curve_metrics_path(scoring)`, `tables_dir()`, `figures_dir()`. Every module reads config as `from sgs import config` and uses `config.X` at call time, never `from sgs.config import X`. Tests depend on this when they monkeypatch.
+- Produces (used by every later task): every name in `config.py` below. In particular `config.ROOT` (monkeypatched by tests), `config.SCREENER` (dict), `SetRole(n, design, seeds, stem, screener=False, disjoint_from=())`, `Arm(roles, budget, ablation)`, `Comparison(first, second, alternative, hypothesised)`, `fit_fingerprint(family, scoring) -> str`, `learning_curve_fingerprint() -> str`, and the path helpers `design_path(role)`, `results_path(role)`, `final_path(role)`, `metadata_path()`, `solver_template_path()`, `fit_path(family, arm, scoring)`, `learning_curve_path(key, budget)`, `metrics_path(test, scoring)`, `learning_curve_metrics_path()`, `tables_dir()`, `figures_dir()`.
+- `tests/conftest.py` produces the `root` fixture.
 
 - [ ] **Step 1: Write `pyproject.toml`**
 
@@ -683,7 +412,22 @@ Expected: the seven pinned versions listed in Tech Stack.
 """Surrogate-guided sampling for slope-stability surrogates."""
 ```
 
-- [ ] **Step 4: Write the failing tests `tests/test_config.py`**
+- [ ] **Step 4: Write `tests/__init__.py` (empty) and `tests/conftest.py`**
+
+```python
+import pytest
+
+from sgs import config
+
+
+@pytest.fixture
+def root(tmp_path, monkeypatch):
+    """Redirect every pipeline path into a temporary directory."""
+    monkeypatch.setattr(config, "ROOT", tmp_path)
+    return tmp_path
+```
+
+- [ ] **Step 5: Write the failing tests `tests/test_config.py`**
 
 ```python
 import dataclasses
@@ -711,7 +455,7 @@ def test_every_role_seed_is_declared():
 
 def test_every_declared_seed_has_a_user():
     used = {s for role in config.ROLES.values() for s in role.seeds}
-    used |= {"protocol_cv_split", "protocol_estimator",
+    used |= {"screener_fit", "screener_cv", "protocol_cv_split", "protocol_estimator",
              "bootstrap_resampling", "learning_curve_subsampling"}
     assert used == set(config.SEEDS)
 
@@ -723,8 +467,7 @@ def test_role_order_covers_roles_and_respects_dependencies():
         for earlier in spec.disjoint_from:
             assert position[earlier] < position[role]
         if spec.screener:
-            trained_on = config.SCREENERS[spec.screener].trained_on
-            assert position[trained_on] < position[role]
+            assert position[config.SCREENER["trained_on"]] < position[role]
 
 
 def test_design_sizes_match_role_sizes():
@@ -733,7 +476,7 @@ def test_design_sizes_match_role_sizes():
     assert config.GUIDED_DRAWN_PER_BIN >= config.GUIDED_PER_BIN
 
 
-def test_arms_are_compositions_of_roles():
+def test_arms_are_compositions_of_training_roles():
     for arm in config.ARMS.values():
         assert set(arm.roles) <= set(config.ROLES)
         assert not set(arm.roles) & set(config.TEST_ROLES)
@@ -768,34 +511,33 @@ def test_learning_curve_strategies_extend_the_base_role():
     assert set(config.LC_STRATEGIES.values()) <= set(config.ROLES)
 
 
-def test_section_hash_is_stable():
-    assert config.section_hash("design") == config.section_hash("design")
-    assert len(config.section_hash("design")) == 64
-
-
-def test_section_hash_changes_only_its_own_section(monkeypatch):
-    before = {name: config.section_hash(name) for name in config.sections()}
+def test_fit_fingerprint_is_stable_and_per_family(monkeypatch):
+    rf, gbm = config.fit_fingerprint("rf", "log-rmse"), config.fit_fingerprint("gbm", "log-rmse")
+    assert len(rf) == 64 and rf == config.fit_fingerprint("rf", "log-rmse")
+    assert rf != config.fit_fingerprint("rf", "fos-rmse")
     monkeypatch.setitem(config.GRIDS["gbm"], "max_iter", [300, 600, 900])
-    after = {name: config.section_hash(name) for name in config.sections()}
-    changed = {name for name in before if before[name] != after[name]}
-    assert changed == {"protocol"}
+    assert config.fit_fingerprint("gbm", "log-rmse") != gbm
+    assert config.fit_fingerprint("rf", "log-rmse") == rf
 
 
-def test_active_scorings_do_not_enter_any_hash(monkeypatch):
-    before = {name: config.section_hash(name) for name in config.sections()}
-    monkeypatch.setattr(config, "ACTIVE_SCORINGS", ("log-rmse", "fos-rmse"))
-    assert before == {name: config.section_hash(name) for name in config.sections()}
+def test_evaluation_settings_do_not_enter_the_fit_fingerprint(monkeypatch):
+    before = config.fit_fingerprint("rf", "log-rmse")
+    monkeypatch.setattr(config, "ALPHA", 0.2)
+    monkeypatch.setattr(config, "ZONE_EDGES", (1.0, 2.0))
+    assert config.fit_fingerprint("rf", "log-rmse") == before
 
 
-def test_unknown_section_raises():
-    with pytest.raises(KeyError):
-        config.section_hash("nope")
+def test_learning_curve_fingerprint_follows_its_settings(monkeypatch):
+    before = config.learning_curve_fingerprint()
+    monkeypatch.setattr(config, "LC_REPEATS", 3)
+    assert config.learning_curve_fingerprint() != before
 
 
 def test_paths_follow_root(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "ROOT", tmp_path)
     assert config.final_path("guided") == tmp_path / "data" / "final" / "guided_300.csv"
     assert config.fit_path("rf", "C0", "log-rmse") == tmp_path / "artifacts" / "fits" / "rf__C0__log-rmse.joblib"
+    assert config.metadata_path() == tmp_path / "data" / "run_metadata.json"
 
 
 def test_roles_are_frozen():
@@ -803,38 +545,130 @@ def test_roles_are_frozen():
         config.ROLES["seed"].n = 1
 ```
 
-- [ ] **Step 5: Run to verify failure**
+- [ ] **Step 6: Write `tests/test_seeds.py`**
+
+```python
+"""No integer seed literal outside sgs/config.py."""
+
+import ast
+import re
+from pathlib import Path
+
+import pytest
+
+import sgs
+
+SGS_DIR = Path(sgs.__file__).parent
+MODULES = sorted(p for p in SGS_DIR.glob("*.py") if p.name != "config.py")
+SEED_NAME = re.compile(r"seed|random_state", re.IGNORECASE)
+RNG_CALLS = {"LatinHypercube", "default_rng", "RandomState", "check_random_state"}
+
+
+def _int_literal(node):
+    return (isinstance(node, ast.Constant) and isinstance(node.value, int)
+            and not isinstance(node.value, bool))
+
+
+def _target_name(node):
+    if isinstance(node, ast.Name):
+        return node.id
+    if isinstance(node, ast.Attribute):
+        return node.attr
+    if isinstance(node, ast.Subscript) and isinstance(node.slice, ast.Constant):
+        return str(node.slice.value)
+    return None
+
+
+def _call_name(node):
+    if isinstance(node.func, ast.Name):
+        return node.func.id
+    if isinstance(node.func, ast.Attribute):
+        return node.func.attr
+    return None
+
+
+def seed_violations(source):
+    found = []
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, (ast.Assign, ast.AnnAssign)):
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+            if node.value is not None and _int_literal(node.value):
+                for target in targets:
+                    name = _target_name(target)
+                    if name and SEED_NAME.search(name):
+                        found.append(f"line {node.lineno}: {name} = literal")
+        elif isinstance(node, ast.Call):
+            for kw in node.keywords:
+                if kw.arg and SEED_NAME.search(kw.arg) and _int_literal(kw.value):
+                    found.append(f"line {node.lineno}: {kw.arg}=literal")
+            if _call_name(node) in RNG_CALLS and any(_int_literal(a) for a in node.args):
+                found.append(f"line {node.lineno}: {_call_name(node)}(literal)")
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            args = node.args.args + node.args.kwonlyargs
+            defaults = ([None] * (len(node.args.args) - len(node.args.defaults))
+                        + node.args.defaults + node.args.kw_defaults)
+            for arg, default in zip(args, defaults):
+                if default is not None and SEED_NAME.search(arg.arg) and _int_literal(default):
+                    found.append(f"line {node.lineno}: default {arg.arg}=literal")
+    return found
+
+
+@pytest.mark.parametrize("snippet", [
+    "seed = 42",
+    "RANDOM_STATE: int = 0",
+    "f(random_state=0)",
+    "qmc.LatinHypercube(42)",
+    "np.random.default_rng(7)",
+    "def f(seed=1): pass",
+    "cfg['seed'] = 3",
+])
+def test_checker_catches(snippet):
+    assert seed_violations(snippet)
+
+
+@pytest.mark.parametrize("snippet", [
+    "seed = config.SEEDS['seed_lhs_design']",
+    "f(random_state=config.SEEDS['protocol_estimator'], n_jobs=1)",
+    "qmc.LatinHypercube(d=len(config.PARAMS), seed=seed)",
+    "np.random.default_rng(config.SEEDS['guided_stream'])",
+    "n_seed = len(frame)",
+])
+def test_checker_allows(snippet):
+    assert not seed_violations(snippet)
+
+
+@pytest.mark.parametrize("path", MODULES, ids=lambda p: p.name)
+def test_no_seed_literal_outside_config(path):
+    assert seed_violations(path.read_text()) == []
+```
+
+- [ ] **Step 7: Run to verify failure**
 
 Run: `.venv/bin/pytest tests/test_config.py -q`
 Expected: collection error `ImportError: cannot import name 'config' from 'sgs'`.
 
-- [ ] **Step 6: Write `sgs/config.py`**
+- [ ] **Step 8: Write `sgs/config.py`**
 
 ```python
-"""The only source of scientific truth for the study.
+"""The only source of scientific values for the study.
 
 Every seed, range, grid and threshold is defined here, named by role, and
-referenced from nowhere else as a literal. Values are grouped into sections;
-each stage declares which sections it depends on, and a change to a section
-invalidates only the artifacts that depend on it (see manifest.py).
-
-Modules read this file as ``from sgs import config`` and use ``config.X`` at
-call time, so tests can redirect ``ROOT`` and shrink sizes with monkeypatch.
+referenced from nowhere else as a literal. Modules read this file as
+``from sgs import config`` and use ``config.X`` at call time, so tests can
+redirect ``ROOT`` and shrink sizes with monkeypatch.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 
 
-# ---------------------------------------------------------------------------
-# Section "domain": the physical problem and how FOS is computed for it
-# ---------------------------------------------------------------------------
+# --- the physical problem ---------------------------------------------------------
 
 PARAMS = ("angle", "phi", "c", "gamma", "H")
 
@@ -898,9 +732,7 @@ REPAIR_VARIANTS = (
 )
 
 
-# ---------------------------------------------------------------------------
-# Section "design": sampling procedures and their seeds
-# ---------------------------------------------------------------------------
+# --- sampling designs -------------------------------------------------------------
 
 SELECTION_RANGE = (0.5, 6.0)
 N_BINS = 15
@@ -911,8 +743,8 @@ N_GUIDED_POOL = 200_000
 GUIDED_PER_BIN = 20
 # Greedy max-min draws 30 candidates per bin and a random 20 are kept. The
 # other 10 were the share of an earlier, non-independent test set; they are
-# still drawn so the RNG stream, and with it the training selection, is
-# reproduced, and are then discarded.
+# still drawn so the RNG stream, and with it the training selection, follows
+# the published procedure, and are then discarded.
 GUIDED_DRAWN_PER_BIN = 30
 
 # Independent pool for the target-stratified test set (declared in Methods).
@@ -924,7 +756,6 @@ TEST_PER_BIN = 10
 MIN_DISTANCE = 1e-3
 
 SEEDS = {
-    # design
     "seed_lhs_design": 42,
     "lhs_extension_design": 20260917,
     # One stream for the guided role: the candidate pool is drawn first and
@@ -934,12 +765,14 @@ SEEDS = {
     "test_stratified_pool": 20260918,
     "test_stratified_selection": 20260919,
     "test_natural_design": 20260920,
-    # protocol
+    # The screener's seeds share the value 42 with guided_stream but are
+    # independent of that stream.
+    "screener_fit": 42,
+    "screener_cv": 42,
     "protocol_cv_split": 42,       # inner and outer KFold shuffling
     "protocol_estimator": 42,      # random_state of every tuned estimator
-    # evaluation
     "bootstrap_resampling": 20260921,
-    # learning curve: entropy of a SeedSequence keyed on (budget, repeat)
+    # Entropy of a SeedSequence keyed on (budget, repeat).
     "learning_curve_subsampling": 20260922,
 }
 
@@ -947,10 +780,10 @@ SEEDS = {
 @dataclass(frozen=True)
 class SetRole:
     n: int
-    design: str                      # "lhs" | "guided-maxmin" | "stratified-random"
-    seeds: tuple[str, ...]           # keys of SEEDS, in the order the procedure uses them
-    screener: str | None             # key of SCREENERS, or None
-    stem: str                        # file name without extension
+    design: str                           # "lhs" | "guided-maxmin" | "stratified-random"
+    seeds: tuple[str, ...]                # keys of SEEDS, in the order the procedure uses them
+    stem: str                             # file name without extension
+    screener: bool = False                # built from screener predictions
     disjoint_from: tuple[str, ...] = ()   # roles whose designs this one must avoid
 
 
@@ -958,55 +791,29 @@ class SetRole:
 # max-min: it must be representative of the target distribution, not
 # diversified toward the edges of the domain like the guided training set.
 ROLES = {
-    "seed": SetRole(
-        n=300, design="lhs", seeds=("seed_lhs_design",), screener=None,
-        stem="seed_lhs_300"),
-    "lhs-extension": SetRole(
-        n=300, design="lhs", seeds=("lhs_extension_design",), screener=None,
-        stem="lhs_extension_300", disjoint_from=("seed",)),
-    "guided": SetRole(
-        n=300, design="guided-maxmin", seeds=("guided_stream",), screener="primary",
-        stem="guided_300", disjoint_from=("seed",)),
-    "test-natural": SetRole(
-        n=300, design="lhs", seeds=("test_natural_design",), screener=None,
-        stem="test_natural_300", disjoint_from=("seed", "lhs-extension", "guided")),
-    "test-stratified": SetRole(
-        n=150, design="stratified-random",
-        seeds=("test_stratified_pool", "test_stratified_selection"), screener="primary",
-        stem="test_stratified_150",
-        disjoint_from=("seed", "lhs-extension", "guided", "test-natural")),
+    "seed": SetRole(n=300, design="lhs", seeds=("seed_lhs_design",), stem="seed_lhs_300"),
+    "lhs-extension": SetRole(n=300, design="lhs", seeds=("lhs_extension_design",),
+                             stem="lhs_extension_300", disjoint_from=("seed",)),
+    "guided": SetRole(n=300, design="guided-maxmin", seeds=("guided_stream",),
+                      stem="guided_300", screener=True, disjoint_from=("seed",)),
+    "test-natural": SetRole(n=300, design="lhs", seeds=("test_natural_design",),
+                            stem="test_natural_300",
+                            disjoint_from=("seed", "lhs-extension", "guided")),
+    "test-stratified": SetRole(n=150, design="stratified-random",
+                               seeds=("test_stratified_pool", "test_stratified_selection"),
+                               stem="test_stratified_150", screener=True,
+                               disjoint_from=("seed", "lhs-extension", "guided", "test-natural")),
 }
 
 # Generation order: each role follows the roles it depends on.
 ROLE_ORDER = ("seed", "lhs-extension", "guided", "test-natural", "test-stratified")
 
-
-# ---------------------------------------------------------------------------
-# Section "screener": the preliminary surrogate(s)
-# ---------------------------------------------------------------------------
-
-@dataclass(frozen=True)
-class Screener:
-    trained_on: str
-    family: str
-    params: dict = field(default_factory=dict)
-    seeds: dict = field(default_factory=dict)
-    cv_folds: int = 5    # out-of-fold diagnostic only
+# The preliminary surrogate. Fixed hyper-parameters, not a tuned search: it
+# screens the candidate pools and is not one of the models under comparison.
+SCREENER = {"trained_on": "seed", "n_estimators": 500, "cv_folds": 5}
 
 
-# Fixed hyper-parameters, not a tuned search: a screening instrument for the
-# candidate pool, not one of the models under comparison. Its seeds share the
-# value 42 with guided_stream but are independent of that stream.
-SCREENERS = {
-    "primary": Screener(trained_on="seed", family="rf",
-                        params={"n_estimators": 500},
-                        seeds={"fit": 42, "cv": 42}),
-}
-
-
-# ---------------------------------------------------------------------------
-# Section "protocol": the tuned learners and the arms they are fitted on
-# ---------------------------------------------------------------------------
+# --- the tuned learners and the arms ------------------------------------------------
 
 FAMILIES = ("rf", "gbm")
 
@@ -1030,11 +837,10 @@ GRIDS = {
 }
 
 CV_FOLDS = 5
-SEARCH_KIND = "grid"
 
 # Selection criterion. "log-rmse" is RMSE on the trained (log) target, the
 # declared choice; "fos-rmse" is the sensitivity check. Each scoring has its
-# own fit artifacts, so ACTIVE_SCORINGS is not part of any section hash.
+# own fit files.
 SCORINGS = ("log-rmse", "fos-rmse")
 ACTIVE_SCORINGS = ("log-rmse",)
 
@@ -1054,9 +860,7 @@ ARMS = {
 }
 
 
-# ---------------------------------------------------------------------------
-# Section "evaluation"
-# ---------------------------------------------------------------------------
+# --- evaluation -------------------------------------------------------------------
 
 TEST_ROLES = ("test-natural", "test-stratified")
 
@@ -1089,9 +893,7 @@ COMPARISONS = (
 )
 
 
-# ---------------------------------------------------------------------------
-# Section "learning_curve"
-# ---------------------------------------------------------------------------
+# --- learning curve (optional; RF with fixed hyper-parameters) ----------------------
 
 LC_BASE_ROLE = "seed"
 LC_STRATEGIES = {"lhs": "lhs-extension", "guided": "guided"}
@@ -1099,68 +901,33 @@ LC_BUDGETS = (100, 200, 300, 400, 500, 600)
 LC_REPEATS = 10
 
 
-# ---------------------------------------------------------------------------
-# Section hashing
-# ---------------------------------------------------------------------------
+# --- fingerprints -------------------------------------------------------------------
 
-def _jsonable(value):
-    if hasattr(value, "__dataclass_fields__"):
-        return _jsonable(asdict(value))
-    if isinstance(value, dict):
-        return {str(k): _jsonable(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [_jsonable(v) for v in value]
-    return value
+def _digest(payload) -> str:
+    text = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(text.encode()).hexdigest()
 
 
-def _seeds(*names):
-    return {name: SEEDS[name] for name in names}
+def fit_fingerprint(family: str, scoring: str) -> str:
+    """Everything a tuned fit depends on, apart from its training data."""
+    return _digest({
+        "family": family, "scoring": scoring,
+        "grid": GRIDS[family], "fixed": ESTIMATOR_FIXED[family], "cv_folds": CV_FOLDS,
+        "seeds": {k: SEEDS[k] for k in ("protocol_cv_split", "protocol_estimator")},
+        "target": TARGET, "features": FEATURES,
+    })
 
 
-def sections() -> dict[str, dict]:
-    """The configuration, grouped into independently hashed sections."""
-    design_seeds = sorted({s for role in ROLES.values() for s in role.seeds})
-    return {
-        "domain": {
-            "params": PARAMS, "domain": DOMAIN, "features": FEATURES,
-            "target": TARGET, "solver": SOLVER, "repair_variants": REPAIR_VARIANTS,
-        },
-        "design": {
-            "selection_range": SELECTION_RANGE, "n_bins": N_BINS,
-            "n_guided_pool": N_GUIDED_POOL, "guided_per_bin": GUIDED_PER_BIN,
-            "guided_drawn_per_bin": GUIDED_DRAWN_PER_BIN,
-            "n_test_pool": N_TEST_POOL, "test_per_bin": TEST_PER_BIN,
-            "min_distance": MIN_DISTANCE, "roles": ROLES,
-            "seeds": _seeds(*design_seeds),
-        },
-        "screener": {"screeners": SCREENERS},
-        "protocol": {
-            "families": FAMILIES, "estimator_fixed": ESTIMATOR_FIXED,
-            "grids": GRIDS, "cv_folds": CV_FOLDS, "search_kind": SEARCH_KIND,
-            "arms": ARMS, "seeds": _seeds("protocol_cv_split", "protocol_estimator"),
-        },
-        "evaluation": {
-            "test_roles": TEST_ROLES, "zone_edges": ZONE_EDGES, "alpha": ALPHA,
-            "n_bootstrap": N_BOOTSTRAP, "bootstrap_ci": BOOTSTRAP_CI,
-            "comparisons": COMPARISONS, "selection_range": SELECTION_RANGE,
-            "seeds": _seeds("bootstrap_resampling"),
-        },
-        "learning_curve": {
-            "base_role": LC_BASE_ROLE, "strategies": LC_STRATEGIES,
-            "budgets": LC_BUDGETS, "repeats": LC_REPEATS,
-            "seeds": _seeds("learning_curve_subsampling"),
-        },
-    }
+def learning_curve_fingerprint() -> str:
+    return _digest({
+        "base": LC_BASE_ROLE, "strategies": LC_STRATEGIES, "budgets": LC_BUDGETS,
+        "repeats": LC_REPEATS, "fixed": ESTIMATOR_FIXED["rf"],
+        "seeds": {k: SEEDS[k] for k in ("protocol_estimator", "learning_curve_subsampling")},
+        "target": TARGET, "features": FEATURES,
+    })
 
 
-def section_hash(name: str) -> str:
-    payload = json.dumps(_jsonable(sections()[name]), sort_keys=True, separators=(",", ":"))
-    return hashlib.sha256(payload.encode()).hexdigest()
-
-
-# ---------------------------------------------------------------------------
-# Paths (functions, so tests can redirect ROOT)
-# ---------------------------------------------------------------------------
+# --- paths (functions, so tests can redirect ROOT) -------------------------------------
 
 def design_path(role: str) -> Path:
     return ROOT / "data" / "designs" / f"{ROLES[role].stem}.csv"
@@ -1174,12 +941,8 @@ def final_path(role: str) -> Path:
     return ROOT / "data" / "final" / f"{ROLES[role].stem}.csv"
 
 
-def receipt_path() -> Path:
-    return ROOT / "data" / "checks" / "receipt.json"
-
-
-def screener_path(name: str) -> Path:
-    return ROOT / "artifacts" / "screeners" / f"{name}.joblib"
+def metadata_path() -> Path:
+    return ROOT / "data" / "run_metadata.json"
 
 
 def solver_template_path() -> Path:
@@ -1190,16 +953,16 @@ def fit_path(family: str, arm: str, scoring: str) -> Path:
     return ROOT / "artifacts" / "fits" / f"{family}__{arm}__{scoring}.joblib"
 
 
-def learning_curve_path(family: str, key: str, scoring: str, budget: int) -> Path:
-    return ROOT / "artifacts" / "learning_curve" / f"{family}__{key}__{scoring}__n{budget}.joblib"
+def learning_curve_path(key: str, budget: int) -> Path:
+    return ROOT / "artifacts" / "learning_curve" / f"rf__{key}__n{budget}.joblib"
 
 
 def metrics_path(test: str, scoring: str) -> Path:
     return ROOT / "outputs" / "metrics" / f"{test}__{scoring}.json"
 
 
-def learning_curve_metrics_path(scoring: str) -> Path:
-    return ROOT / "outputs" / "metrics" / f"learning_curve__{scoring}.json"
+def learning_curve_metrics_path() -> Path:
+    return ROOT / "outputs" / "metrics" / "learning_curve.json"
 
 
 def tables_dir() -> Path:
@@ -1210,975 +973,37 @@ def figures_dir() -> Path:
     return ROOT / "outputs" / "figures"
 ```
 
-- [ ] **Step 7: Write `tests/__init__.py` (empty) and `tests/conftest.py`**
-
-```python
-import pytest
-
-from sgs import config
-
-
-@pytest.fixture
-def root(tmp_path, monkeypatch):
-    """Redirect every pipeline path into a temporary directory."""
-    monkeypatch.setattr(config, "ROOT", tmp_path)
-    return tmp_path
-```
-
-- [ ] **Step 8: Run tests to verify they pass**
-
-Run: `.venv/bin/pytest tests/test_config.py -q`
-Expected: all pass.
-
-- [ ] **Step 9: Commit**
-
-```bash
-git add pyproject.toml requirements.lock sgs/__init__.py sgs/config.py tests/__init__.py tests/conftest.py tests/test_config.py
-git commit -m "Add the sgs package and its configuration
-
-config.py is the only source of scientific values, grouped into sections
-that are hashed independently.
-
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-```
-
----
-
-### Task 4: Discipline tests (seed literals, forbidden vocabulary)
-
-These go in before any other module so that every later task is written under them.
-
-**Files:**
-- Create: `tests/test_discipline.py`
-
-**Interfaces:**
-- Consumes: the files under `sgs/` (all except `config.py`) and under `notebooks/`.
-- Produces: `seed_violations(source: str) -> list[str]` and `threshold_violations(source: str) -> list[str]`, used only inside this test file.
-
-- [ ] **Step 1: Write the test file**
-
-```python
-"""Tests that enforce the protocol disciplines on the source itself."""
-
-import ast
-import json
-import re
-from pathlib import Path
-
-import pytest
-
-import sgs
-
-SGS_DIR = Path(sgs.__file__).parent
-ROOT = SGS_DIR.parent
-MODULES = sorted(p for p in SGS_DIR.glob("*.py") if p.name != "config.py")
-
-SEED_NAME = re.compile(r"seed|random_state", re.IGNORECASE)
-RNG_CALLS = {"LatinHypercube", "default_rng", "RandomState", "check_random_state"}
-CLASSIFICATION_METRICS = {
-    "accuracy_score", "balanced_accuracy_score", "precision_score", "recall_score",
-    "f1_score", "fbeta_score", "confusion_matrix", "classification_report",
-    "roc_auc_score", "roc_curve", "precision_recall_curve", "matthews_corrcoef",
-    "cohen_kappa_score", "average_precision_score",
-}
-FORBIDDEN_WORDS = re.compile(r"false[\s_-]?stable", re.IGNORECASE)
-
-
-def _int_literal(node):
-    return (isinstance(node, ast.Constant) and isinstance(node.value, int)
-            and not isinstance(node.value, bool))
-
-
-def _target_name(node):
-    if isinstance(node, ast.Name):
-        return node.id
-    if isinstance(node, ast.Attribute):
-        return node.attr
-    if isinstance(node, ast.Subscript) and isinstance(node.slice, ast.Constant):
-        return str(node.slice.value)
-    return None
-
-
-def _call_name(node):
-    if isinstance(node.func, ast.Name):
-        return node.func.id
-    if isinstance(node.func, ast.Attribute):
-        return node.func.attr
-    return None
-
-
-def seed_violations(source):
-    found = []
-    for node in ast.walk(ast.parse(source)):
-        if isinstance(node, (ast.Assign, ast.AnnAssign)):
-            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
-            if node.value is not None and _int_literal(node.value):
-                for target in targets:
-                    name = _target_name(target)
-                    if name and SEED_NAME.search(name):
-                        found.append(f"line {node.lineno}: {name} = literal")
-        elif isinstance(node, ast.Call):
-            for kw in node.keywords:
-                if kw.arg and SEED_NAME.search(kw.arg) and _int_literal(kw.value):
-                    found.append(f"line {node.lineno}: {kw.arg}=literal")
-            if _call_name(node) in RNG_CALLS and any(_int_literal(a) for a in node.args):
-                found.append(f"line {node.lineno}: {_call_name(node)}(literal)")
-        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            args = node.args.args + node.args.kwonlyargs
-            defaults = ([None] * (len(node.args.args) - len(node.args.defaults))
-                        + node.args.defaults + node.args.kw_defaults)
-            for arg, default in zip(args, defaults):
-                if default is not None and SEED_NAME.search(arg.arg) and _int_literal(default):
-                    found.append(f"line {node.lineno}: default {arg.arg}=literal")
-    return found
-
-
-def threshold_violations(source):
-    found = []
-    if FORBIDDEN_WORDS.search(source):
-        found.append("forbidden vocabulary: false stable")
-    for node in ast.walk(ast.parse(source)):
-        if isinstance(node, ast.ImportFrom) and (node.module or "").startswith("sklearn.metrics"):
-            for alias in node.names:
-                if alias.name in CLASSIFICATION_METRICS:
-                    found.append(f"line {node.lineno}: imports {alias.name}")
-        elif isinstance(node, ast.Attribute) and node.attr in CLASSIFICATION_METRICS:
-            found.append(f"line {node.lineno}: uses {node.attr}")
-        elif isinstance(node, ast.Compare):
-            operands = [node.left, *node.comparators]
-            has_number = any(isinstance(o, ast.Constant) and isinstance(o.value, (int, float))
-                             and not isinstance(o.value, bool) for o in operands)
-            mentions_pred = any("pred" in ast.unparse(o).lower() for o in operands
-                                if not isinstance(o, ast.Constant))
-            if has_number and mentions_pred:
-                found.append(f"line {node.lineno}: prediction compared with a fixed value")
-    return found
-
-
-def _notebook_sources():
-    for path in sorted((ROOT / "notebooks").glob("*.ipynb")):
-        cells = json.loads(path.read_text())["cells"]
-        code = "\n".join(
-            "\n".join(line for line in "".join(c["source"]).splitlines()
-                      if not line.lstrip().startswith(("!", "%")))
-            for c in cells if c["cell_type"] == "code")
-        yield path, code
-
-
-# --- the checkers themselves ------------------------------------------------------
-
-@pytest.mark.parametrize("snippet", [
-    "seed = 42",
-    "RANDOM_STATE: int = 0",
-    "f(random_state=0)",
-    "qmc.LatinHypercube(42)",
-    "np.random.default_rng(7)",
-    "def f(seed=1): pass",
-    "cfg['seed'] = 3",
-])
-def test_seed_checker_catches(snippet):
-    assert seed_violations(snippet)
-
-
-@pytest.mark.parametrize("snippet", [
-    "seed = config.SEEDS['seed_lhs_design']",
-    "f(random_state=config.SEEDS['protocol_estimator'], n_jobs=1)",
-    "qmc.LatinHypercube(d=len(config.PARAMS), seed=seed)",
-    "np.random.default_rng(config.SEEDS['guided_stream'])",
-    "n_seed = len(frame)",
-])
-def test_seed_checker_allows(snippet):
-    assert not seed_violations(snippet)
-
-
-@pytest.mark.parametrize("snippet", [
-    "n_false_stable = 3",
-    "from sklearn.metrics import confusion_matrix",
-    "sklearn.metrics.f1_score(a, b)",
-    "bad = (y_pred >= 1.0) & (y < 1.0)",
-    "flag = preds[name] < 1",
-])
-def test_threshold_checker_catches(snippet):
-    assert threshold_violations(snippet)
-
-
-@pytest.mark.parametrize("snippet", [
-    "mask = (pool['FOS_pred'] > lo) & (pool['FOS_pred'] <= hi)",
-    "share = np.mean(d < 0)",
-    "from sklearn.metrics import make_scorer",
-])
-def test_threshold_checker_allows(snippet):
-    assert not threshold_violations(snippet)
-
-
-# --- the actual disciplines ------------------------------------------------------
-
-@pytest.mark.parametrize("path", MODULES, ids=lambda p: p.name)
-def test_no_seed_literal_outside_config(path):
-    assert seed_violations(path.read_text()) == []
-
-
-@pytest.mark.parametrize("path", MODULES, ids=lambda p: p.name)
-def test_no_threshold_misclassification_in_package(path):
-    assert threshold_violations(path.read_text()) == []
-
-
-def test_no_threshold_misclassification_in_notebooks():
-    for path, code in _notebook_sources():
-        assert threshold_violations(code) == [], path.name
-```
-
-- [ ] **Step 2: Run**
-
-Run: `.venv/bin/pytest tests/test_discipline.py -q`
-Expected: all pass. The checker tests exercise the snippets; the module tests pass over `__init__.py` alone, and the notebook test passes vacuously, since `notebooks/` is empty until Task 26.
-
-- [ ] **Step 3: Commit**
-
-```bash
-git add tests/test_discipline.py
-git commit -m "Enforce the seed and no-misclassification disciplines in tests
-
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-```
-
----
-
-### Task 5: `manifest.py` — hashing, sidecars, staleness
-
-**Files:**
-- Create: `sgs/manifest.py`, `tests/test_manifest.py`
-
-**Interfaces:**
-- Consumes: `config.ROOT`, `config.section_hash`.
-- Produces:
-  - `SUFFIX = ".manifest.json"`, `manifest_path(payload: Path) -> Path`
-  - `sha256_file(path) -> str`, `environment() -> dict`
-  - `write_manifest(payload, *, stage: str, sections: Iterable[str], inputs: Mapping[str, Path], wall_time_s: float, extra: dict | None = None) -> dict`
-  - `read_manifest(payload) -> dict | None`
-  - `staleness(payload, *, sections, inputs) -> list[str]` (empty = fresh)
-  - `verify_provenance(path) -> None` (raises `FileNotFoundError` / `MissingProvenance`)
-  - `should_run(payload, *, sections, inputs, force: bool) -> bool` (raises `StaleArtifact`)
-  - `require_fresh(payload, *, sections, inputs) -> None` (raises `MissingProvenance` / `StaleArtifact`)
-  - exceptions `StaleArtifact(RuntimeError)`, `MissingProvenance(RuntimeError)`
-
-- [ ] **Step 1: Write the failing tests `tests/test_manifest.py`**
-
-```python
-import json
-
-import numpy as np
-import pytest
-
-from sgs import config, manifest
-
-
-def _write(path, text):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text)
-    return path
-
-
-def test_manifest_records_hashes_and_environment(root):
-    src = _write(root / "data" / "a.csv", "x\n1\n")
-    out = _write(root / "data" / "b.csv", "y\n2\n")
-    record = manifest.write_manifest(out, stage="demo", sections=("domain",),
-                                     inputs={"a": src}, wall_time_s=1.23456,
-                                     extra={"n": np.int64(3)})
-    on_disk = json.loads(manifest.manifest_path(out).read_text())
-    assert on_disk == record
-    assert record["sha256"] == manifest.sha256_file(out)
-    assert record["config"] == {"domain": config.section_hash("domain")}
-    assert record["inputs"]["a"]["path"] == "data/a.csv"
-    assert record["environment"]["python"]
-    assert record["extra"] == {"n": 3}
-    assert record["wall_time_s"] == 1.235
-
-
-def test_fresh_payload_has_no_staleness(root):
-    src = _write(root / "a.csv", "1")
-    out = _write(root / "b.csv", "2")
-    manifest.write_manifest(out, stage="demo", sections=("design",), inputs={"a": src}, wall_time_s=0)
-    assert manifest.staleness(out, sections=("design",), inputs={"a": src}) == []
-
-
-def test_changed_input_is_named(root):
-    src = _write(root / "a.csv", "1")
-    out = _write(root / "b.csv", "2")
-    manifest.write_manifest(out, stage="demo", sections=(), inputs={"a": src}, wall_time_s=0)
-    src.write_text("changed")
-    reasons = manifest.staleness(out, sections=(), inputs={"a": src})
-    assert len(reasons) == 1 and reasons[0].startswith("input 'a' changed")
-
-
-def test_changed_section_is_named(root, monkeypatch):
-    out = _write(root / "b.csv", "2")
-    manifest.write_manifest(out, stage="demo", sections=("protocol",), inputs={}, wall_time_s=0)
-    monkeypatch.setitem(config.GRIDS["rf"], "min_samples_leaf", [1])
-    assert manifest.staleness(out, sections=("protocol",), inputs={}) == ["config section 'protocol' changed"]
-
-
-def test_unrelated_section_change_does_not_stale(root, monkeypatch):
-    out = _write(root / "b.csv", "2")
-    manifest.write_manifest(out, stage="demo", sections=("design",), inputs={}, wall_time_s=0)
-    monkeypatch.setitem(config.GRIDS["rf"], "min_samples_leaf", [1])
-    assert manifest.staleness(out, sections=("design",), inputs={}) == []
-
-
-def test_modified_payload_is_detected(root):
-    out = _write(root / "b.csv", "2")
-    manifest.write_manifest(out, stage="demo", sections=(), inputs={}, wall_time_s=0)
-    out.write_text("tampered")
-    assert "payload modified after its manifest was written" in manifest.staleness(out, sections=(), inputs={})
-
-
-def test_changed_dependency_set_is_named(root):
-    src = _write(root / "a.csv", "1")
-    out = _write(root / "b.csv", "2")
-    manifest.write_manifest(out, stage="demo", sections=("domain",), inputs={}, wall_time_s=0)
-    reasons = manifest.staleness(out, sections=("domain", "design"), inputs={"a": src})
-    assert "stage now depends on config section 'design'" in reasons
-    assert "new input 'a'" in reasons
-
-
-def test_should_run(root):
-    out = root / "b.csv"
-    assert manifest.should_run(out, sections=(), inputs={}, force=False)
-    _write(out, "2")
-    manifest.write_manifest(out, stage="demo", sections=(), inputs={}, wall_time_s=0)
-    assert not manifest.should_run(out, sections=(), inputs={}, force=False)
-    out.write_text("tampered")
-    with pytest.raises(manifest.StaleArtifact, match="--force"):
-        manifest.should_run(out, sections=(), inputs={}, force=False)
-    assert manifest.should_run(out, sections=(), inputs={}, force=True)
-
-
-def test_verify_provenance(root):
-    path = root / "x.csv"
-    with pytest.raises(FileNotFoundError):
-        manifest.verify_provenance(path)
-    _write(path, "1")
-    with pytest.raises(manifest.MissingProvenance, match="no manifest"):
-        manifest.verify_provenance(path)
-    manifest.write_manifest(path, stage="demo", sections=(), inputs={}, wall_time_s=0)
-    manifest.verify_provenance(path)
-
-
-def test_require_fresh(root):
-    out = _write(root / "b.csv", "2")
-    manifest.write_manifest(out, stage="demo", sections=("domain",), inputs={}, wall_time_s=0)
-    manifest.require_fresh(out, sections=("domain",), inputs={})
-    with pytest.raises(manifest.StaleArtifact):
-        manifest.require_fresh(out, sections=("domain", "design"), inputs={})
-```
-
-- [ ] **Step 2: Run to verify failure**
-
-Run: `.venv/bin/pytest tests/test_manifest.py -q`
-Expected: `ImportError: cannot import name 'manifest'`.
-
-- [ ] **Step 3: Write `sgs/manifest.py`**
-
-```python
-"""Provenance sidecars: hashing, manifest read/write, staleness detection.
-
-Every payload ``x`` has a sidecar ``x.manifest.json`` recording its content
-hash, the hashes of the config sections and input files that produced it,
-library versions and wall time. A payload whose recorded hashes no longer
-match is stale, and the stage that owns it refuses to proceed without --force.
-"""
-
-from __future__ import annotations
-
-import datetime as _dt
-import hashlib
-import json
-import os
-import platform
-from importlib import metadata
-from pathlib import Path
-from typing import Iterable, Mapping
-
-from sgs import config
-
-SUFFIX = ".manifest.json"
-TRACKED_PACKAGES = ("numpy", "pandas", "scipy", "scikit-learn", "joblib", "shapely", "xslope")
-
-
-class StaleArtifact(RuntimeError):
-    """An artifact exists but no longer matches its configuration or inputs."""
-
-
-class MissingProvenance(RuntimeError):
-    """A file is used as an input but has no valid manifest."""
-
-
-def manifest_path(payload: Path) -> Path:
-    payload = Path(payload)
-    return payload.with_name(payload.name + SUFFIX)
-
-
-def sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with Path(path).open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1 << 20), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def environment() -> dict:
-    packages = {}
-    for name in TRACKED_PACKAGES:
-        try:
-            packages[name] = metadata.version(name)
-        except metadata.PackageNotFoundError:
-            packages[name] = None
-    return {"python": platform.python_version(), "packages": packages}
-
-
-def _relative(path: Path) -> str:
-    path = Path(path).resolve()
-    try:
-        return path.relative_to(Path(config.ROOT).resolve()).as_posix()
-    except ValueError:
-        return str(path)
-
-
-def _json_default(value):
-    if hasattr(value, "item"):          # numpy scalar
-        return value.item()
-    if hasattr(value, "tolist"):        # numpy array
-        return value.tolist()
-    raise TypeError(f"not JSON serializable: {type(value).__name__}")
-
-
-def _atomic_write_text(path: Path, text: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_name(f".{path.name}.tmp")
-    tmp.write_text(text)
-    os.replace(tmp, path)
-
-
-def write_manifest(payload, *, stage: str, sections: Iterable[str],
-                   inputs: Mapping[str, Path], wall_time_s: float,
-                   extra: dict | None = None) -> dict:
-    payload = Path(payload)
-    record = {
-        "stage": stage,
-        "payload": payload.name,
-        "sha256": sha256_file(payload),
-        "config": {name: config.section_hash(name) for name in sorted(sections)},
-        "inputs": {name: {"path": _relative(path), "sha256": sha256_file(path)}
-                   for name, path in sorted(inputs.items())},
-        "environment": environment(),
-        "wall_time_s": round(float(wall_time_s), 3),
-        "created": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
-        "extra": extra or {},
-    }
-    text = json.dumps(record, indent=2, sort_keys=True, default=_json_default)
-    _atomic_write_text(manifest_path(payload), text + "\n")
-    return json.loads(text)
-
-
-def read_manifest(payload) -> dict | None:
-    path = manifest_path(Path(payload))
-    if not path.exists():
-        return None
-    return json.loads(path.read_text())
-
-
-def staleness(payload, *, sections: Iterable[str], inputs: Mapping[str, Path]) -> list[str]:
-    """Reasons why an existing payload no longer matches; empty when fresh."""
-    payload = Path(payload)
-    record = read_manifest(payload)
-    if record is None:
-        return ["no manifest: the payload has no recorded provenance"]
-    reasons = []
-    if sha256_file(payload) != record["sha256"]:
-        reasons.append("payload modified after its manifest was written")
-
-    sections = set(sections)
-    recorded = record["config"]
-    for name in sorted(sections | set(recorded)):
-        if name not in sections:
-            reasons.append(f"stage no longer depends on config section {name!r}")
-        elif name not in recorded:
-            reasons.append(f"stage now depends on config section {name!r}")
-        elif recorded[name] != config.section_hash(name):
-            reasons.append(f"config section {name!r} changed")
-
-    recorded_inputs = record["inputs"]
-    for name in sorted(set(inputs) | set(recorded_inputs)):
-        if name not in inputs:
-            reasons.append(f"input {name!r} no longer used")
-        elif name not in recorded_inputs:
-            reasons.append(f"new input {name!r}")
-        elif not Path(inputs[name]).exists():
-            reasons.append(f"input {name!r} missing")
-        else:
-            was = recorded_inputs[name]["sha256"]
-            now = sha256_file(inputs[name])
-            if now != was:
-                reasons.append(f"input {name!r} changed ({was[:8]} -> {now[:8]})")
-    return reasons
-
-
-def verify_provenance(path) -> None:
-    """Fail unless ``path`` exists, has a manifest, and still matches it."""
-    path = Path(path)
-    if not path.exists():
-        raise FileNotFoundError(f"{_relative(path)} does not exist; run the stage that produces it")
-    record = read_manifest(path)
-    if record is None:
-        raise MissingProvenance(f"{_relative(path)} has no manifest; only pipeline-produced files may be used")
-    if sha256_file(path) != record["sha256"]:
-        raise MissingProvenance(f"{_relative(path)} was modified after its manifest was written")
-
-
-def should_run(payload, *, sections, inputs, force: bool) -> bool:
-    """True if the payload is missing, or stale and ``force`` is set."""
-    payload = Path(payload)
-    if not payload.exists():
-        return True
-    reasons = staleness(payload, sections=sections, inputs=inputs)
-    if not reasons:
-        return False
-    if force:
-        return True
-    raise StaleArtifact(f"{_relative(payload)} is stale: " + "; ".join(reasons)
-                        + ". Re-run with --force to regenerate it.")
-
-
-def require_fresh(payload, *, sections, inputs) -> None:
-    """Fail loudly if an artifact about to be consumed is stale."""
-    verify_provenance(payload)
-    reasons = staleness(payload, sections=sections, inputs=inputs)
-    if reasons:
-        raise StaleArtifact(f"{_relative(Path(payload))} is stale: " + "; ".join(reasons)
-                            + ". Re-run the stage that produces it.")
-```
-
-- [ ] **Step 4: Run tests**
-
-Run: `.venv/bin/pytest tests/test_manifest.py tests/test_discipline.py -q`
-Expected: all pass.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add sgs/manifest.py tests/test_manifest.py
-git commit -m "Add manifest sidecars with per-section staleness detection
-
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-```
-
----
-
-### Task 6: `stage.py` (guarded producer) and the CLI
-
-**Files:**
-- Create: `sgs/stage.py`, `sgs/cli.py`, `tests/test_stage.py`, `tests/test_cli.py`
-
-**Interfaces:**
-- Consumes: `manifest.*`.
-- Produces:
-  - `Options(dry_run=False, force=False, resume=False, workers=1, only_family=None, only_arm=None, only_scoring=None)` (frozen dataclass)
-  - `produce(payload, *, stage: str, sections, inputs: Mapping[str, Path], opts: Options, build: Callable[[Path], dict | None], resumable: bool = False) -> bool`. It builds into `.{name}.tmp`, then `os.replace`s it into place and writes the manifest. It returns True if the payload was (re)built. On failure it deletes the tmp file, unless `resumable`.
-  - `cli.build_parser()`, `cli.main(argv=None)`. Each handler imports its stage module lazily, so the CLI works before later modules exist. The stage entry points it calls, which later tasks must provide exactly:
-    `design.stage(role, opts)`, `solve.stage(role, opts)`, `repair.stage(role, opts)`, `screener.stage(opts, name=None)`, `checks.stage(opts)`, `fitting.stage(opts)`, `learning_curve.stage(opts)`, `evaluate.stage(opts, role=None)`, `report.stage(opts)`.
-
-- [ ] **Step 1: Write the failing tests `tests/test_stage.py`**
-
-```python
-import pytest
-
-from sgs import manifest
-from sgs.stage import Options, produce
-
-
-def _input(root, name="in.csv", text="1"):
-    path = root / name
-    path.write_text(text)
-    manifest.write_manifest(path, stage="fixture", sections=(), inputs={}, wall_time_s=0)
-    return path
-
-
-def _builder(calls, text="out"):
-    def build(tmp):
-        calls.append(tmp)
-        tmp.write_text(text)
-        return {"n": 1}
-    return build
-
-
-def test_builds_once_then_skips(root):
-    src, out, calls = _input(root), root / "out.csv", []
-    assert produce(out, stage="t", sections=(), inputs={"a": src}, opts=Options(), build=_builder(calls))
-    assert out.read_text() == "out"
-    assert manifest.read_manifest(out)["extra"] == {"n": 1}
-    assert not produce(out, stage="t", sections=(), inputs={"a": src}, opts=Options(), build=_builder(calls))
-    assert len(calls) == 1
-    assert calls[0].name == ".out.csv.tmp"
-
-
-def test_changed_input_fails_without_force(root):
-    src, out, calls = _input(root), root / "out.csv", []
-    produce(out, stage="t", sections=(), inputs={"a": src}, opts=Options(), build=_builder(calls))
-    src.write_text("2")
-    manifest.write_manifest(src, stage="fixture", sections=(), inputs={}, wall_time_s=0)
-    with pytest.raises(manifest.StaleArtifact, match="input 'a' changed"):
-        produce(out, stage="t", sections=(), inputs={"a": src}, opts=Options(), build=_builder(calls))
-    assert produce(out, stage="t", sections=(), inputs={"a": src}, opts=Options(force=True),
-                   build=_builder(calls, "rebuilt"))
-    assert out.read_text() == "rebuilt"
-
-
-def test_input_without_manifest_is_refused(root):
-    src = root / "raw.csv"
-    src.write_text("1")
-    with pytest.raises(manifest.MissingProvenance):
-        produce(root / "out.csv", stage="t", sections=(), inputs={"a": src}, opts=Options(), build=_builder([]))
-
-
-def test_dry_run_writes_nothing(root, capsys):
-    out = root / "out.csv"
-    assert not produce(out, stage="t", sections=(), inputs={}, opts=Options(dry_run=True), build=_builder([]))
-    assert not out.exists()
-    assert "dry run" in capsys.readouterr().out
-
-
-def test_dry_run_reports_missing_inputs(root, capsys):
-    produce(root / "out.csv", stage="t", sections=(), inputs={"a": root / "nope.csv"},
-            opts=Options(dry_run=True), build=_builder([]))
-    assert "waits for a" in capsys.readouterr().out
-
-
-def test_failed_build_leaves_no_payload(root):
-    out = root / "out.csv"
-
-    def build(tmp):
-        tmp.write_text("partial")
-        raise RuntimeError("boom")
-
-    with pytest.raises(RuntimeError):
-        produce(out, stage="t", sections=(), inputs={}, opts=Options(), build=build)
-    assert not out.exists() and not (root / ".out.csv.tmp").exists()
-
-
-def test_resumable_build_keeps_its_checkpoint(root):
-    out = root / "out.csv"
-
-    def build(tmp):
-        tmp.write_text("partial")
-        raise KeyboardInterrupt
-
-    with pytest.raises(KeyboardInterrupt):
-        produce(out, stage="t", sections=(), inputs={}, opts=Options(), build=build, resumable=True)
-    assert (root / ".out.csv.tmp").read_text() == "partial"
-```
-
-- [ ] **Step 2: Write `tests/test_cli.py`**
-
-```python
-import pytest
-
-from sgs import cli
-
-
-def test_every_stage_has_a_subcommand():
-    parser = cli.build_parser()
-    for argv in (["design", "--role", "seed"], ["solve", "--role", "guided", "--workers", "4", "--resume"],
-                 ["repair", "--role", "test-natural"], ["fit-screener"], ["check"],
-                 ["fit", "--only-family", "rf", "--only-arm", "C0", "--only-scoring", "log-rmse"],
-                 ["learning-curve", "--only-family", "gbm"], ["evaluate", "--role", "test-stratified"],
-                 ["report"], ["run-all", "--dry-run", "--workers", "6"]):
-        args = parser.parse_args(argv)
-        assert callable(args.handler)
-
-
-def test_unknown_role_is_rejected():
-    with pytest.raises(SystemExit):
-        cli.build_parser().parse_args(["design", "--role", "nope"])
-
-
-def test_evaluate_role_is_restricted_to_test_sets():
-    with pytest.raises(SystemExit):
-        cli.build_parser().parse_args(["evaluate", "--role", "seed"])
-
-
-def test_no_scientific_flags_exist():
-    with pytest.raises(SystemExit):
-        cli.build_parser().parse_args(["design", "--role", "seed", "--seed", "1"])
-
-
-def test_workers_must_be_positive():
-    with pytest.raises(SystemExit):
-        cli.main(["solve", "--role", "seed", "--workers", "0"])
-
-
-def test_options_are_carried():
-    args = cli.build_parser().parse_args(["fit", "--force", "--only-arm", "C"])
-    opts = cli._options(args)
-    assert opts.force and opts.only_arm == "C" and not opts.dry_run and opts.workers == 1
-```
-
-- [ ] **Step 3: Run to verify failure**
-
-Run: `.venv/bin/pytest tests/test_stage.py tests/test_cli.py -q`
-Expected: `ImportError` for `sgs.stage` and `sgs.cli`.
-
-- [ ] **Step 4: Write `sgs/stage.py`**
-
-```python
-"""Execution control shared by every stage: options and the guarded producer."""
-
-from __future__ import annotations
-
-import os
-import time
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Callable, Iterable, Mapping
-
-from sgs import manifest
-
-
-@dataclass(frozen=True)
-class Options:
-    dry_run: bool = False
-    force: bool = False
-    resume: bool = False
-    workers: int = 1
-    only_family: str | None = None
-    only_arm: str | None = None
-    only_scoring: str | None = None
-
-
-def produce(payload, *, stage: str, sections: Iterable[str], inputs: Mapping[str, Path],
-            opts: Options, build: Callable[[Path], dict | None], resumable: bool = False) -> bool:
-    """Produce ``payload`` unless it is fresh; return True if it was (re)built.
-
-    ``build(tmp)`` writes the payload to ``tmp`` and returns extra manifest
-    fields (or None). The payload is moved into place only after ``build``
-    returns, so an interrupted stage never leaves a partial file that looks
-    complete. A resumable build keeps ``tmp`` on failure as its checkpoint.
-    """
-    payload = Path(payload)
-    sections = tuple(sections)
-    if opts.dry_run:
-        missing = [name for name, path in inputs.items() if not Path(path).exists()]
-        if missing:
-            print(f"[{stage}] dry run: {payload.name} waits for {', '.join(missing)}")
-            return False
-    for path in inputs.values():
-        manifest.verify_provenance(path)
-    if not manifest.should_run(payload, sections=sections, inputs=inputs, force=opts.force):
-        print(f"[{stage}] up to date: {payload.name}")
-        return False
-    if opts.dry_run:
-        print(f"[{stage}] dry run: would produce {payload.name}")
-        return False
-
-    payload.parent.mkdir(parents=True, exist_ok=True)
-    tmp = payload.with_name(f".{payload.name}.tmp")
-    started = time.perf_counter()
-    try:
-        extra = build(tmp)
-        os.replace(tmp, payload)
-    except BaseException:
-        if not resumable:
-            tmp.unlink(missing_ok=True)
-        raise
-    manifest.write_manifest(payload, stage=stage, sections=sections, inputs=inputs,
-                            wall_time_s=time.perf_counter() - started, extra=extra)
-    print(f"[{stage}] wrote {payload.name}")
-    return True
-```
-
-- [ ] **Step 5: Write `sgs/cli.py`**
-
-```python
-"""sgs — the surrogate-guided sampling pipeline, one subcommand per stage.
-
-Scientific parameters live in sgs/config.py; the command line only selects a
-role and controls execution.
-"""
-
-from __future__ import annotations
-
-import argparse
-import platform
-import sys
-
-from sgs import config
-from sgs.stage import Options
-
-REFERENCE_PYTHON = "3.14.4"
-
-
-def _options(args) -> Options:
-    return Options(
-        dry_run=args.dry_run,
-        force=args.force,
-        resume=getattr(args, "resume", False),
-        workers=getattr(args, "workers", 1),
-        only_family=getattr(args, "only_family", None),
-        only_arm=getattr(args, "only_arm", None),
-        only_scoring=getattr(args, "only_scoring", None),
-    )
-
-
-def _design(args, opts):
-    from sgs import design
-    design.stage(args.role, opts)
-
-
-def _solve(args, opts):
-    from sgs import solve
-    solve.stage(args.role, opts)
-
-
-def _repair(args, opts):
-    from sgs import repair
-    repair.stage(args.role, opts)
-
-
-def _fit_screener(args, opts):
-    from sgs import screener
-    screener.stage(opts)
-
-
-def _check(args, opts):
-    from sgs import checks
-    checks.stage(opts)
-
-
-def _fit(args, opts):
-    from sgs import fitting
-    fitting.stage(opts)
-
-
-def _learning_curve(args, opts):
-    from sgs import learning_curve
-    learning_curve.stage(opts)
-
-
-def _evaluate(args, opts):
-    from sgs import evaluate
-    evaluate.stage(opts, role=args.role)
-
-
-def _report(args, opts):
-    from sgs import report
-    report.stage(opts)
-
-
-def _run_all(args, opts):
-    from sgs import checks, design, evaluate, fitting, learning_curve, repair, report, screener, solve
-    for role in config.ROLE_ORDER:
-        spec = config.ROLES[role]
-        if spec.screener:
-            screener.stage(opts, name=spec.screener)
-        design.stage(role, opts)
-        solve.stage(role, opts)
-        repair.stage(role, opts)
-    checks.stage(opts)
-    fitting.stage(opts)
-    learning_curve.stage(opts)
-    evaluate.stage(opts)
-    report.stage(opts)
-
-
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="sgs", description=__doc__,
-                                     formatter_class=argparse.RawDescriptionHelpFormatter)
-    sub = parser.add_subparsers(dest="command", required=True)
-
-    def command(name, handler, help, *, role=None, resume=False, filters=()):
-        p = sub.add_parser(name, help=help)
-        p.add_argument("--dry-run", action="store_true", help="report what would run, run nothing")
-        p.add_argument("--force", action="store_true", help="regenerate stale artifacts instead of failing")
-        if role == "any":
-            p.add_argument("--role", required=True, choices=tuple(config.ROLES))
-        elif role == "test":
-            p.add_argument("--role", default=None, choices=config.TEST_ROLES,
-                           help="one test set (default: all)")
-        if resume:
-            p.add_argument("--resume", action="store_true", help="continue a partial solver run")
-            p.add_argument("--workers", type=int, default=1, help="solver processes")
-        for name_ in filters:
-            p.add_argument(f"--only-{name_}", default=None,
-                           help=f"restrict to one {name_} declared in config")
-        p.set_defaults(handler=handler)
-
-    command("design", _design, "draw the parameter set of a role", role="any")
-    command("solve", _solve, "run xslope/Bishop on a role's design", role="any", resume=True)
-    command("repair", _repair, "recompute boundary-truncated rows on enlarged domains", role="any")
-    command("fit-screener", _fit_screener, "fit the preliminary surrogate")
-    command("check", _check, "validate final sets and pairwise disjointness")
-    command("fit", _fit, "tuned search + nested OOF residuals per (family, arm, scoring)",
-            filters=("family", "arm", "scoring"))
-    command("learning-curve", _learning_curve, "refit on budget subsamples",
-            filters=("family", "scoring"))
-    command("evaluate", _evaluate, "metrics on the test sets", role="test", filters=("scoring",))
-    command("report", _report, "booktabs tables and figures from outputs/metrics")
-    command("run-all", _run_all, "every stage, in order", resume=True, filters=("scoring",))
-    return parser
-
-
-def main(argv=None) -> None:
-    parser = build_parser()
-    args = parser.parse_args(argv)
-    if getattr(args, "workers", 1) < 1:
-        parser.error("--workers must be at least 1")
-    if platform.python_version() != REFERENCE_PYTHON:
-        print(f"warning: running on Python {platform.python_version()}; "
-              f"the reference environment is {REFERENCE_PYTHON}", file=sys.stderr)
-    args.handler(args, _options(args))
-
-
-if __name__ == "__main__":
-    main()
-```
-
-- [ ] **Step 6: Run tests**
+- [ ] **Step 9: Run tests**
 
 Run: `.venv/bin/pytest -q`
-Expected: all pass.
+Expected: all pass. `test_seeds.py` scans `sgs/__init__.py` only at this point.
 
-Run: `.venv/bin/sgs --help`
-Expected: the ten subcommands are listed.
-
-- [ ] **Step 7: Commit**
+- [ ] **Step 10: Commit**
 
 ```bash
-git add sgs/stage.py sgs/cli.py tests/test_stage.py tests/test_cli.py
-git commit -m "Add the guarded stage producer and the sgs CLI
+git add pyproject.toml requirements.lock sgs/__init__.py sgs/config.py tests/__init__.py tests/conftest.py tests/test_config.py tests/test_seeds.py
+git commit -m "Add the sgs package, its configuration and the seed-literal test
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
 
 ---
 
-## Phase 2 — design, solve, repair; the seed chain
-
-### Task 7: `data.py` — schema, derived feature, loading
+## Task 4: `data.py` — schema, derived feature, loading, validation, run metadata
 
 **Files:**
 - Create: `sgs/data.py`, `tests/helpers.py`, `tests/test_data.py`
 
 **Interfaces:**
-- Consumes: `config`, `manifest.verify_provenance`.
+- Consumes: `config`.
 - Produces:
   - `RESULT_COLUMNS: list[str]`, `META_COLUMNS = ["repair_variant", "excluded"]`, `FINAL_COLUMNS`, `EXCLUSION_REASONS = ("solver_error", "unresolved")`
   - `add_features(frame) -> DataFrame` (copy, adds `gamma_H_c`) — the **only** definition of the derived feature
-  - `read_table(path) -> DataFrame` (text columns as strings, empty = `""`)
-  - `is_true(series) -> Series[bool]`, `usable(frame) -> DataFrame`
-  - `load_role(role) -> DataFrame` — usable rows of `final/<role>`, with `row_id = "<role>:<row index in the file>"` and features
-  - `load_arm(arm) -> DataFrame`
-  - `TestSet(name, X, y, ids)` (frozen dataclass, `__test__ = False`), `load_test(role) -> TestSet`
-  - `normalize(frame) -> ndarray` (params scaled to [0, 1] by `config.DOMAIN`)
-- `tests/helpers.py` produces `synthetic_fos(frame)`, `FormulaModel`, `synthetic_final(n, seed)`, `write_payload(path, frame, sections=(), inputs=None)`, `write_final(role, frame)`.
+  - `read_table(path) -> DataFrame` (text columns as strings, empty = `""`), `is_true(series)`, `usable(frame)`, `normalize(frame) -> ndarray`
+  - `load_role(role) -> DataFrame` (usable rows of `final/<role>`, `row_id = "<role>:<index in file>"`, features), `load_arm(arm)`, `TestSet(name, X, y, ids)`, `load_test(role) -> TestSet`
+  - `DataError(RuntimeError)`, `set_problems(frame, role) -> list[str]` (each entry starts with the check name), `validate_sets(roles) -> None`
+  - `sha256_file(path) -> str`, `environment() -> dict`, `read_metadata() -> dict`, `record(section, key, entry) -> None`
+- `tests/helpers.py` produces `synthetic_fos(frame)`, `FormulaModel`, `synthetic_final(n, seed)`, `write_final(role, frame)`, `shrink_roles(monkeypatch, sizes: dict)`.
 
 - [ ] **Step 1: Write `tests/helpers.py`**
 
@@ -2186,10 +1011,12 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 """Synthetic fixtures. The formula is not a slope-stability model; it only
 gives a smooth, positive, FOS-like response over the real domain."""
 
+import dataclasses
+
 import numpy as np
 import pandas as pd
 
-from sgs import config, data, manifest
+from sgs import config, data
 
 
 def synthetic_fos(frame):
@@ -2219,26 +1046,31 @@ def synthetic_final(n, seed):
     return frame[data.FINAL_COLUMNS]
 
 
-def write_payload(path, frame, sections=(), inputs=None):
+def write_final(role, frame):
+    path = config.final_path(role)
     path.parent.mkdir(parents=True, exist_ok=True)
     frame.to_csv(path, index=False)
-    manifest.write_manifest(path, stage="fixture", sections=sections,
-                            inputs=inputs or {}, wall_time_s=0.0)
     return path
 
 
-def write_final(role, frame):
-    return write_payload(config.final_path(role), frame)
+def shrink_roles(monkeypatch, sizes):
+    roles = dict(config.ROLES)
+    for role, n in sizes.items():
+        roles[role] = dataclasses.replace(roles[role], n=n)
+    monkeypatch.setattr(config, "ROLES", roles)
 ```
 
 - [ ] **Step 2: Write the failing tests `tests/test_data.py`**
 
 ```python
+import json
+
 import numpy as np
+import pandas as pd
 import pytest
 
-from sgs import config, data, manifest
-from tests.helpers import synthetic_final, write_final
+from sgs import config, data
+from tests.helpers import shrink_roles, synthetic_final, write_final
 
 
 def test_schema_order():
@@ -2261,14 +1093,11 @@ def test_load_role_drops_excluded_and_keeps_file_row_ids(root):
     write_final("seed", frame)
     loaded = data.load_role("seed")
     assert list(loaded["row_id"]) == ["seed:0", "seed:2", "seed:4"]
-    assert list(loaded.columns[-1:]) == ["gamma_H_c"]
+    assert loaded.columns[-1] == "gamma_H_c"
 
 
-def test_load_role_requires_provenance(root):
-    path = config.final_path("seed")
-    path.parent.mkdir(parents=True)
-    synthetic_final(3, 0).to_csv(path, index=False)
-    with pytest.raises(manifest.MissingProvenance):
+def test_load_role_names_the_missing_step(root):
+    with pytest.raises(FileNotFoundError, match="sgs generate"):
         data.load_role("seed")
 
 
@@ -2294,15 +1123,74 @@ def test_load_test_refuses_training_roles(root):
 
 
 def test_is_true_reads_csv_booleans():
-    import pandas as pd
     assert data.is_true(pd.Series(["True", "false", "", " TRUE "])).tolist() == [True, False, False, True]
 
 
 def test_normalize_maps_domain_to_unit_cube():
-    import pandas as pd
     corners = pd.DataFrame([{p: lo for p, (lo, _) in config.DOMAIN.items()},
                             {p: hi for p, (_, hi) in config.DOMAIN.items()}])
     np.testing.assert_allclose(data.normalize(corners), [[0] * 5, [1] * 5])
+
+
+def _problem_names(frame, role="seed"):
+    return {p.split(":")[0] for p in data.set_problems(frame, role)}
+
+
+def test_clean_set_has_no_problems():
+    assert data.set_problems(synthetic_final(300, 1), "seed") == []
+
+
+@pytest.mark.parametrize("name, corrupt", [
+    ("schema", lambda f: f.drop(columns="Error")),
+    ("row_count", lambda f: f.iloc[:-1]),
+    ("domain", lambda f: f.assign(angle=np.r_[70.0, f["angle"].to_numpy()[1:]])),
+    ("exclusion_reasons", lambda f: f.assign(excluded=["odd"] + [""] * (len(f) - 1))),
+    ("fos_present", lambda f: f.assign(FOS=np.r_[np.nan, f["FOS"].to_numpy()[1:]])),
+    ("no_untreated_boundary", lambda f: f.assign(At_Boundary=["True"] + ["False"] * (len(f) - 1))),
+    ("no_internal_duplicates", lambda f: f.assign(**{p: np.r_[f[p].iloc[1], f[p].to_numpy()[1:]]
+                                                     for p in config.PARAMS})),
+])
+def test_each_violation_is_named(name, corrupt):
+    assert name in _problem_names(corrupt(synthetic_final(300, 1)))
+
+
+def test_excluded_rows_are_not_held_to_fos_or_boundary_rules():
+    frame = synthetic_final(300, 1)
+    frame.loc[0, ["FOS", "excluded"]] = [np.nan, "solver_error"]
+    frame.loc[1, ["At_Boundary", "excluded"]] = ["True", "unresolved"]
+    assert data.set_problems(frame, "seed") == []
+
+
+def test_validate_sets_passes_and_catches_overlap(root, monkeypatch):
+    shrink_roles(monkeypatch, {"seed": 50, "lhs-extension": 50})
+    write_final("seed", synthetic_final(50, 1))
+    write_final("lhs-extension", synthetic_final(50, 2))
+    data.validate_sets(["seed", "lhs-extension"])
+    write_final("lhs-extension", synthetic_final(50, 1))
+    with pytest.raises(data.DataError, match="lhs-extension/seed: not disjoint"):
+        data.validate_sets(["seed", "lhs-extension"])
+
+
+def test_validate_sets_names_the_failing_role(root, monkeypatch):
+    shrink_roles(monkeypatch, {"seed": 50})
+    frame = synthetic_final(50, 1)
+    frame.loc[0, "At_Boundary"] = "True"
+    write_final("seed", frame)
+    with pytest.raises(data.DataError, match="seed: no_untreated_boundary"):
+        data.validate_sets(["seed"])
+
+
+def test_record_merges_entries_and_serializes_numpy(root):
+    data.record("datasets", "seed", {"n": np.int64(3), "x": np.array([1.0, 2.0])})
+    data.record("fits", "rf__A__log-rmse", {"best_params": {"min_samples_leaf": 1}})
+    meta = json.loads(config.metadata_path().read_text())
+    assert meta["datasets"]["seed"] == {"n": 3, "x": [1.0, 2.0]}
+    assert data.read_metadata()["fits"]["rf__A__log-rmse"]["best_params"] == {"min_samples_leaf": 1}
+
+
+def test_environment_lists_the_pinned_packages():
+    env = data.environment()
+    assert env["python"] and set(env["packages"]) >= {"numpy", "scikit-learn", "xslope"}
 ```
 
 - [ ] **Step 3: Run to verify failure**
@@ -2313,16 +1201,25 @@ Expected: `ImportError: cannot import name 'data'`.
 - [ ] **Step 4: Write `sgs/data.py`**
 
 ```python
-"""Loading, the schema contract, and the one definition of the derived feature."""
+"""Schema, the one definition of the derived feature, loading, validation of
+the final sets, and the run metadata file."""
 
 from __future__ import annotations
 
+import hashlib
+import itertools
+import json
+import os
+import platform
 from dataclasses import dataclass
+from importlib import metadata as _metadata
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from scipy.spatial import cKDTree
 
-from sgs import config, manifest
+from sgs import config
 
 RESULT_COLUMNS = [
     *config.PARAMS,
@@ -2339,6 +1236,11 @@ FINAL_COLUMNS = RESULT_COLUMNS + META_COLUMNS
 EXCLUSION_REASONS = ("solver_error", "unresolved")
 
 _TEXT_COLUMNS = ("At_Boundary", "Search_Converged", "Warnings", "Error", "repair_variant", "excluded")
+TRACKED_PACKAGES = ("numpy", "pandas", "scipy", "scikit-learn", "joblib", "shapely", "xslope")
+
+
+class DataError(RuntimeError):
+    """A final set, or a pair of them, violates the data contract."""
 
 
 def add_features(frame: pd.DataFrame) -> pd.DataFrame:
@@ -2364,11 +1266,22 @@ def usable(frame: pd.DataFrame) -> pd.DataFrame:
     return frame.loc[(frame["excluded"] == "") & frame["FOS"].notna()]
 
 
+def normalize(frame: pd.DataFrame) -> np.ndarray:
+    lo = np.array([config.DOMAIN[p][0] for p in config.PARAMS], dtype=float)
+    hi = np.array([config.DOMAIN[p][1] for p in config.PARAMS], dtype=float)
+    return (frame[list(config.PARAMS)].to_numpy(float) - lo) / (hi - lo)
+
+
+def _final_table(role: str) -> pd.DataFrame:
+    path = config.final_path(role)
+    if not path.exists():
+        raise FileNotFoundError(f"{path.name} is missing; run `sgs generate --role {role}`")
+    return read_table(path)
+
+
 def load_role(role: str) -> pd.DataFrame:
     """Usable rows of a final set, with row identifiers and features."""
-    path = config.final_path(role)
-    manifest.verify_provenance(path)
-    frame = read_table(path)
+    frame = _final_table(role)
     frame.insert(0, "row_id", [f"{role}:{i}" for i in range(len(frame))])
     return add_features(usable(frame)).reset_index(drop=True)
 
@@ -2397,10 +1310,90 @@ def load_test(role: str) -> TestSet:
                    ids=frame["row_id"].to_numpy(str))
 
 
-def normalize(frame: pd.DataFrame) -> np.ndarray:
-    lo = np.array([config.DOMAIN[p][0] for p in config.PARAMS], dtype=float)
-    hi = np.array([config.DOMAIN[p][1] for p in config.PARAMS], dtype=float)
-    return (frame[list(config.PARAMS)].to_numpy(float) - lo) / (hi - lo)
+# --- validation -----------------------------------------------------------------
+
+def set_problems(frame: pd.DataFrame, role: str) -> list[str]:
+    """Violations of the data contract by one final set; empty when clean."""
+    if list(frame.columns) != FINAL_COLUMNS:
+        return [f"schema: columns {list(frame.columns)}"]
+    problems = []
+    expected = config.ROLES[role].n
+    if len(frame) != expected:
+        problems.append(f"row_count: {len(frame)} rows, expected {expected}")
+    outside = {p: int((~frame[p].between(lo, hi)).sum()) for p, (lo, hi) in config.DOMAIN.items()}
+    if any(outside.values()):
+        problems.append(f"domain: rows outside the domain {outside}")
+    unknown = sorted(set(frame["excluded"]) - {"", *EXCLUSION_REASONS})
+    if unknown:
+        problems.append(f"exclusion_reasons: unknown {unknown}")
+    kept = frame["excluded"] == ""
+    bad_fos = int((kept & ~(frame["FOS"] > 0)).sum())
+    if bad_fos:
+        problems.append(f"fos_present: {bad_fos} kept rows without a positive FOS")
+    boundary = int((kept & is_true(frame["At_Boundary"])).sum())
+    if boundary:
+        problems.append(f"no_untreated_boundary: {boundary} kept rows at the domain boundary")
+    unit = normalize(frame)
+    closest = float(cKDTree(unit).query(unit, k=2)[0][:, 1].min())
+    if closest <= config.MIN_DISTANCE:
+        problems.append(f"no_internal_duplicates: closest pair {closest:.2e}")
+    return problems
+
+
+def validate_sets(roles) -> None:
+    """Fail unless every set is clean and every pair is disjoint."""
+    frames = {role: _final_table(role) for role in roles}
+    problems = [f"{role}: {p}" for role, frame in frames.items() for p in set_problems(frame, role)]
+    for a, b in itertools.combinations(sorted(frames), 2):
+        closest = float(cKDTree(normalize(frames[b])).query(normalize(frames[a]), k=1)[0].min())
+        if closest <= config.MIN_DISTANCE:
+            problems.append(f"{a}/{b}: not disjoint (closest cross pair {closest:.2e})")
+    if problems:
+        raise DataError("; ".join(problems))
+
+
+# --- provenance -----------------------------------------------------------------
+
+def sha256_file(path) -> str:
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def environment() -> dict:
+    packages = {}
+    for name in TRACKED_PACKAGES:
+        try:
+            packages[name] = _metadata.version(name)
+        except _metadata.PackageNotFoundError:
+            packages[name] = None
+    return {"python": platform.python_version(), "packages": packages}
+
+
+def _json_default(value):
+    if hasattr(value, "item") and np.ndim(value) == 0:   # numpy scalar
+        return value.item()
+    if hasattr(value, "tolist"):                          # numpy array
+        return value.tolist()
+    raise TypeError(f"not JSON serializable: {type(value).__name__}")
+
+
+def read_metadata() -> dict:
+    path = config.metadata_path()
+    return json.loads(path.read_text()) if path.exists() else {}
+
+
+def record(section: str, key: str, entry: dict) -> None:
+    """Set ``run_metadata.json[section][key] = entry`` and write the file."""
+    meta = read_metadata()
+    meta.setdefault(section, {})[key] = entry
+    path = config.metadata_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(f".{path.name}.tmp")
+    tmp.write_text(json.dumps(meta, indent=2, sort_keys=True, default=_json_default) + "\n")
+    os.replace(tmp, path)
 ```
 
 - [ ] **Step 5: Run tests**
@@ -2412,28 +1405,29 @@ Expected: all pass.
 
 ```bash
 git add sgs/data.py tests/helpers.py tests/test_data.py
-git commit -m "Add data loading with the schema contract and one derived-feature definition
+git commit -m "Add data loading, validation of the final sets and run metadata
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
 
 ---
 
-### Task 8: `design.py` — LHS designs and the design stage
+## Task 5: `design.py` — LHS, screener, guided max-min, stratified random
 
 **Files:**
 - Create: `sgs/design.py`, `tests/test_design.py`
 
 **Interfaces:**
-- Consumes: `config`, `data.normalize`, `data.add_features`, `manifest.verify_provenance`, `stage.produce`.
+- Consumes: `config`, `data.normalize`, `data.add_features`, `data.load_role`, `data.sha256_file`.
 - Produces:
   - `DesignError(RuntimeError)`
-  - `lhs(n: int, seed: int) -> tuple[ndarray, DataFrame]` (unit design, physical frame with `config.PARAMS` columns)
-  - `lhs_strata_complete(unit) -> bool`
-  - `nearest_distance(points, reference) -> ndarray`, `assert_disjoint(frame, references: Mapping[str, DataFrame], min_distance: float) -> None`
-  - `read_design(role) -> DataFrame`, `build(role) -> DataFrame`, `stage(role, opts)`
-  - `_BUILDERS: dict[str, Callable[[str, SetRole, dict], DataFrame]]` — Tasks 14 and 15 add `"guided-maxmin"` and `"stratified-random"`.
-  - Design CSV columns: `config.PARAMS` (+ `FOS_pred`, `bin` for screener designs).
+  - `lhs(n, seed) -> (unit ndarray, frame)`, `lhs_strata_complete(unit) -> bool`
+  - `nearest_distance(points, reference) -> ndarray`, `assert_disjoint(frame, references: Mapping[str, DataFrame], min_distance) -> None`
+  - `screener_model(*, oob: bool) -> RandomForestRegressor`, `fit_screener(frame) -> (model, diagnostics: dict)`
+  - `uniform_pool(rng, n)`, `predict_fos(model, frame)`, `greedy_maxmin(Xs, k, rng)`, `bin_edges(n_bins, selection_range)`
+  - `guided_maxmin(model, *, rng, n_pool, n_bins, per_bin, drawn_per_bin, selection_range) -> DataFrame`
+  - `stratified_random(model, *, pool_rng, selection_rng, n_pool, n_bins, per_bin, selection_range, references, min_distance) -> DataFrame`
+  - `read_design(role) -> DataFrame`, `build(role) -> (frame, info: dict)`. `info` has `"seeds"` and, for screener roles, `"screener"` (diagnostics plus `trained_on_sha256`). Design columns: `config.PARAMS`, plus `FOS_pred` and `bin` for screener roles.
 
 - [ ] **Step 1: Write the failing tests `tests/test_design.py`**
 
@@ -2444,13 +1438,21 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sgs import config, design, manifest
-from sgs.stage import Options
+from sgs import config, data, design
+from tests.helpers import FormulaModel, shrink_roles, synthetic_final, write_final
 
 
 def _hash(frame):
     return hashlib.sha256(frame.to_csv(index=False).encode()).hexdigest()
 
+
+def _write_design(role, frame):
+    path = config.design_path(role)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    frame.to_csv(path, index=False)
+
+
+# --- LHS and disjointness -------------------------------------------------------------
 
 def test_lhs_uses_the_seed_keyword_semantics():
     # First row of the published seed design. Pins SciPy's `seed=` stream; a
@@ -2488,27 +1490,134 @@ def test_assert_disjoint_catches_internal_duplicates():
         design.assert_disjoint(doubled, {}, 1e-3)
 
 
-@pytest.mark.parametrize("role", ["seed", "lhs-extension"])
-def test_lhs_roles_are_deterministic(root, role):
-    design.stage("seed", Options())
-    if role != "seed":
-        design.stage(role, Options())
-    on_disk = manifest.sha256_file(config.design_path(role))
-    assert _hash(design.build(role)) == on_disk
+def test_build_lhs_roles(root):
+    frame, info = design.build("seed")
+    assert len(frame) == 300 and info == {"seeds": {"seed_lhs_design": 42}}
+    assert _hash(design.build("seed")[0]) == _hash(frame)
+    with pytest.raises(FileNotFoundError, match="seed_lhs_300.csv"):
+        design.build("lhs-extension")
+    _write_design("seed", frame)
+    extension, _ = design.build("lhs-extension")
+    assert design.nearest_distance(extension, frame).min() > config.MIN_DISTANCE
 
 
-def test_stage_skips_when_fresh_and_records_provenance(root, capsys):
-    design.stage("seed", Options())
-    design.stage("seed", Options())
-    assert "up to date" in capsys.readouterr().out
-    record = manifest.read_manifest(config.design_path("seed"))
-    assert set(record["config"]) == {"domain", "design"}
-    assert record["extra"]["n"] == 300
+# --- screener -------------------------------------------------------------------------
+
+@pytest.fixture
+def small_screener(monkeypatch):
+    monkeypatch.setitem(config.SCREENER, "n_estimators", 20)
+    monkeypatch.setitem(config.SCREENER, "cv_folds", 3)
 
 
-def test_stage_requires_designs_it_must_avoid(root):
-    with pytest.raises(FileNotFoundError):
-        design.stage("lhs-extension", Options())
+def test_screener_uses_named_seeds(small_screener):
+    model = design.screener_model(oob=True)
+    assert model.random_state == config.SEEDS["screener_fit"] and model.oob_score
+
+
+def test_fit_screener_is_deterministic_and_reports_diagnostics(small_screener):
+    frame = data.add_features(synthetic_final(80, 5))
+    a, diagnostics = design.fit_screener(frame)
+    b, _ = design.fit_screener(frame)
+    X = data.add_features(synthetic_final(10, 9))[list(config.FEATURES)]
+    np.testing.assert_array_equal(a.predict(X), b.predict(X))
+    assert diagnostics["n_train"] == 80 and 0 < diagnostics["oob_r2_log"] <= 1
+    assert {"oof_rmse", "oof_rmse_selection_range", "oof_spearman"} <= set(diagnostics)
+
+
+# --- guided max-min ---------------------------------------------------------------------
+
+def _guided(rng_seed=42):
+    return design.guided_maxmin(FormulaModel(), rng=np.random.default_rng(rng_seed), n_pool=6000,
+                                n_bins=5, per_bin=4, drawn_per_bin=6, selection_range=(0.5, 6.0))
+
+
+def test_guided_fills_every_bin_with_predicted_fos_inside_it():
+    frame = _guided()
+    assert frame["bin"].value_counts().sort_index().tolist() == [4] * 5
+    edges = design.bin_edges(5, (0.5, 6.0))
+    for b, group in frame.groupby("bin"):
+        assert group["FOS_pred"].gt(edges[b]).all() and group["FOS_pred"].le(edges[b + 1]).all()
+
+
+def test_guided_draws_the_pool_first_from_the_stream():
+    # The order contract of `guided_stream`: every selected point is a row of
+    # the pool drawn first from a fresh generator with the same seed.
+    frame = _guided(42)
+    pool = design.uniform_pool(np.random.default_rng(42), 6000)
+    merged = frame.merge(pool, on=list(config.PARAMS), how="left", indicator=True)
+    assert (merged["_merge"] == "both").all()
+
+
+def test_guided_is_deterministic_and_seed_sensitive():
+    assert _hash(_guided(42)) == _hash(_guided(42))
+    assert _hash(_guided(42)) != _hash(_guided(43))
+
+
+def test_guided_refuses_thin_bins():
+    with pytest.raises(design.DesignError, match="fewer than"):
+        design.guided_maxmin(FormulaModel(), rng=np.random.default_rng(0), n_pool=200, n_bins=5,
+                             per_bin=4, drawn_per_bin=60, selection_range=(0.5, 6.0))
+
+
+def test_greedy_maxmin_picks_spread_points():
+    X = np.array([[0.0, 0.0], [0.01, 0.0], [1.0, 1.0], [0.0, 1.0]])
+    chosen = design.greedy_maxmin(X, 3, np.random.default_rng(0))
+    assert len(set(chosen.tolist())) == 3
+
+
+# --- stratified random ------------------------------------------------------------------
+
+def _stratified(pool_seed=1, selection_seed=2, references=None):
+    return design.stratified_random(FormulaModel(), pool_rng=np.random.default_rng(pool_seed),
+                                    selection_rng=np.random.default_rng(selection_seed), n_pool=6000,
+                                    n_bins=5, per_bin=3, selection_range=(0.5, 6.0),
+                                    references=references or {}, min_distance=1e-3)
+
+
+def test_stratified_fills_bins_with_closed_first_bin():
+    frame = _stratified()
+    assert frame["bin"].value_counts().sort_index().tolist() == [3] * 5
+    assert frame["FOS_pred"].between(0.5, 6.0).all()
+
+
+def test_stratified_uses_both_streams_independently():
+    base = _hash(_stratified(1, 2))
+    assert _hash(_stratified(1, 2)) == base
+    assert _hash(_stratified(1, 3)) != base
+    assert _hash(_stratified(9, 2)) != base
+
+
+def test_stratified_filters_candidates_near_references():
+    first = _stratified()
+    again = _stratified(references={"previous": first})
+    assert design.nearest_distance(again, first).min() > 1e-3
+
+
+# --- screener roles through build() -------------------------------------------------------
+
+@pytest.fixture
+def small_designs(root, monkeypatch, small_screener):
+    monkeypatch.setattr(config, "N_GUIDED_POOL", 6000)
+    monkeypatch.setattr(config, "N_TEST_POOL", 6000)
+    monkeypatch.setattr(config, "N_BINS", 5)
+    monkeypatch.setattr(config, "GUIDED_PER_BIN", 4)
+    monkeypatch.setattr(config, "GUIDED_DRAWN_PER_BIN", 6)
+    monkeypatch.setattr(config, "TEST_PER_BIN", 3)
+    shrink_roles(monkeypatch, {"guided": 20, "test-stratified": 15})
+    seed_design, _ = design.build("seed")
+    _write_design("seed", seed_design)
+    write_final("seed", synthetic_final(300, 1))
+
+
+def test_screener_roles_are_deterministic_and_record_the_screener(small_designs):
+    guided, info = design.build("guided")
+    assert _hash(design.build("guided")[0]) == _hash(guided)
+    assert info["seeds"] == {"guided_stream": 42}
+    assert info["screener"]["trained_on_sha256"] == data.sha256_file(config.final_path("seed"))
+    for role in ("guided", "lhs-extension", "test-natural"):
+        _write_design(role, design.build(role)[0])
+    stratified, _ = design.build("test-stratified")
+    assert len(stratified) == 15 and set(stratified.columns) == {*config.PARAMS, "FOS_pred", "bin"}
 ```
 
 - [ ] **Step 2: Run to verify failure**
@@ -2527,24 +1636,29 @@ Three procedures, one per ``SetRole.design``:
                      (the guided training selection);
   stratified-random  screener-predicted FOS bins, random selection inside a
                      bin (the target-stratified test set).
+The screener is refitted in memory whenever a screener role is built; the fit
+takes seconds and is deterministic.
 """
 
 from __future__ import annotations
 
-from typing import Callable, Mapping
+from typing import Mapping
 
 import numpy as np
 import pandas as pd
 from scipy.spatial import cKDTree
-from scipy.stats import qmc
+from scipy.stats import qmc, spearmanr
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import KFold, cross_val_predict
 
-from sgs import config, data, manifest
-from sgs.stage import Options, produce
+from sgs import config, data
 
 
 class DesignError(RuntimeError):
     """A design violates one of its own invariants."""
 
+
+# --- LHS ------------------------------------------------------------------------
 
 def _bounds():
     lo = np.array([config.DOMAIN[p][0] for p in config.PARAMS], dtype=float)
@@ -2568,6 +1682,8 @@ def lhs_strata_complete(unit: np.ndarray) -> bool:
     return all(len(np.unique(strata[:, j])) == n for j in range(unit.shape[1]))
 
 
+# --- disjointness -----------------------------------------------------------------
+
 def nearest_distance(points: pd.DataFrame, reference: pd.DataFrame) -> np.ndarray:
     return cKDTree(data.normalize(reference)).query(data.normalize(points), k=1)[0]
 
@@ -2585,51 +1701,174 @@ def assert_disjoint(frame: pd.DataFrame, references: Mapping[str, pd.DataFrame],
         raise DesignError(f"duplicate points inside the set (closest pair {self_d.min():.2e})")
 
 
+# --- screener -----------------------------------------------------------------------
+
+def screener_model(*, oob: bool) -> RandomForestRegressor:
+    return RandomForestRegressor(n_estimators=config.SCREENER["n_estimators"], oob_score=oob,
+                                 random_state=config.SEEDS["screener_fit"], n_jobs=-1)
+
+
+def fit_screener(frame: pd.DataFrame):
+    """Fit on log(FOS) of ``frame`` (features included); return model and diagnostics."""
+    X = frame[list(config.FEATURES)]
+    fos = frame["FOS"].to_numpy(float)
+    y = np.log(fos)
+    model = screener_model(oob=True).fit(X, y)
+    cv = KFold(config.SCREENER["cv_folds"], shuffle=True, random_state=config.SEEDS["screener_cv"])
+    oof = np.exp(cross_val_predict(screener_model(oob=False), X, y, cv=cv))
+    lo, hi = config.SELECTION_RANGE
+    inside = (fos >= lo) & (fos <= hi)
+    diagnostics = {
+        "n_train": int(len(frame)),
+        "oob_r2_log": float(model.oob_score_),
+        "oof_rmse": float(np.sqrt(np.mean((oof - fos) ** 2))),
+        "oof_rmse_selection_range": float(np.sqrt(np.mean((oof[inside] - fos[inside]) ** 2))),
+        "oof_spearman": float(spearmanr(oof, fos).statistic),
+    }
+    return model, diagnostics
+
+
+# --- screener-driven designs --------------------------------------------------------------
+
+def uniform_pool(rng: np.random.Generator, n: int) -> pd.DataFrame:
+    """Uniform candidates over the domain, one column at a time in PARAMS order."""
+    return pd.DataFrame({p: rng.uniform(config.DOMAIN[p][0], config.DOMAIN[p][1], n)
+                         for p in config.PARAMS})
+
+
+def predict_fos(model, frame: pd.DataFrame) -> np.ndarray:
+    return np.exp(model.predict(data.add_features(frame)[list(config.FEATURES)]))
+
+
+def greedy_maxmin(Xs: np.ndarray, k: int, rng: np.random.Generator) -> np.ndarray:
+    """Greedy max-min selection of k rows from a random start."""
+    n = len(Xs)
+    if k >= n:
+        return np.arange(n)
+    chosen = [int(rng.integers(n))]
+    dmin = np.linalg.norm(Xs - Xs[chosen[0]], axis=1)
+    for _ in range(k - 1):
+        nxt = int(dmin.argmax())
+        chosen.append(nxt)
+        dmin = np.minimum(dmin, np.linalg.norm(Xs - Xs[nxt], axis=1))
+    return np.array(chosen)
+
+
+def bin_edges(n_bins: int, selection_range) -> np.ndarray:
+    lo, hi = selection_range
+    return np.linspace(lo, hi, n_bins + 1)
+
+
+def guided_maxmin(model, *, rng, n_pool, n_bins, per_bin, drawn_per_bin, selection_range) -> pd.DataFrame:
+    """The guided training selection.
+
+    One generator, in this order: the pool, then per bin a max-min draw of
+    ``drawn_per_bin`` candidates and a permutation of which the first
+    ``per_bin`` are kept. Bins are (lo, hi] on screener-predicted FOS.
+    """
+    params = list(config.PARAMS)
+    pool = uniform_pool(rng, n_pool)
+    pool["FOS_pred"] = predict_fos(model, pool)
+    edges = bin_edges(n_bins, selection_range)
+    lo, hi = selection_range
+    inside = pool[(pool["FOS_pred"] >= lo) & (pool["FOS_pred"] <= hi)]
+    counts = pd.cut(inside["FOS_pred"], edges).value_counts().sort_index()
+    thin = counts[counts < drawn_per_bin]
+    if len(thin):
+        raise DesignError(f"bins with fewer than {drawn_per_bin} candidates:\n{thin.to_string()}")
+
+    mu, sd = pool[params].mean(), pool[params].std()
+    chosen, bins = [], []
+    for b, (a, z) in enumerate(zip(edges[:-1], edges[1:])):
+        candidates = pool[(pool["FOS_pred"] > a) & (pool["FOS_pred"] <= z)]
+        Xs = ((candidates[params] - mu) / sd).to_numpy()
+        drawn = candidates.index.to_numpy()[greedy_maxmin(Xs, drawn_per_bin, rng)]
+        kept = drawn[rng.permutation(len(drawn))[:per_bin]]
+        chosen.extend(kept.tolist())
+        bins.extend([b] * len(kept))
+    out = pool.loc[chosen, params + ["FOS_pred"]].reset_index(drop=True)
+    out["bin"] = bins
+    return out
+
+
+def stratified_random(model, *, pool_rng, selection_rng, n_pool, n_bins, per_bin,
+                      selection_range, references, min_distance) -> pd.DataFrame:
+    """The target-stratified test set: random selection within each bin.
+
+    An independent pool (its own generator) is screened; candidates outside
+    the selection range or within ``min_distance`` of any reference point are
+    dropped; ``per_bin`` candidates are then drawn at random from each bin on
+    a separate generator. The first bin is closed [lo, hi], the others (lo, hi].
+    """
+    params = list(config.PARAMS)
+    lo, hi = selection_range
+    pool = uniform_pool(pool_rng, n_pool)
+    pool["FOS_pred"] = predict_fos(model, pool)
+    pool = pool[pool["FOS_pred"].between(lo, hi, inclusive="both")].reset_index(drop=True)
+    if references:
+        reference = pd.concat([r[params] for r in references.values()], ignore_index=True)
+        pool = pool.loc[nearest_distance(pool, reference) > min_distance].reset_index(drop=True)
+
+    edges = bin_edges(n_bins, selection_range)
+    chosen, bins = [], []
+    for b, (a, z) in enumerate(zip(edges[:-1], edges[1:])):
+        lower = pool["FOS_pred"] >= a if b == 0 else pool["FOS_pred"] > a
+        candidates = pool.loc[lower & (pool["FOS_pred"] <= z)]
+        if len(candidates) < per_bin:
+            raise DesignError(f"bin {b} [{a:.3f}, {z:.3f}] has only {len(candidates)} candidates")
+        picked = selection_rng.choice(len(candidates), per_bin, replace=False)
+        chosen.extend(candidates.index.to_numpy()[picked].tolist())
+        bins.extend([b] * per_bin)
+    out = pool.loc[chosen, params + ["FOS_pred"]].reset_index(drop=True)
+    out["bin"] = bins
+    return out
+
+
+# --- roles ------------------------------------------------------------------------
+
 def read_design(role: str) -> pd.DataFrame:
     path = config.design_path(role)
-    manifest.verify_provenance(path)
+    if not path.exists():
+        raise FileNotFoundError(f"{path.name} is missing; generate role {role!r} first")
     return pd.read_csv(path)
 
 
-def _build_lhs(role, spec, references):
-    (seed_name,) = spec.seeds
-    unit, frame = lhs(spec.n, config.SEEDS[seed_name])
-    if not lhs_strata_complete(unit):
-        raise DesignError(f"{role}: LHS stratification incomplete")
-    return frame
-
-
-_BUILDERS: dict[str, Callable] = {
-    "lhs": _build_lhs,
-}
-
-
-def build(role: str) -> pd.DataFrame:
+def build(role: str) -> tuple[pd.DataFrame, dict]:
+    """The design of a role, and what produced it (seeds, screener diagnostics)."""
     spec = config.ROLES[role]
-    if spec.design not in _BUILDERS:
-        raise ValueError(f"unknown design procedure {spec.design!r} for role {role!r}")
     references = {r: read_design(r) for r in spec.disjoint_from}
-    frame = _BUILDERS[spec.design](role, spec, references)
+    seeds = [config.SEEDS[name] for name in spec.seeds]
+    info = {"seeds": dict(zip(spec.seeds, seeds))}
+
+    if spec.design == "lhs":
+        unit, frame = lhs(spec.n, seeds[0])
+        if not lhs_strata_complete(unit):
+            raise DesignError(f"{role}: LHS stratification incomplete")
+    else:
+        trained_on = config.SCREENER["trained_on"]
+        model, diagnostics = fit_screener(data.load_role(trained_on))
+        info["screener"] = {**diagnostics, "trained_on": trained_on,
+                            "trained_on_sha256": data.sha256_file(config.final_path(trained_on))}
+        if spec.design == "guided-maxmin":
+            frame = guided_maxmin(model, rng=np.random.default_rng(seeds[0]),
+                                  n_pool=config.N_GUIDED_POOL, n_bins=config.N_BINS,
+                                  per_bin=config.GUIDED_PER_BIN,
+                                  drawn_per_bin=config.GUIDED_DRAWN_PER_BIN,
+                                  selection_range=config.SELECTION_RANGE)
+        elif spec.design == "stratified-random":
+            frame = stratified_random(model, pool_rng=np.random.default_rng(seeds[0]),
+                                      selection_rng=np.random.default_rng(seeds[1]),
+                                      n_pool=config.N_TEST_POOL, n_bins=config.N_BINS,
+                                      per_bin=config.TEST_PER_BIN,
+                                      selection_range=config.SELECTION_RANGE,
+                                      references=references, min_distance=config.MIN_DISTANCE)
+        else:
+            raise ValueError(f"unknown design procedure {spec.design!r} for role {role!r}")
+
     if len(frame) != spec.n:
         raise DesignError(f"{role}: {len(frame)} points, expected {spec.n}")
     assert_disjoint(frame, references, config.MIN_DISTANCE)
-    return frame
-
-
-def stage(role: str, opts: Options) -> None:
-    spec = config.ROLES[role]
-    sections = ("domain", "design") + (("screener",) if spec.screener else ())
-    inputs = {f"design:{r}": config.design_path(r) for r in spec.disjoint_from}
-    if spec.screener:
-        inputs[f"screener:{spec.screener}"] = config.screener_path(spec.screener)
-
-    def build_to(tmp):
-        frame = build(role)
-        frame.to_csv(tmp, index=False)
-        return {"n": len(frame), "columns": list(frame.columns)}
-
-    produce(config.design_path(role), stage=f"design:{role}", sections=sections,
-            inputs=inputs, opts=opts, build=build_to)
+    return frame, info
 ```
 
 - [ ] **Step 4: Run tests**
@@ -2641,37 +1880,62 @@ Expected: all pass.
 
 ```bash
 git add sgs/design.py tests/test_design.py
-git commit -m "Add LHS designs and the design stage
+git commit -m "Add the three design procedures and the in-memory screener
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
 
 ---
 
-### Task 9: `solver.py` — the xslope/Bishop wrapper
+## Task 6: `solver.py` — xslope/Bishop wrapper, parallel set runner, repair
 
-A port of `run_analyses.py` (reference copy in `$REF`). Only what changes: all values come from `config.SOLVER`; the template is cached under `artifacts/solver/`; one analysis becomes one row `dict` keyed by `data.RESULT_COLUMNS`.
+A port of `run_analyses.py` and `run_repair.py` (reference copies in `$REF`). What changes: all values come from `config.SOLVER` and `config.REPAIR_VARIANTS`; the template is cached under `artifacts/solver/`; one analysis becomes one row `dict` keyed by `data.RESULT_COLUMNS`; a set runs in a process pool and is written once at the end.
 
 **Files:**
 - Create: `sgs/solver.py`, `tests/test_solver.py`
+- Modify: `tests/helpers.py` (append `fake_analyse`, `boundary_row`)
 
 **Interfaces:**
-- Consumes: `config.SOLVER`, `config.solver_template_path()`, `data.RESULT_COLUMNS`.
+- Consumes: `config.SOLVER`, `config.REPAIR_VARIANTS`, `config.solver_template_path()`, `data.RESULT_COLUMNS`.
 - Produces:
   - `model_dims(H, angle, ext_factor=None, depth_factor=None) -> (slope, slope_length, extension, depth)`
-  - `check_boundary(surface_left, surface_right, surface_depth, geometry: dict, H) -> (bool, list[str])`
-  - `calculate_fos(angle, phi, c, gamma, H, ext_factor=None, depth_factor=None) -> dict`. Keys: `fos, surface_left, surface_right, surface_depth, cx, cy, radius, at_boundary, boundary_flags, search_converged, n_circles_tested, n_valid_surfaces, n_unsolved, warnings, error, runtime_s`. `fos` is None on solver error.
-  - `analysis_row(combo, analysis, ext_factor=None, depth_factor=None) -> dict` keyed by `data.RESULT_COLUMNS`
-  - `analyse(combo) -> dict` — module-level, so it pickles under the `spawn` start method
+  - `check_boundary(surface_left, surface_right, surface_depth, geometry, H) -> (bool, list[str])`
+  - `calculate_fos(angle, phi, c, gamma, H, ext_factor=None, depth_factor=None) -> dict` (keys `fos, surface_left, surface_right, surface_depth, cx, cy, radius, at_boundary, boundary_flags, search_converged, n_circles_tested, n_valid_surfaces, n_unsolved, warnings, error, runtime_s`; `fos` is None on solver error)
+  - `analysis_row(combo, analysis, ext_factor=None, depth_factor=None) -> dict`, `analyse(combo) -> dict` (module level, pickles under `spawn`)
+  - `run_set(combos, *, workers, label, fn=None) -> list[dict]` (rows in design order; `fn` defaults to `analyse` looked up at call time)
+  - `read_rows(path) -> (list[dict], list[str])`, `write_rows(path, rows, columns) -> None` (tmp file then `os.replace`)
+  - `variant_label(ext_factor, depth_factor) -> str`, `repair_rows(rows, calculate=None) -> dict` (mutates rows, adds `repair_variant` and `excluded`, returns summary with keys `n_rows, n_boundary, n_repaired, n_unresolved, n_solver_error`)
 
-- [ ] **Step 1: Write the failing tests `tests/test_solver.py`**
+- [ ] **Step 1: Append to `tests/helpers.py`**
+
+```python
+def fake_analyse(combo):
+    """Stands in for solver.analyse: a solved, boundary-free row. Module level
+    so that a spawned worker can import it."""
+    angle, phi, c, gamma, H = combo
+    row = {column: "" for column in data.RESULT_COLUMNS}
+    row.update(angle=angle, phi=phi, c=c, gamma=gamma, H=H, FOS=round(c / H, 6),
+               At_Boundary=False, Search_Converged=True, Runtime_s=0.0)
+    return row
+
+
+def boundary_row(fos="1.5", boundary="False", c=10.0):
+    """A results row as read back from CSV (all strings)."""
+    row = {column: "" for column in data.RESULT_COLUMNS}
+    row.update(angle="45.0", phi="30.0", c=str(c), gamma="18.0", H="10.0", FOS=fos, At_Boundary=boundary)
+    return row
+```
+
+- [ ] **Step 2: Write the failing tests `tests/test_solver.py`**
 
 ```python
 import math
 
+import numpy as np
 import pytest
 
 from sgs import config, data, solver
+from tests.helpers import boundary_row, fake_analyse
 
 
 def test_model_dims_matches_the_adaptive_rule():
@@ -2708,25 +1972,88 @@ def test_analysis_row_schema_for_solved_and_failed_cases():
     assert failed["slope_length"] == 10.0
 
 
+def _combos(n=7):
+    rng = np.random.default_rng(0)
+    return np.column_stack([rng.uniform(lo, hi, n) for lo, hi in config.DOMAIN.values()])
+
+
+@pytest.mark.parametrize("workers", [1, 2])
+def test_run_set_keeps_design_order(workers):
+    combos = _combos()
+    rows = solver.run_set(combos, workers=workers, label="t", fn=fake_analyse)
+    np.testing.assert_allclose([[r[p] for p in config.PARAMS] for r in rows], combos)
+
+
+def test_rows_round_trip_through_csv(tmp_path):
+    rows = solver.run_set(_combos(3), workers=1, label="t", fn=fake_analyse)
+    path = tmp_path / "out" / "r.csv"
+    solver.write_rows(path, rows, data.RESULT_COLUMNS)
+    back, columns = solver.read_rows(path)
+    assert columns == data.RESULT_COLUMNS and len(back) == 3
+    assert not list(path.parent.glob(".*.tmp"))
+
+
+# --- repair ---------------------------------------------------------------------------
+
+def fake_calculate(frees_at):
+    """Returns a boundary-free surface only on the given variant."""
+    def calculate(angle, phi, c, gamma, H, ext_factor=None, depth_factor=None):
+        free = (ext_factor, depth_factor) == frees_at
+        return {**_analysis(fos=1.2, at_boundary=not free), "runtime_s": 0.1}
+    return calculate
+
+
+def test_label():
+    assert solver.variant_label(2.0, None) == "ext2.0x_depth1x"
+
+
+def test_rows_without_problems_are_left_alone():
+    rows = [boundary_row(), boundary_row()]
+    summary = solver.repair_rows(rows, calculate=fake_calculate(None))
+    assert summary["n_boundary"] == 0 and summary["n_repaired"] == 0
+    assert all(r["repair_variant"] == "" and r["excluded"] == "" for r in rows)
+
+
+def test_boundary_row_is_repaired_by_the_first_freeing_variant():
+    rows = [boundary_row(boundary="True")]
+    summary = solver.repair_rows(rows, calculate=fake_calculate((None, 2.0)))
+    assert summary["n_repaired"] == 1
+    assert rows[0]["repair_variant"] == "ext1x_depth2.0x"
+    assert rows[0]["FOS"] == 1.2 and rows[0]["At_Boundary"] is False and rows[0]["excluded"] == ""
+
+
+def test_unfreeable_row_is_excluded():
+    rows = [boundary_row(boundary="True")]
+    summary = solver.repair_rows(rows, calculate=fake_calculate(("never", "never")))
+    assert summary["n_unresolved"] == 1 and rows[0]["excluded"] == "unresolved"
+
+
+def test_solver_error_is_excluded_not_repaired():
+    rows = [boundary_row(fos="")]
+    summary = solver.repair_rows(rows, calculate=fake_calculate(None))
+    assert summary["n_solver_error"] == 1 and rows[0]["excluded"] == "solver_error"
+
+
 @pytest.mark.slow
 def test_one_real_analysis():
     row = solver.analyse((24.70810805776474, 33.64879751536226, 12.628212513088526,
                           17.341403519225082, 4.832465812168988))
-    # Seed row 1 of the reference data: FOS 3.171339, not at boundary.
+    # First row of the seed design: FOS 3.171339 in the reference data, not at boundary.
     assert row["Error"] == ""
     assert abs(row["FOS"] - 3.171339) < 1e-4
     assert row["At_Boundary"] is False
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [ ] **Step 3: Run to verify failure**
 
 Run: `.venv/bin/pytest tests/test_solver.py -q`
 Expected: `ImportError: cannot import name 'solver'`.
 
-- [ ] **Step 3: Write `sgs/solver.py`**
+- [ ] **Step 4: Write `sgs/solver.py`**
 
 ```python
-"""xslope/Bishop wrapper: one homogeneous, dry, unloaded slope per analysis.
+"""xslope/Bishop: one homogeneous, dry, unloaded slope per analysis; a set of
+analyses in a process pool; boundary repair on enlarged domains.
 
 Every model is built in memory; the version-pinned xslope workbook supplies
 only a valid input schema. Solver settings come from ``config.SOLVER``.
@@ -2735,9 +2062,12 @@ only a valid input schema. Solver settings come from ``config.SOLVER``.
 from __future__ import annotations
 
 import contextlib
+import csv
 import hashlib
 import io
 import math
+import multiprocessing as mp
+import os
 import time
 import urllib.request
 from copy import deepcopy
@@ -2747,6 +2077,8 @@ from sgs import config
 
 _BASE_MODEL = None
 
+
+# --- the template and the model -------------------------------------------------------
 
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
@@ -2957,157 +2289,32 @@ def analyse(combo) -> dict:
     """Solve one parameter combination ``(angle, phi, c, gamma, H)``."""
     angle, phi, c, gamma, H = (float(v) for v in combo)
     return analysis_row(combo, calculate_fos(angle, phi, c, gamma, H))
-```
-
-- [ ] **Step 4: Run tests, including the slow one once**
-
-Run: `.venv/bin/pytest tests/test_solver.py -q`
-Expected: 3 passed, 1 deselected.
-
-Run: `.venv/bin/pytest tests/test_solver.py -q -m slow`
-Expected: 1 passed, in about 10 s. It uses the cached template in `artifacts/solver/`.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add sgs/solver.py tests/test_solver.py
-git commit -m "Port the xslope/Bishop wrapper into sgs.solver
-
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-```
-
----
-
-### Task 10: `solve.py` — the solve stage (batches, resume, parallel parts)
-
-A port of `run_batch`/`run_parallel`/`merge_parts` from `run_analyses.py`. Rows are dicts; parts are hidden files next to the stage's tmp payload and are deleted after a verified merge.
-
-**Files:**
-- Create: `sgs/solve.py`, `tests/test_solve.py`
-
-**Interfaces:**
-- Consumes: `solver.analyse`, `data.RESULT_COLUMNS`, `config.design_path/results_path`, `stage.produce(..., resumable=True)`.
-- Produces: `read_rows(path) -> (list[dict], list[str])`, `validate_prefix(rows, combos, where)`, `run_batch(combos, outfile, label, analyse=solver.analyse)`, `part_path(outfile, k, n) -> Path`, `split_contiguous(combos, n_parts) -> list[ndarray]`, `merge_parts(part_specs, outfile, all_combos)`, `run_parallel(combos, outfile, label, workers, analyse=solver.analyse)`, `stage(role, opts)`.
-
-- [ ] **Step 1: Write the failing tests `tests/test_solve.py`**
-
-```python
-import numpy as np
-import pytest
-
-from sgs import config, data, manifest, solve
-from sgs.stage import Options
-from tests.helpers import write_payload
 
 
-def fake_analyse(combo):
-    angle, phi, c, gamma, H = combo
-    row = {column: "" for column in data.RESULT_COLUMNS}
-    row.update(angle=angle, phi=phi, c=c, gamma=gamma, H=H, FOS=round(c / H, 6),
-               At_Boundary=False, Search_Converged=True, Runtime_s=0.0)
-    return row
+# --- a set of analyses ----------------------------------------------------------------
 
+def run_set(combos, *, workers: int, label: str, fn=None) -> list[dict]:
+    """Solve every combination, in design order. Nothing is written here: a set
+    of 300 takes minutes, so an interrupted set is simply rerun."""
+    fn = fn or analyse
+    combos = [tuple(float(v) for v in combo) for combo in combos]
+    rows = []
 
-def _combos(n=6):
-    rng = np.random.default_rng(0)
-    return np.column_stack([rng.uniform(lo, hi, n) for lo, hi in config.DOMAIN.values()])
+    def progress(index, row):
+        state = row["Error"] or f"FOS={row['FOS']}" + (" AT BOUNDARY" if row["At_Boundary"] is True else "")
+        print(f"[{label} {index}/{len(combos)}] {state}", flush=True)
 
-
-def test_batch_writes_every_row(tmp_path):
-    out = tmp_path / "r.csv"
-    solve.run_batch(_combos(), out, "t", analyse=fake_analyse)
-    rows, columns = solve.read_rows(out)
-    assert columns == data.RESULT_COLUMNS and len(rows) == 6
-
-
-def test_batch_resumes_where_it_stopped(tmp_path):
-    combos = _combos()
-    out = tmp_path / "r.csv"
-    solve.run_batch(combos[:2], out, "t", analyse=fake_analyse)
-    calls = []
-
-    def counting(combo):
-        calls.append(combo)
-        return fake_analyse(combo)
-
-    solve.run_batch(combos, out, "t", analyse=counting)
-    assert len(calls) == 4 and len(solve.read_rows(out)[0]) == 6
-
-
-def test_resume_refuses_another_design(tmp_path):
-    out = tmp_path / "r.csv"
-    solve.run_batch(_combos()[:2], out, "t", analyse=fake_analyse)
-    other = _combos()[::-1].copy()
-    with pytest.raises(RuntimeError, match="mismatch at row 1"):
-        solve.run_batch(other, out, "t", analyse=fake_analyse)
-
-
-def test_split_and_merge_preserve_order(tmp_path):
-    combos = _combos(7)
-    out = tmp_path / ".r.csv.tmp"
-    chunks = solve.split_contiguous(combos, 3)
-    assert [len(c) for c in chunks] == [3, 2, 2]
-    specs = [(solve.part_path(out, k, 3), chunk) for k, chunk in enumerate(chunks, 1)]
-    for path, chunk in specs:
-        solve.run_batch(chunk, path, "p", analyse=fake_analyse)
-    solve.merge_parts(specs, out, combos)
-    rows, _ = solve.read_rows(out)
-    np.testing.assert_allclose([[float(r[p]) for p in config.PARAMS] for r in rows], combos)
-    assert not any(path.exists() for path, _ in specs)
-
-
-def test_stage_writes_results_with_manifest(root, monkeypatch):
-    import pandas as pd
-    monkeypatch.setattr(solve.solver, "analyse", fake_analyse)
-    write_payload(config.design_path("seed"), pd.DataFrame(_combos(), columns=list(config.PARAMS)))
-    solve.stage("seed", Options())
-    record = manifest.read_manifest(config.results_path("seed"))
-    assert record["inputs"]["design"]["path"] == "data/designs/seed_lhs_300.csv"
-    assert record["extra"]["n"] == 6 and record["config"].keys() == {"domain"}
-
-
-def test_stage_refuses_partial_output_without_resume(root, monkeypatch):
-    import pandas as pd
-    monkeypatch.setattr(solve.solver, "analyse", fake_analyse)
-    write_payload(config.design_path("seed"), pd.DataFrame(_combos(), columns=list(config.PARAMS)))
-    tmp = config.results_path("seed").with_name(".seed_lhs_300.csv.tmp")
-    solve.run_batch(_combos()[:2], tmp, "t", analyse=fake_analyse)
-    with pytest.raises(RuntimeError, match="--resume"):
-        solve.stage("seed", Options())
-    solve.stage("seed", Options(resume=True))
-    assert len(solve.read_rows(config.results_path("seed"))[0]) == 6
-```
-
-The stage uses `solver.analyse` looked up at call time (`solve.solver.analyse`), so the monkeypatch reaches it.
-
-- [ ] **Step 2: Run to verify failure**
-
-Run: `.venv/bin/pytest tests/test_solve.py -q`
-Expected: `ImportError: cannot import name 'solve'`.
-
-- [ ] **Step 3: Write `sgs/solve.py`**
-
-```python
-"""The solve stage: a design in, immutable raw solver output out.
-
-Each completed analysis is appended and fsync'ed immediately, so an
-interrupted run resumes with --resume. With --workers K the design is split
-into K contiguous parts solved in separate processes and merged, in order,
-after every part is verified against its slice of the design.
-"""
-
-from __future__ import annotations
-
-import csv
-import multiprocessing as mp
-import os
-from pathlib import Path
-
-import numpy as np
-import pandas as pd
-
-from sgs import config, data, solver
-from sgs.stage import Options, produce
+    if workers == 1:
+        for index, combo in enumerate(combos, 1):
+            rows.append(fn(combo))
+            progress(index, rows[-1])
+    else:
+        # spawn: portable to macOS, and no solver state inherited from the parent.
+        with mp.get_context("spawn").Pool(workers) as pool:
+            for index, row in enumerate(pool.imap(fn, combos), 1):
+                rows.append(row)
+                progress(index, row)
+    return rows
 
 
 def read_rows(path) -> tuple[list[dict], list[str]]:
@@ -3116,267 +2323,18 @@ def read_rows(path) -> tuple[list[dict], list[str]]:
         return list(reader), list(reader.fieldnames or [])
 
 
-def validate_prefix(rows, combos, where) -> None:
-    """Refuse rows that do not belong to the requested design, in order."""
-    if len(rows) > len(combos):
-        raise RuntimeError(f"{where} has more rows than the design")
-    for index, row in enumerate(rows):
-        previous = np.array([float(row[p]) for p in config.PARAMS])
-        if not np.allclose(previous, combos[index], rtol=0.0, atol=1e-9):
-            raise RuntimeError(f"cannot resume {where}: parameter mismatch at row {index + 1}")
-
-
-def _write_header(path: Path) -> None:
+def write_rows(path, rows, columns) -> None:
+    path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", newline="") as stream:
-        csv.DictWriter(stream, fieldnames=data.RESULT_COLUMNS).writeheader()
-        stream.flush()
-        os.fsync(stream.fileno())
-
-
-def append_row(path: Path, row: dict) -> None:
-    with path.open("a", newline="") as stream:
-        csv.DictWriter(stream, fieldnames=data.RESULT_COLUMNS).writerow(row)
-        stream.flush()
-        os.fsync(stream.fileno())
-
-
-def run_batch(combos, outfile, label, analyse=None) -> None:
-    analyse = analyse or solver.analyse
-    combos = np.asarray(combos, dtype=float)
-    outfile = Path(outfile)
-    if outfile.exists():
-        rows, columns = read_rows(outfile)
-        if columns != data.RESULT_COLUMNS:
-            raise RuntimeError(f"cannot resume {outfile.name}: schema differs")
-        validate_prefix(rows, combos, outfile.name)
-        done = len(rows)
-        print(f"[{label}] resume: {done}/{len(combos)} already computed")
-    else:
-        _write_header(outfile)
-        done = 0
-    for index in range(done, len(combos)):
-        row = analyse(combos[index])
-        append_row(outfile, row)
-        state = row["Error"] or f"FOS={row['FOS']}" + (" AT BOUNDARY" if row["At_Boundary"] is True else "")
-        print(f"[{label} {index + 1}/{len(combos)}] {state}", flush=True)
-
-
-def part_path(outfile, k: int, n: int) -> Path:
-    outfile = Path(outfile)
-    return outfile.with_name(f"{outfile.name}.part{k}of{n}.csv")
-
-
-def split_contiguous(combos, n_parts: int) -> list[np.ndarray]:
-    combos = np.asarray(combos, dtype=float)
-    if len(combos) == 0:
-        raise ValueError("cannot split an empty design")
-    n_parts = min(int(n_parts), len(combos))
-    return [combos[idx] for idx in np.array_split(np.arange(len(combos)), n_parts)]
-
-
-def merge_parts(part_specs, outfile, all_combos) -> None:
-    merged = []
-    for path, expected in part_specs:
-        rows, columns = read_rows(path)
-        if columns != data.RESULT_COLUMNS or len(rows) != len(expected):
-            raise RuntimeError(f"cannot merge {Path(path).name}: incomplete or wrong schema")
-        validate_prefix(rows, expected, Path(path).name)
-        merged.extend(rows)
-    validate_prefix(merged, np.asarray(all_combos, dtype=float), "merged output")
-    if len(merged) != len(all_combos):
-        raise RuntimeError(f"merge produced {len(merged)} rows, expected {len(all_combos)}")
-    with Path(outfile).open("w", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=data.RESULT_COLUMNS)
+    tmp = path.with_name(f".{path.name}.tmp")
+    with tmp.open("w", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=columns)
         writer.writeheader()
-        writer.writerows(merged)
-        stream.flush()
-        os.fsync(stream.fileno())
-    for path, _ in part_specs:
-        Path(path).unlink()
+        writer.writerows(rows)
+    os.replace(tmp, path)
 
 
-def run_parallel(combos, outfile, label, workers, analyse=None) -> None:
-    analyse = analyse or solver.analyse
-    chunks = split_contiguous(combos, workers)
-    specs = [(part_path(outfile, k, len(chunks)), chunk) for k, chunk in enumerate(chunks, 1)]
-    context = mp.get_context("spawn")    # portable to macOS; no inherited solver state
-    processes = []
-    for k, (path, chunk) in enumerate(specs, 1):
-        process = context.Process(target=run_batch, args=(chunk, path, f"{label}:part{k}/{len(chunks)}", analyse),
-                                  name=f"{label}:part{k}")
-        process.start()
-        processes.append(process)
-    failed = []
-    for process in processes:
-        process.join()
-        if process.exitcode != 0:
-            failed.append(f"{process.name} (exit={process.exitcode})")
-    if failed:
-        raise RuntimeError("solver workers failed: " + ", ".join(failed)
-                           + "; completed parts are kept for --resume")
-    merge_parts(specs, outfile, combos)
-
-
-def stage(role: str, opts: Options) -> None:
-    design_path = config.design_path(role)
-
-    def build(tmp: Path):
-        parts = sorted(tmp.parent.glob(f"{tmp.name}.part*.csv"))
-        if (tmp.exists() or parts) and not opts.resume:
-            raise RuntimeError(f"partial solver output for {role!r} exists; pass --resume to "
-                               f"continue it, or delete {tmp.name}* to start over")
-        if parts and not all(p.name.endswith(f"of{opts.workers}.csv") for p in parts):
-            raise RuntimeError("partial output was written with a different --workers; resume with the same value")
-        if opts.workers > 1 and tmp.exists():
-            raise RuntimeError("partial output was written sequentially; resume with --workers 1")
-        combos = pd.read_csv(design_path)[list(config.PARAMS)].to_numpy(float)
-        if opts.workers == 1:
-            run_batch(combos, tmp, role, analyse=solver.analyse)
-        else:
-            run_parallel(combos, tmp, role, opts.workers, analyse=solver.analyse)
-        rows, _ = read_rows(tmp)
-        return {"n": len(rows),
-                "n_solver_error": sum(1 for r in rows if r["FOS"] == ""),
-                "n_at_boundary": sum(1 for r in rows if r["At_Boundary"].strip().lower() == "true"),
-                "workers": opts.workers}
-
-    produce(config.results_path(role), stage=f"solve:{role}", sections=("domain",),
-            inputs={"design": design_path}, opts=opts, build=build, resumable=True)
-```
-
-- [ ] **Step 4: Run tests**
-
-Run: `.venv/bin/pytest -q`
-Expected: all pass.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add sgs/solve.py tests/test_solve.py
-git commit -m "Add the solve stage with resumable and parallel batches
-
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-```
-
----
-
-### Task 11: `repair.py` — the repair stage
-
-A port of `run_repair.py`. It reads from `data/results/` and writes to `data/final/`, and never rewrites its input.
-
-**Files:**
-- Create: `sgs/repair.py`, `tests/test_repair.py`
-
-**Interfaces:**
-- Consumes: `solver.calculate_fos`, `solver.analysis_row`, `solve.read_rows`, `config.REPAIR_VARIANTS`, `data.RESULT_COLUMNS/FINAL_COLUMNS`.
-- Produces: `variant_label(ext_factor, depth_factor) -> str`, `repair_rows(rows: list[dict], calculate=None) -> dict` (mutates rows, returns summary), `stage(role, opts)`.
-
-- [ ] **Step 1: Write the failing tests `tests/test_repair.py`**
-
-```python
-import csv
-
-import pytest
-
-from sgs import config, data, manifest, repair
-from sgs.stage import Options
-
-
-def _row(fos="1.5", boundary="False", c=10.0):
-    row = {column: "" for column in data.RESULT_COLUMNS}
-    row.update(angle="45.0", phi="30.0", c=str(c), gamma="18.0", H="10.0", FOS=fos, At_Boundary=boundary)
-    return row
-
-
-def fake_calculate(frees_at):
-    """Returns a boundary-free surface only on the given variant."""
-    def calculate(angle, phi, c, gamma, H, ext_factor=None, depth_factor=None):
-        free = (ext_factor, depth_factor) == frees_at
-        return {"fos": 1.2, "surface_left": 0.0, "surface_right": 1.0, "surface_depth": -1.0,
-                "cx": 0.0, "cy": 1.0, "radius": 2.0, "at_boundary": not free, "boundary_flags": [],
-                "search_converged": True, "n_circles_tested": 1, "n_valid_surfaces": 1,
-                "n_unsolved": 0, "warnings": "", "error": "", "runtime_s": 0.1}
-    return calculate
-
-
-def test_label():
-    assert repair.variant_label(2.0, None) == "ext2.0x_depth1x"
-
-
-def test_rows_without_problems_are_copied():
-    rows = [_row(), _row()]
-    summary = repair.repair_rows(rows, calculate=fake_calculate(None))
-    assert summary["copied_unchanged"] and summary["n_boundary"] == 0
-    assert all(r["repair_variant"] == "" and r["excluded"] == "" for r in rows)
-
-
-def test_boundary_row_is_repaired_by_the_first_freeing_variant():
-    rows = [_row(boundary="True")]
-    summary = repair.repair_rows(rows, calculate=fake_calculate((None, 2.0)))
-    assert summary["n_repaired"] == 1
-    assert rows[0]["repair_variant"] == "ext1x_depth2.0x"
-    assert rows[0]["FOS"] == 1.2 and rows[0]["At_Boundary"] is False and rows[0]["excluded"] == ""
-
-
-def test_unfreeable_row_is_excluded():
-    rows = [_row(boundary="True")]
-    summary = repair.repair_rows(rows, calculate=fake_calculate(("never", "never")))
-    assert summary["n_unresolved"] == 1 and rows[0]["excluded"] == "unresolved"
-
-
-def test_solver_error_is_excluded_not_repaired():
-    rows = [_row(fos="")]
-    summary = repair.repair_rows(rows, calculate=fake_calculate(None))
-    assert summary["n_solver_error"] == 1 and rows[0]["excluded"] == "solver_error"
-
-
-def test_stage_writes_final_and_leaves_results_untouched(root, monkeypatch):
-    monkeypatch.setattr(repair.solver, "calculate_fos", fake_calculate((2.0, None)))
-    results = config.results_path("seed")
-    results.parent.mkdir(parents=True)
-    with results.open("w", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=data.RESULT_COLUMNS)
-        writer.writeheader()
-        writer.writerows([_row(), _row(boundary="True", c=20.0)])
-    manifest.write_manifest(results, stage="fixture", sections=(), inputs={}, wall_time_s=0)
-    before = manifest.sha256_file(results)
-    repair.stage("seed", Options())
-    assert manifest.sha256_file(results) == before
-    final = data.read_table(config.final_path("seed"))
-    assert list(final.columns) == data.FINAL_COLUMNS
-    assert final["repair_variant"].tolist() == ["", "ext2.0x_depth1x"]
-    assert manifest.read_manifest(config.final_path("seed"))["extra"]["n_repaired"] == 1
-```
-
-- [ ] **Step 2: Run to verify failure**
-
-Run: `.venv/bin/pytest tests/test_repair.py -q`
-Expected: `ImportError: cannot import name 'repair'`.
-
-- [ ] **Step 3: Write `sgs/repair.py`**
-
-```python
-"""The repair stage: boundary-truncated rows recomputed on enlarged domains.
-
-A critical surface that reaches the analysis domain was cut short by the model
-extent, so its FOS is not the true minimum. Each such row is recomputed with
-the same solver and search settings on the enlarged domains of
-``config.REPAIR_VARIANTS``, in order, until the surface sits inside the
-domain. Rows no variant frees are excluded as ``unresolved``; rows the solver
-could not analyse are excluded as ``solver_error``. The input in
-data/results/ is never modified.
-"""
-
-from __future__ import annotations
-
-import csv
-import os
-from pathlib import Path
-
-from sgs import config, data, solve, solver
-from sgs.stage import Options, produce
-
+# --- repair -------------------------------------------------------------------------
 
 def variant_label(ext_factor, depth_factor) -> str:
     return f"ext{ext_factor or 1}x_depth{depth_factor or 1}x"
@@ -3390,7 +2348,11 @@ def _float(value):
 
 
 def repair_rows(rows: list[dict], calculate=None) -> dict:
-    calculate = calculate or solver.calculate_fos
+    """Recompute boundary-truncated rows on the enlarged domains of
+    ``config.REPAIR_VARIANTS``, in order, until the surface sits inside the
+    domain. Rows no variant frees are excluded as ``unresolved``; rows the
+    solver could not analyse are excluded as ``solver_error``."""
+    calculate = calculate or calculate_fos
     for row in rows:
         row["repair_variant"] = ""
         row["excluded"] = ""
@@ -3410,7 +2372,7 @@ def repair_rows(rows: list[dict], calculate=None) -> dict:
             if analysis["fos"] is None or analysis["at_boundary"]:
                 print(f"  row {index + 1}: {label} did not free the surface")
                 continue
-            row.update(solver.analysis_row(combo, analysis, ext_factor, depth_factor))
+            row.update(analysis_row(combo, analysis, ext_factor, depth_factor))
             row["repair_variant"] = label
             n_repaired += 1
             print(f"  row {index + 1}: repaired with {label}, FOS={analysis['fos']:.4f}")
@@ -3419,29 +2381,292 @@ def repair_rows(rows: list[dict], calculate=None) -> dict:
             row["excluded"] = "unresolved"
             print(f"  row {index + 1}: no variant freed the surface; excluded")
     return {"n_rows": len(rows), "n_boundary": n_boundary, "n_repaired": n_repaired,
-            "n_unresolved": n_boundary - n_repaired, "n_solver_error": n_error,
-            "copied_unchanged": n_boundary == 0 and n_error == 0}
+            "n_unresolved": n_boundary - n_repaired, "n_solver_error": n_error}
+```
+
+- [ ] **Step 5: Run tests, including the slow one once**
+
+Run: `.venv/bin/pytest tests/test_solver.py -q`
+Expected: all pass, 1 deselected.
+
+Run: `.venv/bin/pytest tests/test_solver.py -q -m slow`
+Expected: 1 passed, in about 10 s. It uses the template cached in `artifacts/solver/` by Task 2.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add sgs/solver.py tests/test_solver.py tests/helpers.py
+git commit -m "Port the xslope/Bishop wrapper, a parallel set runner and boundary repair
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
+```
+
+---
+
+## Task 7: `cli.py` — `generate` and the subcommands
+
+The whole CLI is written here. Handlers for `fit`, `evaluate`, `report` and `learning-curve` import their modules lazily, so the parser works before those modules exist (Tasks 9, 11, 12, 13 provide them).
+
+**Files:**
+- Create: `sgs/cli.py`, `tests/test_cli.py`
+
+**Interfaces:**
+- Consumes: `design.build`, `solver.run_set/read_rows/write_rows/repair_rows`, `data.sha256_file/read_metadata/record/environment/RESULT_COLUMNS/FINAL_COLUMNS`.
+- Produces:
+  - `GenerateError(RuntimeError)`, `generate(role, *, workers=1, force=False) -> dict` (the `run_metadata.json["datasets"][role]` entry)
+  - `build_parser()`, `main(argv=None)`
+  - Later modules must provide exactly: `models.fit_all(*, force)` (Task 9), `evaluate.run()` (Task 11), `report.run()` (Task 12), `models.learning_curve(*, force)` and `evaluate.run_learning_curve()` (Task 13).
+- `run_metadata.json["datasets"][role]` keys: `n, seeds, design_sha256, results_sha256, final_sha256, repair, environment, updated`, plus `screener` for screener roles.
+
+- [ ] **Step 1: Write the failing tests `tests/test_cli.py`**
+
+```python
+import pytest
+
+from sgs import cli, config, data, solver
+from tests.helpers import fake_analyse
 
 
-def stage(role: str, opts: Options) -> None:
-    results = config.results_path(role)
+def test_every_command_parses():
+    parser = cli.build_parser()
+    for argv in (["generate"], ["generate", "--role", "guided", "--workers", "4", "--force"],
+                 ["fit", "--force"], ["evaluate"], ["report"], ["learning-curve", "--force"],
+                 ["all", "--workers", "2"]):
+        assert callable(parser.parse_args(argv).handler)
 
-    def build(tmp: Path):
-        rows, columns = solve.read_rows(results)
+
+def test_unknown_role_is_rejected():
+    with pytest.raises(SystemExit):
+        cli.build_parser().parse_args(["generate", "--role", "nope"])
+
+
+def test_no_scientific_flags_exist():
+    with pytest.raises(SystemExit):
+        cli.build_parser().parse_args(["generate", "--seed", "1"])
+
+
+def test_workers_must_be_positive():
+    with pytest.raises(SystemExit):
+        cli.main(["generate", "--role", "seed", "--workers", "0"])
+
+
+@pytest.fixture
+def fake_solver(root, monkeypatch):
+    calls = []
+
+    def counting(combo):
+        calls.append(combo)
+        return fake_analyse(combo)
+
+    monkeypatch.setattr(solver, "analyse", counting)
+    return calls
+
+
+def test_generate_writes_three_files_and_records_them(fake_solver):
+    entry = cli.generate("seed")
+    for path in (config.design_path("seed"), config.results_path("seed"), config.final_path("seed")):
+        assert path.exists()
+    assert len(fake_solver) == 300
+    assert list(data.read_table(config.final_path("seed")).columns) == data.FINAL_COLUMNS
+    recorded = data.read_metadata()["datasets"]["seed"]
+    assert recorded == entry
+    assert recorded["design_sha256"] == data.sha256_file(config.design_path("seed"))
+    assert recorded["seeds"] == {"seed_lhs_design": 42} and recorded["repair"]["n_boundary"] == 0
+
+
+def test_generate_reuses_existing_outputs(fake_solver):
+    cli.generate("seed")
+    results = data.sha256_file(config.results_path("seed"))
+    cli.generate("seed")
+    assert len(fake_solver) == 300
+    assert data.sha256_file(config.results_path("seed")) == results
+
+
+def test_repair_is_redone_from_untouched_results(fake_solver):
+    cli.generate("seed")
+    results = data.sha256_file(config.results_path("seed"))
+    config.final_path("seed").unlink()
+    cli.generate("seed")
+    assert len(fake_solver) == 300 and config.final_path("seed").exists()
+    assert data.sha256_file(config.results_path("seed")) == results
+
+
+def test_changed_design_is_refused_without_force(fake_solver, monkeypatch):
+    cli.generate("seed")
+    monkeypatch.setitem(config.SEEDS, "seed_lhs_design", 43)
+    with pytest.raises(cli.GenerateError, match="differs"):
+        cli.generate("seed")
+    cli.generate("seed", force=True)
+    assert len(fake_solver) == 600
+
+
+def test_results_from_another_design_are_refused(fake_solver):
+    cli.generate("seed")
+    entry = data.read_metadata()["datasets"]["seed"]
+    data.record("datasets", "seed", {**entry, "design_sha256": "0" * 64})
+    with pytest.raises(cli.GenerateError, match="different design"):
+        cli.generate("seed")
+```
+
+- [ ] **Step 2: Run to verify failure**
+
+Run: `.venv/bin/pytest tests/test_cli.py -q`
+Expected: `ImportError: cannot import name 'cli'`.
+
+- [ ] **Step 3: Write `sgs/cli.py`**
+
+```python
+"""sgs — the surrogate-guided sampling pipeline.
+
+  sgs generate        design → solve → repair, for every role or one
+  sgs fit             tuned searches with nested OOF residuals, cached
+  sgs evaluate        metrics on the test sets (seconds)
+  sgs report          booktabs tables and figures
+  sgs learning-curve  optional; RF with fixed hyper-parameters
+  sgs all             generate, fit, evaluate, report
+
+Scientific parameters live in sgs/config.py; the command line only selects a
+role and controls execution.
+"""
+
+from __future__ import annotations
+
+import argparse
+import datetime as _dt
+import platform
+import sys
+
+from sgs import config, data, design, solver
+
+REFERENCE_PYTHON = "3.14.4"
+
+
+class GenerateError(RuntimeError):
+    """Existing outputs of a role do not match what would be produced now."""
+
+
+def generate(role: str, *, workers: int = 1, force: bool = False) -> dict:
+    """Design, solve and repair one role; reuse outputs that still match."""
+    spec = config.ROLES[role]
+    frame, info = design.build(role)
+    design_path, results_path, final_path = (config.design_path(role), config.results_path(role),
+                                             config.final_path(role))
+
+    text = frame.to_csv(index=False)
+    if design_path.exists() and design_path.read_text() != text and not force:
+        raise GenerateError(f"{design_path.name} differs from the design the current configuration "
+                            f"and data produce; rerun with --force to regenerate {role!r}")
+    if not design_path.exists() or design_path.read_text() != text:
+        design_path.parent.mkdir(parents=True, exist_ok=True)
+        design_path.write_text(text)
+    design_sha = data.sha256_file(design_path)
+
+    previous = data.read_metadata().get("datasets", {}).get(role, {})
+    solved = False
+    if results_path.exists() and not force:
+        if previous.get("design_sha256") != design_sha:
+            raise GenerateError(f"{results_path.name} was solved from a different design; "
+                                f"rerun with --force to solve {role!r} again")
+        print(f"[{role}] results up to date")
+    else:
+        rows = solver.run_set(frame[list(config.PARAMS)].to_numpy(float), workers=workers, label=role)
+        solver.write_rows(results_path, rows, data.RESULT_COLUMNS)
+        solved = True
+
+    if solved or force or not final_path.exists():
+        rows, columns = solver.read_rows(results_path)
         if columns != data.RESULT_COLUMNS:
-            raise RuntimeError(f"{results.name} does not match the result schema")
-        summary = repair_rows(rows)
-        with tmp.open("w", newline="") as stream:
-            writer = csv.DictWriter(stream, fieldnames=data.FINAL_COLUMNS)
-            writer.writeheader()
-            writer.writerows(rows)
-            stream.flush()
-            os.fsync(stream.fileno())
-        print(f"[repair:{role}] {summary}")
-        return summary
+            raise GenerateError(f"{results_path.name} does not match the result schema")
+        repair = solver.repair_rows(rows)
+        solver.write_rows(final_path, rows, data.FINAL_COLUMNS)
+        print(f"[{role}] repair: {repair}")
+    else:
+        repair = previous["repair"]
+        print(f"[{role}] final up to date")
 
-    produce(config.final_path(role), stage=f"repair:{role}", sections=("domain",),
-            inputs={"results": results}, opts=opts, build=build)
+    entry = {"n": spec.n, **info, "design_sha256": design_sha,
+             "results_sha256": data.sha256_file(results_path),
+             "final_sha256": data.sha256_file(final_path), "repair": repair,
+             "environment": data.environment(),
+             "updated": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")}
+    data.record("datasets", role, entry)
+    return entry
+
+
+def _generate(args):
+    roles = [args.role] if getattr(args, "role", None) else list(config.ROLE_ORDER)
+    for role in roles:
+        generate(role, workers=args.workers, force=args.force)
+
+
+def _fit(args):
+    from sgs import models
+    models.fit_all(force=args.force)
+
+
+def _evaluate(args):
+    from sgs import evaluate
+    evaluate.run()
+
+
+def _report(args):
+    from sgs import report
+    report.run()
+
+
+def _learning_curve(args):
+    from sgs import evaluate, models
+    models.learning_curve(force=args.force)
+    evaluate.run_learning_curve()
+
+
+def _all(args):
+    _generate(args)
+    _fit(args)
+    _evaluate(args)
+    _report(args)
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="sgs", description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    def command(name, handler, help, *, role=False, workers=False, force=False):
+        p = sub.add_parser(name, help=help)
+        if role:
+            p.add_argument("--role", choices=tuple(config.ROLES), default=None,
+                           help="one role (default: all, in dependency order)")
+        if workers:
+            p.add_argument("--workers", type=int, default=1, help="solver processes")
+        if force:
+            p.add_argument("--force", action="store_true",
+                           help="regenerate outputs instead of reusing or refusing them")
+        p.set_defaults(handler=handler)
+
+    command("generate", _generate, "design, solve and repair the data sets", role=True, workers=True, force=True)
+    command("fit", _fit, "tuned searches with nested OOF residuals", force=True)
+    command("evaluate", _evaluate, "metrics on the test sets")
+    command("report", _report, "booktabs tables and figures from outputs/metrics")
+    command("learning-curve", _learning_curve, "optional: RF learning curve with fixed hyper-parameters",
+            force=True)
+    command("all", _all, "generate, fit, evaluate, report", workers=True, force=True)
+    return parser
+
+
+def main(argv=None) -> None:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    if getattr(args, "workers", 1) < 1:
+        parser.error("--workers must be at least 1")
+    if platform.python_version() != REFERENCE_PYTHON:
+        print(f"warning: running on Python {platform.python_version()}; "
+              f"the reference environment is {REFERENCE_PYTHON}", file=sys.stderr)
+    args.handler(args)
+
+
+if __name__ == "__main__":
+    main()
 ```
 
 - [ ] **Step 4: Run tests**
@@ -3449,973 +2674,93 @@ def stage(role: str, opts: Options) -> None:
 Run: `.venv/bin/pytest -q`
 Expected: all pass.
 
+Run: `.venv/bin/sgs --help`
+Expected: the six subcommands are listed.
+
 - [ ] **Step 5: Commit**
 
 ```bash
-git add sgs/repair.py tests/test_repair.py
-git commit -m "Add the repair stage writing data/final from immutable results
+git add sgs/cli.py tests/test_cli.py
+git commit -m "Add the sgs CLI and the generate command
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
 
 ---
 
-### Task 12: Run the seed chain and compare it descriptively
+## Task 8: Generate the five data sets
 
-**EXPENSIVE: about 300 solver analyses, unattended.**
+**About an hour of solver time, unattended** (under 15 minutes per set of 300 with two workers).
 
 **Files:**
-- Create: `tools/describe_sets.py`
-- Produces (untracked payloads, tracked manifests): `data/designs/seed_lhs_300.csv`, `data/results/seed_lhs_300.csv`, `data/final/seed_lhs_300.csv`
+- Produces: `data/designs/*.csv`, `data/results/*.csv`, `data/final/*.csv` (ignored), `data/run_metadata.json` (tracked)
 
-**Interfaces:**
-- Produces: `tools/describe_sets.py <reference-dir>` prints, for every final set present, the columns n, excluded, min, median, max FOS, occupancy of the 15 selection-range bins and max |Δparam|, next to the reference copy under its old name. The author reuses it in Task 16.
+- [ ] **Step 1: Generate**
 
-- [ ] **Step 1: Write `tools/describe_sets.py`**
+```bash
+.venv/bin/sgs generate --workers 2 2>&1 | tee /tmp/generate.log
+```
+Expected: for each of the five roles, solver progress lines, then `repair: {...}`. More workers are fine if the machine has the cores. If the run is interrupted, rerun the same command: finished roles print `results up to date` and `final up to date`.
 
-```python
-"""Descriptive comparison of regenerated final sets with the reference copies.
+- [ ] **Step 2: Validate the sets**
 
-For the author's eyes only: nothing in the pipeline reads the reference
-directory. Usage: .venv/bin/python tools/describe_sets.py <reference-dir>
-"""
+```bash
+.venv/bin/python -c "from sgs import config, data; data.validate_sets(config.ROLE_ORDER); print('all sets valid and pairwise disjoint')"
+```
+Expected: `all sets valid and pairwise disjoint`. A `DataError` here means something upstream is wrong: stop and report it to the author.
 
-import sys
-from pathlib import Path
+- [ ] **Step 3: Descriptive comparison with the reference copies (for the author, not a gate)**
 
+```bash
+.venv/bin/python - <<'EOF'
 import numpy as np
-import pandas as pd
-
 from sgs import config, data
-
-OLD_NAMES = {
-    "seed": "initial_lhs_300_bishop.csv",
-    "lhs-extension": "results_lhs_bishop.csv",
-    "guided": "results_uniform_bishop.csv",
-    "test-natural": "results_test_bishop.csv",
-    "test-stratified": "results_test_150_bishop.csv",
-}
-
-
-def describe(frame):
-    kept = data.usable(frame)
-    fos = kept["FOS"].to_numpy(float)
-    edges = np.linspace(*config.SELECTION_RANGE, config.N_BINS + 1)
-    occupancy = np.histogram(fos, bins=edges)[0].tolist()
-    return {"n": len(frame), "excluded": len(frame) - len(kept), "min": fos.min(),
-            "median": np.median(fos), "max": fos.max(), "bins": occupancy}
-
-
-reference_dir = Path(sys.argv[1])
-for role in config.ROLE_ORDER:
-    path = config.final_path(role)
-    if not path.exists():
-        continue
-    new = data.read_table(path)
-    old = data.read_table(reference_dir / OLD_NAMES[role])
+REF = "/Users/bogdanteodoru/Documents/scoala/lucrari/FOS_by_ML/reference-data-2026-09/"
+OLD = {"seed": "initial_lhs_300_bishop.csv", "lhs-extension": "results_lhs_bishop.csv",
+       "guided": "results_uniform_bishop.csv", "test-natural": "results_test_bishop.csv",
+       "test-stratified": "results_test_150_bishop.csv"}
+edges = np.linspace(*config.SELECTION_RANGE, config.N_BINS + 1)
+for role, name in OLD.items():
+    new, old = data.read_table(config.final_path(role)), data.read_table(REF + name)
     if "excluded" not in old:
         old["excluded"] = ""
-    a, b = describe(new), describe(old)
+    print(f"\n== {role}")
+    for label, frame in (("new", new), ("ref", old)):
+        fos = data.usable(frame)["FOS"].to_numpy(float)
+        print(f"  {label}: n={len(frame)} excluded={len(frame) - len(fos)} "
+              f"min={fos.min():.3f} median={np.median(fos):.3f} max={fos.max():.3f} "
+              f"bins={np.histogram(fos, edges)[0].tolist()}")
     dparam = np.abs(new[list(config.PARAMS)].to_numpy(float) - old[list(config.PARAMS)].to_numpy(float)).max()
-    print(f"\n== {role} ({path.name} vs {OLD_NAMES[role]}) — max |Δparam| {dparam:.2e}")
-    for key in ("n", "excluded", "min", "median", "max"):
-        print(f"  {key:9} new {a[key]!s:>10}   ref {b[key]!s:>10}")
-    print(f"  bins new {a['bins']}\n  bins ref {b['bins']}")
-    same_rows = np.isclose(new["FOS"].to_numpy(float), old["FOS"].to_numpy(float), atol=1e-6, equal_nan=True)
-    print(f"  rows with identical FOS (±1e-6): {int(same_rows.sum())}/{len(new)}")
-```
-
-- [ ] **Step 2: Run the chain**
-
-```bash
-.venv/bin/sgs design --role seed
-.venv/bin/sgs solve --role seed --workers 6
-.venv/bin/sgs repair --role seed
-```
-If interrupted, re-run `solve` with `--resume --workers 6`. The worker count must stay the same.
-
-Expected: `wrote seed_lhs_300.csv` three times; the repair summary names how many boundary rows were found and repaired.
-
-- [ ] **Step 3: Descriptive comparison**
-
-```bash
-.venv/bin/python tools/describe_sets.py "$REF"
-```
-Expected: `max |Δparam|` = 0, since the seed design is regenerated bit-identically. Most rows should have identical FOS: the search is deterministic, so any difference comes from repair. Report any row-level FOS differences to the author. This is a descriptive check, not a gate.
-
-- [ ] **Step 4: Commit (tool and manifests; payloads are ignored)**
-
-```bash
-git add tools/describe_sets.py data/designs/*.manifest.json data/results/*.manifest.json data/final/*.manifest.json
-git status --short data/     # must list only *.manifest.json
-git commit -m "Regenerate the seed chain through the pipeline
-
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-```
-
----
-
-## Phase 3 — the screener
-
-### Task 13: `screener.py` and `sgs fit-screener`
-
-**Files:**
-- Create: `sgs/screener.py`, `tests/test_screener.py`
-
-**Interfaces:**
-- Consumes: `data.load_role`, `config.SCREENERS`, `manifest.require_fresh`, `stage.produce`.
-- Produces: `SECTIONS = ("domain", "screener")`, `inputs_for(name) -> dict[str, Path]`, `build_model(spec, *, oob: bool) -> RandomForestRegressor`, `fit(name) -> (model, diagnostics: dict)`, `load(name) -> fitted model` (fails on stale), `stage(opts, name=None)`.
-
-- [ ] **Step 1: Write the failing tests `tests/test_screener.py`**
-
-```python
-import joblib
-import numpy as np
-import pytest
-
-from sgs import config, manifest, screener
-from sgs.stage import Options
-from tests.helpers import synthetic_final, write_final
-
-
-@pytest.fixture
-def small_screener(root, monkeypatch):
-    spec = config.SCREENERS["primary"]
-    small = type(spec)(trained_on=spec.trained_on, family="rf", params={"n_estimators": 20},
-                       seeds=dict(spec.seeds), cv_folds=3)
-    monkeypatch.setitem(config.SCREENERS, "primary", small)
-    write_final("seed", synthetic_final(80, 5))
-    return small
-
-
-def test_model_uses_named_seeds(small_screener):
-    model = screener.build_model(small_screener, oob=True)
-    assert model.random_state == small_screener.seeds["fit"] and model.oob_score
-
-
-def test_non_rf_family_is_refused(small_screener):
-    with pytest.raises(ValueError):
-        screener.build_model(type(small_screener)(trained_on="seed", family="gbm"), oob=False)
-
-
-def test_stage_fits_on_log_fos_and_records_diagnostics(small_screener):
-    screener.stage(Options())
-    path = config.screener_path("primary")
-    diagnostics = manifest.read_manifest(path)["extra"]
-    assert diagnostics["n_train"] == 80 and 0 < diagnostics["oob_r2_log"] <= 1
-    model = screener.load("primary")
-    assert np.all(np.exp(model.predict(np.zeros((1, len(config.FEATURES))) + 10)) > 0)
-
-
-def test_fit_is_deterministic(small_screener):
-    a, _ = screener.fit("primary")
-    b, _ = screener.fit("primary")
-    probe = synthetic_final(10, 9)
-    from sgs import data
-    X = data.add_features(probe)[list(config.FEATURES)]
-    np.testing.assert_array_equal(a.predict(X), b.predict(X))
-
-
-def test_load_refuses_a_stale_screener(small_screener, monkeypatch):
-    screener.stage(Options())
-    monkeypatch.setitem(config.SCREENERS, "primary",
-                        type(small_screener)(trained_on="seed", family="rf",
-                                             params={"n_estimators": 21}, seeds=dict(small_screener.seeds)))
-    with pytest.raises(manifest.StaleArtifact, match="screener"):
-        screener.load("primary")
-```
-
-- [ ] **Step 2: Run to verify failure**
-
-Run: `.venv/bin/pytest tests/test_screener.py -q`
-Expected: `ImportError: cannot import name 'screener'`.
-
-- [ ] **Step 3: Write `sgs/screener.py`**
-
-```python
-"""The preliminary surrogate: fitted once on its training role, loaded thereafter.
-
-Fixed hyper-parameters, not a tuned search. It screens the candidate pools of
-the guided and target-stratified designs; it is not one of the models under
-comparison.
-"""
-
-from __future__ import annotations
-
-import joblib
-import numpy as np
-from scipy.stats import spearmanr
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import KFold, cross_val_predict
-
-from sgs import config, data, manifest
-from sgs.stage import Options, produce
-
-SECTIONS = ("domain", "screener")
-
-
-def inputs_for(name: str) -> dict:
-    trained_on = config.SCREENERS[name].trained_on
-    return {f"final:{trained_on}": config.final_path(trained_on)}
-
-
-def build_model(spec: config.Screener, *, oob: bool) -> RandomForestRegressor:
-    if spec.family != "rf":
-        raise ValueError(f"screener family {spec.family!r} is not supported")
-    return RandomForestRegressor(**spec.params, oob_score=oob,
-                                 random_state=spec.seeds["fit"], n_jobs=-1)
-
-
-def fit(name: str):
-    spec = config.SCREENERS[name]
-    frame = data.load_role(spec.trained_on)
-    X = frame[list(config.FEATURES)]
-    fos = frame["FOS"].to_numpy(float)
-    y = np.log(fos)
-    model = build_model(spec, oob=True).fit(X, y)
-
-    cv = KFold(spec.cv_folds, shuffle=True, random_state=spec.seeds["cv"])
-    oof = np.exp(cross_val_predict(build_model(spec, oob=False), X, y, cv=cv))
-    lo, hi = config.SELECTION_RANGE
-    inside = (fos >= lo) & (fos <= hi)
-    diagnostics = {
-        "n_train": int(len(frame)),
-        "oob_r2_log": float(model.oob_score_),
-        "oof_rmse": float(np.sqrt(np.mean((oof - fos) ** 2))),
-        "oof_rmse_selection_range": float(np.sqrt(np.mean((oof[inside] - fos[inside]) ** 2))),
-        "oof_spearman": float(spearmanr(oof, fos).statistic),
-    }
-    return model, diagnostics
-
-
-def load(name: str):
-    path = config.screener_path(name)
-    manifest.require_fresh(path, sections=SECTIONS, inputs=inputs_for(name))
-    return joblib.load(path)
-
-
-def stage(opts: Options, name: str | None = None) -> None:
-    for screener_name in ([name] if name else list(config.SCREENERS)):
-        def build(tmp, screener_name=screener_name):
-            model, diagnostics = fit(screener_name)
-            joblib.dump(model, tmp)
-            print(f"[fit-screener:{screener_name}] {diagnostics}")
-            return diagnostics
-
-        produce(config.screener_path(screener_name), stage=f"fit-screener:{screener_name}",
-                sections=SECTIONS, inputs=inputs_for(screener_name), opts=opts, build=build)
-```
-
-- [ ] **Step 4: Run tests**
-
-Run: `.venv/bin/pytest -q`
-Expected: all pass.
-
-- [ ] **Step 5: Fit the real screener**
-
-```bash
-.venv/bin/sgs fit-screener
-```
-Expected: `oob_r2_log` close to the 0.9567 the notebook reported. The values are identical if repair left the seed FOS identical to the reference.
-
-- [ ] **Step 6: Commit**
-
-```bash
-git add sgs/screener.py tests/test_screener.py artifacts/screeners/primary.joblib.manifest.json
-git commit -m "Add the preliminary screener stage
-
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-```
-
----
-
-## Phase 4 — the remaining four roles
-
-### Task 14: `guided-maxmin` design
-
-**Files:**
-- Modify: `sgs/design.py` (add helpers and register the builder)
-- Modify: `tests/test_design.py` (append tests)
-
-**Interfaces:**
-- Consumes: `screener.load(name)` → an object with `.predict(X_features) -> log FOS`.
-- Produces: `uniform_pool(rng, n) -> DataFrame`, `predict_fos(model, frame) -> ndarray`, `greedy_maxmin(Xs, k, rng) -> ndarray`, `bin_edges(n_bins, selection_range) -> ndarray`, `guided_maxmin(model, *, rng, n_pool, n_bins, per_bin, drawn_per_bin, selection_range) -> DataFrame` (columns `PARAMS + ["FOS_pred", "bin"]`), `_BUILDERS["guided-maxmin"]`.
-
-- [ ] **Step 1: Append failing tests to `tests/test_design.py`**
-
-```python
-# --- screener-driven designs -------------------------------------------------------
-
-import dataclasses
-
-import joblib
-
-from tests.helpers import FormulaModel, synthetic_final, write_final, write_payload
-
-
-@pytest.fixture
-def small_designs(root, monkeypatch):
-    """Shrink the screener designs and install a formula screener artifact."""
-    monkeypatch.setattr(config, "N_GUIDED_POOL", 6000)
-    monkeypatch.setattr(config, "N_TEST_POOL", 6000)
-    monkeypatch.setattr(config, "N_BINS", 5)
-    monkeypatch.setattr(config, "GUIDED_PER_BIN", 4)
-    monkeypatch.setattr(config, "GUIDED_DRAWN_PER_BIN", 6)
-    monkeypatch.setattr(config, "TEST_PER_BIN", 3)
-    roles = dict(config.ROLES)
-    roles["guided"] = dataclasses.replace(roles["guided"], n=20)
-    roles["test-stratified"] = dataclasses.replace(roles["test-stratified"], n=15)
-    monkeypatch.setattr(config, "ROLES", roles)
-    write_final("seed", synthetic_final(50, 1))
-    path = config.screener_path("primary")
-    path.parent.mkdir(parents=True, exist_ok=True)
-    joblib.dump(FormulaModel(), path)
-    manifest.write_manifest(path, stage="fixture", sections=("domain", "screener"),
-                            inputs={"final:seed": config.final_path("seed")}, wall_time_s=0)
-
-
-def _guided(rng_seed=42):
-    return design.guided_maxmin(FormulaModel(), rng=np.random.default_rng(rng_seed), n_pool=6000,
-                                n_bins=5, per_bin=4, drawn_per_bin=6, selection_range=(0.5, 6.0))
-
-
-def test_guided_fills_every_bin_with_predicted_fos_inside_it():
-    frame = _guided()
-    assert frame["bin"].value_counts().sort_index().tolist() == [4] * 5
-    edges = design.bin_edges(5, (0.5, 6.0))
-    for b, group in frame.groupby("bin"):
-        assert group["FOS_pred"].gt(edges[b]).all() and group["FOS_pred"].le(edges[b + 1]).all()
-
-
-def test_guided_draws_the_pool_first_from_the_stream():
-    # The order contract of `guided_stream`: every selected point is a row of
-    # the pool drawn first from a fresh generator with the same seed.
-    frame = _guided(42)
-    pool = design.uniform_pool(np.random.default_rng(42), 6000)
-    merged = frame.merge(pool, on=list(config.PARAMS), how="left", indicator=True)
-    assert (merged["_merge"] == "both").all()
-
-
-def test_guided_is_deterministic_and_seed_sensitive():
-    assert _hash(_guided(42)) == _hash(_guided(42))
-    assert _hash(_guided(42)) != _hash(_guided(43))
-
-
-def test_guided_refuses_thin_bins():
-    with pytest.raises(design.DesignError, match="fewer than"):
-        design.guided_maxmin(FormulaModel(), rng=np.random.default_rng(0), n_pool=200, n_bins=5,
-                             per_bin=4, drawn_per_bin=60, selection_range=(0.5, 6.0))
-
-
-def test_greedy_maxmin_picks_spread_points():
-    X = np.array([[0.0, 0.0], [0.01, 0.0], [1.0, 1.0], [0.0, 1.0]])
-    chosen = design.greedy_maxmin(X, 3, np.random.default_rng(0))
-    assert len(set(chosen.tolist())) == 3
-
-
-def test_guided_role_is_deterministic_through_the_stage(small_designs):
-    design.stage("seed", Options())
-    design.stage("guided", Options())
-    assert _hash(design.build("guided")) == manifest.sha256_file(config.design_path("guided"))
-    assert "screener" in manifest.read_manifest(config.design_path("guided"))["config"]
-```
-
-- [ ] **Step 2: Run to verify failure**
-
-Run: `.venv/bin/pytest tests/test_design.py -q`
-Expected: new tests fail with `AttributeError: module 'sgs.design' has no attribute 'guided_maxmin'`.
-
-- [ ] **Step 3: Add to `sgs/design.py`**
-
-Add `from sgs import screener` to the imports. Insert the following above `_BUILDERS`:
-
-```python
-def uniform_pool(rng: np.random.Generator, n: int) -> pd.DataFrame:
-    """Uniform candidates over the domain, one column at a time in PARAMS order."""
-    return pd.DataFrame({p: rng.uniform(config.DOMAIN[p][0], config.DOMAIN[p][1], n)
-                         for p in config.PARAMS})
-
-
-def predict_fos(model, frame: pd.DataFrame) -> np.ndarray:
-    return np.exp(model.predict(data.add_features(frame)[list(config.FEATURES)]))
-
-
-def greedy_maxmin(Xs: np.ndarray, k: int, rng: np.random.Generator) -> np.ndarray:
-    """Greedy max-min selection of k rows from a random start."""
-    n = len(Xs)
-    if k >= n:
-        return np.arange(n)
-    chosen = [int(rng.integers(n))]
-    dmin = np.linalg.norm(Xs - Xs[chosen[0]], axis=1)
-    for _ in range(k - 1):
-        nxt = int(dmin.argmax())
-        chosen.append(nxt)
-        dmin = np.minimum(dmin, np.linalg.norm(Xs - Xs[nxt], axis=1))
-    return np.array(chosen)
-
-
-def bin_edges(n_bins: int, selection_range) -> np.ndarray:
-    lo, hi = selection_range
-    return np.linspace(lo, hi, n_bins + 1)
-
-
-def guided_maxmin(model, *, rng, n_pool, n_bins, per_bin, drawn_per_bin, selection_range) -> pd.DataFrame:
-    """The guided training selection.
-
-    One generator, in this order: the pool, then per bin a max-min draw of
-    ``drawn_per_bin`` candidates and a permutation of which the first
-    ``per_bin`` are kept. Bins are (lo, hi] on screener-predicted FOS.
-    """
-    params = list(config.PARAMS)
-    pool = uniform_pool(rng, n_pool)
-    pool["FOS_pred"] = predict_fos(model, pool)
-    edges = bin_edges(n_bins, selection_range)
-    lo, hi = selection_range
-    inside = pool[(pool["FOS_pred"] >= lo) & (pool["FOS_pred"] <= hi)]
-    counts = pd.cut(inside["FOS_pred"], edges).value_counts().sort_index()
-    thin = counts[counts < drawn_per_bin]
-    if len(thin):
-        raise DesignError(f"bins with fewer than {drawn_per_bin} candidates:\n{thin.to_string()}")
-
-    mu, sd = pool[params].mean(), pool[params].std()
-    chosen, bins = [], []
-    for b, (a, z) in enumerate(zip(edges[:-1], edges[1:])):
-        candidates = pool[(pool["FOS_pred"] > a) & (pool["FOS_pred"] <= z)]
-        Xs = ((candidates[params] - mu) / sd).to_numpy()
-        drawn = candidates.index.to_numpy()[greedy_maxmin(Xs, drawn_per_bin, rng)]
-        kept = drawn[rng.permutation(len(drawn))[:per_bin]]
-        chosen.extend(kept.tolist())
-        bins.extend([b] * len(kept))
-    out = pool.loc[chosen, params + ["FOS_pred"]].reset_index(drop=True)
-    out["bin"] = bins
-    return out
-
-
-def _build_guided(role, spec, references):
-    (stream,) = spec.seeds
-    return guided_maxmin(screener.load(spec.screener),
-                         rng=np.random.default_rng(config.SEEDS[stream]),
-                         n_pool=config.N_GUIDED_POOL, n_bins=config.N_BINS,
-                         per_bin=config.GUIDED_PER_BIN, drawn_per_bin=config.GUIDED_DRAWN_PER_BIN,
-                         selection_range=config.SELECTION_RANGE)
-```
-
-Register it:
-
-```python
-_BUILDERS: dict[str, Callable] = {
-    "lhs": _build_lhs,
-    "guided-maxmin": _build_guided,
-}
-```
-
-- [ ] **Step 4: Run tests**
-
-Run: `.venv/bin/pytest -q`
-Expected: all pass.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add sgs/design.py tests/test_design.py
-git commit -m "Add the guided max-min design
-
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-```
-
----
-
-### Task 15: `stratified-random` design
-
-**Files:**
-- Modify: `sgs/design.py`, `tests/test_design.py`
-
-**Interfaces:**
-- Produces: `stratified_random(model, *, pool_rng, selection_rng, n_pool, n_bins, per_bin, selection_range, references: Mapping[str, DataFrame], min_distance) -> DataFrame` (columns `PARAMS + ["FOS_pred", "bin"]`), `_BUILDERS["stratified-random"]`.
-
-- [ ] **Step 1: Append failing tests to `tests/test_design.py`**
-
-```python
-def _stratified(pool_seed=1, selection_seed=2, references=None):
-    return design.stratified_random(FormulaModel(), pool_rng=np.random.default_rng(pool_seed),
-                                    selection_rng=np.random.default_rng(selection_seed), n_pool=6000,
-                                    n_bins=5, per_bin=3, selection_range=(0.5, 6.0),
-                                    references=references or {}, min_distance=1e-3)
-
-
-def test_stratified_fills_bins_with_closed_first_bin():
-    frame = _stratified()
-    assert frame["bin"].value_counts().sort_index().tolist() == [3] * 5
-    assert frame["FOS_pred"].between(0.5, 6.0).all()
-
-
-def test_stratified_uses_both_streams_independently():
-    base = _hash(_stratified(1, 2))
-    assert _hash(_stratified(1, 2)) == base
-    assert _hash(_stratified(1, 3)) != base
-    assert _hash(_stratified(9, 2)) != base
-
-
-def test_stratified_filters_candidates_near_references():
-    first = _stratified()
-    again = _stratified(references={"previous": first})
-    assert design.nearest_distance(again, first).min() > 1e-3
-
-
-def test_every_role_is_deterministic_through_the_stage(small_designs):
-    for role in config.ROLE_ORDER:
-        design.stage(role, Options())
-    for role in config.ROLE_ORDER:
-        assert _hash(design.build(role)) == manifest.sha256_file(config.design_path(role)), role
-```
-
-- [ ] **Step 2: Run to verify failure**
-
-Run: `.venv/bin/pytest tests/test_design.py -q`
-Expected: new tests fail with `AttributeError: ... 'stratified_random'`.
-
-- [ ] **Step 3: Add to `sgs/design.py` above `_BUILDERS`**
-
-```python
-def stratified_random(model, *, pool_rng, selection_rng, n_pool, n_bins, per_bin,
-                      selection_range, references, min_distance) -> pd.DataFrame:
-    """The target-stratified test set: random selection within each bin.
-
-    An independent pool (its own generator) is screened; candidates outside
-    the selection range or within ``min_distance`` of any reference point are
-    dropped; ``per_bin`` candidates are then drawn at random from each bin on
-    a separate generator. The first bin is closed [lo, hi], the others (lo, hi].
-    """
-    params = list(config.PARAMS)
-    lo, hi = selection_range
-    pool = uniform_pool(pool_rng, n_pool)
-    pool["FOS_pred"] = predict_fos(model, pool)
-    pool = pool[pool["FOS_pred"].between(lo, hi, inclusive="both")].reset_index(drop=True)
-    if references:
-        reference = pd.concat([r[params] for r in references.values()], ignore_index=True)
-        pool = pool.loc[nearest_distance(pool, reference) > min_distance].reset_index(drop=True)
-
-    edges = bin_edges(n_bins, selection_range)
-    chosen, bins = [], []
-    for b, (a, z) in enumerate(zip(edges[:-1], edges[1:])):
-        lower = pool["FOS_pred"] >= a if b == 0 else pool["FOS_pred"] > a
-        candidates = pool.loc[lower & (pool["FOS_pred"] <= z)]
-        if len(candidates) < per_bin:
-            raise DesignError(f"bin {b} [{a:.3f}, {z:.3f}] has only {len(candidates)} candidates")
-        picked = selection_rng.choice(len(candidates), per_bin, replace=False)
-        chosen.extend(candidates.index.to_numpy()[picked].tolist())
-        bins.extend([b] * per_bin)
-    out = pool.loc[chosen, params + ["FOS_pred"]].reset_index(drop=True)
-    out["bin"] = bins
-    return out
-
-
-def _build_stratified(role, spec, references):
-    pool_seed, selection_seed = spec.seeds
-    return stratified_random(screener.load(spec.screener),
-                             pool_rng=np.random.default_rng(config.SEEDS[pool_seed]),
-                             selection_rng=np.random.default_rng(config.SEEDS[selection_seed]),
-                             n_pool=config.N_TEST_POOL, n_bins=config.N_BINS,
-                             per_bin=config.TEST_PER_BIN, selection_range=config.SELECTION_RANGE,
-                             references=references, min_distance=config.MIN_DISTANCE)
-```
-
-Register it:
-
-```python
-_BUILDERS: dict[str, Callable] = {
-    "lhs": _build_lhs,
-    "guided-maxmin": _build_guided,
-    "stratified-random": _build_stratified,
-}
-```
-
-- [ ] **Step 4: Run tests**
-
-Run: `.venv/bin/pytest -q`
-Expected: all pass.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add sgs/design.py tests/test_design.py
-git commit -m "Add the target-stratified random design
-
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-```
-
----
-
-### Task 16: Run the four remaining chains
-
-**EXPENSIVE: about 1050 solver analyses, unattended — the largest single block of machine time in the project.**
-
-- [ ] **Step 1: Designs first (cheap), then compare inputs before spending solver time**
-
-```bash
-for role in lhs-extension guided test-natural test-stratified; do .venv/bin/sgs design --role $role; done
-.venv/bin/python - <<'EOF'
-import numpy as np, pandas as pd
-from sgs import config
-REF = "/Users/bogdanteodoru/Documents/scoala/lucrari/FOS_by_ML/reference-data-2026-09/"
-old = {"lhs-extension": "results_lhs_bishop.csv", "guided": "results_uniform_bishop.csv",
-       "test-natural": "results_test_bishop.csv", "test-stratified": "results_test_150_bishop.csv"}
-for role, name in old.items():
-    a = pd.read_csv(config.design_path(role))[list(config.PARAMS)].to_numpy()
-    b = pd.read_csv(REF + name)[list(config.PARAMS)].to_numpy()
-    print(role, a.shape, "max |Δparam|", np.abs(a - b).max())
+    print(f"  max |Δparam| vs reference: {dparam:.2e}")
 EOF
 ```
-Expected: `max |Δparam|` ≤ 5e-7 for all four, the rounding of the old 6-decimal arrays. If `guided` or `test-stratified` differ by more, the screener changed. That happens only if repair changed seed FOS values relative to the reference. **Report to the author before solving.** It is a legitimate consequence of the regeneration, but it has to be seen before ~1050 analyses are spent on it.
+Expected, per the Task 1 probe: `seed`, `lhs-extension` and `test-natural` have max |Δparam| ≤ 5e-7; `guided` and `test-stratified` differ, because the screener differs slightly from Colab. Distributions (n, median, bin occupancy) should be comparable. Record the output in the task report for the author.
 
-- [ ] **Step 2: Solve and repair each role (unattended)**
-
-```bash
-for role in lhs-extension guided test-natural test-stratified; do
-  .venv/bin/sgs solve --role $role --workers 6 && .venv/bin/sgs repair --role $role || break
-done
-```
-After an interruption, re-run the same loop with `--resume` added to `solve`.
-
-- [ ] **Step 3: Descriptive comparison**
+- [ ] **Step 4: Commit the metadata**
 
 ```bash
-.venv/bin/python tools/describe_sets.py "$REF"
-```
-Expected: n, min, median, max and bin occupancy close to the reference copies. Differences are confined to rows the previous run left boundary-truncated; the old run had eleven across these four sets. Record the output for the author.
-
-- [ ] **Step 4: Commit manifests**
-
-```bash
-git add data/designs/*.manifest.json data/results/*.manifest.json data/final/*.manifest.json
-git status --short data/
-git commit -m "Regenerate the extension, guided and test chains through the pipeline
+git add data/run_metadata.json
+git status --short data/     # must list only run_metadata.json
+git commit -m "Generate the five data sets through the pipeline
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
 
 ---
 
-## Phase 5 — check
-
-### Task 17: `checks.py`, the receipt, and `sgs check`
+## Task 9: `models.py` — tuned searches, nested OOF residuals, the fit cache
 
 **Files:**
-- Create: `sgs/checks.py`, `tests/test_checks.py`
-
-**Interfaces:**
-- Consumes: `data.read_table/normalize/is_true/FINAL_COLUMNS/EXCLUSION_REASONS`, `manifest.sha256_file/verify_provenance/write_manifest`.
-- Produces: `Check(name, passed, detail)`, `ReceiptError(RuntimeError)`, `check_set(frame, role) -> list[Check]`, `check_pair(a, b) -> Check`, `pairs_among(roles) -> list[tuple[str, str]]`, `load_receipt() -> dict`, `update_receipt(roles) -> dict`, `require(roles, pairs=()) -> None`, `stage(opts)`.
-- Receipt shape: `{"sets": {<sha>: {"role", "file", "passed", "checks": [...], "config": {...}, "checked"}}, "pairs": {"<sha>|<sha>": {"roles", "passed", "detail", "config", "checked"}}}`. An entry is reused only while its file hashes **and** its `config` stamp (the `domain` and `design` section hashes) match.
-
-- [ ] **Step 1: Write the failing tests `tests/test_checks.py`**
-
-```python
-import numpy as np
-import pytest
-
-from sgs import checks, config, data
-from sgs.stage import Options
-from tests.helpers import synthetic_final, write_final
-
-
-@pytest.fixture
-def clean_sets(root):
-    for i, role in enumerate(config.ROLE_ORDER):
-        write_final(role, synthetic_final(config.ROLES[role].n, 100 + i))
-
-
-def _failed(frame, role="seed"):
-    return {c.name for c in checks.check_set(frame, role) if not c.passed}
-
-
-def test_clean_set_passes():
-    assert _failed(synthetic_final(300, 1)) == set()
-
-
-@pytest.mark.parametrize("name, corrupt", [
-    ("schema", lambda f: f.drop(columns="Error")),
-    ("row_count", lambda f: f.iloc[:-1]),
-    ("domain", lambda f: f.assign(angle=np.r_[70.0, f["angle"].to_numpy()[1:]])),
-    ("exclusion_reasons", lambda f: f.assign(excluded=["odd"] + [""] * (len(f) - 1))),
-    ("fos_present", lambda f: f.assign(FOS=np.r_[np.nan, f["FOS"].to_numpy()[1:]])),
-    ("no_untreated_boundary", lambda f: f.assign(At_Boundary=["True"] + ["False"] * (len(f) - 1))),
-    ("no_internal_duplicates", lambda f: f.assign(**{p: np.r_[f[p].iloc[1], f[p].to_numpy()[1:]] for p in config.PARAMS})),
-])
-def test_each_violation_is_named(name, corrupt):
-    assert name in _failed(corrupt(synthetic_final(300, 1)))
-
-
-def test_excluded_rows_are_not_held_to_fos_or_boundary_rules():
-    frame = synthetic_final(300, 1)
-    frame.loc[0, ["FOS", "excluded"]] = [np.nan, "solver_error"]
-    frame.loc[1, ["At_Boundary", "excluded"]] = ["True", "unresolved"]
-    assert _failed(frame) == set()
-
-
-def test_overlapping_pair_fails():
-    a = synthetic_final(50, 1)
-    assert not checks.check_pair(a, a.copy()).passed
-    assert checks.check_pair(a, synthetic_final(50, 2)).passed
-
-
-def test_stage_writes_a_complete_receipt(clean_sets):
-    checks.stage(Options())
-    receipt = checks.load_receipt()
-    assert len(receipt["sets"]) == 5 and len(receipt["pairs"]) == 10
-    assert all(entry["passed"] for entry in receipt["sets"].values())
-    checks.require(list(config.ROLE_ORDER), checks.pairs_among(config.ROLE_ORDER))
-
-
-def test_regenerating_one_set_rechecks_only_that_set(clean_sets, monkeypatch):
-    checks.stage(Options())
-    write_final("guided", synthetic_final(300, 999))
-    with pytest.raises(checks.ReceiptError, match="guided: not checked"):
-        checks.require(["guided"])
-    calls = {"set": 0, "pair": 0}
-    real_set, real_pair = checks.check_set, checks.check_pair
-    monkeypatch.setattr(checks, "check_set", lambda *a: calls.__setitem__("set", calls["set"] + 1) or real_set(*a))
-    monkeypatch.setattr(checks, "check_pair", lambda *a: calls.__setitem__("pair", calls["pair"] + 1) or real_pair(*a))
-    checks.stage(Options())
-    assert calls == {"set": 1, "pair": 4}
-    assert len(checks.load_receipt()["sets"]) == 5
-
-
-def test_failing_set_fails_the_stage_after_recording_it(clean_sets):
-    frame = synthetic_final(300, 100)
-    frame.loc[0, "At_Boundary"] = "True"
-    write_final("seed", frame)
-    with pytest.raises(checks.ReceiptError, match="seed"):
-        checks.stage(Options())
-    with pytest.raises(checks.ReceiptError, match="no_untreated_boundary"):
-        checks.require(["seed"])
-```
-
-- [ ] **Step 2: Run to verify failure**
-
-Run: `.venv/bin/pytest tests/test_checks.py -q`
-Expected: `ImportError: cannot import name 'checks'`.
-
-- [ ] **Step 3: Write `sgs/checks.py`**
-
-```python
-"""Validation of the final sets: per-set checks and pairwise disjointness.
-
-``sgs check`` writes data/checks/receipt.json. Per-set entries are keyed on
-the hash of the file in data/final/, pairwise entries on the sorted pair of
-hashes, so regenerating one set invalidates its entry and the pairs that
-contain it, and nothing else. Stages that consume data call ``require``.
-"""
-
-from __future__ import annotations
-
-import datetime as _dt
-import itertools
-import json
-import os
-import time
-from dataclasses import asdict, dataclass
-
-from scipy.spatial import cKDTree
-
-from sgs import config, data, manifest
-from sgs.stage import Options
-
-
-class ReceiptError(RuntimeError):
-    """The receipt does not vouch for the data about to be used."""
-
-
-@dataclass(frozen=True)
-class Check:
-    name: str
-    passed: bool
-    detail: str
-
-
-def check_set(frame, role: str) -> list[Check]:
-    spec = config.ROLES[role]
-    schema_ok = list(frame.columns) == data.FINAL_COLUMNS
-    result = [Check("schema", schema_ok, "final schema" if schema_ok else f"columns {list(frame.columns)}")]
-    if not schema_ok:
-        return result
-    result.append(Check("row_count", len(frame) == spec.n, f"{len(frame)} rows, expected {spec.n}"))
-    outside = {p: int((~frame[p].between(lo, hi)).sum()) for p, (lo, hi) in config.DOMAIN.items()}
-    result.append(Check("domain", not any(outside.values()), f"rows outside the domain: {outside}"))
-    reasons = frame["excluded"]
-    unknown = sorted(set(reasons) - {"", *data.EXCLUSION_REASONS})
-    result.append(Check("exclusion_reasons", not unknown,
-                        f"unknown reasons {unknown}" if unknown else f"{int((reasons != '').sum())} excluded"))
-    kept = reasons == ""
-    bad_fos = int((kept & ~(frame["FOS"] > 0)).sum())
-    result.append(Check("fos_present", bad_fos == 0, f"{bad_fos} kept rows without a positive FOS"))
-    boundary = int((kept & data.is_true(frame["At_Boundary"])).sum())
-    result.append(Check("no_untreated_boundary", boundary == 0, f"{boundary} kept rows at the domain boundary"))
-    unit = data.normalize(frame)
-    closest = float(cKDTree(unit).query(unit, k=2)[0][:, 1].min())
-    result.append(Check("no_internal_duplicates", closest > config.MIN_DISTANCE, f"closest pair {closest:.2e}"))
-    return result
-
-
-def check_pair(a, b) -> Check:
-    closest = float(cKDTree(data.normalize(b)).query(data.normalize(a), k=1)[0].min())
-    return Check("disjoint", closest > config.MIN_DISTANCE, f"closest cross pair {closest:.2e}")
-
-
-def pairs_among(roles) -> list[tuple[str, str]]:
-    return list(itertools.combinations(sorted(roles), 2))
-
-
-def _pair_key(h1: str, h2: str) -> str:
-    return "|".join(sorted((h1, h2)))
-
-
-def _config_stamp() -> dict:
-    return {name: config.section_hash(name) for name in ("domain", "design")}
-
-
-def _hashes(roles) -> dict:
-    out = {}
-    for role in roles:
-        path = config.final_path(role)
-        manifest.verify_provenance(path)
-        out[role] = manifest.sha256_file(path)
-    return out
-
-
-def load_receipt() -> dict:
-    path = config.receipt_path()
-    if not path.exists():
-        return {"sets": {}, "pairs": {}}
-    return json.loads(path.read_text())
-
-
-def update_receipt(roles) -> dict:
-    """Reuse entries still valid for the current files; check the rest."""
-    previous, stamp = load_receipt(), _config_stamp()
-    hashes = _hashes(roles)
-    now = _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")
-    frames = {}
-
-    def frame(role):
-        if role not in frames:
-            frames[role] = data.read_table(config.final_path(role))
-        return frames[role]
-
-    sets = {}
-    for role in roles:
-        entry = previous["sets"].get(hashes[role])
-        if entry is None or entry["role"] != role or entry["config"] != stamp:
-            result = check_set(frame(role), role)
-            entry = {"role": role, "file": config.final_path(role).name,
-                     "passed": all(c.passed for c in result),
-                     "checks": [asdict(c) for c in result], "config": stamp, "checked": now}
-        sets[hashes[role]] = entry
-    pairs = {}
-    for a, b in pairs_among(roles):
-        key = _pair_key(hashes[a], hashes[b])
-        entry = previous["pairs"].get(key)
-        if entry is None or entry["config"] != stamp:
-            result = check_pair(frame(a), frame(b))
-            entry = {"roles": [a, b], "passed": result.passed, "detail": result.detail,
-                     "config": stamp, "checked": now}
-        pairs[key] = entry
-    return {"sets": sets, "pairs": pairs}
-
-
-def require(roles, pairs=()) -> None:
-    """Fail unless the receipt vouches for every set and pair, as they are now."""
-    receipt, stamp = load_receipt(), _config_stamp()
-    hashes = _hashes(set(roles) | {r for pair in pairs for r in pair})
-    problems = []
-    for role in roles:
-        entry = receipt["sets"].get(hashes[role])
-        if entry is None or entry["config"] != stamp:
-            problems.append(f"{role}: not checked in its current state")
-        elif not entry["passed"]:
-            failed = [c["name"] for c in entry["checks"] if not c["passed"]]
-            problems.append(f"{role}: failed {', '.join(failed)}")
-    for a, b in pairs:
-        entry = receipt["pairs"].get(_pair_key(hashes[a], hashes[b]))
-        if entry is None or entry["config"] != stamp:
-            problems.append(f"{a}/{b}: disjointness not checked")
-        elif not entry["passed"]:
-            problems.append(f"{a}/{b}: not disjoint ({entry['detail']})")
-    if problems:
-        raise ReceiptError("the receipt does not cover the data: " + "; ".join(problems)
-                           + ". Run `sgs check`.")
-
-
-def stage(opts: Options) -> None:
-    roles = list(config.ROLE_ORDER)
-    missing = [r for r in roles if not config.final_path(r).exists()]
-    if opts.dry_run:
-        print(f"[check] dry run: would check {len(roles)} sets"
-              + (f"; waits for {', '.join(missing)}" if missing else ""))
-        return
-    if missing:
-        raise FileNotFoundError(f"final sets missing: {', '.join(missing)}")
-    started = time.perf_counter()
-    receipt = update_receipt(roles)
-    path = config.receipt_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_name(f".{path.name}.tmp")
-    tmp.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")
-    os.replace(tmp, path)
-
-    failures = []
-    for entry in receipt["sets"].values():
-        print(f"[check] {'PASS' if entry['passed'] else 'FAIL'} {entry['role']}")
-        if not entry["passed"]:
-            failures.append(entry["role"] + ": " + ", ".join(c["name"] for c in entry["checks"] if not c["passed"]))
-    for entry in receipt["pairs"].values():
-        print(f"[check] {'PASS' if entry['passed'] else 'FAIL'} {' / '.join(entry['roles'])} ({entry['detail']})")
-        if not entry["passed"]:
-            failures.append(" / ".join(entry["roles"]) + " not disjoint")
-    manifest.write_manifest(path, stage="check", sections=("domain", "design"),
-                            inputs={f"final:{r}": config.final_path(r) for r in roles},
-                            wall_time_s=time.perf_counter() - started,
-                            extra={"passed": not failures})
-    if failures:
-        raise ReceiptError("checks failed: " + "; ".join(failures))
-```
-
-- [ ] **Step 4: Run tests**
-
-Run: `.venv/bin/pytest -q`
-Expected: all pass.
-
-- [ ] **Step 5: Run on the real data**
-
-```bash
-.venv/bin/sgs check
-```
-Expected: 5 set lines and 10 pair lines, all `PASS`. A `FAIL` here means something upstream is wrong (spec §10, phase 5). Stop and report; do not proceed to fitting.
-
-- [ ] **Step 6: Commit**
-
-```bash
-git add sgs/checks.py tests/test_checks.py data/checks/receipt.json data/checks/receipt.json.manifest.json
-git commit -m "Add the check stage and its hash-keyed receipt
-
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-```
-
----
-
-## Phase 6 — protocol and fitting
-
-### Task 18: `protocol.py` — `searcher()` and `fit_arm()`
-
-**Files:**
-- Create: `sgs/protocol.py`, `tests/test_protocol.py`
+- Create: `sgs/models.py`, `tests/test_models.py`
 - Modify: `tests/conftest.py` (add the `tiny_protocol` fixture)
 
 **Interfaces:**
-- Consumes: `data.load_arm`, `config.GRIDS/ESTIMATOR_FIXED/CV_FOLDS/SEARCH_KIND/SEEDS/TARGET`.
+- Consumes: `data.load_arm`, `data.validate_sets`, `data.sha256_file`, `data.record`, `data.environment`, `config.GRIDS/ESTIMATOR_FIXED/CV_FOLDS/SEEDS/TARGET/fit_fingerprint`.
 - Produces:
   - `FitArtifact` dataclass: `family, arm, scoring, target, model, best_params: dict, cv_results: dict, train_ids: ndarray[str], oof_pred: ndarray` (log scale), `oof_residual: ndarray` (`y_log − oof_pred`, signed), `fold: ndarray[int]`; property `scores -> |oof_residual|`
   - `estimator(family)`, `scorer(scoring)`, `cv_splitter() -> KFold`, `searcher(family, scoring) -> GridSearchCV`, `fit_arm(family, arm, scoring) -> FitArtifact`
+  - `StaleFit(RuntimeError)`, `training_hashes(arm) -> dict[role, sha256]`, `save_fit(artifact) -> None`, `fit_problems(stored: dict) -> list[str]`, `load_fit(family, arm, scoring) -> FitArtifact`, `all_units() -> list[(family, arm, scoring)]`, `fit_all(*, force=False, units=None) -> None`
+  - Fit file content: `{"artifact": FitArtifact, "fingerprint": str, "data": {role: sha256}, "environment": dict}`.
 
 - [ ] **Step 1: Add the shared fixture to `tests/conftest.py`**
 
@@ -4423,35 +2768,38 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 @pytest.fixture
 def tiny_protocol(root, monkeypatch):
     """Small grids and three small training sets, for fast fitting tests."""
-    from tests.helpers import synthetic_final, write_final
+    from tests.helpers import shrink_roles, synthetic_final, write_final
 
     monkeypatch.setattr(config, "GRIDS", {"rf": {"min_samples_leaf": [1, 5]},
                                           "gbm": {"max_iter": [20], "min_samples_leaf": [3, 10]}})
     monkeypatch.setattr(config, "ESTIMATOR_FIXED", {"rf": {"n_estimators": 20},
                                                     "gbm": {"early_stopping": False}})
     monkeypatch.setattr(config, "CV_FOLDS", 3)
+    shrink_roles(monkeypatch, {"seed": 60, "lhs-extension": 60, "guided": 60})
     for i, role in enumerate(("seed", "lhs-extension", "guided")):
         write_final(role, synthetic_final(60, 10 + i))
 ```
 
-- [ ] **Step 2: Write the failing tests `tests/test_protocol.py`**
+- [ ] **Step 2: Write the failing tests `tests/test_models.py`**
 
 ```python
+import joblib
 import numpy as np
 import pytest
 from sklearn.model_selection import GridSearchCV
 
-from sgs import config, protocol
+from sgs import config, data, models
+from tests.helpers import synthetic_final, write_final
 
 
 def test_estimators_are_single_threaded_and_seeded():
-    rf = protocol.estimator("rf")
+    rf = models.estimator("rf")
     assert rf.n_jobs == 1 and rf.random_state == config.SEEDS["protocol_estimator"]
-    assert protocol.estimator("gbm").random_state == config.SEEDS["protocol_estimator"]
+    assert models.estimator("gbm").random_state == config.SEEDS["protocol_estimator"]
 
 
 def test_search_is_parallel_and_uses_the_named_split():
-    search = protocol.searcher("rf", "log-rmse")
+    search = models.searcher("rf", "log-rmse")
     assert isinstance(search, GridSearchCV) and search.n_jobs == -1
     assert search.cv.random_state == config.SEEDS["protocol_cv_split"]
     assert search.cv.n_splits == config.CV_FOLDS
@@ -4459,20 +2807,14 @@ def test_search_is_parallel_and_uses_the_named_split():
 
 
 def test_fos_scale_scorer():
-    assert protocol._fos_rmse(np.log([1.0, 2.0]), np.log([1.0, 4.0])) == pytest.approx(np.sqrt(2.0))
-    assert protocol.scorer("fos-rmse") is not None
+    assert models._fos_rmse(np.log([1.0, 2.0]), np.log([1.0, 4.0])) == pytest.approx(np.sqrt(2.0))
+    assert models.scorer("fos-rmse") is not None
     with pytest.raises(ValueError):
-        protocol.scorer("r2")
-
-
-def test_unknown_search_kind_is_refused(monkeypatch):
-    monkeypatch.setattr(config, "SEARCH_KIND", "randomized")
-    with pytest.raises(ValueError):
-        protocol.searcher("rf", "log-rmse")
+        models.scorer("r2")
 
 
 def test_fit_arm_artifact(tiny_protocol):
-    art = protocol.fit_arm("rf", "C", "log-rmse")
+    art = models.fit_arm("rf", "C", "log-rmse")
     assert (art.family, art.arm, art.scoring, art.target) == ("rf", "C", "log-rmse", "log")
     assert len(art.train_ids) == 120 and art.train_ids[0] == "seed:0" and art.train_ids[-1] == "guided:59"
     assert set(art.fold) == {0, 1, 2}
@@ -4483,44 +2825,103 @@ def test_fit_arm_artifact(tiny_protocol):
 
 def test_oof_residuals_come_from_the_search_object(tiny_protocol, monkeypatch):
     seen = []
-    real = protocol.cross_val_predict
+    real = models.cross_val_predict
 
     def spy(estimator, *args, **kwargs):
         seen.append(estimator)
         return real(estimator, *args, **kwargs)
 
-    monkeypatch.setattr(protocol, "cross_val_predict", spy)
-    protocol.fit_arm("gbm", "A", "log-rmse")
+    monkeypatch.setattr(models, "cross_val_predict", spy)
+    models.fit_arm("gbm", "A", "log-rmse")
     assert len(seen) == 1 and isinstance(seen[0], GridSearchCV)
 
 
 def test_fit_arm_is_deterministic(tiny_protocol):
-    a = protocol.fit_arm("gbm", "C0", "log-rmse")
-    b = protocol.fit_arm("gbm", "C0", "log-rmse")
+    a = models.fit_arm("gbm", "C0", "log-rmse")
+    b = models.fit_arm("gbm", "C0", "log-rmse")
     np.testing.assert_array_equal(a.oof_pred, b.oof_pred)
     assert a.best_params == b.best_params
+
+
+def test_saved_fit_loads_while_fresh(tiny_protocol):
+    models.save_fit(models.fit_arm("rf", "A", "log-rmse"))
+    stored = joblib.load(config.fit_path("rf", "A", "log-rmse"))
+    assert stored["data"] == {"seed": data.sha256_file(config.final_path("seed"))}
+    assert models.load_fit("rf", "A", "log-rmse").arm == "A"
+
+
+def test_load_fit_fails_on_a_changed_grid(tiny_protocol, monkeypatch):
+    models.save_fit(models.fit_arm("rf", "A", "log-rmse"))
+    monkeypatch.setitem(config.GRIDS, "rf", {"min_samples_leaf": [1, 2]})
+    with pytest.raises(models.StaleFit, match="protocol configuration changed"):
+        models.load_fit("rf", "A", "log-rmse")
+
+
+def test_load_fit_fails_on_changed_training_data(tiny_protocol):
+    models.save_fit(models.fit_arm("rf", "A", "log-rmse"))
+    write_final("seed", synthetic_final(60, 99))
+    with pytest.raises(models.StaleFit, match="training data 'seed' changed"):
+        models.load_fit("rf", "A", "log-rmse")
+
+
+def test_load_fit_names_a_missing_file(tiny_protocol):
+    with pytest.raises(FileNotFoundError, match="sgs fit"):
+        models.load_fit("rf", "A", "log-rmse")
+
+
+def test_fit_all_skips_fresh_units_and_refuses_stale_ones(tiny_protocol, monkeypatch):
+    unit = [("rf", "C", "log-rmse")]
+    models.fit_all(units=unit)
+    assert data.read_metadata()["fits"]["rf__C__log-rmse"]["n_train"] == 120
+    calls = []
+    real = models.fit_arm
+    monkeypatch.setattr(models, "fit_arm", lambda *a: calls.append(a) or real(*a))
+    models.fit_all(units=unit)
+    assert calls == []
+    write_final("guided", synthetic_final(60, 77))
+    with pytest.raises(models.StaleFit, match="--force"):
+        models.fit_all(units=unit)
+    models.fit_all(units=unit, force=True)
+    assert calls == [("rf", "C", "log-rmse")]
+
+
+def test_fit_all_validates_the_training_sets(tiny_protocol):
+    write_final("guided", synthetic_final(60, 10))       # identical to the seed set
+    with pytest.raises(data.DataError, match="not disjoint"):
+        models.fit_all(units=[("rf", "C", "log-rmse")])
+
+
+def test_all_units_cover_the_declared_axes():
+    assert len(models.all_units()) == len(config.FAMILIES) * len(config.ARMS) * len(config.ACTIVE_SCORINGS)
 ```
 
 - [ ] **Step 3: Run to verify failure**
 
-Run: `.venv/bin/pytest tests/test_protocol.py -q`
-Expected: `ImportError: cannot import name 'protocol'`.
+Run: `.venv/bin/pytest tests/test_models.py -q`
+Expected: `ImportError: cannot import name 'models'`.
 
-- [ ] **Step 4: Write `sgs/protocol.py`**
+- [ ] **Step 4: Write `sgs/models.py`**
 
 ```python
-"""The tuning protocol: one fixed grid per family, identical for every arm.
+"""The tuned learners: one fixed grid per family, identical for every arm.
 
 Hyper-parameters are selected by K-fold CV on the arm's training data only;
 no test set is touched. Out-of-fold residuals come from a nested CV:
 ``cross_val_predict`` receives the search object, so each OOF prediction is
 made with hyper-parameters selected without its fold.
+
+Each (family, arm, scoring) fit is cached in artifacts/fits/ together with a
+fingerprint of its protocol configuration and the hashes of its training
+data; a fit whose configuration or data changed is refused.
 """
 
 from __future__ import annotations
 
+import datetime as _dt
+import os
 from dataclasses import dataclass
 
+import joblib
 import numpy as np
 from sklearn.ensemble import HistGradientBoostingRegressor, RandomForestRegressor
 from sklearn.metrics import make_scorer
@@ -4549,6 +2950,8 @@ class FitArtifact:
         return np.abs(self.oof_residual)
 
 
+# --- the protocol -----------------------------------------------------------------
+
 def estimator(family: str):
     fixed = config.ESTIMATOR_FIXED[family]
     random_state = config.SEEDS["protocol_estimator"]
@@ -4576,8 +2979,6 @@ def cv_splitter() -> KFold:
 
 
 def searcher(family: str, scoring: str) -> GridSearchCV:
-    if config.SEARCH_KIND != "grid":
-        raise ValueError(f"search kind {config.SEARCH_KIND!r} is not implemented")
     return GridSearchCV(estimator(family), config.GRIDS[family], cv=cv_splitter(),
                         scoring=scorer(scoring), n_jobs=-1)
 
@@ -4605,6 +3006,85 @@ def fit_arm(family: str, arm: str, scoring: str) -> FitArtifact:
                     "std_test_score": cv["std_test_score"].tolist()},
         train_ids=frame["row_id"].to_numpy(str), oof_pred=oof, oof_residual=y - oof, fold=fold,
     )
+
+
+# --- the fit cache ------------------------------------------------------------------
+
+class StaleFit(RuntimeError):
+    """A cached fit no longer matches its configuration or training data."""
+
+
+def training_hashes(arm: str) -> dict:
+    return {role: data.sha256_file(config.final_path(role)) for role in config.ARMS[arm].roles}
+
+
+def _dump(path, payload) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(f".{path.name}.tmp")
+    joblib.dump(payload, tmp)
+    os.replace(tmp, path)
+
+
+def save_fit(artifact: FitArtifact) -> None:
+    _dump(config.fit_path(artifact.family, artifact.arm, artifact.scoring), {
+        "artifact": artifact,
+        "fingerprint": config.fit_fingerprint(artifact.family, artifact.scoring),
+        "data": training_hashes(artifact.arm),
+        "environment": data.environment(),
+    })
+
+
+def fit_problems(stored: dict) -> list[str]:
+    artifact = stored["artifact"]
+    problems = []
+    if stored["fingerprint"] != config.fit_fingerprint(artifact.family, artifact.scoring):
+        problems.append("protocol configuration changed (grid, fixed parameters, CV, seeds, target or features)")
+    now = training_hashes(artifact.arm)
+    for role in sorted(set(now) | set(stored["data"])):
+        if stored["data"].get(role) != now.get(role):
+            problems.append(f"training data {role!r} changed")
+    return problems
+
+
+def load_fit(family: str, arm: str, scoring: str) -> FitArtifact:
+    path = config.fit_path(family, arm, scoring)
+    if not path.exists():
+        raise FileNotFoundError(f"{path.name} is missing; run `sgs fit`")
+    stored = joblib.load(path)
+    problems = fit_problems(stored)
+    if problems:
+        raise StaleFit(f"{path.name} is stale: {'; '.join(problems)}. Run `sgs fit --force`.")
+    return stored["artifact"]
+
+
+def all_units() -> list[tuple[str, str, str]]:
+    return [(f, a, s) for s in config.ACTIVE_SCORINGS for f in config.FAMILIES for a in config.ARMS]
+
+
+def fit_all(*, force: bool = False, units=None) -> None:
+    units = list(units or all_units())
+    data.validate_sets(sorted({role for _, arm, _ in units for role in config.ARMS[arm].roles}))
+    for index, (family, arm, scoring) in enumerate(units, 1):
+        path = config.fit_path(family, arm, scoring)
+        label = f"[fit {index}/{len(units)}] {family} {arm} {scoring}"
+        if path.exists():
+            problems = fit_problems(joblib.load(path))
+            if not problems:
+                print(f"{label}: up to date")
+                continue
+            if not force:
+                raise StaleFit(f"{path.name} is stale: {'; '.join(problems)}. "
+                               "Rerun with --force to refit.")
+        print(label, flush=True)
+        artifact = fit_arm(family, arm, scoring)
+        save_fit(artifact)
+        print(f"  best {artifact.best_params}")
+        data.record("fits", f"{family}__{arm}__{scoring}", {
+            "best_params": artifact.best_params, "n_train": int(len(artifact.train_ids)),
+            "fingerprint": config.fit_fingerprint(family, scoring), "data": training_hashes(arm),
+            "environment": data.environment(),
+            "updated": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
+        })
 ```
 
 - [ ] **Step 5: Run tests**
@@ -4615,220 +3095,129 @@ Expected: all pass.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add sgs/protocol.py tests/test_protocol.py tests/conftest.py
-git commit -m "Add the symmetric tuning protocol with nested OOF residuals
+git add sgs/models.py tests/test_models.py tests/conftest.py
+git commit -m "Add the symmetric tuning protocol and a fit cache that refuses stale fits
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
 
 ---
 
-### Task 19: `fitting.py` — the fit stage
+## Task 10: Run the searches; retire the environment probe
 
-**Files:**
-- Create: `sgs/fitting.py`, `tests/test_fitting.py`
+**Hours. Runs once; nothing downstream refits.** 8 units: 2 families × 4 arms × 1 active scoring; each unit is one search plus a five-fold nested `cross_val_predict`, so 48 grid searches in total.
 
-**Interfaces:**
-- Consumes: `protocol.fit_arm`, `checks.require/pairs_among`, `stage.produce`, `manifest.require_fresh`.
-- Produces: `SECTIONS = ("domain", "protocol")`, `select(declared, only, what) -> tuple`, `units(opts) -> list[(family, arm, scoring)]`, `fit_inputs(arm) -> dict`, `stage(opts)`, `load_fit(family, arm, scoring) -> FitArtifact` (fails on stale).
-
-- [ ] **Step 1: Write the failing tests `tests/test_fitting.py`**
-
-```python
-import pytest
-
-from sgs import config, fitting, manifest
-from sgs.stage import Options
-
-
-def test_units_cover_the_declared_axes():
-    assert len(fitting.units(Options())) == len(config.FAMILIES) * len(config.ARMS) * len(config.ACTIVE_SCORINGS)
-    assert fitting.units(Options(only_family="gbm", only_arm="C0")) == [("gbm", "C0", "log-rmse")]
-
-
-def test_filters_must_name_declared_values():
-    with pytest.raises(ValueError, match="only-arm 'D'"):
-        fitting.units(Options(only_arm="D"))
-    with pytest.raises(ValueError, match="only-scoring 'fos-rmse'"):
-        fitting.units(Options(only_scoring="fos-rmse"))   # declared, but not active
-
-
-def test_stage_requires_the_receipt_then_checkpoints_each_unit(tiny_protocol, monkeypatch):
-    required = []
-    monkeypatch.setattr(fitting.checks, "require", lambda roles, pairs: required.append((roles, pairs)))
-    fitting.stage(Options(only_family="rf", only_arm="C"))
-    assert required == [(["guided", "seed"], [("guided", "seed")])]
-    path = config.fit_path("rf", "C", "log-rmse")
-    record = manifest.read_manifest(path)
-    assert set(record["inputs"]) == {"final:seed", "final:guided"}
-    assert record["extra"]["n_train"] == 120
-    assert fitting.load_fit("rf", "C", "log-rmse").arm == "C"
-
-
-def test_load_fit_fails_loudly_on_a_changed_grid(tiny_protocol, monkeypatch):
-    monkeypatch.setattr(fitting.checks, "require", lambda *a: None)
-    fitting.stage(Options(only_family="rf", only_arm="A"))
-    monkeypatch.setitem(config.GRIDS, "rf", {"min_samples_leaf": [1, 2]})
-    with pytest.raises(manifest.StaleArtifact, match="protocol"):
-        fitting.load_fit("rf", "A", "log-rmse")
-    with pytest.raises(manifest.StaleArtifact, match="--force"):
-        fitting.stage(Options(only_family="rf", only_arm="A"))
-```
-
-- [ ] **Step 2: Run to verify failure**
-
-Run: `.venv/bin/pytest tests/test_fitting.py -q`
-Expected: `ImportError: cannot import name 'fitting'`.
-
-- [ ] **Step 3: Write `sgs/fitting.py`**
-
-```python
-"""The fit stage: one tuned search plus nested OOF residuals per unit.
-
-A unit is (family, arm, scoring) and is checkpointed as soon as it finishes;
-re-running skips fresh units. Nothing here touches a test set, so evaluating
-on any test set afterwards costs seconds.
-"""
-
-from __future__ import annotations
-
-import joblib
-
-from sgs import checks, config, manifest, protocol
-from sgs.stage import Options, produce
-
-SECTIONS = ("domain", "protocol")
-
-
-def select(declared, only, what) -> tuple:
-    declared = tuple(declared)
-    if only is None:
-        return declared
-    if only not in declared:
-        raise ValueError(f"--only-{what} {only!r} is not declared in config ({', '.join(declared)})")
-    return (only,)
-
-
-def units(opts: Options) -> list[tuple[str, str, str]]:
-    families = select(config.FAMILIES, opts.only_family, "family")
-    arms = select(config.ARMS, opts.only_arm, "arm")
-    scorings = select(config.ACTIVE_SCORINGS, opts.only_scoring, "scoring")
-    return [(f, a, s) for f in families for a in arms for s in scorings]
-
-
-def fit_inputs(arm: str) -> dict:
-    return {f"final:{role}": config.final_path(role) for role in config.ARMS[arm].roles}
-
-
-def stage(opts: Options) -> None:
-    selected = units(opts)
-    roles = sorted({role for _, arm, _ in selected for role in config.ARMS[arm].roles})
-    if not opts.dry_run:
-        checks.require(roles, checks.pairs_among(roles))
-    for index, (family, arm, scoring) in enumerate(selected, 1):
-        print(f"[fit {index}/{len(selected)}] {family} {arm} {scoring}", flush=True)
-
-        def build(tmp, family=family, arm=arm, scoring=scoring):
-            artifact = protocol.fit_arm(family, arm, scoring)
-            joblib.dump(artifact, tmp)
-            print(f"  best {artifact.best_params}")
-            return {"best_params": artifact.best_params, "n_train": int(len(artifact.train_ids))}
-
-        produce(config.fit_path(family, arm, scoring), stage="fit", sections=SECTIONS,
-                inputs=fit_inputs(arm), opts=opts, build=build)
-
-
-def load_fit(family: str, arm: str, scoring: str) -> protocol.FitArtifact:
-    path = config.fit_path(family, arm, scoring)
-    manifest.require_fresh(path, sections=SECTIONS, inputs=fit_inputs(arm))
-    return joblib.load(path)
-```
-
-- [ ] **Step 4: Run tests**
-
-Run: `.venv/bin/pytest -q`
-Expected: all pass.
-
-- [ ] **Step 5: Commit**
+- [ ] **Step 1: Fit**
 
 ```bash
-git add sgs/fitting.py tests/test_fitting.py
-git commit -m "Add the checkpointed fit stage
-
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-```
-
----
-
-### Task 20: Run the 48 searches; retire the environment probe
-
-**EXPENSIVE: hours. Runs once; nothing downstream refits.**
-
-- [ ] **Step 1: Dry run, then the real run**
-
-```bash
-.venv/bin/sgs fit --dry-run
 .venv/bin/sgs fit 2>&1 | tee /tmp/fit.log
 ```
-Expected dry run: 8 `would produce` lines, one per (family, arm). The real run prints `best {...}` for each unit. If it is interrupted, re-run the same command: units already finished print `up to date`.
+Expected: `[fit k/8] ...` lines with `best {...}`. If interrupted, rerun the same command: finished units print `up to date`.
 
-- [ ] **Step 2: Descriptive comparison of the selected hyper-parameters with the Colab reference**
+- [ ] **Step 2: Compare the selected hyper-parameters with the Colab table (descriptive)**
 
 ```bash
-.venv/bin/python - <<'EOF'
-import json, glob
-for path in sorted(glob.glob("artifacts/fits/*.manifest.json")):
-    record = json.load(open(path))
-    print(f"{record['payload']:32} n={record['extra']['n_train']:4}  {record['extra']['best_params']}")
-EOF
+.venv/bin/python -c "
+from sgs import data
+for key, entry in sorted(data.read_metadata()['fits'].items()):
+    print(f\"{key:22} n={entry['n_train']:4}  {entry['best_params']}\")
+"
 ```
-Compare with the table in `docs/environment-probe-2026-09.md`. Differences are **legitimate**, because the data were regenerated and the boundary rows repaired (spec §10, phase 6 corollary). From here on, the acceptance target is determinism of the local run, not agreement with Colab. Report the comparison to the author.
+Compare with the table in `docs/environment-probe-2026-09.md` and put the comparison in the task report. Differences are legitimate: the data were regenerated and the boundary rows repaired.
 
-- [ ] **Step 3: Retire the probe (end of phase 6)**
+- [ ] **Step 3: Retire the probe and commit**
 
 ```bash
 git rm -q docs/environment-probe-2026-09.md tools/probe_environment.py
-git add artifacts/fits/*.manifest.json
+git add data/run_metadata.json
 git commit -m "Fit all arms locally; retire the environment probe
 
-The 48 searches ran in the reference environment. The probe record has served
-its comparison: from here the acceptance target is determinism of the local
-run, not agreement with the earlier Colab selections.
+The acceptance target is determinism of the local run, not agreement with
+the earlier Colab selections.
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
 
 ---
 
-## Phase 7 — evaluate
-
-### Task 21: Metric primitives — global, zones, minimax, conformal
+## Task 11: `evaluate.py` — metrics, paired comparisons, `sgs evaluate`
 
 **Files:**
 - Create: `sgs/evaluate.py`, `tests/test_evaluate.py`
+- Modify: `tests/helpers.py` (append stubs)
 
 **Interfaces:**
-- Consumes: `protocol.FitArtifact`, `data.TestSet`.
+- Consumes: `models.FitArtifact`, `models.load_fit`, `data.TestSet`, `data.load_test`, `data.validate_sets`, `data.sha256_file`, `data.environment`, `data.record`.
 - Produces:
-  - `Prediction(family, arm, scoring, test, ids, y_true, y_pred)` (frozen)
-  - `predict(fit, test) -> Prediction` (exponentiates according to `fit.target`)
-  - `rmse(y, p) -> float`, `global_metrics(y, p) -> dict` with keys `n, r2, rmse, mae, bias, max_abs_error`
-  - `zones(edges) -> list[(label, lo, hi)]` (half-open `[lo, hi)`; labels `"FOS < 1"`, `"1–1.3"`, …, `"FOS ≥ 6"`)
-  - `zone_metrics(y, p, edges) -> list[dict(zone, lo, hi, n, rmse, mae, bias)]` (`None` metrics for empty zones, `None` for infinite bounds)
-  - `minimax(zone_rows) -> dict(zone, rmse)`
-  - `conformal_quantile(scores, alpha) -> float` (order statistic)
-  - `conformal(pred, scores, *, alpha, edges) -> dict` with keys `alpha, q_log, factor, n_calibration, coverage, mean_width, zones: [dict(zone, n, coverage, mean_width)], procedure`
-  - `subset_mask(y, subset, selection_range) -> ndarray[bool]`, `SUBSETS = ("all", "selection-range")`
+  - `Prediction(family, arm, scoring, test, ids, y_true, y_pred)` (frozen), `predict(fit, test) -> Prediction`
+  - `rmse(y, p)`, `global_metrics(y, p) -> dict` (`n, r2, rmse, mae, bias, max_abs_error`)
+  - `zones(edges) -> list[(label, lo, hi)]` (labels `"FOS < 1"`, `"1–1.3"`, `"1.3–3"`, `"3–6"`, `"FOS ≥ 6"`), `zone_metrics(y, p, edges) -> list[dict(zone, lo, hi, n, rmse, mae, bias)]`, `minimax(zone_rows) -> dict(zone, rmse)`
+  - `conformal_quantile(scores, alpha)`, `conformal(pred, scores, *, alpha, edges) -> dict` (`alpha, q_log, factor, n_calibration, coverage, mean_width, zones, procedure`)
+  - `SUBSETS = ("all", "selection-range")`, `subset_mask(y, subset, selection_range)`
+  - `MisalignedPair(ValueError)`, `UnregisteredComparison(KeyError)`, `registered(first, second, registry)`, `wilcoxon_abs(p1, p2, *, registry, mask=None) -> dict` (`first, second, n, median_d, p_d_lt_0, statistic, pvalue, alternative, hypothesised, reading`), `paired_bootstrap(p1, p2, *, registry, n_boot, seed, ci, mask=None) -> dict` (`delta_rmse, ci, ci_level, p_delta_lt_0, n_boot, limitation`)
+  - `EvalResult` with `to_json()`, `evaluate(fits, test, *, alpha, zones, comparisons, selection_range, n_boot, bootstrap_seed, bootstrap_ci) -> EvalResult`, `run() -> None`
+- Metrics JSON (read by `report.py`): `{"test", "scoring", "n", "fos_range", "arms": {family: {arm: {"global", "zones", "minimax", "conformal", "best_params", "n_train"}}}, "comparisons": [{"family", "subset", "first", "second", "wilcoxon", "bootstrap"}], "predictions": {"row_id", "y_true", "<family>__<arm>": [...]}, "notes": {...}, "provenance": {"final_sha256", "fit_fingerprints", "environment"}}`.
 
-- [ ] **Step 1: Write the failing tests `tests/test_evaluate.py`**
+- [ ] **Step 1: Append the stubs to `tests/helpers.py`**
 
 ```python
+class OffsetModel:
+    """log(FOS) of the formula, perturbed row-wise by a fixed pattern."""
+
+    def __init__(self, scale):
+        self.scale = scale
+
+    def predict(self, X):
+        return np.log(synthetic_fos(X)) + self.scale * np.sin(np.arange(len(X)) * 1.7)
+
+
+ARM_SCALES = {"A": 0.30, "B": 0.20, "C": 0.10, "C0": 0.25}
+
+
+def stub_fit(family, arm, scale, scoring="log-rmse", n_train=40):
+    from sgs.models import FitArtifact
+    rng = np.random.default_rng(int(scale * 1000) + len(arm))
+    return FitArtifact(family=family, arm=arm, scoring=scoring, target="log", model=OffsetModel(scale),
+                       best_params={}, cv_results={},
+                       train_ids=np.array([f"seed:{i}" for i in range(n_train)]),
+                       oof_pred=np.zeros(n_train), oof_residual=rng.normal(0.0, 0.1, n_train),
+                       fold=np.arange(n_train) % 5)
+
+
+def stub_fits(family="rf", scoring="log-rmse"):
+    return {f"{family}__{arm}__{scoring}": stub_fit(family, arm, scale, scoring)
+            for arm, scale in ARM_SCALES.items()}
+
+
+def stub_test(n=60, seed=3, name="test-natural"):
+    frame = data.add_features(synthetic_final(n, seed))
+    return data.TestSet(name=name, X=frame[list(config.FEATURES)].reset_index(drop=True),
+                        y=frame["FOS"].to_numpy(float), ids=np.array([f"{name}:{i}" for i in range(n)]))
+
+
+EVAL_KWARGS = dict(alpha=0.10, zones=config.ZONE_EDGES, comparisons=config.COMPARISONS,
+                   selection_range=config.SELECTION_RANGE, n_boot=300, bootstrap_seed=1,
+                   bootstrap_ci=0.95)
+
+
+def write_all_finals(monkeypatch, n=60):
+    """Small, valid, pairwise-disjoint final sets for every role."""
+    shrink_roles(monkeypatch, {role: n for role in config.ROLE_ORDER})
+    for i, role in enumerate(config.ROLE_ORDER):
+        write_final(role, synthetic_final(n, 200 + i))
+```
+
+- [ ] **Step 2: Write the failing tests `tests/test_evaluate.py`**
+
+```python
+import json
 import math
 
 import numpy as np
 import pytest
 
-from sgs import config, evaluate
+from sgs import config, evaluate, models
+from tests.helpers import EVAL_KWARGS, stub_fit, stub_fits, stub_test, ARM_SCALES, write_all_finals
 
 
 def _pred(y_true, y_pred, arm="C", family="rf", test="test-natural", ids=None):
@@ -4837,6 +3226,8 @@ def _pred(y_true, y_pred, arm="C", family="rf", test="test-natural", ids=None):
     return evaluate.Prediction(family=family, arm=arm, scoring="log-rmse", test=test,
                                ids=ids, y_true=y_true, y_pred=y_pred)
 
+
+# --- primitives -------------------------------------------------------------------------
 
 def test_global_metrics():
     m = evaluate.global_metrics(np.array([1.0, 2.0, 3.0]), np.array([1.0, 2.0, 5.0]))
@@ -4856,8 +3247,7 @@ def test_zone_labels_and_half_open_bounds():
 def test_minimax_is_the_worst_zone_rmse():
     y = np.array([0.8, 0.9, 1.1, 1.2, 2.0, 2.5, 4.0, 7.0])
     p = y + np.array([0.1, -0.1, 0.0, 0.0, 0.5, -0.5, 0.2, 0.0])
-    rows = evaluate.zone_metrics(y, p, config.ZONE_EDGES)
-    worst = evaluate.minimax(rows)
+    worst = evaluate.minimax(evaluate.zone_metrics(y, p, config.ZONE_EDGES))
     assert worst == {"zone": "1.3–3", "rmse": pytest.approx(0.5)}
 
 
@@ -4889,49 +3279,123 @@ def test_subset_mask():
 
 
 def test_predict_exponentiates_log_models():
-    from tests.helpers import stub_fit, stub_test
     test = stub_test(10)
     pred = evaluate.predict(stub_fit("rf", "C", 0.0), test)
     np.testing.assert_allclose(pred.y_pred, test.y)
     assert pred.test == "test-natural" and (pred.ids == test.ids).all()
-```
-
-- [ ] **Step 2: Append the stub helpers to `tests/helpers.py`**
-
-```python
-class OffsetModel:
-    """log(FOS) of the formula, perturbed row-wise by a fixed pattern."""
-
-    def __init__(self, scale):
-        self.scale = scale
-
-    def predict(self, X):
-        return np.log(synthetic_fos(X)) + self.scale * np.sin(np.arange(len(X)) * 1.7)
 
 
-ARM_SCALES = {"A": 0.30, "B": 0.20, "C": 0.10, "C0": 0.25}
+# --- paired comparisons -------------------------------------------------------------------
+
+REG = config.COMPARISONS
 
 
-def stub_fit(family, arm, scale, scoring="log-rmse", n_train=40):
-    from sgs.protocol import FitArtifact
-    rng = np.random.default_rng(int(scale * 1000) + len(arm))
-    return FitArtifact(family=family, arm=arm, scoring=scoring, target="log", model=OffsetModel(scale),
-                       best_params={}, cv_results={},
-                       train_ids=np.array([f"seed:{i}" for i in range(n_train)]),
-                       oof_pred=np.zeros(n_train), oof_residual=rng.normal(0.0, 0.1, n_train),
-                       fold=np.arange(n_train) % 5)
+def _pair(n=80, seed=0):
+    rng = np.random.default_rng(seed)
+    y = rng.uniform(0.5, 6.0, n)
+    better = _pred(y, y + rng.normal(0, 0.05, n), arm="C")
+    worse = _pred(y, y + rng.normal(0, 0.30, n), arm="B")
+    return better, worse
 
 
-def stub_fits(family="rf", scoring="log-rmse"):
-    return {f"{family}__{arm}__{scoring}": stub_fit(family, arm, scale, scoring)
-            for arm, scale in ARM_SCALES.items()}
+def test_registry_lookup_is_directional():
+    assert evaluate.registered("C", "B", REG).alternative == "less"
+    with pytest.raises(evaluate.UnregisteredComparison):
+        evaluate.registered("B", "C", REG)
+    with pytest.raises(evaluate.UnregisteredComparison):
+        evaluate.registered("A", "B", REG)
 
 
-def stub_test(n=60, seed=3, name="test-natural"):
-    from sgs.data import TestSet
-    frame = data.add_features(synthetic_final(n, seed))
-    return TestSet(name=name, X=frame[list(config.FEATURES)].reset_index(drop=True),
-                   y=frame["FOS"].to_numpy(float), ids=np.array([f"{name}:{i}" for i in range(n)]))
+def test_wilcoxon_on_differences_of_absolute_errors():
+    c, b = _pair()
+    out = evaluate.wilcoxon_abs(c, b, registry=REG)
+    d = np.abs(c.y_pred - c.y_true) - np.abs(b.y_pred - b.y_true)
+    assert out["median_d"] == pytest.approx(np.median(d)) and out["median_d"] < 0
+    assert out["p_d_lt_0"] == pytest.approx(np.mean(d < 0))
+    assert out["alternative"] == "less" and out["hypothesised"] and out["pvalue"] < 0.01
+    assert "smaller absolute errors" in out["reading"]
+
+
+def test_wilcoxon_is_invariant_to_row_order():
+    c, b = _pair()
+    perm = np.random.default_rng(1).permutation(len(c.ids))
+    shuffle = lambda p: _pred(p.y_true[perm], p.y_pred[perm], arm=p.arm, ids=p.ids[perm])
+    a1 = evaluate.wilcoxon_abs(c, b, registry=REG)
+    a2 = evaluate.wilcoxon_abs(shuffle(c), shuffle(b), registry=REG)
+    assert a1["statistic"] == a2["statistic"] and a1["pvalue"] == a2["pvalue"]
+
+
+@pytest.mark.parametrize("break_it, message", [
+    (lambda b: _pred(b.y_true[:-1], b.y_pred[:-1], arm="B"), "identifiers"),
+    (lambda b: _pred(b.y_true, b.y_pred, arm="B", ids=b.ids[::-1]), "identifiers"),
+    (lambda b: _pred(b.y_true, b.y_pred, arm="B", test="test-stratified"), "test set"),
+    (lambda b: _pred(b.y_true, b.y_pred, arm="B", family="gbm"), "vertical"),
+    (lambda b: _pred(b.y_true + 1, b.y_pred, arm="B"), "observed FOS"),
+])
+def test_misaligned_pairs_are_refused(break_it, message):
+    c, b = _pair()
+    with pytest.raises(evaluate.MisalignedPair, match=message):
+        evaluate.wilcoxon_abs(c, break_it(b), registry=REG)
+    with pytest.raises(evaluate.MisalignedPair, match=message):
+        evaluate.paired_bootstrap(c, break_it(b), registry=REG, n_boot=50, seed=1, ci=0.95)
+
+
+def test_bootstrap_is_reproducible_and_states_its_limitation():
+    c, b = _pair()
+    one = evaluate.paired_bootstrap(c, b, registry=REG, n_boot=500, seed=7, ci=0.95)
+    two = evaluate.paired_bootstrap(c, b, registry=REG, n_boot=500, seed=7, ci=0.95)
+    other = evaluate.paired_bootstrap(c, b, registry=REG, n_boot=500, seed=8, ci=0.95)
+    assert one == two and one["ci"] != other["ci"]
+    assert one["delta_rmse"] == pytest.approx(evaluate.rmse(c.y_true, c.y_pred) - evaluate.rmse(b.y_true, b.y_pred))
+    assert one["ci"][0] <= one["delta_rmse"] <= one["ci"][1] and one["ci"][1] < 0
+    assert "test-sampling variability only" in one["limitation"]
+
+
+def test_mask_restricts_the_test():
+    c, b = _pair()
+    mask = c.y_true <= 3.0
+    assert evaluate.wilcoxon_abs(c, b, registry=REG, mask=mask)["n"] == int(mask.sum())
+
+
+# --- evaluate() and run() -------------------------------------------------------------------
+
+def test_evaluate_covers_every_arm_and_registered_comparison():
+    fits = {**stub_fits("rf"), **stub_fits("gbm")}
+    result = evaluate.evaluate(fits, stub_test(), **EVAL_KWARGS)
+    assert set(result.arms) == {"rf", "gbm"}
+    assert set(result.arms["rf"]) == {"A", "B", "C", "C0"}
+    assert len(result.comparisons) == 2 * len(config.COMPARISONS) * len(evaluate.SUBSETS)
+    payload = json.loads(json.dumps(result.to_json()))
+    assert payload["predictions"]["row_id"][0] == "test-natural:0"
+    assert "rf__C0" in payload["predictions"]
+    assert "test-sampling variability only" in payload["notes"]["bootstrap"]
+
+
+def test_evaluate_refuses_a_missing_arm():
+    fits = stub_fits("rf")
+    fits.pop("rf__C0__log-rmse")
+    with pytest.raises(ValueError, match="C0"):
+        evaluate.evaluate(fits, stub_test(), **EVAL_KWARGS)
+
+
+def test_evaluate_refuses_mixed_scorings():
+    fits = {**stub_fits("rf"), **stub_fits("gbm", scoring="fos-rmse")}
+    with pytest.raises(ValueError, match="one scoring"):
+        evaluate.evaluate(fits, stub_test(), **EVAL_KWARGS)
+
+
+def test_run_writes_metrics_with_provenance(root, monkeypatch):
+    write_all_finals(monkeypatch)
+    for family in config.FAMILIES:
+        for arm, scale in ARM_SCALES.items():
+            models.save_fit(stub_fit(family, arm, scale))
+    monkeypatch.setattr(config, "N_BOOTSTRAP", 200)
+    evaluate.run()
+    for test in config.TEST_ROLES:
+        metrics = json.loads(config.metrics_path(test, "log-rmse").read_text())
+        assert metrics["test"] == test and set(metrics["arms"]["gbm"]) == {"A", "B", "C", "C0"}
+        assert set(metrics["provenance"]["final_sha256"]) == set(config.ROLE_ORDER)
+        assert set(metrics["provenance"]["fit_fingerprints"]) == {"rf__log-rmse", "gbm__log-rmse"}
 ```
 
 - [ ] **Step 3: Run to verify failure**
@@ -4939,14 +3403,14 @@ def stub_test(n=60, seed=3, name="test-natural"):
 Run: `.venv/bin/pytest tests/test_evaluate.py -q`
 Expected: `ImportError: cannot import name 'evaluate'`.
 
-- [ ] **Step 4: Write `sgs/evaluate.py` (primitives)**
+- [ ] **Step 4: Write `sgs/evaluate.py`**
 
 ```python
 """Metrics on a test set. Pure functions: everything arrives as an argument.
 
-Only ``stage`` (at the bottom) reads files; it loads fits and one test set
-and passes them in explicitly. Predictions carry their test name and row
-identifiers, so errors from one test set can never be paired with
+Only ``run`` (and ``run_learning_curve``, Task 13) read files: they load fits
+and test sets and pass them in explicitly. Predictions carry their test name
+and row identifiers, so errors from one test set can never be paired with
 observations from another.
 """
 
@@ -4954,21 +3418,25 @@ from __future__ import annotations
 
 import json
 import math
+import os
 from dataclasses import dataclass
 from typing import Mapping
 
 import numpy as np
 from scipy import stats
 
-from sgs import checks, config, data, fitting
-from sgs.protocol import FitArtifact
-from sgs.stage import Options, produce
+from sgs import config, data, models
+from sgs.models import FitArtifact
 
 SUBSETS = ("all", "selection-range")
 CONFORMAL_PROCEDURE = ("Cross-conformal-style: nested-CV out-of-fold residuals on log(FOS), "
                        "multiplicative intervals around the refit model. Coverage is reported "
                        "empirically; no formal guarantee is claimed.")
+BOOTSTRAP_LIMITATION = ("Paired bootstrap over test rows: covers test-sampling variability only, "
+                        "not seed or selection variability.")
 
+
+# --- predictions and point metrics --------------------------------------------------------
 
 @dataclass(frozen=True)
 class Prediction:
@@ -4982,9 +3450,9 @@ class Prediction:
 
 
 def predict(fit: FitArtifact, test: data.TestSet) -> Prediction:
-    raw = fit.model.predict(test.X[list(config.FEATURES)])
     if fit.target != "log":
         raise ValueError(f"unknown target convention {fit.target!r}")
+    raw = fit.model.predict(test.X[list(config.FEATURES)])
     return Prediction(family=fit.family, arm=fit.arm, scoring=fit.scoring, test=test.name,
                       ids=test.ids, y_true=test.y, y_pred=np.exp(raw))
 
@@ -5080,120 +3548,9 @@ def subset_mask(y, subset: str, selection_range) -> np.ndarray:
         lo, hi = selection_range
         return (y >= lo) & (y <= hi)
     raise ValueError(f"unknown subset {subset!r}")
-```
-
-The imports of `checks`, `fitting`, `json`, `Mapping`, `stats`, `Options` and `produce` are used by Tasks 22–23. Keep them.
-
-- [ ] **Step 5: Run tests**
-
-Run: `.venv/bin/pytest -q`
-Expected: all pass.
-
-- [ ] **Step 6: Commit**
-
-```bash
-git add sgs/evaluate.py tests/test_evaluate.py tests/helpers.py
-git commit -m "Add metric primitives with an order-statistic conformal quantile
-
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-```
-
----
-
-### Task 22: Paired comparisons — Wilcoxon on |e₁|−|e₂| and paired bootstrap
-
-**Files:**
-- Modify: `sgs/evaluate.py`, `tests/test_evaluate.py`
-
-**Interfaces:**
-- Produces: `MisalignedPair(ValueError)`, `UnregisteredComparison(KeyError)`, `BOOTSTRAP_LIMITATION: str`, `registered(first, second, registry) -> Comparison`, `wilcoxon_abs(p1, p2, *, registry, mask=None) -> dict` with keys `first, second, n, median_d, p_d_lt_0, statistic, pvalue, alternative, hypothesised, reading`, and `paired_bootstrap(p1, p2, *, registry, n_boot, seed, ci, mask=None) -> dict` with keys `delta_rmse, ci, ci_level, p_delta_lt_0, n_boot, limitation`.
-
-- [ ] **Step 1: Append failing tests to `tests/test_evaluate.py`**
-
-```python
-# --- paired comparisons ----------------------------------------------------------------
-
-REG = config.COMPARISONS
 
 
-def _pair(n=80, seed=0):
-    rng = np.random.default_rng(seed)
-    y = rng.uniform(0.5, 6.0, n)
-    better = _pred(y, y + rng.normal(0, 0.05, n), arm="C")
-    worse = _pred(y, y + rng.normal(0, 0.30, n), arm="B")
-    return better, worse
-
-
-def test_registry_lookup_is_directional():
-    assert evaluate.registered("C", "B", REG).alternative == "less"
-    with pytest.raises(evaluate.UnregisteredComparison):
-        evaluate.registered("B", "C", REG)
-    with pytest.raises(evaluate.UnregisteredComparison):
-        evaluate.registered("A", "B", REG)
-
-
-def test_wilcoxon_on_differences_of_absolute_errors():
-    c, b = _pair()
-    out = evaluate.wilcoxon_abs(c, b, registry=REG)
-    d = np.abs(c.y_pred - c.y_true) - np.abs(b.y_pred - b.y_true)
-    assert out["median_d"] == pytest.approx(np.median(d)) and out["median_d"] < 0
-    assert out["p_d_lt_0"] == pytest.approx(np.mean(d < 0))
-    assert out["alternative"] == "less" and out["hypothesised"] and out["pvalue"] < 0.01
-    assert "smaller absolute errors" in out["reading"]
-
-
-def test_wilcoxon_is_invariant_to_row_order():
-    c, b = _pair()
-    perm = np.random.default_rng(1).permutation(len(c.ids))
-    shuffle = lambda p: _pred(p.y_true[perm], p.y_pred[perm], arm=p.arm, ids=p.ids[perm])
-    a1 = evaluate.wilcoxon_abs(c, b, registry=REG)
-    a2 = evaluate.wilcoxon_abs(shuffle(c), shuffle(b), registry=REG)
-    assert a1["statistic"] == a2["statistic"] and a1["pvalue"] == a2["pvalue"]
-
-
-@pytest.mark.parametrize("break_it, message", [
-    (lambda b: _pred(b.y_true[:-1], b.y_pred[:-1], arm="B"), "identifiers"),
-    (lambda b: _pred(b.y_true, b.y_pred, arm="B", ids=b.ids[::-1]), "identifiers"),
-    (lambda b: _pred(b.y_true, b.y_pred, arm="B", test="test-stratified"), "test set"),
-    (lambda b: _pred(b.y_true, b.y_pred, arm="B", family="gbm"), "vertical"),
-    (lambda b: _pred(b.y_true + 1, b.y_pred, arm="B"), "observed FOS"),
-])
-def test_misaligned_pairs_are_refused(break_it, message):
-    c, b = _pair()
-    with pytest.raises(evaluate.MisalignedPair, match=message):
-        evaluate.wilcoxon_abs(c, break_it(b), registry=REG)
-    with pytest.raises(evaluate.MisalignedPair, match=message):
-        evaluate.paired_bootstrap(c, break_it(b), registry=REG, n_boot=50, seed=1, ci=0.95)
-
-
-def test_bootstrap_is_reproducible_and_states_its_limitation():
-    c, b = _pair()
-    one = evaluate.paired_bootstrap(c, b, registry=REG, n_boot=500, seed=7, ci=0.95)
-    two = evaluate.paired_bootstrap(c, b, registry=REG, n_boot=500, seed=7, ci=0.95)
-    other = evaluate.paired_bootstrap(c, b, registry=REG, n_boot=500, seed=8, ci=0.95)
-    assert one == two and one["ci"] != other["ci"]
-    assert one["delta_rmse"] == pytest.approx(evaluate.rmse(c.y_true, c.y_pred) - evaluate.rmse(b.y_true, b.y_pred))
-    assert one["ci"][0] <= one["delta_rmse"] <= one["ci"][1] and one["ci"][1] < 0
-    assert "test-sampling variability only" in one["limitation"]
-
-
-def test_mask_restricts_both_tests():
-    c, b = _pair()
-    mask = c.y_true <= 3.0
-    assert evaluate.wilcoxon_abs(c, b, registry=REG, mask=mask)["n"] == int(mask.sum())
-```
-
-- [ ] **Step 2: Run to verify failure**
-
-Run: `.venv/bin/pytest tests/test_evaluate.py -q`
-Expected: new tests fail with `AttributeError: ... 'registered'`.
-
-- [ ] **Step 3: Add to `sgs/evaluate.py` (after `subset_mask`)**
-
-```python
-BOOTSTRAP_LIMITATION = ("Paired bootstrap over test rows: covers test-sampling variability only, "
-                        "not seed or selection variability.")
-
+# --- paired comparisons ---------------------------------------------------------------------
 
 class MisalignedPair(ValueError):
     """Two predictions that do not describe the same rows of the same test set."""
@@ -5255,126 +3612,10 @@ def paired_bootstrap(p1: Prediction, p2: Prediction, *, registry, n_boot: int, s
             "ci": [float(np.quantile(delta, tail)), float(np.quantile(delta, 1 - tail))],
             "ci_level": ci, "p_delta_lt_0": float(np.mean(delta < 0)), "n_boot": int(n_boot),
             "limitation": BOOTSTRAP_LIMITATION}
-```
-
-- [ ] **Step 4: Run tests**
-
-Run: `.venv/bin/pytest -q`
-Expected: all pass.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add sgs/evaluate.py tests/test_evaluate.py
-git commit -m "Add Wilcoxon on absolute-error differences and a paired bootstrap
-
-Both refuse pairs that are not aligned on the same test rows and comparisons
-absent from the registry.
-
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-```
-
----
-
-### Task 23: `evaluate()` and `sgs evaluate`
-
-**Files:**
-- Modify: `sgs/evaluate.py`, `tests/test_evaluate.py`, `tests/helpers.py`
-
-**Interfaces:**
-- Produces:
-  - `EvalResult(test, scoring, n, fos_range, arms, comparisons, predictions)` with `to_json() -> dict`
-  - `evaluate(fits: Mapping[str, FitArtifact], test: TestSet, *, alpha, zones, comparisons, selection_range, n_boot, bootstrap_seed, bootstrap_ci) -> EvalResult`
-  - `stage(opts, role=None)` writing `outputs/metrics/{test}__{scoring}.json`
-- Metrics JSON layout (read by `report.py`): `{"test", "scoring", "n", "fos_range", "arms": {family: {arm: {"global", "zones", "minimax", "conformal", "best_params", "n_train"}}}, "comparisons": [{"family", "subset", "first", "second", "wilcoxon", "bootstrap"}], "predictions": {"row_id", "y_true", "<family>__<arm>": [...]}, "notes": {...}}`
-
-- [ ] **Step 1: Append to `tests/helpers.py`**
-
-```python
-EVAL_KWARGS = dict(alpha=0.10, zones=config.ZONE_EDGES, comparisons=config.COMPARISONS,
-                   selection_range=config.SELECTION_RANGE, n_boot=300, bootstrap_seed=1,
-                   bootstrap_ci=0.95)
 
 
-def write_stub_fits(scoring="log-rmse"):
-    """Stub fit artifacts on disk, with manifests that load_fit accepts."""
-    import joblib
-    from sgs import fitting
-    for family in config.FAMILIES:
-        for arm, scale in ARM_SCALES.items():
-            path = config.fit_path(family, arm, scoring)
-            path.parent.mkdir(parents=True, exist_ok=True)
-            joblib.dump(stub_fit(family, arm, scale, scoring), path)
-            manifest.write_manifest(path, stage="fixture", sections=fitting.SECTIONS,
-                                    inputs=fitting.fit_inputs(arm), wall_time_s=0.0)
-```
+# --- one test set, every arm ----------------------------------------------------------------
 
-- [ ] **Step 2: Append failing tests to `tests/test_evaluate.py`**
-
-```python
-# --- evaluate() and the stage ------------------------------------------------------------
-
-import json
-
-from sgs.stage import Options
-from tests.helpers import EVAL_KWARGS, stub_fits, stub_test, synthetic_final, write_final, write_stub_fits
-
-
-def test_evaluate_covers_every_arm_and_registered_comparison():
-    fits = {**stub_fits("rf"), **stub_fits("gbm")}
-    result = evaluate.evaluate(fits, stub_test(), **EVAL_KWARGS)
-    assert set(result.arms) == {"rf", "gbm"}
-    assert set(result.arms["rf"]) == {"A", "B", "C", "C0"}
-    assert len(result.comparisons) == 2 * len(config.COMPARISONS) * len(evaluate.SUBSETS)
-    first = result.comparisons[0]
-    assert {first["first"], first["second"]} <= set(config.ARMS)
-    payload = json.loads(json.dumps(result.to_json()))
-    assert payload["predictions"]["row_id"][0] == "test-natural:0"
-    assert "rf__C0" in payload["predictions"]
-    assert "test-sampling variability only" in payload["notes"]["bootstrap"]
-
-
-def test_evaluate_refuses_a_missing_arm():
-    fits = stub_fits("rf")
-    fits.pop("rf__C0__log-rmse")
-    with pytest.raises(ValueError, match="C0"):
-        evaluate.evaluate(fits, stub_test(), **EVAL_KWARGS)
-
-
-def test_evaluate_refuses_mixed_scorings():
-    fits = {**stub_fits("rf"), **stub_fits("gbm", scoring="fos-rmse")}
-    with pytest.raises(ValueError, match="one scoring"):
-        evaluate.evaluate(fits, stub_test(), **EVAL_KWARGS)
-
-
-def test_stage_writes_metrics_with_provenance(root, monkeypatch):
-    for i, role in enumerate(config.ROLE_ORDER):
-        write_final(role, synthetic_final(60, 200 + i))
-    write_stub_fits()
-    monkeypatch.setattr(config, "N_BOOTSTRAP", 200)
-    monkeypatch.setattr(evaluate.checks, "require", lambda *a, **k: None)
-    evaluate.stage(Options(), role="test-natural")
-    path = config.metrics_path("test-natural", "log-rmse")
-    metrics = json.loads(path.read_text())
-    assert metrics["test"] == "test-natural" and set(metrics["arms"]["gbm"]) == {"A", "B", "C", "C0"}
-    record = json.loads(path.with_name(path.name + ".manifest.json").read_text())
-    assert "fit:rf__C0" in record["inputs"] and "final:test-natural" in record["inputs"]
-    assert set(record["config"]) == {"domain", "protocol", "evaluation"}
-
-
-def test_stage_refuses_arm_or_family_filters():
-    with pytest.raises(ValueError, match="C0 included"):
-        evaluate.stage(Options(only_arm="C"))
-```
-
-- [ ] **Step 3: Run to verify failure**
-
-Run: `.venv/bin/pytest tests/test_evaluate.py -q`
-Expected: new tests fail with `AttributeError: ... 'evaluate'`.
-
-- [ ] **Step 4: Append to `sgs/evaluate.py`**
-
-```python
 @dataclass
 class EvalResult:
     test: str
@@ -5446,36 +3687,36 @@ def evaluate(fits: Mapping[str, FitArtifact], test: data.TestSet, *, alpha, zone
                       arms=arms, comparisons=rows, predictions=predictions)
 
 
-EVAL_SECTIONS = ("domain", "protocol", "evaluation")
+def _write_json(path, payload) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(f".{path.name}.tmp")
+    tmp.write_text(json.dumps(payload, indent=2) + "\n")
+    os.replace(tmp, path)
 
 
-def stage(opts: Options, role: str | None = None) -> None:
-    if opts.only_family or opts.only_arm:
-        raise ValueError("evaluate always covers every family and every arm, C0 included")
-    test_roles = (role,) if role else config.TEST_ROLES
-    scorings = fitting.select(config.ACTIVE_SCORINGS, opts.only_scoring, "scoring")
-    training = sorted({r for arm in config.ARMS.values() for r in arm.roles})
-    for scoring in scorings:
-        for test_role in test_roles:
-            inputs = {f"fit:{f}__{a}": config.fit_path(f, a, scoring)
-                      for f in config.FAMILIES for a in config.ARMS}
-            inputs[f"final:{test_role}"] = config.final_path(test_role)
-
-            def build(tmp, scoring=scoring, test_role=test_role):
-                checks.require([test_role, *training], [(test_role, r) for r in training])
-                fits = {f"{f}__{a}__{scoring}": fitting.load_fit(f, a, scoring)
-                        for f in config.FAMILIES for a in config.ARMS}
-                result = evaluate(fits, data.load_test(test_role), alpha=config.ALPHA,
-                                  zones=config.ZONE_EDGES, comparisons=config.COMPARISONS,
-                                  selection_range=config.SELECTION_RANGE,
-                                  n_boot=config.N_BOOTSTRAP,
-                                  bootstrap_seed=config.SEEDS["bootstrap_resampling"],
-                                  bootstrap_ci=config.BOOTSTRAP_CI)
-                tmp.write_text(json.dumps(result.to_json(), indent=2) + "\n")
-                return {"n_test": result.n, "fos_range": list(result.fos_range)}
-
-            produce(config.metrics_path(test_role, scoring), stage=f"evaluate:{test_role}",
-                    sections=EVAL_SECTIONS, inputs=inputs, opts=opts, build=build)
+def run() -> None:
+    """Every active scoring on every test set; every family and arm, C0 included."""
+    data.validate_sets(config.ROLE_ORDER)
+    provenance_data = {role: data.sha256_file(config.final_path(role)) for role in config.ROLE_ORDER}
+    for scoring in config.ACTIVE_SCORINGS:
+        fits = {f"{f}__{a}__{scoring}": models.load_fit(f, a, scoring)
+                for f in config.FAMILIES for a in config.ARMS}
+        for test_role in config.TEST_ROLES:
+            result = evaluate(fits, data.load_test(test_role), alpha=config.ALPHA,
+                              zones=config.ZONE_EDGES, comparisons=config.COMPARISONS,
+                              selection_range=config.SELECTION_RANGE, n_boot=config.N_BOOTSTRAP,
+                              bootstrap_seed=config.SEEDS["bootstrap_resampling"],
+                              bootstrap_ci=config.BOOTSTRAP_CI)
+            payload = result.to_json()
+            payload["provenance"] = {
+                "final_sha256": provenance_data,
+                "fit_fingerprints": {f"{f}__{scoring}": config.fit_fingerprint(f, scoring)
+                                     for f in config.FAMILIES},
+                "environment": data.environment(),
+            }
+            path = config.metrics_path(test_role, scoring)
+            _write_json(path, payload)
+            print(f"[evaluate] wrote {path.name}")
 ```
 
 - [ ] **Step 5: Run tests**
@@ -5483,333 +3724,33 @@ def stage(opts: Options, role: str | None = None) -> None:
 Run: `.venv/bin/pytest -q`
 Expected: all pass.
 
-- [ ] **Step 6: Run on the real fits**
+- [ ] **Step 6: Run on the real fits and commit**
 
 ```bash
 .venv/bin/sgs evaluate
 ```
 Expected: `wrote test-natural__log-rmse.json` and `wrote test-stratified__log-rmse.json`, in seconds.
 
-- [ ] **Step 7: Commit**
-
 ```bash
 git add sgs/evaluate.py tests/test_evaluate.py tests/helpers.py outputs/metrics/
-git commit -m "Add the evaluate stage: pure metrics from fits and one test set
+git commit -m "Add evaluation: zone metrics, order-statistic conformal, Wilcoxon on
+absolute-error differences and a paired bootstrap
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
 
 ---
 
-## Phase 8 — learning curve
-
-### Task 24: `learning_curve.py`, `sgs learning-curve`, and its metrics
+## Task 12: `report.py`, the narrative notebook, final verification
 
 **Files:**
-- Create: `sgs/learning_curve.py`, `tests/test_learning_curve.py`
-- Modify: `sgs/evaluate.py` (add `learning_curve_metrics` and call it from `stage`)
+- Create: `sgs/report.py`, `tests/test_report.py`, `notebooks/surrogate_guided_sampling.ipynb`
+- Modify: `tests/conftest.py` (Agg backend), `README.md` (notebook section)
 
 **Interfaces:**
-- Consumes: `protocol.searcher`, `data.load_role/load_test`, `checks.require/pairs_among`, `fitting.select`.
-- Produces:
-  - `SECTIONS = ("domain", "protocol", "learning_curve")`, `SHARED = "seed-only"`
-  - `unit_rng(budget, repeat) -> Generator`, `subsample(seed_df, extra_df, budget, rng) -> DataFrame`
-  - `plan(n_seed) -> list[(key, budget, repeats)]`
-  - `run_budget(family, key, budget, repeats, scoring, seed_df, extras, tests) -> dict` (`{"family", "key", "budget", "scoring", "units": [{"repeat", "n_train", "train_ids", "best_params", "predictions": {test: {"ids", "y_pred"}}}]}`)
-  - `artifact_paths(scoring, families=None) -> list[Path]`, `available(scoring) -> bool`
-  - `load_units(scoring, families=None) -> dict[(family, curve, budget), list[unit]]` (shared units are listed under every curve)
-  - `stage(opts)`
-  - In `evaluate.py`: `learning_curve_metrics(units, tests, *, selection_range) -> {"rows": [...]}` with row keys `family, curve, budget, test, n_repeats, rmse_mean, rmse_std, rmse_selection_mean, rmse_selection_std`
-
-- [ ] **Step 1: Write the failing tests `tests/test_learning_curve.py`**
-
-```python
-import numpy as np
-import pandas as pd
-import pytest
-
-from sgs import config, evaluate, learning_curve as lc
-from sgs.stage import Options
-from tests.helpers import synthetic_final, write_final
-
-
-@pytest.fixture
-def tiny_curve(tiny_protocol, monkeypatch):
-    write_final("seed", synthetic_final(40, 10))          # overrides the 60-row seed
-    for i, role in enumerate(config.TEST_ROLES):
-        write_final(role, synthetic_final(30, 50 + i))
-    monkeypatch.setattr(config, "LC_BUDGETS", (20, 40, 60))
-    monkeypatch.setattr(config, "LC_REPEATS", 2)
-    monkeypatch.setattr(lc.checks, "require", lambda *a, **k: None)
-
-
-def test_plan_shares_budgets_up_to_the_seed_size():
-    assert lc.plan(300) == [("seed-only", 100, 10), ("seed-only", 200, 10), ("seed-only", 300, 1),
-                            ("lhs", 400, 10), ("guided", 400, 10), ("lhs", 500, 10),
-                            ("guided", 500, 10), ("lhs", 600, 10), ("guided", 600, 10)]
-
-
-def test_subsample_semantics():
-    seed_df = pd.DataFrame({"row_id": [f"s{i}" for i in range(10)]})
-    extra = pd.DataFrame({"row_id": [f"e{i}" for i in range(10)]})
-    small = lc.subsample(seed_df, extra, 4, lc.unit_rng(4, 0))
-    assert len(small) == 4 and small["row_id"].str.startswith("s").all()
-    assert lc.subsample(seed_df, extra, 10, lc.unit_rng(10, 0)) is seed_df
-    large = lc.subsample(seed_df, extra, 13, lc.unit_rng(13, 0))
-    assert len(large) == 13 and set(seed_df["row_id"]) <= set(large["row_id"])
-
-
-def test_unit_rng_is_keyed_on_budget_and_repeat():
-    draw = lambda b, r: lc.unit_rng(b, r).integers(0, 10**9)
-    assert draw(100, 0) == draw(100, 0)
-    assert len({draw(100, 0), draw(100, 1), draw(200, 0)}) == 3
-
-
-def test_stage_writes_one_checkpoint_per_budget_and_metrics_follow(tiny_curve):
-    lc.stage(Options(only_family="rf"))
-    paths = lc.artifact_paths("log-rmse", families=("rf",))
-    assert [p.name for p in paths] == ["rf__seed-only__log-rmse__n20.joblib",
-                                       "rf__seed-only__log-rmse__n40.joblib",
-                                       "rf__lhs__log-rmse__n60.joblib",
-                                       "rf__guided__log-rmse__n60.joblib"]
-    units = lc.load_units("log-rmse", families=("rf",))
-    assert units[("rf", "lhs", 20)] is units[("rf", "guided", 20)]
-    assert len(units[("rf", "lhs", 40)]) == 1 and len(units[("rf", "lhs", 60)]) == 2
-
-    from sgs import data
-    tests = {r: data.load_test(r) for r in config.TEST_ROLES}
-    rows = evaluate.learning_curve_metrics(units, tests, selection_range=config.SELECTION_RANGE)["rows"]
-    shared = [r for r in rows if r["budget"] == 20 and r["test"] == "test-natural"]
-    assert len(shared) == 2 and shared[0]["rmse_mean"] == shared[1]["rmse_mean"]
-    assert all(r["rmse_std"] == 0.0 for r in rows if r["budget"] == 40)
-```
-
-- [ ] **Step 2: Run to verify failure**
-
-Run: `.venv/bin/pytest tests/test_learning_curve.py -q`
-Expected: `ImportError: cannot import name 'learning_curve'`.
-
-- [ ] **Step 3: Write `sgs/learning_curve.py`**
-
-```python
-"""The learning curve: the only analysis that refits in a loop.
-
-For each budget, the training set is the seed (subsampled when the budget is
-smaller) plus a random subsample of one strategy's additional points. Every
-subsample is refit with the same tuned ``searcher`` as the arms. Subsample
-generators are keyed on (budget, repeat), so repeats at different budgets never
-share draws, and both strategies see the same draw at the same key. Budgets up
-to the seed size do not depend on the strategy and are fitted once.
-
-Predictions on every test set are stored with each unit; ``evaluate`` turns
-them into RMSE. The cache lives apart from artifacts/fits/.
-"""
-
-from __future__ import annotations
-
-from pathlib import Path
-
-import joblib
-import numpy as np
-import pandas as pd
-
-from sgs import checks, config, data, fitting, manifest, protocol
-from sgs.stage import Options, produce
-
-SECTIONS = ("domain", "protocol", "learning_curve")
-SHARED = "seed-only"
-
-
-def unit_rng(budget: int, repeat: int) -> np.random.Generator:
-    sequence = np.random.SeedSequence(config.SEEDS["learning_curve_subsampling"],
-                                      spawn_key=(budget, repeat))
-    return np.random.default_rng(sequence)
-
-
-def subsample(seed_df: pd.DataFrame, extra_df: pd.DataFrame, budget: int, rng) -> pd.DataFrame:
-    n_seed = len(seed_df)
-    if budget < n_seed:
-        return seed_df.iloc[rng.choice(n_seed, budget, replace=False)]
-    if budget == n_seed:
-        return seed_df
-    take = extra_df.iloc[rng.choice(len(extra_df), budget - n_seed, replace=False)]
-    return pd.concat([seed_df, take], ignore_index=True)
-
-
-def plan(n_seed: int) -> list[tuple[str, int, int]]:
-    out = []
-    for budget in config.LC_BUDGETS:
-        repeats = 1 if budget == n_seed else config.LC_REPEATS
-        if budget <= n_seed:
-            out.append((SHARED, budget, repeats))
-        else:
-            out.extend((strategy, budget, repeats) for strategy in config.LC_STRATEGIES)
-    return out
-
-
-def _roles() -> list[str]:
-    return [config.LC_BASE_ROLE, *config.LC_STRATEGIES.values(), *config.TEST_ROLES]
-
-
-def _inputs() -> dict:
-    return {f"final:{role}": config.final_path(role) for role in _roles()}
-
-
-def run_budget(family, key, budget, repeats, scoring, seed_df, extras, tests) -> dict:
-    units = []
-    for repeat in range(repeats):
-        extra = seed_df.iloc[:0] if key == SHARED else extras[key]
-        frame = subsample(seed_df, extra, budget, unit_rng(budget, repeat))
-        X = frame[list(config.FEATURES)]
-        y = np.log(frame["FOS"].to_numpy(float))
-        search = protocol.searcher(family, scoring).fit(X, y)
-        units.append({
-            "repeat": repeat, "n_train": int(len(frame)),
-            "train_ids": frame["row_id"].to_numpy(str),
-            "best_params": dict(search.best_params_),
-            "predictions": {name: {"ids": test.ids, "y_pred": np.exp(search.best_estimator_.predict(test.X))}
-                            for name, test in tests.items()},
-        })
-    return {"family": family, "key": key, "budget": budget, "scoring": scoring, "units": units}
-
-
-def artifact_paths(scoring: str, families=None) -> list[Path]:
-    n_seed = len(data.load_role(config.LC_BASE_ROLE))
-    return [config.learning_curve_path(family, key, scoring, budget)
-            for family in (families or config.FAMILIES)
-            for key, budget, _ in plan(n_seed)]
-
-
-def available(scoring: str) -> bool:
-    return all(path.exists() for path in artifact_paths(scoring))
-
-
-def load_units(scoring: str, families=None) -> dict:
-    n_seed = len(data.load_role(config.LC_BASE_ROLE))
-    out = {}
-    for family in (families or config.FAMILIES):
-        for key, budget, _ in plan(n_seed):
-            path = config.learning_curve_path(family, key, scoring, budget)
-            manifest.require_fresh(path, sections=SECTIONS, inputs=_inputs())
-            units = joblib.load(path)["units"]
-            for curve in (tuple(config.LC_STRATEGIES) if key == SHARED else (key,)):
-                out[(family, curve, budget)] = units
-    return out
-
-
-def stage(opts: Options) -> None:
-    families = fitting.select(config.FAMILIES, opts.only_family, "family")
-    scorings = fitting.select(config.ACTIVE_SCORINGS, opts.only_scoring, "scoring")
-    missing = [name for name, path in _inputs().items() if not path.exists()]
-    if missing:
-        if opts.dry_run:
-            print(f"[learning-curve] dry run: waits for {', '.join(missing)}")
-            return
-        raise FileNotFoundError(f"learning curve needs {', '.join(missing)}")
-    roles = _roles()
-    if not opts.dry_run:
-        checks.require(roles, checks.pairs_among(roles))
-    seed_df = data.load_role(config.LC_BASE_ROLE)
-    extras = {strategy: data.load_role(role) for strategy, role in config.LC_STRATEGIES.items()}
-    tests = {role: data.load_test(role) for role in config.TEST_ROLES}
-    for scoring in scorings:
-        for family in families:
-            for key, budget, repeats in plan(len(seed_df)):
-                def build(tmp, family=family, key=key, budget=budget, repeats=repeats, scoring=scoring):
-                    result = run_budget(family, key, budget, repeats, scoring, seed_df, extras, tests)
-                    joblib.dump(result, tmp)
-                    return {"repeats": repeats, "budget": budget}
-
-                produce(config.learning_curve_path(family, key, scoring, budget),
-                        stage=f"learning-curve:{family}:{key}:n{budget}", sections=SECTIONS,
-                        inputs=_inputs(), opts=opts, build=build)
-```
-
-- [ ] **Step 4: Add the learning-curve metrics to `sgs/evaluate.py`**
-
-Add `from sgs import learning_curve` to the imports. Insert the function below after `evaluate()`:
-
-```python
-def learning_curve_metrics(units: Mapping, tests: Mapping[str, data.TestSet], *, selection_range) -> dict:
-    """Mean and spread of RMSE over repeats, per (family, curve, budget, test)."""
-    rows = []
-    for (family, curve, budget), unit_list in sorted(units.items()):
-        for name, test in tests.items():
-            mask = subset_mask(test.y, "selection-range", selection_range)
-            overall, inside = [], []
-            for unit in unit_list:
-                pred = unit["predictions"][name]
-                if not np.array_equal(pred["ids"], test.ids):
-                    raise MisalignedPair(f"learning-curve predictions for {name} are not aligned with the test set")
-                overall.append(rmse(test.y, pred["y_pred"]))
-                inside.append(rmse(test.y[mask], pred["y_pred"][mask]))
-            rows.append({"family": family, "curve": curve, "budget": int(budget), "test": name,
-                         "n_repeats": len(unit_list),
-                         "rmse_mean": float(np.mean(overall)), "rmse_std": float(np.std(overall)),
-                         "rmse_selection_mean": float(np.mean(inside)),
-                         "rmse_selection_std": float(np.std(inside))})
-    return {"rows": rows}
-```
-
-At the end of `stage`, inside `for scoring in scorings:` and after the inner test-role loop, append:
-
-```python
-        if role is None and learning_curve.available(scoring):
-            lc_inputs = {f"lc:{p.stem}": p for p in learning_curve.artifact_paths(scoring)}
-            lc_inputs.update({f"final:{r}": config.final_path(r) for r in config.TEST_ROLES})
-
-            def build_lc(tmp, scoring=scoring):
-                tests = {r: data.load_test(r) for r in config.TEST_ROLES}
-                result = learning_curve_metrics(learning_curve.load_units(scoring), tests,
-                                                selection_range=config.SELECTION_RANGE)
-                tmp.write_text(json.dumps(result, indent=2) + "\n")
-                return {"n_rows": len(result["rows"])}
-
-            produce(config.learning_curve_metrics_path(scoring), stage="evaluate:learning-curve",
-                    sections=("domain", "evaluation", "learning_curve"), inputs=lc_inputs,
-                    opts=opts, build=build_lc)
-        elif role is None:
-            print(f"[evaluate] learning curve for {scoring} not available yet; run sgs learning-curve")
-```
-
-`learning_curve.available()` calls `data.load_role("seed")`. The evaluate stage test in Task 23 writes a seed final, so that test keeps passing.
-
-- [ ] **Step 5: Run tests**
-
-Run: `.venv/bin/pytest -q`
-Expected: all pass.
-
-- [ ] **Step 6: Run the learning curve (EXPENSIVE: hours, comparable to Task 20), then its metrics**
-
-```bash
-.venv/bin/sgs learning-curve --dry-run
-.venv/bin/sgs learning-curve 2>&1 | tee /tmp/lc.log
-.venv/bin/sgs evaluate
-```
-Expected: 18 checkpoints for the default config: 3 shared plus 6 strategy budgets, for 2 families. Then `wrote learning_curve__log-rmse.json`. The two test-metric files report `up to date`.
-
-- [ ] **Step 7: Commit**
-
-```bash
-git add sgs/learning_curve.py sgs/evaluate.py tests/test_learning_curve.py artifacts/learning_curve/*.manifest.json outputs/metrics/
-git commit -m "Add the tuned learning curve with its own cache and metrics
-
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-```
-
----
-
-## Phase 9 — report and notebook
-
-### Task 25: `report.py` — booktabs tables and figures
-
-**Files:**
-- Create: `sgs/report.py`, `tests/test_report.py`
-- Modify: `tests/conftest.py` (select the Agg backend)
-
-**Interfaces:**
-- Consumes: only `outputs/metrics/*.json` (via `load_metrics`, `load_learning_curve`) and `config` (arm order, ablation flags, budgets).
-- Produces: `arm_label(arm)`, `load_metrics(test, scoring)`, `load_learning_curve(scoring)`, `booktabs(frame, *, caption, label, digits=3) -> str`, `global_frame(metrics)`, `zone_frame(metrics, family)`, `comparison_frame(metrics)`, `conformal_frame(metrics)`, `budget_frame()`, `fig_zone_rmse(metrics, family) -> Figure`, `fig_learning_curve(lc, test, family) -> Figure`, `stage(opts)`.
+- Consumes: only `outputs/metrics/*.json` and `config` (arm order, ablation flags, budgets).
+- Produces: `arm_label(arm)`, `load_metrics(test, scoring)`, `load_learning_curve()`, `booktabs(frame, *, caption, label, digits=3) -> str`, `global_frame(metrics)`, `zone_frame(metrics, family)`, `comparison_frame(metrics)`, `conformal_frame(metrics)`, `budget_frame()`, `fig_zone_rmse(metrics, family)`, `fig_learning_curve(lc, test)`, `run()`.
+- Learning-curve metrics JSON (written in Task 13, read here): `{"procedure": str, "rows": [{"family", "curve", "budget", "test", "n_repeats", "rmse_mean", "rmse_std", "rmse_selection_mean", "rmse_selection_std"}]}`.
 
 - [ ] **Step 1: Make matplotlib headless in tests — prepend to `tests/conftest.py`**
 
@@ -5824,8 +3765,9 @@ matplotlib.use("Agg")
 ```python
 import json
 
-from sgs import config, evaluate, manifest, report
-from sgs.stage import Options
+import pandas as pd
+
+from sgs import config, evaluate, report
 from tests.helpers import EVAL_KWARGS, stub_fits, stub_test
 
 
@@ -5834,12 +3776,10 @@ def _write_metrics():
     path = config.metrics_path("test-natural", "log-rmse")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(result.to_json()))
-    manifest.write_manifest(path, stage="fixture", sections=(), inputs={}, wall_time_s=0)
     return result.to_json()
 
 
 def test_booktabs_structure_and_escaping():
-    import pandas as pd
     tex = report.booktabs(pd.DataFrame({"arm": ["C_0"], "RMSE": [0.12345], "n": [None]}),
                           caption="Demo.", label="tab:demo")
     assert r"\toprule" in tex and r"\midrule" in tex and r"\bottomrule" in tex
@@ -5860,15 +3800,23 @@ def test_every_results_table_includes_the_ablation(root):
     assert "C vs C0" in report.comparison_frame(metrics)["comparison"].tolist()
 
 
-def test_stage_writes_tables_and_figures_with_manifests(root):
+def test_learning_curve_figure_reads_the_rows():
+    rows = [{"family": "rf", "curve": curve, "budget": b, "test": "test-natural", "n_repeats": 2,
+             "rmse_mean": 1.0 / b, "rmse_std": 0.01, "rmse_selection_mean": 0.5 / b,
+             "rmse_selection_std": 0.01}
+            for curve in ("lhs", "guided") for b in (100, 200)]
+    fig = report.fig_learning_curve({"rows": rows}, "test-natural")
+    assert len(fig.axes[0].lines) == 2
+
+
+def test_run_writes_tables_and_figures(root):
     _write_metrics()
-    report.stage(Options())
+    report.run()
     tables = {p.name for p in config.tables_dir().glob("*.tex")}
     assert {"budget.tex", "test-natural__log-rmse__global.tex", "test-natural__log-rmse__comparisons.tex",
             "test-natural__log-rmse__conformal.tex", "test-natural__log-rmse__zones_rf.tex"} <= tables
     figure = config.figures_dir() / "test-natural__log-rmse__zones_gbm.pdf"
     assert figure.read_bytes()[:4] == b"%PDF"
-    assert manifest.read_manifest(figure)["inputs"]["metrics"]["path"].endswith("test-natural__log-rmse.json")
 ```
 
 - [ ] **Step 3: Run to verify failure**
@@ -5896,24 +3844,25 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from sgs import config, manifest
-from sgs.stage import Options, produce
+from sgs import config
 
 
 def arm_label(arm: str) -> str:
     return f"{arm} (ablation)" if config.ARMS[arm].ablation else arm
 
 
+def _read(path) -> dict:
+    if not path.exists():
+        raise FileNotFoundError(f"{path.name} is missing; run `sgs evaluate`")
+    return json.loads(path.read_text())
+
+
 def load_metrics(test: str, scoring: str) -> dict:
-    path = config.metrics_path(test, scoring)
-    manifest.verify_provenance(path)
-    return json.loads(path.read_text())
+    return _read(config.metrics_path(test, scoring))
 
 
-def load_learning_curve(scoring: str) -> dict:
-    path = config.learning_curve_metrics_path(scoring)
-    manifest.verify_provenance(path)
-    return json.loads(path.read_text())
+def load_learning_curve() -> dict:
+    return _read(config.learning_curve_metrics_path())
 
 
 def _escape(text: str) -> str:
@@ -6008,8 +3957,8 @@ def fig_zone_rmse(metrics: dict, family: str):
     return fig
 
 
-def fig_learning_curve(lc: dict, test: str, family: str):
-    rows = [r for r in lc["rows"] if r["test"] == test and r["family"] == family]
+def fig_learning_curve(lc: dict, test: str):
+    rows = [r for r in lc["rows"] if r["test"] == test]
     fig, axes = plt.subplots(1, 2, figsize=(10, 3.8), sharex=True)
     for curve in sorted({r["curve"] for r in rows}):
         points = sorted((r for r in rows if r["curve"] == curve), key=lambda r: r["budget"])
@@ -6024,64 +3973,57 @@ def fig_learning_curve(lc: dict, test: str, family: str):
     for ax in axes:
         ax.set_xlabel("Solver budget")
         ax.grid(alpha=0.3)
-    axes[0].set_ylabel(f"RMSE on {test}")
+    axes[0].set_ylabel(f"RMSE on {test} (RF, fixed hyper-parameters)")
     axes[0].legend(frameon=False)
     fig.tight_layout()
     return fig
 
 
-SECTIONS = ("protocol", "evaluation")
+def _save_table(path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text)
 
 
-def stage(opts: Options) -> None:
+def _save_figure(path, fig) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    # No creation date, so an unchanged figure is byte-identical in git.
+    fig.savefig(path, format="pdf", metadata={"CreationDate": None})
+    plt.close(fig)
+
+
+def run() -> None:
     tables, figures = config.tables_dir(), config.figures_dir()
-
-    def table(path, make, inputs):
-        def build(tmp):
-            tmp.write_text(make())
-        produce(path, stage="report", sections=SECTIONS, inputs=inputs, opts=opts, build=build)
-
-    def figure(path, make, inputs):
-        def build(tmp):
-            fig = make()
-            fig.savefig(tmp, format="pdf")
-            plt.close(fig)
-        produce(path, stage="report", sections=SECTIONS, inputs=inputs, opts=opts, build=build)
-
-    table(tables / "budget.tex", lambda: booktabs(
+    _save_table(tables / "budget.tex", booktabs(
         budget_frame(), caption="Budget-fair arms. C0 is an ablation and carries no budget.",
-        label="tab:budget"), {})
+        label="tab:budget"))
 
     for scoring in config.ACTIVE_SCORINGS:
         for test in config.TEST_ROLES:
-            path = config.metrics_path(test, scoring)
-            if not path.exists():
-                print(f"[report] {path.name} missing; run sgs evaluate")
+            if not config.metrics_path(test, scoring).exists():
+                print(f"[report] {config.metrics_path(test, scoring).name} missing; run sgs evaluate")
                 continue
             metrics = load_metrics(test, scoring)
-            stem, inputs = f"{test}__{scoring}", {"metrics": path}
-            table(tables / f"{stem}__global.tex", lambda m=metrics, s=stem: booktabs(
-                global_frame(m), caption=f"Global metrics on {test}.", label=f"tab:{s}:global"), inputs)
-            table(tables / f"{stem}__comparisons.tex", lambda m=metrics, s=stem: booktabs(
-                comparison_frame(m), caption=f"Paired comparisons on {test}: Wilcoxon on "
+            stem = f"{test}__{scoring}"
+            _save_table(tables / f"{stem}__global.tex", booktabs(
+                global_frame(metrics), caption=f"Global metrics on {test}.", label=f"tab:{stem}:global"))
+            _save_table(tables / f"{stem}__comparisons.tex", booktabs(
+                comparison_frame(metrics), caption=f"Paired comparisons on {test}: Wilcoxon on "
                 "d = |e1| - |e2| (smaller absolute errors) and bootstrap ΔRMSE.",
-                label=f"tab:{s}:comparisons"), inputs)
-            table(tables / f"{stem}__conformal.tex", lambda m=metrics, s=stem: booktabs(
-                conformal_frame(m), caption=f"Cross-conformal-style intervals on {test}, "
-                "empirical coverage.", label=f"tab:{s}:conformal"), inputs)
+                label=f"tab:{stem}:comparisons"))
+            _save_table(tables / f"{stem}__conformal.tex", booktabs(
+                conformal_frame(metrics), caption=f"Cross-conformal-style intervals on {test}, "
+                "empirical coverage.", label=f"tab:{stem}:conformal"))
             for family in metrics["arms"]:
-                table(tables / f"{stem}__zones_{family}.tex", lambda m=metrics, f=family, s=stem: booktabs(
-                    zone_frame(m, f), caption=f"Zone RMSE on {test}, {f}.", label=f"tab:{s}:zones:{f}"), inputs)
-                figure(figures / f"{stem}__zones_{family}.pdf",
-                       lambda m=metrics, f=family: fig_zone_rmse(m, f), inputs)
+                _save_table(tables / f"{stem}__zones_{family}.tex", booktabs(
+                    zone_frame(metrics, family), caption=f"Zone RMSE on {test}, {family}.",
+                    label=f"tab:{stem}:zones:{family}"))
+                _save_figure(figures / f"{stem}__zones_{family}.pdf", fig_zone_rmse(metrics, family))
 
-        lc_path = config.learning_curve_metrics_path(scoring)
-        if lc_path.exists():
-            lc = load_learning_curve(scoring)
-            for test in config.TEST_ROLES:
-                for family in config.FAMILIES:
-                    figure(figures / f"learning_curve__{test}__{family}__{scoring}.pdf",
-                           lambda t=test, f=family: fig_learning_curve(lc, t, f), {"metrics": lc_path})
+    if config.learning_curve_metrics_path().exists():
+        lc = load_learning_curve()
+        for test in config.TEST_ROLES:
+            _save_figure(figures / f"learning_curve__{test}.pdf", fig_learning_curve(lc, test))
+    print(f"[report] wrote {tables} and {figures}")
 ```
 
 - [ ] **Step 5: Run tests**
@@ -6089,96 +4031,7 @@ def stage(opts: Options) -> None:
 Run: `.venv/bin/pytest -q`
 Expected: all pass.
 
-- [ ] **Step 6: Generate the real report**
-
-```bash
-.venv/bin/sgs report
-ls outputs/tables outputs/figures
-```
-Expected: `budget.tex`; four tables plus two zone tables per test set; zone figures; and learning-curve figures for 2 tests × 2 families.
-
-- [ ] **Step 7: Commit**
-
-```bash
-git add sgs/report.py tests/test_report.py tests/conftest.py outputs/
-git commit -m "Add booktabs tables and figures read from outputs/metrics
-
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
-```
-
----
-
-### Task 26: Narrative notebook, notebook purity test, final verification
-
-**Files:**
-- Create: `notebooks/surrogate_guided_sampling.ipynb`, `tests/test_notebook.py`
-- Modify: `README.md` (add a notebook section)
-
-**Interfaces:**
-- Consumes: `sgs.config`, `sgs.report`, `sgs.manifest` only.
-
-- [ ] **Step 1: Write the failing purity test `tests/test_notebook.py`**
-
-```python
-"""The notebook holds narrative and figures only: no fitting, no metrics."""
-
-import ast
-import json
-from pathlib import Path
-
-import pytest
-
-ROOT = Path(__file__).resolve().parent.parent
-NOTEBOOKS = sorted((ROOT / "notebooks").glob("*.ipynb"))
-FORBIDDEN_CALLS = {"fit", "fit_transform", "fit_predict", "partial_fit", "cross_val_predict", "cross_val_score"}
-COMPUTING_MODULES = {"protocol", "fitting", "learning_curve", "evaluate", "screener", "design", "solve",
-                     "solver", "repair", "checks"}
-
-
-def _code(path):
-    cells = json.loads(path.read_text())["cells"]
-    for cell in cells:
-        if cell["cell_type"] == "code":
-            lines = "".join(cell["source"]).splitlines()
-            yield "\n".join(l for l in lines if not l.lstrip().startswith(("!", "%")))
-
-
-def test_the_narrative_notebook_exists():
-    assert [p.name for p in NOTEBOOKS] == ["surrogate_guided_sampling.ipynb"]
-
-
-@pytest.mark.parametrize("path", NOTEBOOKS, ids=lambda p: p.name)
-def test_notebook_is_pure(path):
-    for source in _code(path):
-        for node in ast.walk(ast.parse(source)):
-            if isinstance(node, ast.Import):
-                for alias in node.names:
-                    assert not alias.name.startswith("sklearn"), alias.name
-                    assert alias.name.removeprefix("sgs.") not in COMPUTING_MODULES, alias.name
-            elif isinstance(node, ast.ImportFrom):
-                module = node.module or ""
-                assert not module.startswith("sklearn"), module
-                if module == "sgs":
-                    assert not {a.name for a in node.names} & COMPUTING_MODULES, module
-                assert module.removeprefix("sgs.") not in COMPUTING_MODULES, module
-            elif isinstance(node, ast.Call):
-                name = node.func.attr if isinstance(node.func, ast.Attribute) else getattr(node.func, "id", "")
-                assert name not in FORBIDDEN_CALLS, name
-```
-
-- [ ] **Step 2: Run to verify failure**
-
-Run: `.venv/bin/pytest tests/test_notebook.py -q`
-Expected: `test_the_narrative_notebook_exists` FAILS (no notebook).
-
-- [ ] **Step 3: Check the Zenodo "latest version" endpoint before writing it into the notebook**
-
-```bash
-curl -sL https://zenodo.org/api/records/20706202/versions/latest | .venv/bin/python -c "import json,sys; r=json.load(sys.stdin); print(r['id'], [f['key'] for f in r['files']])"
-```
-Expected: a record id and the file list of the newest version. If the call fails or returns something other than the newest version, ask the author for the correct record URL and use it for `ZENODO_LATEST` below. Until the corrected version is published, the listed files still carry the old names. The download loop then finds nothing, and the metrics in `outputs/` still render.
-
-- [ ] **Step 4: Generate the notebook** (run once; the script itself is not committed)
+- [ ] **Step 6: Generate the notebook** (run once; the script itself is not committed)
 
 ```bash
 .venv/bin/python - <<'EOF'
@@ -6197,30 +4050,19 @@ cells = [
 
 Narrative and figures only. Every number shown here is read from `outputs/metrics/`,
 written by `sgs evaluate`; nothing in this notebook fits a model or computes a metric.
-To regenerate the numbers, run the pipeline (`sgs run-all`, see README).
+To regenerate the numbers, run the pipeline (see README).
 """),
     code("""
-# On Colab: fetch the repository (code, manifests, metrics) and the final data sets.
-import json, os, sys, subprocess, urllib.request
-
-ZENODO_LATEST = "https://zenodo.org/api/records/20706202/versions/latest"
+# On Colab: fetch the repository; the metrics are tracked in it.
+import os, subprocess, sys
 
 if "google.colab" in sys.modules and not os.path.exists("sgs"):
     subprocess.run(["git", "clone", "--depth", "1",
                     "https://github.com/bteodoru/surrogate-guided-slope-stability.git"], check=True)
     os.chdir("surrogate-guided-slope-stability")
-    sys.path.insert(0, os.getcwd())
-    from sgs import config, manifest
-    record = json.load(urllib.request.urlopen(ZENODO_LATEST))
-    for entry in record["files"]:
-        for role in config.ROLES:
-            target = config.final_path(role)
-            if entry["key"] == target.name:
-                target.parent.mkdir(parents=True, exist_ok=True)
-                urllib.request.urlretrieve(entry["links"]["self"], target)
-                manifest.verify_provenance(target)   # the tracked manifest vouches for the download
 elif os.path.basename(os.getcwd()) == "notebooks":
-    sys.path.insert(0, os.path.dirname(os.getcwd()))
+    os.chdir("..")
+sys.path.insert(0, os.getcwd())
 """),
     code("""
 from IPython.display import display
@@ -6231,7 +4073,7 @@ SCORING = config.ACTIVE_SCORINGS[0]
     md("""
 ## Budget-fair arms
 
-A, B and C share the same solver budget logic; C0 (guided points only) is an ablation
+A, B and C are compared at their solver budgets; C0 (guided points only) is an ablation
 and appears in every results table below, but not in this one.
 """),
     code("display(report.budget_frame())"),
@@ -6271,12 +4113,16 @@ coverage is reported empirically, without a formal guarantee.
 for test in config.TEST_ROLES:
     display(report.conformal_frame(report.load_metrics(test, SCORING)).round(3))
 """),
-    md("## Learning curve"),
+    md("""
+## Learning curve (optional analysis)
+
+RF with fixed hyper-parameters; present only after `sgs learning-curve`.
+"""),
     code("""
-lc = report.load_learning_curve(SCORING)
-for test in config.TEST_ROLES:
-    for family in config.FAMILIES:
-        report.fig_learning_curve(lc, test, family)
+if config.learning_curve_metrics_path().exists():
+    lc = report.load_learning_curve()
+    for test in config.TEST_ROLES:
+        report.fig_learning_curve(lc, test)
 """),
 ]
 
@@ -6289,53 +4135,315 @@ with open("notebooks/surrogate_guided_sampling.ipynb", "w") as stream:
 EOF
 ```
 
-- [ ] **Step 5: Run the purity and discipline tests**
-
-Run: `.venv/bin/pytest tests/test_notebook.py tests/test_discipline.py -q`
-Expected: all pass. The discipline test now also scans the notebook.
-
-- [ ] **Step 6: Append a notebook section to `README.md`**
+- [ ] **Step 7: Append a notebook section to `README.md`**
 
 ```markdown
 ## Notebook
 
 `notebooks/surrogate_guided_sampling.ipynb` holds the narrative and figures. It imports
-`sgs.report` and reads `outputs/metrics/`; it fits nothing and computes no metric
-(`tests/test_notebook.py` enforces this). On Colab its first cell clones the repository
-and downloads the final data sets from Zenodo, checking each file against its tracked
-manifest.
+`sgs.report` and reads `outputs/metrics/`; it fits nothing and computes no metric. On
+Colab its first cell clones the repository, which already contains the metrics.
 ```
 
-- [ ] **Step 7: Full verification**
+- [ ] **Step 8: Generate the real report and verify end to end**
 
 ```bash
+.venv/bin/sgs report
+ls outputs/tables outputs/figures
 .venv/bin/pytest -q
 .venv/bin/pytest -q -m slow
-.venv/bin/sgs run-all --dry-run
+.venv/bin/sgs all --workers 2
 git status --short
 ```
-Expected: all tests pass. The slow solver test passes. `run-all --dry-run` reports `up to date` for every stage, except `check`, which always re-evaluates and so prints its dry-run line. `git status` shows only the new notebook, test and README changes, and no CSV or joblib files.
+Expected: `budget.tex`, three tables plus two zone tables per test set, and zone figures. All tests pass, and the slow solver test passes. `sgs all` reports every data set and fit as up to date, rewrites the metrics, tables and figures, and `git status` shows no change to `outputs/` or `data/run_metadata.json` beyond the `updated` timestamps: the run is deterministic. No CSV or joblib file appears in `git status`.
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
-git add notebooks/surrogate_guided_sampling.ipynb tests/test_notebook.py README.md
-git commit -m "Add the narrative notebook and enforce that it computes nothing
+git add sgs/report.py tests/test_report.py tests/conftest.py notebooks/surrogate_guided_sampling.ipynb README.md outputs/ data/run_metadata.json
+git commit -m "Add booktabs tables, figures and the narrative notebook
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 ```
 
-- [ ] **Step 9: Finish the branch**
+---
 
-Use superpowers:finishing-a-development-branch to decide how `pipeline-reorganization` is integrated into `main`.
+## Task 13 (optional): RF learning curve with fixed hyper-parameters
+
+Spec §8. RF only, `ESTIMATOR_FIXED["rf"]` plus scikit-learn defaults, declared in Methods. Not part of `sgs all`.
+
+**Files:**
+- Modify: `sgs/models.py` (append), `sgs/evaluate.py` (append), `tests/test_models.py` (append), `tests/test_evaluate.py` (append)
+
+**Interfaces:**
+- Consumes: `data.load_role/load_test/validate_sets/sha256_file`, `config.LC_*`, `config.learning_curve_fingerprint`, `config.learning_curve_path`.
+- Produces:
+  - In `models.py`: `SHARED = "seed-only"`, `lc_estimator()`, `unit_rng(budget, repeat)`, `subsample(seed_df, extra_df, budget, rng)`, `lc_plan(n_seed) -> list[(key, budget, repeats)]`, `lc_roles() -> list[str]`, `lc_state() -> dict`, `run_lc_budget(key, budget, repeats, seed_df, extras, tests) -> dict`, `learning_curve(*, force=False)`, `load_lc_units() -> dict[(curve, budget), list[unit]]`
+  - In `evaluate.py`: `learning_curve_metrics(units, tests, *, selection_range) -> dict` (the JSON layout in Task 12), `run_learning_curve()`
+  - Learning-curve file content: `{"key", "budget", "state": {"fingerprint", "data"}, "units": [{"repeat", "n_train", "train_ids", "predictions": {test: {"ids", "y_pred"}}}]}`.
+
+- [ ] **Step 1: Append failing tests to `tests/test_models.py`**
+
+```python
+# --- learning curve ---------------------------------------------------------------------
+
+import pandas as pd
+
+from tests.helpers import shrink_roles
+
+
+@pytest.fixture
+def tiny_curve(root, monkeypatch):
+    shrink_roles(monkeypatch, {"seed": 40, "lhs-extension": 60, "guided": 60,
+                               "test-natural": 30, "test-stratified": 30})
+    for i, role in enumerate(("seed", "lhs-extension", "guided", "test-natural", "test-stratified")):
+        write_final(role, synthetic_final(config.ROLES[role].n, 300 + i))
+    monkeypatch.setattr(config, "ESTIMATOR_FIXED", {"rf": {"n_estimators": 20}, "gbm": {}})
+    monkeypatch.setattr(config, "LC_BUDGETS", (20, 40, 60))
+    monkeypatch.setattr(config, "LC_REPEATS", 2)
+
+
+def test_lc_plan_shares_budgets_up_to_the_seed_size():
+    assert models.lc_plan(300) == [("seed-only", 100, 10), ("seed-only", 200, 10), ("seed-only", 300, 1),
+                                   ("lhs", 400, 10), ("guided", 400, 10), ("lhs", 500, 10),
+                                   ("guided", 500, 10), ("lhs", 600, 10), ("guided", 600, 10)]
+
+
+def test_subsample_semantics():
+    seed_df = pd.DataFrame({"row_id": [f"s{i}" for i in range(10)]})
+    extra = pd.DataFrame({"row_id": [f"e{i}" for i in range(10)]})
+    small = models.subsample(seed_df, extra, 4, models.unit_rng(4, 0))
+    assert len(small) == 4 and small["row_id"].str.startswith("s").all()
+    assert models.subsample(seed_df, extra, 10, models.unit_rng(10, 0)) is seed_df
+    large = models.subsample(seed_df, extra, 13, models.unit_rng(13, 0))
+    assert len(large) == 13 and set(seed_df["row_id"]) <= set(large["row_id"])
+
+
+def test_unit_rng_is_keyed_on_budget_and_repeat():
+    draw = lambda b, r: models.unit_rng(b, r).integers(0, 10**9)
+    assert draw(100, 0) == draw(100, 0)
+    assert len({draw(100, 0), draw(100, 1), draw(200, 0)}) == 3
+
+
+def test_lc_estimator_is_fixed_and_seeded():
+    rf = models.lc_estimator()
+    assert rf.random_state == config.SEEDS["protocol_estimator"]
+    assert rf.max_features == 1.0 and rf.min_samples_leaf == 1
+
+
+def test_learning_curve_writes_one_file_per_budget_and_refuses_stale(tiny_curve, monkeypatch):
+    models.learning_curve()
+    names = sorted(p.name for p in (config.ROOT / "artifacts" / "learning_curve").glob("*.joblib"))
+    assert names == ["rf__guided__n60.joblib", "rf__lhs__n60.joblib",
+                     "rf__seed-only__n20.joblib", "rf__seed-only__n40.joblib"]
+    units = models.load_lc_units()
+    assert units[("lhs", 20)] is units[("guided", 20)]
+    assert len(units[("lhs", 40)]) == 1 and len(units[("lhs", 60)]) == 2
+    monkeypatch.setattr(config, "LC_REPEATS", 3)
+    with pytest.raises(models.StaleFit, match="--force"):
+        models.learning_curve()
+    with pytest.raises(models.StaleFit):
+        models.load_lc_units()
+    models.learning_curve(force=True)
+    assert len(models.load_lc_units()[("lhs", 60)]) == 3
+```
+
+- [ ] **Step 2: Append failing tests to `tests/test_evaluate.py`**
+
+```python
+# --- learning-curve metrics -------------------------------------------------------------
+
+def test_learning_curve_metrics_average_over_repeats():
+    test = stub_test(20)
+    good = {"repeat": 0, "predictions": {"test-natural": {"ids": test.ids, "y_pred": test.y}}}
+    off = {"repeat": 1, "predictions": {"test-natural": {"ids": test.ids, "y_pred": test.y + 1.0}}}
+    rows = evaluate.learning_curve_metrics({("lhs", 100): [good, off]}, {"test-natural": test},
+                                           selection_range=config.SELECTION_RANGE)["rows"]
+    assert len(rows) == 1 and rows[0]["n_repeats"] == 2 and rows[0]["family"] == "rf"
+    assert rows[0]["rmse_mean"] == pytest.approx(0.5) and rows[0]["rmse_std"] == pytest.approx(0.5)
+
+
+def test_learning_curve_metrics_refuse_misaligned_predictions():
+    test = stub_test(20)
+    unit = {"repeat": 0, "predictions": {"test-natural": {"ids": test.ids[::-1], "y_pred": test.y}}}
+    with pytest.raises(evaluate.MisalignedPair):
+        evaluate.learning_curve_metrics({("lhs", 100): [unit]}, {"test-natural": test},
+                                        selection_range=config.SELECTION_RANGE)
+```
+
+- [ ] **Step 3: Run to verify failure**
+
+Run: `.venv/bin/pytest tests/test_models.py tests/test_evaluate.py -q`
+Expected: the new tests fail with `AttributeError` (`lc_plan`, `learning_curve_metrics`).
+
+- [ ] **Step 4: Append to `sgs/models.py`**
+
+```python
+# --- learning curve (optional; RF with fixed hyper-parameters) ---------------------------
+
+SHARED = "seed-only"
+
+
+def lc_estimator() -> RandomForestRegressor:
+    """ESTIMATOR_FIXED['rf'] plus scikit-learn defaults; not tuned (spec §8)."""
+    return RandomForestRegressor(**config.ESTIMATOR_FIXED["rf"],
+                                 random_state=config.SEEDS["protocol_estimator"], n_jobs=-1)
+
+
+def unit_rng(budget: int, repeat: int) -> np.random.Generator:
+    sequence = np.random.SeedSequence(config.SEEDS["learning_curve_subsampling"],
+                                      spawn_key=(budget, repeat))
+    return np.random.default_rng(sequence)
+
+
+def subsample(seed_df, extra_df, budget: int, rng):
+    n_seed = len(seed_df)
+    if budget < n_seed:
+        return seed_df.iloc[rng.choice(n_seed, budget, replace=False)]
+    if budget == n_seed:
+        return seed_df
+    take = extra_df.iloc[rng.choice(len(extra_df), budget - n_seed, replace=False)]
+    return pd.concat([seed_df, take], ignore_index=True)
+
+
+def lc_plan(n_seed: int) -> list[tuple[str, int, int]]:
+    """Budgets up to the seed size do not depend on the strategy: fitted once.
+    At the seed size every repeat would be identical: one repeat."""
+    out = []
+    for budget in config.LC_BUDGETS:
+        repeats = 1 if budget == n_seed else config.LC_REPEATS
+        if budget <= n_seed:
+            out.append((SHARED, budget, repeats))
+        else:
+            out.extend((strategy, budget, repeats) for strategy in config.LC_STRATEGIES)
+    return out
+
+
+def lc_roles() -> list[str]:
+    return [config.LC_BASE_ROLE, *config.LC_STRATEGIES.values(), *config.TEST_ROLES]
+
+
+def lc_state() -> dict:
+    return {"fingerprint": config.learning_curve_fingerprint(),
+            "data": {role: data.sha256_file(config.final_path(role)) for role in lc_roles()}}
+
+
+def run_lc_budget(key, budget, repeats, seed_df, extras, tests) -> dict:
+    units = []
+    for repeat in range(repeats):
+        extra = seed_df.iloc[:0] if key == SHARED else extras[key]
+        frame = subsample(seed_df, extra, budget, unit_rng(budget, repeat))
+        model = lc_estimator().fit(frame[list(config.FEATURES)], np.log(frame["FOS"].to_numpy(float)))
+        units.append({
+            "repeat": repeat, "n_train": int(len(frame)), "train_ids": frame["row_id"].to_numpy(str),
+            "predictions": {name: {"ids": test.ids, "y_pred": np.exp(model.predict(test.X))}
+                            for name, test in tests.items()},
+        })
+    return {"key": key, "budget": budget, "units": units}
+
+
+def learning_curve(*, force: bool = False) -> None:
+    roles = lc_roles()
+    data.validate_sets(roles)
+    seed_df = data.load_role(config.LC_BASE_ROLE)
+    extras = {strategy: data.load_role(role) for strategy, role in config.LC_STRATEGIES.items()}
+    tests = {role: data.load_test(role) for role in config.TEST_ROLES}
+    state = lc_state()
+    for key, budget, repeats in lc_plan(len(seed_df)):
+        path = config.learning_curve_path(key, budget)
+        if path.exists():
+            if joblib.load(path)["state"] == state:
+                print(f"[learning-curve] {path.name}: up to date")
+                continue
+            if not force:
+                raise StaleFit(f"{path.name} was fitted under another configuration or other data; "
+                               "rerun with --force")
+        print(f"[learning-curve] {key} n={budget} x{repeats}", flush=True)
+        _dump(path, {**run_lc_budget(key, budget, repeats, seed_df, extras, tests), "state": state})
+
+
+def load_lc_units() -> dict:
+    state = lc_state()
+    out = {}
+    for key, budget, _ in lc_plan(len(data.load_role(config.LC_BASE_ROLE))):
+        path = config.learning_curve_path(key, budget)
+        if not path.exists():
+            raise FileNotFoundError(f"{path.name} is missing; run `sgs learning-curve`")
+        stored = joblib.load(path)
+        if stored["state"] != state:
+            raise StaleFit(f"{path.name} is stale; run `sgs learning-curve --force`")
+        for curve in (tuple(config.LC_STRATEGIES) if key == SHARED else (key,)):
+            out[(curve, budget)] = stored["units"]
+    return out
+```
+
+Add `import pandas as pd` to the imports at the top of `sgs/models.py`.
+
+- [ ] **Step 5: Append to `sgs/evaluate.py`**
+
+```python
+# --- learning curve -------------------------------------------------------------------------
+
+LEARNING_CURVE_PROCEDURE = ("Random forest with fixed hyper-parameters (config.ESTIMATOR_FIXED['rf'] "
+                            "plus scikit-learn defaults), not tuned; declared in Methods.")
+
+
+def learning_curve_metrics(units: Mapping, tests: Mapping[str, data.TestSet], *, selection_range) -> dict:
+    """Mean and spread of RMSE over repeats, per (curve, budget, test)."""
+    rows = []
+    for (curve, budget), unit_list in sorted(units.items()):
+        for name, test in tests.items():
+            mask = subset_mask(test.y, "selection-range", selection_range)
+            overall, inside = [], []
+            for unit in unit_list:
+                pred = unit["predictions"][name]
+                if not np.array_equal(pred["ids"], test.ids):
+                    raise MisalignedPair(f"learning-curve predictions for {name} are not aligned with the test set")
+                overall.append(rmse(test.y, pred["y_pred"]))
+                inside.append(rmse(test.y[mask], pred["y_pred"][mask]))
+            rows.append({"family": "rf", "curve": curve, "budget": int(budget), "test": name,
+                         "n_repeats": len(unit_list),
+                         "rmse_mean": float(np.mean(overall)), "rmse_std": float(np.std(overall)),
+                         "rmse_selection_mean": float(np.mean(inside)),
+                         "rmse_selection_std": float(np.std(inside))})
+    return {"procedure": LEARNING_CURVE_PROCEDURE, "rows": rows}
+
+
+def run_learning_curve() -> None:
+    tests = {role: data.load_test(role) for role in config.TEST_ROLES}
+    result = learning_curve_metrics(models.load_lc_units(), tests, selection_range=config.SELECTION_RANGE)
+    path = config.learning_curve_metrics_path()
+    _write_json(path, result)
+    print(f"[evaluate] wrote {path.name}")
+```
+
+- [ ] **Step 6: Run tests**
+
+Run: `.venv/bin/pytest -q`
+Expected: all pass.
+
+- [ ] **Step 7: Run it and regenerate the report**
+
+```bash
+.venv/bin/sgs learning-curve 2>&1 | tee /tmp/lc.log
+.venv/bin/sgs report
+```
+Expected: 9 files under `artifacts/learning_curve/` (3 shared budgets, 6 strategy budgets), `wrote learning_curve.json`, then two `learning_curve__*.pdf` figures.
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add sgs/models.py sgs/evaluate.py tests/test_models.py tests/test_evaluate.py outputs/
+git commit -m "Add the optional RF learning curve with fixed hyper-parameters
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
+```
 
 ---
 
 ## Open items for the author (not tasks)
 
-- `N_GUIDED_POOL`, `N_TEST_POOL` and `MIN_DISTANCE` are declared study parameters. Each needs a sentence in Methods; the pool size also needs a note on how much the result depends on it.
-- The selection criterion (RMSE on log FOS) and the cross-conformal-style procedure need to be stated in Methods as declared choices.
-- Every published figure is regenerated from the new data. Compare the outputs of `tools/describe_sets.py`, Task 20 and Task 23 against the numbers in circulation, and retire the old ones.
+- `N_GUIDED_POOL`, `N_TEST_POOL`, `MIN_DISTANCE`, the log-scale selection criterion, the cross-conformal-style procedure and the fixed-parameter RF learning curve each need a sentence in Methods.
+- Every published figure is regenerated from the new data. Compare the Task 8 descriptive output and the Task 10 hyper-parameter table with the numbers in circulation, and retire the old ones.
 - The permutation-importance section of the old notebook is not ported: the spec lists no feature-importance analysis. If it returns, it belongs in `evaluate.py` (computed from fits and a test set), not in the notebook.
 - Where `artifacts/fits/` lives at publication is still undecided. Nothing blocks on it.
-- The Zenodo release of the regenerated data (new version under the concept DOI, with the name mapping from `data/README.md`) follows this plan.
