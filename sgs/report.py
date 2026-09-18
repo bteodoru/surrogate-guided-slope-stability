@@ -82,13 +82,20 @@ def zone_frame(metrics: dict, family: str) -> pd.DataFrame:
     return pd.DataFrame(table)
 
 
+def _format_pvalue(p: float) -> str:
+    """Render a p-value for the tables: an order of magnitude below the
+    table's usual 3 decimals would otherwise print as an uninformative 0.000."""
+    return "<0.001" if p < 0.001 else f"{p:.3f}"
+
+
 def comparison_frame(metrics: dict) -> pd.DataFrame:
     rows = []
     for c in metrics["comparisons"]:
         w, b = c["wilcoxon"], c["bootstrap"]
         rows.append({"family": c["family"], "subset": c["subset"],
                      "comparison": f"{c['first']} vs {c['second']}", "alternative": w["alternative"],
-                     "n": w["n"], "median d": w["median_d"], "P(d<0)": w["p_d_lt_0"], "p": w["pvalue"],
+                     "n": w["n"], "median d": w["median_d"], "P(d<0)": w["p_d_lt_0"],
+                     "p": _format_pvalue(w["pvalue"]),
                      "ΔRMSE": b["delta_rmse"], "CI low": b["ci"][0], "CI high": b["ci"][1]})
     return pd.DataFrame(rows)
 

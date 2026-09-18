@@ -27,6 +27,21 @@ def test_budget_table_excludes_the_ablation():
     assert frame["solver budget"].tolist() == [300, 600, 600]
 
 
+def test_comparison_frame_formats_tiny_pvalues():
+    metrics = {"comparisons": [
+        {"family": "rf", "subset": "global", "first": "C", "second": "C0",
+         "wilcoxon": {"alternative": "less", "n": 10, "median_d": -0.1, "p_d_lt_0": 0.9,
+                      "pvalue": 0.00005},
+         "bootstrap": {"delta_rmse": -0.2, "ci": [-0.3, -0.1]}},
+        {"family": "rf", "subset": "global", "first": "B", "second": "A",
+         "wilcoxon": {"alternative": "less", "n": 10, "median_d": -0.05, "p_d_lt_0": 0.7,
+                      "pvalue": 0.042},
+         "bootstrap": {"delta_rmse": -0.1, "ci": [-0.2, 0.0]}},
+    ]}
+    frame = report.comparison_frame(metrics)
+    assert frame["p"].tolist() == ["<0.001", "0.042"]
+
+
 def test_every_results_table_includes_the_ablation(root):
     metrics = _write_metrics()
     assert "C0 (ablation)" in report.global_frame(metrics)["arm"].tolist()
