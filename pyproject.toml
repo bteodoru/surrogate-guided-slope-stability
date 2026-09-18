@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=80"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sgs"
+version = "0.1.0"
+description = "Surrogate-guided sampling for slope-stability surrogate models"
+readme = "README.md"
+license = "MIT"
+# The reference environment is Python 3.14.4 (.python-version, requirements.lock);
+# the floor is looser so the Colab notebook can install the package.
+requires-python = ">=3.12"
+dependencies = [
+    "numpy==2.5.3",
+    "pandas==3.0.5",
+    "scipy==1.18.1",
+    "scikit-learn==1.9.1",
+    "joblib==1.6.0",
+    "matplotlib==3.11.2",
+    "shapely==2.1.2",
+    "openpyxl==3.1.5",
+    "xslope==0.5.2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest==9.1.1"]
+
+[project.scripts]
+sgs = "sgs.cli:main"
+
+[tool.setuptools]
+packages = ["sgs"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = ["slow: runs the real xslope solver (seconds per case)"]
+addopts = "-m 'not slow'"
