@@ -336,3 +336,7 @@ def tables_dir() -> Path:
 
 def figures_dir() -> Path:
     return ROOT / "outputs" / "figures"
+
+
+def inspect_path(role: str, stage: str, row: int, view: str) -> Path:
+    return ROOT / "artifacts" / "inspect" / f"{ROLES[role].stem}_{stage}_row{row}_{view}.png"

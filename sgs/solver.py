@@ -151,33 +151,43 @@ def check_boundary(surface_left, surface_right, surface_depth, geometry, H):
     return bool(flags), flags
 
 
-def calculate_fos(angle, phi, c, gamma, H, ext_factor=None, depth_factor=None) -> dict:
-    """One xslope/Bishop circular search. ``fos`` is None on solver error."""
+def search(angle, phi, c, gamma, H, ext_factor=None, depth_factor=None) -> dict:
+    """Build the model and run the xslope circular search, returning xslope's own
+    outputs so that ``sgs inspect`` can hand them to xslope's plotting."""
     from xslope.search import circular_search
 
     settings = config.SOLVER
+    model, geometry = initialize_model(H, angle, phi, c, gamma, ext_factor, depth_factor)
+    unsolved = {}
+    with contextlib.redirect_stdout(io.StringIO()):
+        fs_cache, converged, search_path, circle_cache = circular_search(
+            model, settings.method,
+            num_slices=settings.num_slices,
+            seed=settings.search_start,
+            tol=settings.search_tol,
+            fs_tol=settings.search_fs_tol,
+            max_iter=settings.search_max_iter,
+            min_grid_frac=settings.search_min_grid_frac,
+            diagnostic=False,
+            entry_range=geometry["entry_range"],
+            exit_range=geometry["exit_range"],
+            unsolved_out=unsolved,
+        )
+    return {"model": model, "geometry": geometry, "fs_cache": fs_cache, "converged": converged,
+            "search_path": search_path, "circle_cache": circle_cache, "unsolved": unsolved}
+
+
+def calculate_fos(angle, phi, c, gamma, H, ext_factor=None, depth_factor=None) -> dict:
+    """One xslope/Bishop circular search. ``fos`` is None on solver error."""
     started = time.perf_counter()
     result = {"fos": None, "surface_left": None, "surface_right": None, "surface_depth": None,
               "cx": None, "cy": None, "radius": None, "at_boundary": None, "boundary_flags": [],
               "search_converged": False, "n_circles_tested": 0, "n_valid_surfaces": 0,
               "n_unsolved": 0, "warnings": "", "error": "", "runtime_s": None}
     try:
-        model, geometry = initialize_model(H, angle, phi, c, gamma, ext_factor, depth_factor)
-        unsolved = {}
-        with contextlib.redirect_stdout(io.StringIO()):
-            fs_cache, converged, _, circle_cache = circular_search(
-                model, settings.method,
-                num_slices=settings.num_slices,
-                seed=settings.search_start,
-                tol=settings.search_tol,
-                fs_tol=settings.search_fs_tol,
-                max_iter=settings.search_max_iter,
-                min_grid_frac=settings.search_min_grid_frac,
-                diagnostic=False,
-                entry_range=geometry["entry_range"],
-                exit_range=geometry["exit_range"],
-                unsolved_out=unsolved,
-            )
+        found = search(angle, phi, c, gamma, H, ext_factor, depth_factor)
+        geometry, fs_cache, converged, circle_cache, unsolved = (
+            found[k] for k in ("geometry", "fs_cache", "converged", "circle_cache", "unsolved"))
         if not fs_cache:
             raise RuntimeError("xslope circular search returned no valid surface")
         best = fs_cache[0]

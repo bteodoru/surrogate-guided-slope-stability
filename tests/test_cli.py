@@ -10,7 +10,8 @@ def test_every_command_parses():
     parser = cli.build_parser()
     for argv in (["generate"], ["generate", "--role", "guided", "--workers", "4", "--force"],
                  ["fit", "--force"], ["evaluate"], ["report"], ["learning-curve", "--force"],
-                 ["all", "--workers", "2"]):
+                 ["all", "--workers", "2"], ["inspect", "--role", "seed", "--row", "3"],
+                 ["inspect", "--role", "guided", "--row", "1", "--stage", "results"]):
         assert callable(parser.parse_args(argv).handler)
 
 

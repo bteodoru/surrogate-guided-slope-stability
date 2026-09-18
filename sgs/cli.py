@@ -6,6 +6,7 @@
   sgs report          booktabs tables and figures
   sgs learning-curve  optional; RF and GBM with fixed hyper-parameters
   sgs all             generate, fit, evaluate, report
+  sgs inspect         rerun one stored row and draw it with xslope's plots
 
 Scientific parameters live in sgs/config.py; the command line only selects a
 role and controls execution.
@@ -107,6 +108,19 @@ def _learning_curve(args):
     evaluate.run_learning_curve()
 
 
+def _inspect(args):
+    from sgs import inspection
+    found = inspection.inspect_row(args.role, args.row, args.stage)
+    print(f"[{found['role']} row {found['row']}, {found['stage']}] "
+          + ", ".join(f"{k}={v:g}" for k, v in found["params"].items()))
+    if found["repair_variant"]:
+        print(f"  repair variant: {found['repair_variant']}")
+    print(f"  FOS stored={found['fos_stored']}  recomputed={found['fos']:.6f}")
+    print(f"  at boundary: {found['at_boundary']} {found['boundary_flags'] or ''}")
+    for path in found["figures"].values():
+        print(f"  {path}")
+
+
 def _all(args):
     _generate(args)
     _fit(args)
@@ -137,6 +151,12 @@ def build_parser() -> argparse.ArgumentParser:
     command("report", _report, "booktabs tables and figures from outputs/metrics")
     command("learning-curve", _learning_curve, "optional: RF and GBM learning curves with fixed hyper-parameters",
             force=True)
+    p = sub.add_parser("inspect", help="rerun one stored row and draw it with xslope's plots")
+    p.add_argument("--role", choices=tuple(config.ROLES), required=True)
+    p.add_argument("--row", type=int, required=True, help="1-based row, in design order")
+    p.add_argument("--stage", choices=("final", "results"), default="final",
+                   help="final: on the row's repair variant; results: on the original domain")
+    p.set_defaults(handler=_inspect)
     command("all", _all, "generate, fit, evaluate, report", workers=True, force=True)
     return parser
 
