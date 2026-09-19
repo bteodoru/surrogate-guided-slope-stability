@@ -364,6 +364,112 @@
       "n_train": 600,
       "updated": "2026-09-19T07:50:51+00:00"
     },
+    "gbm__C-log__fos-rmse": {
+      "best_params": {
+        "learning_rate": 0.1,
+        "max_iter": 8000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 1
+      },
+      "data": {
+        "guided-log": "7949a6ffd82e93ff6367c3606fbe6fb2d0dd44e0c05b81066c16be47ae463660",
+        "seed": "b7976b24e6dfeb1f3e6009e21b1f5ef9dd83b654be654f7a0f249da7f464a30f"
+      },
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "fingerprint": "dd678b8d4f4ecf560c2d65f1e19d642f39030b19765b0ad94d268f260ce3b1fd",
+      "n_train": 600,
+      "updated": "2026-09-19T11:12:18+00:00"
+    },
+    "gbm__C-log__log-rmse": {
+      "best_params": {
+        "learning_rate": 0.06,
+        "max_iter": 8000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 3
+      },
+      "data": {
+        "guided-log": "7949a6ffd82e93ff6367c3606fbe6fb2d0dd44e0c05b81066c16be47ae463660",
+        "seed": "b7976b24e6dfeb1f3e6009e21b1f5ef9dd83b654be654f7a0f249da7f464a30f"
+      },
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "fingerprint": "1f4a6a455dec6dbf20fa7154bc0d2f2e97955f38a60f48ee7112dfe59caf9750",
+      "n_train": 600,
+      "updated": "2026-09-19T10:46:47+00:00"
+    },
+    "gbm__C0-log__fos-rmse": {
+      "best_params": {
+        "learning_rate": 0.1,
+        "max_iter": 2000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 5
+      },
+      "data": {
+        "guided-log": "7949a6ffd82e93ff6367c3606fbe6fb2d0dd44e0c05b81066c16be47ae463660"
+      },
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "fingerprint": "dd678b8d4f4ecf560c2d65f1e19d642f39030b19765b0ad94d268f260ce3b1fd",
+      "n_train": 300,
+      "updated": "2026-09-19T11:23:53+00:00"
+    },
+    "gbm__C0-log__log-rmse": {
+      "best_params": {
+        "learning_rate": 0.1,
+        "max_iter": 8000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 5
+      },
+      "data": {
+        "guided-log": "7949a6ffd82e93ff6367c3606fbe6fb2d0dd44e0c05b81066c16be47ae463660"
+      },
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "fingerprint": "1f4a6a455dec6dbf20fa7154bc0d2f2e97955f38a60f48ee7112dfe59caf9750",
+      "n_train": 300,
+      "updated": "2026-09-19T10:59:12+00:00"
+    },
     "gbm__C0__fos-rmse": {
       "best_params": {
         "learning_rate": 0.1,
@@ -567,6 +673,104 @@
       "fingerprint": "09b23d70830a449170a46ab6aff33f4896749c54bcb1a22b989ae056fff8698d",
       "n_train": 600,
       "updated": "2026-09-18T16:03:55+00:00"
+    },
+    "rf__C-log__fos-rmse": {
+      "best_params": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      },
+      "data": {
+        "guided-log": "7949a6ffd82e93ff6367c3606fbe6fb2d0dd44e0c05b81066c16be47ae463660",
+        "seed": "b7976b24e6dfeb1f3e6009e21b1f5ef9dd83b654be654f7a0f249da7f464a30f"
+      },
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "fingerprint": "6a53ed8522014317bbc6200748168f0892ad0e7fafe773e12f65ebe653b94930",
+      "n_train": 600,
+      "updated": "2026-09-19T10:59:43+00:00"
+    },
+    "rf__C-log__log-rmse": {
+      "best_params": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      },
+      "data": {
+        "guided-log": "7949a6ffd82e93ff6367c3606fbe6fb2d0dd44e0c05b81066c16be47ae463660",
+        "seed": "b7976b24e6dfeb1f3e6009e21b1f5ef9dd83b654be654f7a0f249da7f464a30f"
+      },
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "fingerprint": "09b23d70830a449170a46ab6aff33f4896749c54bcb1a22b989ae056fff8698d",
+      "n_train": 600,
+      "updated": "2026-09-19T10:34:08+00:00"
+    },
+    "rf__C0-log__fos-rmse": {
+      "best_params": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      },
+      "data": {
+        "guided-log": "7949a6ffd82e93ff6367c3606fbe6fb2d0dd44e0c05b81066c16be47ae463660"
+      },
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "fingerprint": "6a53ed8522014317bbc6200748168f0892ad0e7fafe773e12f65ebe653b94930",
+      "n_train": 300,
+      "updated": "2026-09-19T11:00:06+00:00"
+    },
+    "rf__C0-log__log-rmse": {
+      "best_params": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      },
+      "data": {
+        "guided-log": "7949a6ffd82e93ff6367c3606fbe6fb2d0dd44e0c05b81066c16be47ae463660"
+      },
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "fingerprint": "09b23d70830a449170a46ab6aff33f4896749c54bcb1a22b989ae056fff8698d",
+      "n_train": 300,
+      "updated": "2026-09-19T10:34:36+00:00"
     },
     "rf__C0__fos-rmse": {
       "best_params": {

@@ -435,6 +435,220 @@
           "min_samples_leaf": 1
         },
         "n_train": 300
+      },
+      "C-log": {
+        "global": {
+          "n": 150,
+          "r2": 0.9366759897779977,
+          "rmse": 0.5295515162999954,
+          "mae": 0.34424590576313635,
+          "bias": -0.19055412063617624,
+          "max_abs_error": 2.054641158626257
+        },
+        "zones": [
+          {
+            "zone": "FOS < 1",
+            "lo": null,
+            "hi": 1.0,
+            "n": 15,
+            "rmse": 0.11300441835668204,
+            "mae": 0.07020810175571345,
+            "bias": 0.042913287837213834
+          },
+          {
+            "zone": "1\u20131.3",
+            "lo": 1.0,
+            "hi": 1.3,
+            "n": 6,
+            "rmse": 0.10915574843340616,
+            "mae": 0.07856510550362476,
+            "bias": 0.05463817005675572
+          },
+          {
+            "zone": "1.3\u20133",
+            "lo": 1.3,
+            "hi": 3.0,
+            "n": 45,
+            "rmse": 0.22968967969333004,
+            "mae": 0.16924064361209462,
+            "bias": -0.014479954656893475
+          },
+          {
+            "zone": "3\u20136",
+            "lo": 3.0,
+            "hi": 6.0,
+            "n": 61,
+            "rmse": 0.3762616241763294,
+            "mae": 0.30674091248579943,
+            "bias": -0.0838967113578687
+          },
+          {
+            "zone": "FOS \u2265 6",
+            "lo": 6.0,
+            "hi": null,
+            "n": 23,
+            "rmse": 1.1570325484267716,
+            "mae": 1.034145612214564,
+            "bias": -1.034145612214564
+          }
+        ],
+        "minimax": {
+          "zone": "FOS \u2265 6",
+          "rmse": 1.1570325484267716
+        },
+        "conformal": {
+          "alpha": 0.1,
+          "q_log": 0.1864539273048993,
+          "factor": 1.2049691046326232,
+          "n_calibration": 600,
+          "coverage": 0.9133333333333333,
+          "mean_width": 1.2630463900319713,
+          "zones": [
+            {
+              "zone": "FOS < 1",
+              "n": 15,
+              "coverage": 0.8666666666666667,
+              "mean_width": 0.26002031072238757
+            },
+            {
+              "zone": "1\u20131.3",
+              "n": 6,
+              "coverage": 1.0,
+              "mean_width": 0.44061707023974583
+            },
+            {
+              "zone": "1.3\u20133",
+              "n": 45,
+              "coverage": 0.9333333333333333,
+              "mean_width": 0.7975334937861528
+            },
+            {
+              "zone": "3\u20136",
+              "n": 61,
+              "coverage": 0.9836065573770492,
+              "mean_width": 1.533432450958142
+            },
+            {
+              "zone": "FOS \u2265 6",
+              "n": 23,
+              "coverage": 0.6956521739130435,
+              "mean_width": 2.3254158562477345
+            }
+          ],
+          "procedure": "Cross-conformal-style: nested-CV out-of-fold residuals on log(FOS), multiplicative intervals around the refit model. Coverage is reported empirically; no formal guarantee is claimed."
+        },
+        "best_params": {
+          "max_features": 1.0,
+          "min_samples_leaf": 1
+        },
+        "n_train": 600
+      },
+      "C0-log": {
+        "global": {
+          "n": 150,
+          "r2": 0.888121526281527,
+          "rmse": 0.7038778150290567,
+          "mae": 0.46997579436627707,
+          "bias": -0.22252629203395966,
+          "max_abs_error": 2.624384317515207
+        },
+        "zones": [
+          {
+            "zone": "FOS < 1",
+            "lo": null,
+            "hi": 1.0,
+            "n": 15,
+            "rmse": 0.17034695437888486,
+            "mae": 0.08955090014611364,
+            "bias": 0.0451266254359128
+          },
+          {
+            "zone": "1\u20131.3",
+            "lo": 1.0,
+            "hi": 1.3,
+            "n": 6,
+            "rmse": 0.2682078091032035,
+            "mae": 0.16296820213200267,
+            "bias": 0.08932751962948933
+          },
+          {
+            "zone": "1.3\u20133",
+            "lo": 1.3,
+            "hi": 3.0,
+            "n": 45,
+            "rmse": 0.3341239035695643,
+            "mae": 0.2585574647788531,
+            "bias": 0.010657441225222507
+          },
+          {
+            "zone": "3\u20136",
+            "lo": 3.0,
+            "hi": 6.0,
+            "n": 61,
+            "rmse": 0.6541351376453357,
+            "mae": 0.49894977845935784,
+            "bias": -0.15525519972150884
+          },
+          {
+            "zone": "FOS \u2265 6",
+            "lo": 6.0,
+            "hi": null,
+            "n": 23,
+            "rmse": 1.3565382447653,
+            "mae": 1.1349684364734183,
+            "bias": -1.113079390284024
+          }
+        ],
+        "minimax": {
+          "zone": "FOS \u2265 6",
+          "rmse": 1.3565382447653
+        },
+        "conformal": {
+          "alpha": 0.1,
+          "q_log": 0.24670900867186085,
+          "factor": 1.279806645952923,
+          "n_calibration": 300,
+          "coverage": 0.8733333333333333,
+          "mean_width": 1.6625431014510035,
+          "zones": [
+            {
+              "zone": "FOS < 1",
+              "n": 15,
+              "coverage": 0.9333333333333333,
+              "mean_width": 0.34664768682363517
+            },
+            {
+              "zone": "1\u20131.3",
+              "n": 6,
+              "coverage": 0.8333333333333334,
+              "mean_width": 0.6028324380472219
+            },
+            {
+              "zone": "1.3\u20133",
+              "n": 45,
+              "coverage": 0.8666666666666667,
+              "mean_width": 1.0723823916431519
+            },
+            {
+              "zone": "3\u20136",
+              "n": 61,
+              "coverage": 0.9180327868852459,
+              "mean_width": 2.002231098398493
+            },
+            {
+              "zone": "FOS \u2265 6",
+              "n": 23,
+              "coverage": 0.7391304347826086,
+              "mean_width": 3.050932637424468
+            }
+          ],
+          "procedure": "Cross-conformal-style: nested-CV out-of-fold residuals on log(FOS), multiplicative intervals around the refit model. Coverage is reported empirically; no formal guarantee is claimed."
+        },
+        "best_params": {
+          "max_features": 1.0,
+          "min_samples_leaf": 1
+        },
+        "n_train": 300
       }
     },
     "gbm": {
@@ -873,6 +1087,224 @@
           "min_samples_leaf": 5
         },
         "n_train": 300
+      },
+      "C-log": {
+        "global": {
+          "n": 150,
+          "r2": 0.9848606480596831,
+          "rmse": 0.2589271870655603,
+          "mae": 0.16764886775157584,
+          "bias": -0.03846446370659882,
+          "max_abs_error": 1.082426286094523
+        },
+        "zones": [
+          {
+            "zone": "FOS < 1",
+            "lo": null,
+            "hi": 1.0,
+            "n": 15,
+            "rmse": 0.022016301907767596,
+            "mae": 0.018244548654988525,
+            "bias": -0.003937835555537587
+          },
+          {
+            "zone": "1\u20131.3",
+            "lo": 1.0,
+            "hi": 1.3,
+            "n": 6,
+            "rmse": 0.05233437811902638,
+            "mae": 0.038886062257803077,
+            "bias": -0.026953607177031658
+          },
+          {
+            "zone": "1.3\u20133",
+            "lo": 1.3,
+            "hi": 3.0,
+            "n": 45,
+            "rmse": 0.1290757954654362,
+            "mae": 0.09810150986886611,
+            "bias": 0.024257401891305538
+          },
+          {
+            "zone": "3\u20136",
+            "lo": 3.0,
+            "hi": 6.0,
+            "n": 61,
+            "rmse": 0.2032781857098524,
+            "mae": 0.16567287515239335,
+            "bias": -0.056132663761323955
+          },
+          {
+            "zone": "FOS \u2265 6",
+            "lo": 6.0,
+            "hi": null,
+            "n": 23,
+            "rmse": 0.5422345326203046,
+            "mae": 0.4399883578682504,
+            "bias": -0.13984221631576332
+          }
+        ],
+        "minimax": {
+          "zone": "FOS \u2265 6",
+          "rmse": 0.5422345326203046
+        },
+        "conformal": {
+          "alpha": 0.1,
+          "q_log": 0.10474396008782683,
+          "factor": 1.1104262605125879,
+          "n_calibration": 600,
+          "coverage": 0.9333333333333333,
+          "mean_width": 0.7386550918693011,
+          "zones": [
+            {
+              "zone": "FOS < 1",
+              "n": 15,
+              "coverage": 0.9333333333333333,
+              "mean_width": 0.1356613030146924
+            },
+            {
+              "zone": "1\u20131.3",
+              "n": 6,
+              "coverage": 1.0,
+              "mean_width": 0.22942290682643915
+            },
+            {
+              "zone": "1.3\u20133",
+              "n": 45,
+              "coverage": 0.9111111111111111,
+              "mean_width": 0.4543886147160508
+            },
+            {
+              "zone": "3\u20136",
+              "n": 61,
+              "coverage": 0.9836065573770492,
+              "mean_width": 0.8638568735123038
+            },
+            {
+              "zone": "FOS \u2265 6",
+              "n": 23,
+              "coverage": 0.8260869565217391,
+              "mean_width": 1.4888717325105794
+            }
+          ],
+          "procedure": "Cross-conformal-style: nested-CV out-of-fold residuals on log(FOS), multiplicative intervals around the refit model. Coverage is reported empirically; no formal guarantee is claimed."
+        },
+        "best_params": {
+          "learning_rate": 0.1,
+          "max_iter": 8000,
+          "max_leaf_nodes": 3,
+          "min_samples_leaf": 1
+        },
+        "n_train": 600
+      },
+      "C0-log": {
+        "global": {
+          "n": 150,
+          "r2": 0.9773365690258358,
+          "rmse": 0.3168012157195846,
+          "mae": 0.21300191131968602,
+          "bias": -0.10060378545460907,
+          "max_abs_error": 1.279482068884712
+        },
+        "zones": [
+          {
+            "zone": "FOS < 1",
+            "lo": null,
+            "hi": 1.0,
+            "n": 15,
+            "rmse": 0.07095982355680909,
+            "mae": 0.05021401637623114,
+            "bias": 0.023795472652325775
+          },
+          {
+            "zone": "1\u20131.3",
+            "lo": 1.0,
+            "hi": 1.3,
+            "n": 6,
+            "rmse": 0.06623166198695936,
+            "mae": 0.05791663704339658,
+            "bias": 0.009573412129234035
+          },
+          {
+            "zone": "1.3\u20133",
+            "lo": 1.3,
+            "hi": 3.0,
+            "n": 45,
+            "rmse": 0.19361513886935752,
+            "mae": 0.1502862527321095,
+            "bias": -0.012134062621934196
+          },
+          {
+            "zone": "3\u20136",
+            "lo": 3.0,
+            "hi": 6.0,
+            "n": 61,
+            "rmse": 0.3011533502724366,
+            "mae": 0.2108148895988296,
+            "bias": -0.09747807123531296
+          },
+          {
+            "zone": "FOS \u2265 6",
+            "lo": 6.0,
+            "hi": null,
+            "n": 23,
+            "rmse": 0.5798576115457466,
+            "mae": 0.48812986919893575,
+            "bias": -0.39185848771350096
+          }
+        ],
+        "minimax": {
+          "zone": "FOS \u2265 6",
+          "rmse": 0.5798576115457466
+        },
+        "conformal": {
+          "alpha": 0.1,
+          "q_log": 0.13562579175753364,
+          "factor": 1.145253250192983,
+          "n_calibration": 300,
+          "coverage": 0.9333333333333333,
+          "mean_width": 0.9407097116222826,
+          "zones": [
+            {
+              "zone": "FOS < 1",
+              "n": 15,
+              "coverage": 0.8666666666666667,
+              "mean_width": 0.1834215749931496
+            },
+            {
+              "zone": "1\u20131.3",
+              "n": 6,
+              "coverage": 1.0,
+              "mean_width": 0.30736983800469164
+            },
+            {
+              "zone": "1.3\u20133",
+              "n": 45,
+              "coverage": 0.8888888888888888,
+              "mean_width": 0.579182853510579
+            },
+            {
+              "zone": "3\u20136",
+              "n": 61,
+              "coverage": 0.9836065573770492,
+              "mean_width": 1.1086831205599714
+            },
+            {
+              "zone": "FOS \u2265 6",
+              "n": 23,
+              "coverage": 0.9130434782608695,
+              "mean_width": 1.8616528403601167
+            }
+          ],
+          "procedure": "Cross-conformal-style: nested-CV out-of-fold residuals on log(FOS), multiplicative intervals around the refit model. Coverage is reported empirically; no formal guarantee is claimed."
+        },
+        "best_params": {
+          "learning_rate": 0.1,
+          "max_iter": 2000,
+          "max_leaf_nodes": 3,
+          "min_samples_leaf": 5
+        },
+        "n_train": 300
       }
     }
   },
@@ -1110,6 +1542,296 @@
       }
     },
     {
+      "family": "gbm",
+      "subset": "all",
+      "first": "C-log",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C-log",
+        "second": "B",
+        "n": 150,
+        "median_d": 0.008632917705463705,
+        "p_d_lt_0": 0.44,
+        "statistic": 6507.0,
+        "pvalue": 0.9434582173345779,
+        "alternative": "less",
+        "hypothesised": true,
+        "reading": "d = |e_C-log| - |e_B|; d < 0 means C-log has smaller absolute errors"
+      },
+      "bootstrap": {
+        "delta_rmse": 0.04466425565745405,
+        "ci": [
+          -0.01367164785130626,
+          0.10018823108180881
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0684,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "selection-range",
+      "first": "C-log",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C-log",
+        "second": "B",
+        "n": 124,
+        "median_d": 0.006472378380624422,
+        "p_d_lt_0": 0.45161290322580644,
+        "statistic": 4342.0,
+        "pvalue": 0.8778987731254758,
+        "alternative": "less",
+        "hypothesised": true,
+        "reading": "d = |e_C-log| - |e_B|; d < 0 means C-log has smaller absolute errors"
+      },
+      "bootstrap": {
+        "delta_rmse": 0.01938746292464877,
+        "ci": [
+          -0.0034611859353818226,
+          0.04205396426691839
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0495,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "all",
+      "first": "C-log",
+      "second": "A",
+      "wilcoxon": {
+        "first": "C-log",
+        "second": "A",
+        "n": 150,
+        "median_d": -0.022326088880562533,
+        "p_d_lt_0": 0.5733333333333334,
+        "statistic": 4962.0,
+        "pvalue": 0.09437166571236866,
+        "alternative": "less",
+        "hypothesised": true,
+        "reading": "d = |e_C-log| - |e_A|; d < 0 means C-log has smaller absolute errors"
+      },
+      "bootstrap": {
+        "delta_rmse": -0.018486128763012144,
+        "ci": [
+          -0.0702262181136967,
+          0.03161643872238578
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.7637,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "selection-range",
+      "first": "C-log",
+      "second": "A",
+      "wilcoxon": {
+        "first": "C-log",
+        "second": "A",
+        "n": 124,
+        "median_d": -0.024188786340169632,
+        "p_d_lt_0": 0.5806451612903226,
+        "statistic": 3436.0,
+        "pvalue": 0.1368187969800922,
+        "alternative": "less",
+        "hypothesised": true,
+        "reading": "d = |e_C-log| - |e_A|; d < 0 means C-log has smaller absolute errors"
+      },
+      "bootstrap": {
+        "delta_rmse": -0.03134208967839919,
+        "ci": [
+          -0.07723116643974841,
+          0.011702479913698978
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.9111,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "all",
+      "first": "C-log",
+      "second": "C",
+      "wilcoxon": {
+        "first": "C-log",
+        "second": "C",
+        "n": 150,
+        "median_d": 0.007380454015787574,
+        "p_d_lt_0": 0.43333333333333335,
+        "statistic": 4585.0,
+        "pvalue": 0.04321272551936899,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-log| - |e_C|; d < 0 means C-log has smaller absolute errors"
+      },
+      "bootstrap": {
+        "delta_rmse": 0.06707465305801844,
+        "ci": [
+          0.02048259090821879,
+          0.11433663450088578
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0012,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "selection-range",
+      "first": "C-log",
+      "second": "C",
+      "wilcoxon": {
+        "first": "C-log",
+        "second": "C",
+        "n": 124,
+        "median_d": 0.007192068238284888,
+        "p_d_lt_0": 0.43548387096774194,
+        "statistic": 3226.0,
+        "pvalue": 0.10557728458218973,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-log| - |e_C|; d < 0 means C-log has smaller absolute errors"
+      },
+      "bootstrap": {
+        "delta_rmse": 0.022157932025284904,
+        "ci": [
+          -0.0039715541377177005,
+          0.0468408218974713
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0475,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "all",
+      "first": "C-log",
+      "second": "C0-log",
+      "wilcoxon": {
+        "first": "C-log",
+        "second": "C0-log",
+        "n": 150,
+        "median_d": -0.025977046928946146,
+        "p_d_lt_0": 0.5866666666666667,
+        "statistic": 4410.0,
+        "pvalue": 0.018773918109831318,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-log| - |e_C0-log|; d < 0 means C-log has smaller absolute errors"
+      },
+      "bootstrap": {
+        "delta_rmse": -0.0578740286540243,
+        "ci": [
+          -0.13068901733146068,
+          0.014672661745381269
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.9343,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "selection-range",
+      "first": "C-log",
+      "second": "C0-log",
+      "wilcoxon": {
+        "first": "C-log",
+        "second": "C0-log",
+        "n": 124,
+        "median_d": -0.029283067650881955,
+        "p_d_lt_0": 0.6048387096774194,
+        "statistic": 2784.0,
+        "pvalue": 0.006516336759442807,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-log| - |e_C0-log|; d < 0 means C-log has smaller absolute errors"
+      },
+      "bootstrap": {
+        "delta_rmse": -0.0800486448504096,
+        "ci": [
+          -0.13648335716086307,
+          -0.027442694703499235
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.9992,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "all",
+      "first": "C0-log",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C0-log",
+        "second": "B",
+        "n": 150,
+        "median_d": 0.0434582308063487,
+        "p_d_lt_0": 0.36666666666666664,
+        "statistic": 3210.0,
+        "pvalue": 4.19504839611074e-06,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C0-log| - |e_B|; d < 0 means C0-log has smaller absolute errors"
+      },
+      "bootstrap": {
+        "delta_rmse": 0.10253828431147835,
+        "ci": [
+          0.05663459035563892,
+          0.15005343473488908
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "selection-range",
+      "first": "C0-log",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C0-log",
+        "second": "B",
+        "n": 124,
+        "median_d": 0.03717209039032687,
+        "p_d_lt_0": 0.3790322580645161,
+        "statistic": 2202.0,
+        "pvalue": 3.020428340360509e-05,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C0-log| - |e_B|; d < 0 means C0-log has smaller absolute errors"
+      },
+      "bootstrap": {
+        "delta_rmse": 0.09943610777505837,
+        "ci": [
+          0.053625921409744606,
+          0.14697323115213753
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
       "family": "rf",
       "subset": "all",
       "first": "C",
@@ -1337,6 +2059,296 @@
         ],
         "ci_level": 0.95,
         "p_delta_lt_0": 0.5728,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "all",
+      "first": "C-log",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C-log",
+        "second": "B",
+        "n": 150,
+        "median_d": 0.00377705173732501,
+        "p_d_lt_0": 0.49333333333333335,
+        "statistic": 6179.0,
+        "pvalue": 0.8337467861450956,
+        "alternative": "less",
+        "hypothesised": true,
+        "reading": "d = |e_C-log| - |e_B|; d < 0 means C-log has smaller absolute errors"
+      },
+      "bootstrap": {
+        "delta_rmse": -0.018058675045895867,
+        "ci": [
+          -0.09111430446482634,
+          0.06314812875170747
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.6598,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "selection-range",
+      "first": "C-log",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C-log",
+        "second": "B",
+        "n": 124,
+        "median_d": 0.00377705173732501,
+        "p_d_lt_0": 0.49193548387096775,
+        "statistic": 4234.0,
+        "pvalue": 0.8146678801548646,
+        "alternative": "less",
+        "hypothesised": true,
+        "reading": "d = |e_C-log| - |e_B|; d < 0 means C-log has smaller absolute errors"
+      },
+      "bootstrap": {
+        "delta_rmse": 0.012417579518684996,
+        "ci": [
+          -0.030373971866815265,
+          0.05499391554092295
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.2831,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "all",
+      "first": "C-log",
+      "second": "A",
+      "wilcoxon": {
+        "first": "C-log",
+        "second": "A",
+        "n": 150,
+        "median_d": -0.07012437410171607,
+        "p_d_lt_0": 0.7,
+        "statistic": 2618.0,
+        "pvalue": 5.575881789649588e-09,
+        "alternative": "less",
+        "hypothesised": true,
+        "reading": "d = |e_C-log| - |e_A|; d < 0 means C-log has smaller absolute errors"
+      },
+      "bootstrap": {
+        "delta_rmse": -0.31352276007143254,
+        "ci": [
+          -0.40430897845193936,
+          -0.21710652404457828
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 1.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "selection-range",
+      "first": "C-log",
+      "second": "A",
+      "wilcoxon": {
+        "first": "C-log",
+        "second": "A",
+        "n": 124,
+        "median_d": -0.0338200357361218,
+        "p_d_lt_0": 0.6451612903225806,
+        "statistic": 2514.0,
+        "pvalue": 0.0003445322894549516,
+        "alternative": "less",
+        "hypothesised": true,
+        "reading": "d = |e_C-log| - |e_A|; d < 0 means C-log has smaller absolute errors"
+      },
+      "bootstrap": {
+        "delta_rmse": -0.08258136240836816,
+        "ci": [
+          -0.12844254969817445,
+          -0.03591288588960751
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.9996,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "all",
+      "first": "C-log",
+      "second": "C",
+      "wilcoxon": {
+        "first": "C-log",
+        "second": "C",
+        "n": 150,
+        "median_d": 0.015438378727882673,
+        "p_d_lt_0": 0.4533333333333333,
+        "statistic": 4290.0,
+        "pvalue": 0.010019990121178168,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-log| - |e_C|; d < 0 means C-log has smaller absolute errors"
+      },
+      "bootstrap": {
+        "delta_rmse": 0.09266480814366962,
+        "ci": [
+          0.017484186656578516,
+          0.16892825325718336
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0085,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "selection-range",
+      "first": "C-log",
+      "second": "C",
+      "wilcoxon": {
+        "first": "C-log",
+        "second": "C",
+        "n": 124,
+        "median_d": 0.008311700812655198,
+        "p_d_lt_0": 0.47580645161290325,
+        "statistic": 3145.0,
+        "pvalue": 0.06870058003728433,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-log| - |e_C|; d < 0 means C-log has smaller absolute errors"
+      },
+      "bootstrap": {
+        "delta_rmse": 0.04369253706108184,
+        "ci": [
+          0.0015708957420457756,
+          0.08745041353168921
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0208,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "all",
+      "first": "C-log",
+      "second": "C0-log",
+      "wilcoxon": {
+        "first": "C-log",
+        "second": "C0-log",
+        "n": 150,
+        "median_d": -0.08637095555002205,
+        "p_d_lt_0": 0.7333333333333333,
+        "statistic": 2640.0,
+        "pvalue": 1.4202125276780023e-08,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-log| - |e_C0-log|; d < 0 means C-log has smaller absolute errors"
+      },
+      "bootstrap": {
+        "delta_rmse": -0.17432629872906125,
+        "ci": [
+          -0.2509024898903389,
+          -0.10692991551766062
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 1.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "selection-range",
+      "first": "C-log",
+      "second": "C0-log",
+      "wilcoxon": {
+        "first": "C-log",
+        "second": "C0-log",
+        "n": 124,
+        "median_d": -0.09314689245951752,
+        "p_d_lt_0": 0.75,
+        "statistic": 1560.0,
+        "pvalue": 7.793677567170551e-09,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-log| - |e_C0-log|; d < 0 means C-log has smaller absolute errors"
+      },
+      "bootstrap": {
+        "delta_rmse": -0.2065187119240981,
+        "ci": [
+          -0.3081191914754259,
+          -0.11654376924313525
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 1.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "all",
+      "first": "C0-log",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C0-log",
+        "second": "B",
+        "n": 150,
+        "median_d": 0.08757729228321531,
+        "p_d_lt_0": 0.35333333333333333,
+        "statistic": 3003.0,
+        "pvalue": 6.042341414848845e-07,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C0-log| - |e_B|; d < 0 means C0-log has smaller absolute errors"
+      },
+      "bootstrap": {
+        "delta_rmse": 0.15626762368316538,
+        "ci": [
+          0.06786794331167886,
+          0.2515894901791396
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0004,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "selection-range",
+      "first": "C0-log",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C0-log",
+        "second": "B",
+        "n": 124,
+        "median_d": 0.08757729228321531,
+        "p_d_lt_0": 0.3387096774193548,
+        "statistic": 1853.0,
+        "pvalue": 4.60176915814482e-07,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C0-log| - |e_B|; d < 0 means C0-log has smaller absolute errors"
+      },
+      "bootstrap": {
+        "delta_rmse": 0.2189362914427831,
+        "ci": [
+          0.13500059589684252,
+          0.30619934523630943
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0,
         "n_boot": 10000,
         "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
       }
@@ -2103,6 +3115,158 @@
       6.153295437566706,
       6.190775539796067
     ],
+    "gbm__C-log": [
+      0.7012987737002104,
+      0.5338412255933802,
+      0.6416350964538746,
+      0.7353262689281072,
+      0.4918507417006155,
+      0.5629733205364585,
+      0.530698246980683,
+      0.5173177001184257,
+      0.41658640634837,
+      0.7980238825215087,
+      0.4170440398565052,
+      1.2248547858503438,
+      1.0082224145018732,
+      0.7367237889232159,
+      1.0747400737720982,
+      0.8866729950471243,
+      0.8801481429263366,
+      0.8458998370321205,
+      1.0458443652423142,
+      1.1516608102902879,
+      1.3066571234089472,
+      1.4427500455118152,
+      1.6123796507771004,
+      1.3583454976100693,
+      1.5641564399616397,
+      1.5465658734204495,
+      1.3883670183658214,
+      1.33748004039576,
+      1.4955818056065038,
+      1.0536409072808923,
+      1.8184582438306582,
+      1.5084911925212983,
+      1.5766631139943827,
+      2.1306564805495736,
+      1.6164195243329096,
+      2.047796306477695,
+      1.9726030138957587,
+      2.0009089369434814,
+      1.6872012879599954,
+      1.7261766742627425,
+      2.372847479635124,
+      2.5679684091319768,
+      2.477273373409814,
+      2.062187812099164,
+      2.3511468246755163,
+      2.1797154429408754,
+      2.0511934488922203,
+      2.0511336573989567,
+      2.181861695348042,
+      1.7593608540087875,
+      2.7891295845131285,
+      2.7023282787986607,
+      2.8453576999367236,
+      2.891981826453379,
+      2.7630445112061515,
+      2.8316425299482937,
+      2.4079076997660955,
+      2.8393051114381027,
+      2.5115485393754096,
+      2.816529158311266,
+      2.9701053050063764,
+      2.925364246817116,
+      2.653210169743665,
+      3.278563380979667,
+      3.1539371989865823,
+      2.6633307485336233,
+      2.6947998653883793,
+      2.962132792194907,
+      2.9249427718243,
+      3.9183677438989672,
+      3.8272898324013473,
+      4.13570278263418,
+      3.4973418391849727,
+      3.573343279655014,
+      3.0666795516835923,
+      3.099354583769921,
+      3.09139875762016,
+      3.1368231807267444,
+      2.4401113771416987,
+      2.9714031808049444,
+      3.6028585614726825,
+      3.1051380246465152,
+      3.0256058350288275,
+      3.4832583943986903,
+      3.549918465622791,
+      3.0888917635622013,
+      3.4796961469214547,
+      4.468353601226487,
+      3.893110832438008,
+      3.2788970788329244,
+      3.5802377960378218,
+      3.7901334354136686,
+      3.4986578708929654,
+      3.8606157464433646,
+      3.5776475306705686,
+      3.7364229295734788,
+      4.618649203465355,
+      3.8320597599658757,
+      4.145681657948535,
+      3.413331874227823,
+      4.157009494612682,
+      4.959384411935307,
+      5.0163533942436835,
+      5.162368102754355,
+      3.8948928598548047,
+      4.536088998802746,
+      4.829082670774226,
+      4.948754712504546,
+      5.776269461532006,
+      3.8546093507198664,
+      4.91333863950992,
+      4.735266245556774,
+      4.568366856810926,
+      4.5282200394571905,
+      5.167259367085426,
+      6.794477086216581,
+      3.7443347524775783,
+      6.067551645116972,
+      4.878401804252803,
+      4.765049186619202,
+      5.468513756374969,
+      4.7924193407757905,
+      5.683991214586481,
+      6.440797368056011,
+      4.991805722260191,
+      5.071640475495119,
+      5.349520851672914,
+      6.307080142232818,
+      4.6045126923382655,
+      7.660533226000672,
+      6.416482440807719,
+      5.494705743585294,
+      6.896497037835994,
+      5.874841945949427,
+      6.689947019092512,
+      8.119089286094523,
+      5.609634954599975,
+      6.196575784845951,
+      6.824368919845522,
+      7.981433835124715,
+      7.210455363759953,
+      7.6523599473843245,
+      8.20021889146966,
+      9.04268023295274,
+      5.625554258396528,
+      6.591510781903951,
+      7.754943969149919,
+      9.872435020607423,
+      6.866459660539059,
+      6.487022350928925
+    ],
     "gbm__C0": [
       0.7240787890456208,
       0.5814101629840868,
@@ -2254,6 +3418,158 @@
       8.895565397632238,
       6.278076092955608,
       6.546192557942262
+    ],
+    "gbm__C0-log": [
+      0.6937886139902323,
+      0.5401768350506004,
+      0.7208389599256879,
+      0.7528147975709564,
+      0.4994231650942,
+      0.5835848657988607,
+      0.5653284714510174,
+      0.541511328430829,
+      0.43671293880396095,
+      0.7409664546249756,
+      0.46023956838906,
+      1.281841289242283,
+      0.9842010761948474,
+      0.7235941055009465,
+      1.254077407600905,
+      0.8253639585051272,
+      1.0676766409680545,
+      0.9600193856803778,
+      1.0270116165756698,
+      1.2623388340990338,
+      1.3305093967681318,
+      1.4531954114624523,
+      1.72260527487494,
+      1.4924200489643324,
+      1.5649481993895922,
+      1.434130726211188,
+      1.3930757043688002,
+      1.5407682433358614,
+      1.4492397323897244,
+      0.9686552490626649,
+      1.9745534072583062,
+      1.6243721682613366,
+      1.6683101405619425,
+      2.032224661996839,
+      1.5336079118780674,
+      2.1043451422506694,
+      2.060686339343513,
+      1.9968933945612672,
+      1.6954468392246893,
+      1.4027917584439418,
+      2.3602696645667396,
+      2.3355750802112887,
+      2.356719078319371,
+      2.4117817102038432,
+      2.5448764047283365,
+      2.2151368729400485,
+      2.1362604448395786,
+      2.3236251148854907,
+      2.3153680506579812,
+      1.5718967575368548,
+      3.0673609118898413,
+      2.467334799785539,
+      2.9183698175949027,
+      2.856271093676308,
+      3.0616557559373203,
+      2.829724958495672,
+      2.438462200903088,
+      2.318805885577553,
+      2.506212600747458,
+      2.93270136609817,
+      2.6522091162226977,
+      2.6370369601527948,
+      2.1907881569583427,
+      3.041662932147193,
+      3.1374844734260687,
+      2.175123493831141,
+      2.342788535026633,
+      2.8705350076704543,
+      3.2216231444434027,
+      3.595623536528731,
+      4.047532798020912,
+      3.915212779317869,
+      3.550097614487346,
+      3.6986536720145797,
+      3.113511160346531,
+      2.9681660005450414,
+      3.3050621448799897,
+      3.3555323225018108,
+      2.2333957601143144,
+      3.145346545316403,
+      4.068156817466696,
+      2.927379933785676,
+      2.738304282651379,
+      3.697026045189499,
+      3.5742008342110507,
+      3.451715881743027,
+      3.762564889753608,
+      4.060696225869051,
+      4.040207012950237,
+      3.460878737876137,
+      3.838942780792295,
+      3.8946745538297907,
+      3.6202370200036382,
+      3.395888826866477,
+      3.668755347403223,
+      3.408470682654162,
+      4.9653572947982845,
+      4.2874456154603156,
+      4.245514478204888,
+      3.2969636024688596,
+      3.7907916670620696,
+      5.288936133447071,
+      4.9064321695200555,
+      5.007051001322639,
+      3.6528598120374274,
+      4.3019428666042785,
+      4.819554147888764,
+      5.196271789602203,
+      4.776372943212299,
+      4.258248724721812,
+      4.560956139430248,
+      5.170262484251177,
+      4.757114883504598,
+      4.101694107349133,
+      5.047601185549392,
+      6.365916789394546,
+      3.6095322560891,
+      5.032428047873143,
+      4.680807180887438,
+      4.907821381305189,
+      6.374607643337399,
+      4.603511109783904,
+      4.987654705577731,
+      5.738757155823951,
+      4.8969220740955315,
+      4.938231955848118,
+      5.180302274596775,
+      6.552301453587179,
+      3.768948162761319,
+      6.702181672708555,
+      6.531215371763873,
+      6.087547075528616,
+      6.12896106681513,
+      5.327800584495163,
+      6.805860640955361,
+      7.524292532456987,
+      4.684459931115288,
+      7.1654071834318325,
+      6.571149593704842,
+      7.967785428412358,
+      6.633582694593597,
+      7.912501296607308,
+      8.46062448313931,
+      8.557376898733558,
+      5.924834936195188,
+      6.222945482299428,
+      6.877412519370624,
+      8.319901621375735,
+      6.292958629605844,
+      6.70761064040373
     ],
     "rf__A": [
       0.6398259715576652,
@@ -2711,6 +4027,158 @@
       6.103280871396835,
       6.255734035175419
     ],
+    "rf__C-log": [
+      0.7175014167190203,
+      0.5455933003541646,
+      0.6669852686794966,
+      0.6894431781275686,
+      0.5350355555221045,
+      0.5278456676162857,
+      0.6685710013352769,
+      0.5722926336876376,
+      0.41676210091045557,
+      0.7327018914524717,
+      0.39646729166185823,
+      1.2018695549665162,
+      1.0578316191806674,
+      0.9092440909638766,
+      1.1945809701526735,
+      0.896850566398904,
+      0.961934170701079,
+      1.1615791834280076,
+      1.2136857930206657,
+      1.1488256386928766,
+      1.300206912237236,
+      1.3594120624749633,
+      1.7325352836256545,
+      1.3863877702919427,
+      1.5989608283734242,
+      1.364420782379169,
+      1.2306324092209913,
+      1.3609591359966104,
+      1.5312213486795847,
+      1.2317204443271346,
+      1.8169654992936348,
+      1.5766593034780059,
+      1.670429094355466,
+      1.8666982273014987,
+      1.9550807907205,
+      2.2565663011010084,
+      1.7474996151278892,
+      1.8948919827786728,
+      1.8563773655153615,
+      2.0327793356148436,
+      2.35597165360493,
+      2.197344189431515,
+      2.232668526037995,
+      2.249337835948655,
+      2.1815937664053036,
+      2.1545465593273545,
+      2.3112087385753286,
+      2.119163149856941,
+      2.161480777764292,
+      1.693097969676399,
+      2.6782839097524795,
+      2.1301244665846415,
+      2.472079304142458,
+      2.5588356228116713,
+      2.5579223380165317,
+      2.65075422109873,
+      2.671056508413102,
+      2.512011312319453,
+      2.37610804640393,
+      2.6244897746882625,
+      2.6456224379668356,
+      2.808409603106919,
+      2.374301520804083,
+      3.207275970485041,
+      3.2465260225006345,
+      3.4370801245374265,
+      2.476721551725161,
+      3.0798557169325678,
+      3.1961727774757747,
+      3.123313954416195,
+      3.6363470135905036,
+      3.8281057583276863,
+      3.204373624986264,
+      3.4283157273235454,
+      3.316481285769846,
+      3.2572273504226206,
+      2.7246687948646167,
+      3.4537477600724626,
+      2.5027040724430147,
+      2.9427498009468147,
+      3.694151292042726,
+      2.9346052572242285,
+      3.3516807963829285,
+      3.476567883141132,
+      3.5881184260992556,
+      3.753359086422918,
+      3.4534433818139414,
+      3.9567431987752704,
+      3.89881722091717,
+      3.1098152132794925,
+      3.8239190096926468,
+      3.889665199236246,
+      3.9893976386046246,
+      3.8893127098320415,
+      4.0237355790305545,
+      3.548295321873271,
+      4.136972069175488,
+      3.8697259855055575,
+      4.288739037781173,
+      3.4574702321369344,
+      4.386221940525181,
+      4.890280731420144,
+      4.688188338153618,
+      4.704405721998159,
+      4.1601473944011484,
+      4.908924804925198,
+      4.432649569098072,
+      4.542868141462624,
+      4.828454118759112,
+      3.9189017165717686,
+      4.572626293759427,
+      5.058015603931501,
+      4.847234126177626,
+      3.903271529606975,
+      5.102003966141336,
+      6.689169804092174,
+      4.086920650019835,
+      5.296345032181619,
+      4.751230490318238,
+      5.073539331288676,
+      6.070491323290483,
+      4.900994277689708,
+      5.772077378769559,
+      5.138340868590122,
+      5.797569337870043,
+      5.040617700957301,
+      5.0641080004339045,
+      5.904545082006243,
+      5.054719902555107,
+      6.667767803932403,
+      6.196226156585279,
+      5.217226943504317,
+      5.183714701303998,
+      5.304903099761728,
+      6.360409594923774,
+      6.17623346876593,
+      5.61642741041745,
+      6.372194015489027,
+      6.287695754575654,
+      6.334253238537437,
+      5.90821418645118,
+      6.227962591897725,
+      7.094852443886558,
+      7.452744841373743,
+      6.02329217055519,
+      5.9928562142317165,
+      6.036915744443047,
+      7.563857767524813,
+      5.546123452704094,
+      6.073803661722816
+    ],
     "rf__C0": [
       0.8934056988968727,
       0.6420691777146964,
@@ -2862,6 +4330,158 @@
       8.296184331858385,
       5.998664577366554,
       6.1185392920098325
+    ],
+    "rf__C0-log": [
+      0.7025988609731026,
+      0.5623119288053827,
+      0.6716360914450423,
+      0.6592667982164286,
+      0.47485581868997306,
+      0.5264934811045751,
+      0.64884895253432,
+      0.5431718950720082,
+      0.4195280356451678,
+      0.6967804678144746,
+      0.43496162480905365,
+      1.0672802123469485,
+      0.9936967401455115,
+      0.8097206666872948,
+      1.197765515582706,
+      0.8047857490389887,
+      1.074384102186214,
+      1.402662908516666,
+      1.6257176598100094,
+      1.1741829809333253,
+      1.2413740958557913,
+      1.2506476802905164,
+      2.416122161262852,
+      1.2929177255558495,
+      1.456135055827267,
+      1.2669347400720106,
+      1.2336425721683986,
+      1.484397849730658,
+      1.9705866338344997,
+      1.198007008958435,
+      1.8438469225762204,
+      1.7897825373947305,
+      1.7994603379327876,
+      2.2287988756107313,
+      2.1649745412788435,
+      2.086932549798092,
+      1.4523916223678952,
+      1.974368287945032,
+      2.341778989058574,
+      1.24836158910239,
+      2.6061718148134787,
+      2.392070633003562,
+      2.374810117732691,
+      2.080609223793816,
+      2.1708302965915682,
+      1.9997364677939493,
+      2.272661386226783,
+      2.1326320531102945,
+      2.0176330739848343,
+      2.267439312343314,
+      2.5487883806535843,
+      2.83664793892242,
+      2.377850336583338,
+      2.419211489132783,
+      2.4952621871620404,
+      2.7068290212487116,
+      2.8839523500223896,
+      2.064129716255067,
+      2.1668422252102295,
+      2.4536623891136853,
+      2.518825068106829,
+      2.351595111212734,
+      2.24536090479804,
+      2.9071866549493777,
+      2.996794872480455,
+      2.6665088395465544,
+      2.727490623892124,
+      2.6831025450103985,
+      3.03873589090975,
+      3.2549206378193647,
+      3.597939368384114,
+      3.720123871580499,
+      2.8719526468333365,
+      3.363189930436501,
+      3.7249727299860806,
+      3.5663613286447524,
+      2.183493630668867,
+      3.640889236141181,
+      2.653762734765579,
+      3.3267574279568524,
+      3.1011868974725525,
+      3.08501053125176,
+      3.486007932440729,
+      2.995893094800852,
+      3.871512077371394,
+      4.185226626548635,
+      3.250998277294608,
+      3.87752210231644,
+      3.5639078096344234,
+      3.3992338633176296,
+      3.863966641381617,
+      4.14075779017478,
+      3.89802776903858,
+      4.0422586260145,
+      3.87655918543593,
+      3.792901417831819,
+      4.038533881367153,
+      3.8297392241177954,
+      4.312706496629993,
+      3.7252459638700337,
+      4.307596387214927,
+      5.992118806922897,
+      4.847567602456411,
+      4.643148660201797,
+      4.1772070876737555,
+      5.494463519025225,
+      4.119091812233654,
+      4.14098958990981,
+      2.9402010536932535,
+      3.8096102783059704,
+      3.684554797025722,
+      4.7891961299449095,
+      4.883657159109296,
+      3.6966103958755205,
+      5.680335141335854,
+      7.117653818701056,
+      4.161381223140168,
+      4.351496343684425,
+      4.3673498964930335,
+      5.022043680802308,
+      6.4947342124769785,
+      5.021307650247192,
+      5.807243454662088,
+      4.691882834809625,
+      5.5351924773892245,
+      5.085845271852392,
+      5.172717390943865,
+      6.793882623535507,
+      5.208324431654902,
+      6.04931388834814,
+      6.109743527504948,
+      5.19397787201967,
+      4.814730921907094,
+      5.3808069888731955,
+      6.723956310741626,
+      6.160774074760781,
+      4.503217469319639,
+      6.505423218423061,
+      6.793742058233611,
+      6.366926637218568,
+      5.07560799115012,
+      6.191114133179508,
+      6.870375933163215,
+      6.883001682484793,
+      5.872221310840635,
+      5.683072301205874,
+      6.022516393196294,
+      7.476251292115024,
+      5.378863550024931,
+      6.355247965761641
     ]
   },
   "notes": {
@@ -2875,7 +4495,8 @@
       "lhs-extension": "1b98a8d44a8955e2958aa80a41fa6878fcf8dfe5379f135b219f45e8bba46b24",
       "guided": "1fe194868fc7ab7f3aab7d3d5268c12378f754425e4f6f72be7a3b2d637a1651",
       "test-natural": "2e4f6acd3f77a202cc6a002aea6abbd35a3faba762903c0e56accafe2fec2ff7",
-      "test-stratified": "98fa335b1199cf3c21158f85d26105a1e9c61be397489909e2b123564a33ad77"
+      "test-stratified": "98fa335b1199cf3c21158f85d26105a1e9c61be397489909e2b123564a33ad77",
+      "guided-log": "7949a6ffd82e93ff6367c3606fbe6fb2d0dd44e0c05b81066c16be47ae463660"
     },
     "fit_fingerprints": {
       "rf__fos-rmse": "6a53ed8522014317bbc6200748168f0892ad0e7fafe773e12f65ebe653b94930",
