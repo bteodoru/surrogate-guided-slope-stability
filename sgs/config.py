@@ -183,9 +183,9 @@ GRIDS = {
     },
     "gbm": {
         "learning_rate": [0.03, 0.06, 0.10],
-        "max_leaf_nodes": [7, 15, 31],
-        "min_samples_leaf": [3, 5, 10, 20],
-        "max_iter": [300, 600],
+        "max_leaf_nodes": [2, 3, 4, 7],
+        "min_samples_leaf": [1, 2, 3, 5],
+        "max_iter": [2000, 4000, 8000],
     },
 }
 
@@ -262,7 +262,7 @@ LC_FAMILIES = ("rf", "gbm")
 # neutral at small n.
 LC_PARAMS = {
     "rf": {},
-    "gbm": {"learning_rate": 0.06, "max_iter": 600, "max_leaf_nodes": 7, "min_samples_leaf": 3},
+    "gbm": {"learning_rate": 0.06, "max_iter": 8000, "max_leaf_nodes": 3, "min_samples_leaf": 3},
 }
 
 

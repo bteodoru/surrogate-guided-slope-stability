@@ -74,6 +74,12 @@ hyper-parameters selected by K-fold CV on the arm's training data only; the
 test set is never touched during selection; chosen hyper-parameters are
 reported. Library defaults are **not** neutral here — `min_samples_leaf=20` is
 a far stronger constraint at n=300 than at n=600.
+The GBM grid was extended, using training-fold CV only, until the selected
+values lay inside it or on a plateau (`max_iter`); the old-grid state is tagged
+`gbm-grid-v1`. Do not narrow it back to library-default neighbourhoods. One
+declared exception: on C₀ under the FOS-scale criterion, `min_samples_leaf=10`
+(outside the grid) scores ~5% better in CV but only in 2 of 5 folds, below the
+fold spread; the grid was not extended for it (checked on training CV only).
 
 Conformal residuals come from a **nested** CV: `cross_val_predict` receives the
 search object, not a model with parameters already chosen.

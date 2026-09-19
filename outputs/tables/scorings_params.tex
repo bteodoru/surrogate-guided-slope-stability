@@ -10,10 +10,10 @@ rf & A & max\_features=1, min\_samples\_leaf=1 & max\_features=1, min\_samples\_
 rf & B & max\_features=1, min\_samples\_leaf=1 & max\_features=1, min\_samples\_leaf=1 \\
 rf & C & max\_features=1, min\_samples\_leaf=1 & max\_features=1, min\_samples\_leaf=1 \\
 rf & C0 (ablation) & max\_features=1, min\_samples\_leaf=1 & max\_features=1, min\_samples\_leaf=1 \\
-gbm & A & learning\_rate=0.06, max\_iter=600, max\_leaf\_nodes=7, min\_samples\_leaf=3 & learning\_rate=0.06, max\_iter=300, max\_leaf\_nodes=15, min\_samples\_leaf=3 \\
-gbm & B & learning\_rate=0.06, max\_iter=600, max\_leaf\_nodes=7, min\_samples\_leaf=3 & learning\_rate=0.06, max\_iter=600, max\_leaf\_nodes=15, min\_samples\_leaf=3 \\
-gbm & C & learning\_rate=0.06, max\_iter=600, max\_leaf\_nodes=7, min\_samples\_leaf=3 & learning\_rate=0.1, max\_iter=600, max\_leaf\_nodes=15, min\_samples\_leaf=3 \\
-gbm & C0 (ablation) & learning\_rate=0.06, max\_iter=600, max\_leaf\_nodes=7, min\_samples\_leaf=5 & learning\_rate=0.03, max\_iter=600, max\_leaf\_nodes=15, min\_samples\_leaf=5 \\
+gbm & A & learning\_rate=0.06, max\_iter=8000, max\_leaf\_nodes=3, min\_samples\_leaf=3 & learning\_rate=0.06, max\_iter=4000, max\_leaf\_nodes=3, min\_samples\_leaf=2 \\
+gbm & B & learning\_rate=0.06, max\_iter=8000, max\_leaf\_nodes=3, min\_samples\_leaf=3 & learning\_rate=0.06, max\_iter=8000, max\_leaf\_nodes=4, min\_samples\_leaf=1 \\
+gbm & C & learning\_rate=0.06, max\_iter=8000, max\_leaf\_nodes=3, min\_samples\_leaf=2 & learning\_rate=0.03, max\_iter=8000, max\_leaf\_nodes=3, min\_samples\_leaf=2 \\
+gbm & C0 (ablation) & learning\_rate=0.03, max\_iter=8000, max\_leaf\_nodes=4, min\_samples\_leaf=5 & learning\_rate=0.1, max\_iter=2000, max\_leaf\_nodes=3, min\_samples\_leaf=5 \\
 \bottomrule
 \end{tabular}
 \end{table}
