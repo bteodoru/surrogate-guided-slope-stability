@@ -282,8 +282,39 @@ def test_guided_log_role_fills_the_seed_deficit(small_designs, monkeypatch):
     allocation = info["allocation"]
     seed_fos = data.load_role("seed")["FOS"].to_numpy(float)
     edges = design.bin_edges_log(config.N_BINS, config.SELECTION_RANGE)
-    assert allocation["seed_counts"] == design.bin_counts(seed_fos, edges).tolist()
+    assert allocation["trained_counts"] == design.bin_counts(seed_fos, edges).tolist()
     assert sum(allocation["added"]) == 20 and len(frame) == 20
     counts = frame["bin"].value_counts().reindex(range(config.N_BINS), fill_value=0)
     assert counts.tolist() == allocation["added"]
     assert _hash(design.build("guided-log")[0]) == _hash(frame)
+
+
+# --- sequential batches: a screener role that learns from several solved sets ---------------
+
+def _add_roles(monkeypatch, **new):
+    roles = dict(config.ROLES)
+    roles.update(new)
+    monkeypatch.setattr(config, "ROLES", roles)
+
+
+def test_screener_roles_default_to_the_seed_and_follow_trained_on(monkeypatch):
+    assert config.screener_roles("guided-log") == ("seed",)
+    _add_roles(monkeypatch, **{"batch-x": config.SetRole(
+        n=20, design="guided-log-deficit", seeds=("guided_log_stream",), stem="bx", screener=True,
+        trained_on=("seed", "lhs-extension"))})
+    assert config.screener_roles("batch-x") == ("seed", "lhs-extension")
+
+
+def test_a_batch_role_uses_every_trained_on_role(small_designs, monkeypatch):
+    write_final("lhs-extension", synthetic_final(300, 2))
+    _add_roles(monkeypatch, **{"batch-x": config.SetRole(
+        n=20, design="guided-log-deficit", seeds=("guided_log_stream",), stem="bx", screener=True,
+        trained_on=("seed", "lhs-extension"))})
+    frame, info = design.build("batch-x")
+    both = np.concatenate([data.load_role(r)["FOS"].to_numpy(float) for r in ("seed", "lhs-extension")])
+    edges = design.bin_edges_log(config.N_BINS, config.SELECTION_RANGE)
+    assert info["allocation"]["trained_counts"] == design.bin_counts(both, edges).tolist()
+    assert info["screener"]["trained_on"] == ["seed", "lhs-extension"]
+    assert set(info["screener"]["trained_on_sha256"]) == {"seed", "lhs-extension"}
+    assert info["screener"]["n_train"] == 600 and len(frame) == 20
+    assert _hash(design.build("batch-x")[0]) == _hash(frame)

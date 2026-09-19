@@ -151,6 +151,9 @@ class SetRole:
     stem: str                             # file name without extension
     screener: bool = False                # built from screener predictions
     disjoint_from: tuple[str, ...] = ()   # roles whose designs this one must avoid
+    # Solved roles behind the screener and the water-filling deficit; empty
+    # means SCREENER["trained_on"]. A sequential batch lists every earlier set.
+    trained_on: tuple[str, ...] = ()
 
 
 # A test set uses random selection within each predicted-FOS bin, not greedy
@@ -183,6 +186,12 @@ ROLE_ORDER = ("seed", "lhs-extension", "guided", "test-natural", "test-stratifie
 # The preliminary surrogate. Fixed hyper-parameters, not a tuned search: it
 # screens the candidate pools and is not one of the models under comparison.
 SCREENER = {"trained_on": "seed", "n_estimators": 500, "cv_folds": 5}
+
+
+def screener_roles(role: str) -> tuple[str, ...]:
+    """The solved roles the screener of ``role`` is trained on, and whose FOS
+    the guided-log deficit is computed against."""
+    return ROLES[role].trained_on or (SCREENER["trained_on"],)
 
 
 # --- the tuned learners and the arms ------------------------------------------------

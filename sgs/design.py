@@ -10,8 +10,9 @@ Four procedures, one per ``SetRole.design``:
                      against the seed's solved FOS per bin, random selection
                      inside a bin (the seed-aware guided variant; max-min
                      would push the points to the corners of the domain).
-The screener is refitted in memory whenever a screener role is built; the fit
-takes seconds and is deterministic.
+The screener is refitted in memory, on the solved roles config.screener_roles
+names, whenever a screener role is built; the fit takes seconds and is
+deterministic. A sequential batch names the seed and every earlier batch.
 """
 
 from __future__ import annotations
@@ -273,6 +274,15 @@ def read_design(role: str) -> pd.DataFrame:
     return pd.read_csv(path)
 
 
+def _training_record(roles: tuple[str, ...]) -> dict:
+    """Which solved sets a screener learned from. One role keeps the original
+    record format, so the metadata of existing roles does not change."""
+    hashes = {role: data.sha256_file(config.final_path(role)) for role in roles}
+    if len(roles) == 1:
+        return {"trained_on": roles[0], "trained_on_sha256": hashes[roles[0]]}
+    return {"trained_on": list(roles), "trained_on_sha256": hashes}
+
+
 def build(role: str) -> tuple[pd.DataFrame, dict]:
     """The design of a role, and what produced it (seeds, screener diagnostics)."""
     spec = config.ROLES[role]
@@ -285,10 +295,10 @@ def build(role: str) -> tuple[pd.DataFrame, dict]:
         if not lhs_strata_complete(unit):
             raise DesignError(f"{role}: LHS stratification incomplete")
     else:
-        trained_on = config.SCREENER["trained_on"]
-        model, diagnostics = fit_screener(data.load_role(trained_on))
-        info["screener"] = {**diagnostics, "trained_on": trained_on,
-                            "trained_on_sha256": data.sha256_file(config.final_path(trained_on))}
+        trained = config.screener_roles(role)
+        training = pd.concat([data.load_role(r) for r in trained], ignore_index=True)
+        model, diagnostics = fit_screener(training)
+        info["screener"] = {**diagnostics, **_training_record(trained)}
         if spec.design == "guided-maxmin":
             frame = guided_maxmin(model, rng=np.random.default_rng(seeds[0]),
                                   n_pool=config.N_GUIDED_POOL, n_bins=config.N_BINS,
@@ -304,9 +314,9 @@ def build(role: str) -> tuple[pd.DataFrame, dict]:
                                       references=references, min_distance=config.MIN_DISTANCE)
         elif spec.design == "guided-log-deficit":
             edges = bin_edges_log(config.N_BINS, config.SELECTION_RANGE)
-            have = bin_counts(data.load_role(trained_on)["FOS"].to_numpy(float), edges)
+            have = bin_counts(training["FOS"].to_numpy(float), edges)
             allocation = deficit_allocation(have, spec.n)
-            info["allocation"] = {"edges": edges.tolist(), "seed_counts": have.tolist(),
+            info["allocation"] = {"edges": edges.tolist(), "trained_counts": have.tolist(),
                                   "added": allocation.tolist()}
             frame = guided_log_deficit(model, rng=np.random.default_rng(seeds[0]),
                                        allocation=allocation, n_pool=config.N_GUIDED_POOL,
