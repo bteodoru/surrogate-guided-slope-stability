@@ -271,3 +271,19 @@ def test_screener_roles_are_deterministic_and_record_the_screener(small_designs)
         _write_design(role, design.build(role)[0])
     stratified, _ = design.build("test-stratified")
     assert len(stratified) == 15 and set(stratified.columns) == {*config.PARAMS, "FOS_pred", "bin"}
+
+
+def test_guided_log_role_fills_the_seed_deficit(small_designs, monkeypatch):
+    shrink_roles(monkeypatch, {"guided-log": 20})
+    for role in ("guided", "lhs-extension", "test-natural", "test-stratified"):
+        _write_design(role, design.build(role)[0])
+    frame, info = design.build("guided-log")
+    assert info["seeds"] == {"guided_log_stream": config.SEEDS["guided_log_stream"]}
+    allocation = info["allocation"]
+    seed_fos = data.load_role("seed")["FOS"].to_numpy(float)
+    edges = design.bin_edges_log(config.N_BINS, config.SELECTION_RANGE)
+    assert allocation["seed_counts"] == design.bin_counts(seed_fos, edges).tolist()
+    assert sum(allocation["added"]) == 20 and len(frame) == 20
+    counts = frame["bin"].value_counts().reindex(range(config.N_BINS), fill_value=0)
+    assert counts.tolist() == allocation["added"]
+    assert _hash(design.build("guided-log")[0]) == _hash(frame)

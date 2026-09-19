@@ -151,7 +151,7 @@ def test_evaluate_covers_every_arm_and_registered_comparison():
     fits = {**stub_fits("rf"), **stub_fits("gbm")}
     result = evaluate.evaluate(fits, stub_test(), **EVAL_KWARGS)
     assert set(result.arms) == {"rf", "gbm"}
-    assert set(result.arms["rf"]) == {"A", "B", "C", "C0"}
+    assert set(result.arms["rf"]) == set(config.ARMS)
     assert len(result.comparisons) == 2 * len(config.COMPARISONS) * len(evaluate.SUBSETS)
     payload = json.loads(json.dumps(result.to_json()))
     assert payload["predictions"]["row_id"][0] == "test-natural:0"
@@ -184,7 +184,7 @@ def test_run_writes_metrics_with_provenance(root, monkeypatch):
         for test in config.TEST_ROLES:
             metrics = json.loads(config.metrics_path(test, scoring).read_text())
             assert metrics["test"] == test and metrics["scoring"] == scoring
-            assert set(metrics["arms"]["gbm"]) == {"A", "B", "C", "C0"}
+            assert set(metrics["arms"]["gbm"]) == set(config.ARMS)
             assert set(metrics["provenance"]["final_sha256"]) == set(config.ROLE_ORDER)
             assert set(metrics["provenance"]["fit_fingerprints"]) == {f"rf__{scoring}", f"gbm__{scoring}"}
 

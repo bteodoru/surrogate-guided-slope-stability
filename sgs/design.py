@@ -302,6 +302,15 @@ def build(role: str) -> tuple[pd.DataFrame, dict]:
                                       per_bin=config.TEST_PER_BIN,
                                       selection_range=config.SELECTION_RANGE,
                                       references=references, min_distance=config.MIN_DISTANCE)
+        elif spec.design == "guided-log-deficit":
+            edges = bin_edges_log(config.N_BINS, config.SELECTION_RANGE)
+            have = bin_counts(data.load_role(trained_on)["FOS"].to_numpy(float), edges)
+            allocation = deficit_allocation(have, spec.n)
+            info["allocation"] = {"edges": edges.tolist(), "seed_counts": have.tolist(),
+                                  "added": allocation.tolist()}
+            frame = guided_log_deficit(model, rng=np.random.default_rng(seeds[0]),
+                                       allocation=allocation, n_pool=config.N_GUIDED_POOL,
+                                       selection_range=config.SELECTION_RANGE)
         else:
             raise ValueError(f"unknown design procedure {spec.design!r} for role {role!r}")
 

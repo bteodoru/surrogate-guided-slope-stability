@@ -127,3 +127,19 @@ def test_paths_follow_root(tmp_path, monkeypatch):
 def test_roles_are_frozen():
     with pytest.raises(dataclasses.FrozenInstanceError):
         config.ROLES["seed"].n = 1
+
+
+def test_guided_log_role_is_declared_after_every_set_it_avoids():
+    spec = config.ROLES["guided-log"]
+    assert spec.design == "guided-log-deficit" and spec.screener
+    assert set(spec.disjoint_from) == set(config.ROLE_ORDER) - {"guided-log"}
+    assert config.ROLE_ORDER[-1] == "guided-log"
+
+
+def test_log_arms_mirror_the_linear_ones():
+    assert config.ARMS["C-log"] == config.Arm(roles=("seed", "guided-log"), budget=600, ablation=False)
+    assert config.ARMS["C0-log"] == config.Arm(roles=("guided-log",), budget=None, ablation=True)
+    pairs = {(c.first, c.second): c.alternative for c in config.COMPARISONS}
+    assert pairs[("C-log", "B")] == "less" and pairs[("C-log", "A")] == "less"
+    assert pairs[("C-log", "C")] == "two-sided"
+    assert pairs[("C-log", "C0-log")] == "two-sided" and pairs[("C0-log", "B")] == "two-sided"

@@ -100,6 +100,16 @@ GUIDED_PER_BIN = 20
 # the published procedure, and are then discarded.
 GUIDED_DRAWN_PER_BIN = 30
 
+# Seed-aware guided variant (role "guided-log", declared 2026-09-19 before any
+# solver run). The aim is a training set, seed plus guided, that is even in
+# FOS, not a guided set that is even on its own. The role's budget is
+# water-filled against the seed's solved FOS in N_BINS geometric bins on
+# SELECTION_RANGE (log(FOS) is the trained response). Inside a bin the points
+# are drawn at random, not by max-min: max-min picks the corners of the domain
+# (54% of the linear guided set has >= 2 parameters within 5% of a bound,
+# against 9% for LHS), while a random draw keeps the natural distribution of
+# the parameters given FOS.
+
 # Independent pool for the target-stratified test set (declared in Methods).
 N_TEST_POOL = 200_000
 TEST_PER_BIN = 10
@@ -127,13 +137,16 @@ SEEDS = {
     "bootstrap_resampling": 20260921,
     # Entropy of a SeedSequence keyed on (budget, repeat).
     "learning_curve_subsampling": 20260922,
+    # The seed-aware log(FOS) guided variant: pool first, then the bin
+    # selection, on one generator.
+    "guided_log_stream": 20260923,
 }
 
 
 @dataclass(frozen=True)
 class SetRole:
     n: int
-    design: str                           # "lhs" | "guided-maxmin" | "stratified-random"
+    design: str                           # "lhs" | "guided-maxmin" | "stratified-random" | "guided-log-deficit"
     seeds: tuple[str, ...]                # keys of SEEDS, in the order the procedure uses them
     stem: str                             # file name without extension
     screener: bool = False                # built from screener predictions
@@ -156,10 +169,16 @@ ROLES = {
                                seeds=("test_stratified_pool", "test_stratified_selection"),
                                stem="test_stratified_150", screener=True,
                                disjoint_from=("seed", "lhs-extension", "guided", "test-natural")),
+    # Declared after both test sets so that it avoids them; every set used
+    # together must be pairwise disjoint (data.validate_sets).
+    "guided-log": SetRole(n=300, design="guided-log-deficit", seeds=("guided_log_stream",),
+                          stem="surrogate_guided_log_300", screener=True,
+                          disjoint_from=("seed", "lhs-extension", "guided", "test-natural",
+                                         "test-stratified")),
 }
 
 # Generation order: each role follows the roles it depends on.
-ROLE_ORDER = ("seed", "lhs-extension", "guided", "test-natural", "test-stratified")
+ROLE_ORDER = ("seed", "lhs-extension", "guided", "test-natural", "test-stratified", "guided-log")
 
 # The preliminary surrogate. Fixed hyper-parameters, not a tuned search: it
 # screens the candidate pools and is not one of the models under comparison.
@@ -210,6 +229,8 @@ ARMS = {
     "B": Arm(roles=("seed", "lhs-extension"), budget=600, ablation=False),
     "C": Arm(roles=("seed", "guided"), budget=600, ablation=False),
     "C0": Arm(roles=("guided",), budget=None, ablation=True),
+    "C-log": Arm(roles=("seed", "guided-log"), budget=600, ablation=False),
+    "C0-log": Arm(roles=("guided-log",), budget=None, ablation=True),
 }
 
 
@@ -237,12 +258,19 @@ class Comparison:
 
 
 # The alternative is per pair: the direction was hypothesised a priori for C
-# against B and A, not for the comparisons involving C0.
+# and C-log against B and A, not for the comparisons involving an ablation or
+# between the two binning rules. The C-log entries were declared on
+# 2026-09-19, before the guided-log set was solved.
 COMPARISONS = (
     Comparison("C", "B", alternative="less", hypothesised=True),
     Comparison("C", "A", alternative="less", hypothesised=True),
     Comparison("C", "C0", alternative="two-sided", hypothesised=False),
     Comparison("C0", "B", alternative="two-sided", hypothesised=False),
+    Comparison("C-log", "B", alternative="less", hypothesised=True),
+    Comparison("C-log", "A", alternative="less", hypothesised=True),
+    Comparison("C-log", "C", alternative="two-sided", hypothesised=False),
+    Comparison("C-log", "C0-log", alternative="two-sided", hypothesised=False),
+    Comparison("C0-log", "B", alternative="two-sided", hypothesised=False),
 )
 
 
