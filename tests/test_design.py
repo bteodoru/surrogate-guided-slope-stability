@@ -159,6 +159,62 @@ def test_stratified_filters_candidates_near_references():
     assert design.nearest_distance(again, first).min() > 1e-3
 
 
+# --- guided log-deficit -------------------------------------------------------------------
+
+def test_log_edges_are_geometric_on_the_range():
+    edges = design.bin_edges_log(4, (0.5, 8.0))
+    np.testing.assert_allclose(edges, [0.5, 1.0, 2.0, 4.0, 8.0])
+
+
+def test_bin_counts_close_the_first_bin_and_ignore_outside_points():
+    edges = np.array([0.5, 1.0, 2.0, 4.0])
+    fos = np.array([0.5, 0.7, 1.0, 1.5, 4.0, 5.0, 0.4])
+    assert design.bin_counts(fos, edges).tolist() == [3, 1, 1]
+
+
+def test_deficit_allocation_fills_the_emptiest_bins_lowest_first():
+    assert design.deficit_allocation(np.array([1, 4, 7]), 6).tolist() == [5, 1, 0]
+    assert design.deficit_allocation(np.array([0, 100]), 10).tolist() == [10, 0]
+    assert design.deficit_allocation(np.array([3, 3]), 1).tolist() == [1, 0]
+
+
+ALLOCATION = np.array([4, 0, 3, 2, 1])
+
+
+def _guided_log(rng_seed=42, allocation=ALLOCATION, n_pool=6000):
+    return design.guided_log_deficit(FormulaModel(), rng=np.random.default_rng(rng_seed),
+                                     allocation=allocation, n_pool=n_pool, draw_factor=1.5,
+                                     selection_range=(0.5, 6.0))
+
+
+def test_guided_log_follows_the_allocation_inside_log_bins():
+    frame = _guided_log()
+    counts = frame["bin"].value_counts().reindex(range(len(ALLOCATION)), fill_value=0)
+    assert counts.tolist() == ALLOCATION.tolist()
+    edges = design.bin_edges_log(len(ALLOCATION), (0.5, 6.0))
+    for b, group in frame.groupby("bin"):
+        assert group["FOS_pred"].ge(edges[b]).all() and group["FOS_pred"].le(edges[b + 1]).all()
+        if b > 0:
+            assert group["FOS_pred"].gt(edges[b]).all()
+
+
+def test_guided_log_draws_the_pool_first_from_the_stream():
+    frame = _guided_log(42)
+    pool = design.uniform_pool(np.random.default_rng(42), 6000)
+    merged = frame.merge(pool, on=list(config.PARAMS), how="left", indicator=True)
+    assert (merged["_merge"] == "both").all()
+
+
+def test_guided_log_is_deterministic_and_seed_sensitive():
+    assert _hash(_guided_log(42)) == _hash(_guided_log(42))
+    assert _hash(_guided_log(42)) != _hash(_guided_log(43))
+
+
+def test_guided_log_refuses_thin_bins():
+    with pytest.raises(design.DesignError, match="fewer than"):
+        _guided_log(0, allocation=np.array([60, 0, 0, 0, 0]), n_pool=200)
+
+
 # --- screener roles through build() -------------------------------------------------------
 
 @pytest.fixture

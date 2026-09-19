@@ -1,11 +1,14 @@
 """Sampling designs: parameter sets before the solver.
 
-Three procedures, one per ``SetRole.design``:
+Four procedures, one per ``SetRole.design``:
   lhs                Latin hypercube over the input domain;
   guided-maxmin      screener-predicted FOS bins, greedy max-min inside a bin
                      (the guided training selection);
   stratified-random  screener-predicted FOS bins, random selection inside a
-                     bin (the target-stratified test set).
+                     bin (the target-stratified test set);
+  guided-log-deficit screener-predicted log(FOS) bins, the budget water-filled
+                     against the seed's solved FOS per bin, greedy max-min
+                     inside a bin (the seed-aware guided variant).
 The screener is refitted in memory whenever a screener role is built; the fit
 takes seconds and is deterministic.
 """
@@ -190,6 +193,71 @@ def stratified_random(model, *, pool_rng, selection_rng, n_pool, n_bins, per_bin
         picked = selection_rng.choice(len(candidates), per_bin, replace=False)
         chosen.extend(candidates.index.to_numpy()[picked].tolist())
         bins.extend([b] * per_bin)
+    out = pool.loc[chosen, params + ["FOS_pred"]].reset_index(drop=True)
+    out["bin"] = bins
+    return out
+
+
+# --- guided log-deficit ---------------------------------------------------------------
+
+def bin_edges_log(n_bins: int, selection_range) -> np.ndarray:
+    lo, hi = selection_range
+    return np.geomspace(lo, hi, n_bins + 1)
+
+
+def bin_counts(fos, edges: np.ndarray) -> np.ndarray:
+    """Points per bin; bins are (lo, hi], the first closed [lo, hi]; points outside are ignored."""
+    fos = np.asarray(fos, dtype=float)
+    inside = (fos >= edges[0]) & (fos <= edges[-1])
+    index = np.maximum(np.searchsorted(edges, fos[inside], side="left") - 1, 0)
+    return np.bincount(index, minlength=len(edges) - 1)
+
+
+def deficit_allocation(have, budget: int) -> np.ndarray:
+    """Water-filling: each point goes to the bin with the fewest points so far,
+    ties to the lowest-FOS bin. Returns the points added per bin."""
+    have = np.asarray(have, dtype=int)
+    total = have.copy()
+    for _ in range(budget):
+        total[np.argmin(total)] += 1
+    return total - have
+
+
+def guided_log_deficit(model, *, rng, allocation, n_pool, draw_factor, selection_range) -> pd.DataFrame:
+    """The seed-aware guided selection on log(FOS) bins.
+
+    ``allocation[b]`` points go to geometric bin ``b`` of the selection range.
+    One generator, in this order: the pool, then per bin (lowest FOS first,
+    bins with no allocation skipped) a max-min draw of
+    ``ceil(draw_factor * k)`` candidates and a permutation of which the first
+    ``k`` are kept. Bins are (lo, hi] on screener-predicted FOS, the first closed.
+    """
+    params = list(config.PARAMS)
+    allocation = np.asarray(allocation, dtype=int)
+    edges = bin_edges_log(len(allocation), selection_range)
+    drawn = np.ceil(draw_factor * allocation).astype(int)
+    pool = uniform_pool(rng, n_pool)
+    pool["FOS_pred"] = predict_fos(model, pool)
+    pred = pool["FOS_pred"].to_numpy()
+    available = bin_counts(pred, edges)
+    thin = np.flatnonzero(available < drawn)
+    if len(thin):
+        rows = ", ".join(f"bin {b} ({edges[b]:.3f}, {edges[b + 1]:.3f}]: {available[b]} < {drawn[b]}"
+                         for b in thin)
+        raise DesignError(f"bins with fewer than the candidates to draw: {rows}")
+
+    mu, sd = pool[params].mean(), pool[params].std()
+    chosen, bins = [], []
+    for b, (a, z) in enumerate(zip(edges[:-1], edges[1:])):
+        if allocation[b] == 0:
+            continue
+        lower = pred >= a if b == 0 else pred > a
+        candidates = pool[lower & (pred <= z)]
+        Xs = ((candidates[params] - mu) / sd).to_numpy()
+        picked = candidates.index.to_numpy()[greedy_maxmin(Xs, int(drawn[b]), rng)]
+        kept = picked[rng.permutation(len(picked))[:allocation[b]]]
+        chosen.extend(kept.tolist())
+        bins.extend([b] * len(kept))
     out = pool.loc[chosen, params + ["FOS_pred"]].reset_index(drop=True)
     out["bin"] = bins
     return out
