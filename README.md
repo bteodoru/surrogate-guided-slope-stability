@@ -23,7 +23,7 @@ drained slopes without a water table.
 
 > guided-log fills the seed's deficit in 15 geometric log(FOS) bins over the selection range, with random selection inside each bin. C-seq runs the same procedure in three batches of 100. Before each batch the screener is refitted, and the deficit recomputed, on the solved FOS of the seed and every earlier batch.
 >
-> Results are reported in the zones FOS < 0.5 | 0.5–1 | 1–2 | 2–6 | ≥ 6. The primary criterion is log-RMSE on the *decision range* [0.5, 2); the FOS scale is secondary.
+> Results are reported in the zones FOS < 0.5 | 0.5–1 | 1–2 | 2–6 | ≥ 6. The primary criterion is log-RMSE on the *decision range* [0.5, 2) (defined after the C-log results, before C-seq); the FOS scale is secondary.
 
 Two test sets represent two deployment scenarios: `test-natural` (input-space
 LHS, 300) and `test-stratified` (random selection within predicted-FOS bins,

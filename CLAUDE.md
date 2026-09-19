@@ -44,7 +44,9 @@ guided selection, nothing more.
 against B, is the primary criterion; both halves are reported. Reporting zones
 are FOS < 0.5 | 0.5–1 | 1–2 | 2–6 | ≥ 6 (`config.ZONE_EDGES`). 1.3 is not an
 edge: it would read as a normative threshold. Log scale is primary, FOS scale
-secondary.
+secondary. It was defined on 2026-09-19, after the C-log results and before
+C-seq was run, from the lower end of the selection range and its log mirror
+around 1; Methods must say so.
 
 Arms (A, B, C, C₀, C-log, C₀-log, C-seq, C₀-seq) and set roles (seed,
 lhs-extension, guided, test-natural, test-stratified, guided-log,
@@ -118,7 +120,9 @@ alone (`config.LC_PARAMS`), since the seed is shared by both curves.
 - Paired comparisons run on both scales (`evaluate.SCALES`: log, FOS) and on
   three subsets (all, selection range, decision range). Only the hypothesised
   entries (C and C-log against A and against B) are one-sided; every other
-  entry, all C-seq ones included, is two-sided.
+  entry, all C-seq ones included, is two-sided. The one-sided direction was
+  declared for the FOS scale on all test rows; on the log scale and the
+  decision range those p-values are post hoc and are reported as such.
 - Conformal quantile is an order statistic: `k = min(ceil((n+1)(1−α)), n)`.
 - Paired bootstrap for ΔRMSE covers test-sampling variability only, not seed
   or selection variability; the limitation is written into the output.
