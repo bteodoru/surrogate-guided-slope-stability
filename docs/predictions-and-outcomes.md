@@ -19,7 +19,7 @@ Test sets, log-RMSE against B (outputs of e8eafe3):
 | prediction | outcome | held? |
 |---|---|---|
 | C-log's advantage on test points with FOS < 0.5 shrinks for C-seq | shrinks in 3 of 4 family × test cells; grows under RF on test-natural | mostly |
-| C-seq may gain in [0.5, 1) | gains in 3 of 4 cells, ties in 1 (GBM, test-stratified) | yes |
+| C-seq may gain in [0.5, 1) | gains in 3 of 4 cells; slightly worse in the fourth (GBM, test-stratified: 0.054 vs 0.052, n = 12) | mostly |
 | C-seq ties or loses in [1, 2) | loses in 4 of 4 cells | yes |
 | no systematic global gain | RF: C-seq below B on both tests; GBM: above B on both tests | yes |
 
