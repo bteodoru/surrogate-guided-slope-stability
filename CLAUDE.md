@@ -115,6 +115,10 @@ alone (`config.LC_PARAMS`), since the seed is shared by both curves.
 - Wilcoxon on `d = |e₁| − |e₂|`, reporting median d, P(d<0) and the per-pair
   alternative from `config.COMPARISONS`. Phrase as _smaller absolute errors_,
   never _smaller RMSE_. Comparisons absent from the registry are refused.
+- Paired comparisons run on both scales (`evaluate.SCALES`: log, FOS) and on
+  three subsets (all, selection range, decision range). Only the hypothesised
+  entries (C and C-log against A and against B) are one-sided; every other
+  entry, all C-seq ones included, is two-sided.
 - Conformal quantile is an order statistic: `k = min(ceil((n+1)(1−α)), n)`.
 - Paired bootstrap for ΔRMSE covers test-sampling variability only, not seed
   or selection variability; the limitation is written into the output.
