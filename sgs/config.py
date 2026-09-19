@@ -140,6 +140,11 @@ SEEDS = {
     # The seed-aware log(FOS) guided variant: pool first, then the bin
     # selection, on one generator.
     "guided_log_stream": 20260923,
+    # Declared 2026-09-19 before any solver run: the three sequential guided
+    # batches of C-seq, each on its own stream (pool first, then the bin draw).
+    "guided_seq_1_stream": 20260924,
+    "guided_seq_2_stream": 20260925,
+    "guided_seq_3_stream": 20260926,
 }
 
 
@@ -178,10 +183,31 @@ ROLES = {
                           stem="surrogate_guided_log_300", screener=True,
                           disjoint_from=("seed", "lhs-extension", "guided", "test-natural",
                                          "test-stratified")),
+    # C-seq (declared 2026-09-19, before any solver run): the guided-log
+    # procedure in three batches of 100. Before each batch the screener is
+    # refitted, and the deficit recomputed, on the solved FOS of the seed and
+    # every earlier batch, so each batch corrects where the previous ones
+    # actually landed. Only the retraining differs from guided-log.
+    "guided-seq-1": SetRole(n=100, design="guided-log-deficit", seeds=("guided_seq_1_stream",),
+                            stem="surrogate_guided_seq1_100", screener=True, trained_on=("seed",),
+                            disjoint_from=("seed", "lhs-extension", "guided", "test-natural",
+                                           "test-stratified", "guided-log")),
+    "guided-seq-2": SetRole(n=100, design="guided-log-deficit", seeds=("guided_seq_2_stream",),
+                            stem="surrogate_guided_seq2_100", screener=True,
+                            trained_on=("seed", "guided-seq-1"),
+                            disjoint_from=("seed", "lhs-extension", "guided", "test-natural",
+                                           "test-stratified", "guided-log", "guided-seq-1")),
+    "guided-seq-3": SetRole(n=100, design="guided-log-deficit", seeds=("guided_seq_3_stream",),
+                            stem="surrogate_guided_seq3_100", screener=True,
+                            trained_on=("seed", "guided-seq-1", "guided-seq-2"),
+                            disjoint_from=("seed", "lhs-extension", "guided", "test-natural",
+                                           "test-stratified", "guided-log", "guided-seq-1",
+                                           "guided-seq-2")),
 }
 
 # Generation order: each role follows the roles it depends on.
-ROLE_ORDER = ("seed", "lhs-extension", "guided", "test-natural", "test-stratified", "guided-log")
+ROLE_ORDER = ("seed", "lhs-extension", "guided", "test-natural", "test-stratified", "guided-log",
+              "guided-seq-1", "guided-seq-2", "guided-seq-3")
 
 # The preliminary surrogate. Fixed hyper-parameters, not a tuned search: it
 # screens the candidate pools and is not one of the models under comparison.
@@ -240,6 +266,8 @@ ARMS = {
     "C0": Arm(roles=("guided",), budget=None, ablation=True),
     "C-log": Arm(roles=("seed", "guided-log"), budget=600, ablation=False),
     "C0-log": Arm(roles=("guided-log",), budget=None, ablation=True),
+    "C-seq": Arm(roles=("seed", "guided-seq-1", "guided-seq-2", "guided-seq-3"), budget=600, ablation=False),
+    "C0-seq": Arm(roles=("guided-seq-1", "guided-seq-2", "guided-seq-3"), budget=None, ablation=True),
 }
 
 
@@ -280,6 +308,20 @@ class Comparison:
 # and C-log against B and A, not for the comparisons involving an ablation or
 # between the two binning rules. The C-log entries were declared on
 # 2026-09-19, before the guided-log set was solved.
+#
+# The C-seq entries (declared 2026-09-19, before any batch was solved) are
+# two-sided: C-seq vs C-log isolates the effect of retraining the screener,
+# and the rest place C-seq against the references; none tests a
+# hypothesised superiority.
+#
+# Predictions, declared with them:
+#   training data only: the three batches put <= 10 points below FOS 0.5
+#   (guided-log: 45), and seed + batches deviate less from the target
+#   per-bin counts than seed + guided-log.
+#   test sets, log-RMSE against B: C-log's advantage on test points with
+#   FOS < 0.5 shrinks for C-seq; C-seq may gain in [0.5, 1), ties or loses
+#   in [1, 2) (log-uniformization lowers the training density there below
+#   LHS), and shows no systematic global gain.
 COMPARISONS = (
     Comparison("C", "B", alternative="less", hypothesised=True),
     Comparison("C", "A", alternative="less", hypothesised=True),
@@ -290,6 +332,11 @@ COMPARISONS = (
     Comparison("C-log", "C", alternative="two-sided", hypothesised=False),
     Comparison("C-log", "C0-log", alternative="two-sided", hypothesised=False),
     Comparison("C0-log", "B", alternative="two-sided", hypothesised=False),
+    Comparison("C-seq", "B", alternative="two-sided", hypothesised=False),
+    Comparison("C-seq", "A", alternative="two-sided", hypothesised=False),
+    Comparison("C-seq", "C-log", alternative="two-sided", hypothesised=False),
+    Comparison("C-seq", "C0-seq", alternative="two-sided", hypothesised=False),
+    Comparison("C0-seq", "B", alternative="two-sided", hypothesised=False),
 )
 
 

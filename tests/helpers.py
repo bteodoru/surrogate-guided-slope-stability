@@ -77,7 +77,8 @@ class OffsetModel:
         return np.log(synthetic_fos(X)) + self.scale * np.sin(np.arange(len(X)) * 1.7)
 
 
-ARM_SCALES = {"A": 0.30, "B": 0.20, "C": 0.10, "C0": 0.25, "C-log": 0.12, "C0-log": 0.22}
+ARM_SCALES = {"A": 0.30, "B": 0.20, "C": 0.10, "C0": 0.25, "C-log": 0.12, "C0-log": 0.22,
+              "C-seq": 0.11, "C0-seq": 0.23}
 
 
 def stub_fit(family, arm, scale, scoring="log-rmse", n_train=40):

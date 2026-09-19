@@ -35,7 +35,8 @@ def test_role_order_covers_roles_and_respects_dependencies():
         for earlier in spec.disjoint_from:
             assert position[earlier] < position[role]
         if spec.screener:
-            assert position[config.SCREENER["trained_on"]] < position[role]
+            for earlier in config.screener_roles(role):
+                assert position[earlier] < position[role]
 
 
 def test_design_sizes_match_role_sizes():
@@ -129,11 +130,11 @@ def test_roles_are_frozen():
         config.ROLES["seed"].n = 1
 
 
-def test_guided_log_role_is_declared_after_every_set_it_avoids():
+def test_guided_log_role_avoids_every_set_declared_before_it():
     spec = config.ROLES["guided-log"]
     assert spec.design == "guided-log-deficit" and spec.screener
-    assert set(spec.disjoint_from) == set(config.ROLE_ORDER) - {"guided-log"}
-    assert config.ROLE_ORDER[-1] == "guided-log"
+    before = config.ROLE_ORDER[:config.ROLE_ORDER.index("guided-log")]
+    assert set(spec.disjoint_from) == set(before)
 
 
 def test_log_arms_mirror_the_linear_ones():
@@ -143,3 +144,23 @@ def test_log_arms_mirror_the_linear_ones():
     assert pairs[("C-log", "B")] == "less" and pairs[("C-log", "A")] == "less"
     assert pairs[("C-log", "C")] == "two-sided"
     assert pairs[("C-log", "C0-log")] == "two-sided" and pairs[("C0-log", "B")] == "two-sided"
+
+
+SEQ = ("guided-seq-1", "guided-seq-2", "guided-seq-3")
+
+
+def test_sequential_batches_learn_from_every_earlier_set():
+    for k, role in enumerate(SEQ):
+        spec = config.ROLES[role]
+        assert spec.n == 100 and spec.design == "guided-log-deficit" and spec.screener
+        assert spec.trained_on == ("seed", *SEQ[:k])
+        assert set(spec.disjoint_from) == set(config.ROLE_ORDER[:config.ROLE_ORDER.index(role)])
+    assert sum(config.ROLES[r].n for r in SEQ) == config.ROLES["guided-log"].n
+
+
+def test_sequential_arms_and_comparisons():
+    assert config.ARMS["C-seq"] == config.Arm(roles=("seed", *SEQ), budget=600, ablation=False)
+    assert config.ARMS["C0-seq"] == config.Arm(roles=SEQ, budget=None, ablation=True)
+    new = {("C-seq", "B"), ("C-seq", "A"), ("C-seq", "C-log"), ("C-seq", "C0-seq"), ("C0-seq", "B")}
+    pairs = {(c.first, c.second): c.alternative for c in config.COMPARISONS}
+    assert new <= set(pairs) and all(pairs[p] == "two-sided" for p in new)
