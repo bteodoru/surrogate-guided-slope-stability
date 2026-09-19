@@ -29,6 +29,8 @@ Predicting 4 when the truth is 6 changes no decision: both are comfortable. Pred
 
 The primary criterion is log-RMSE on the **decision range** [0.5, 2), log-symmetric around 1. Both halves are reported, because they behave differently.
 
+**Independent corroboration of both limits.** Mazloom et al. (BARL, Applied Soft Computing 188, 2026), working with a different solver (FLAC8), a different constitutive model and a wider parameter set, arrive at the same two numbers without reference to this study. Their training set is filtered to **FOS ∈ [0.3, 6]**, samples outside the interval being discarded (§3.3), and they state their motivation as: "while most practical scenarios involve FoS values between 0.9 and 2, our goal is to construct the model to predict a broader range, extending from 0.3 to 6" (§2.2). Our upper limit of 6 and the upper edge of the decision range at 2 are therefore not idiosyncratic choices. The lower cut differs — 0.3 against our 0.5 — and ours is the one that follows from log-symmetry around 1.
+
 ## 4. What the data say about the original hypothesis
 
 ### 4.1 Uniform parameter sampling is not, by itself, the problem
@@ -63,6 +65,8 @@ So under LHS:
 - **1–2 is not rare:** about 30–34%, more than log-uniform would give it.
 
 Uniformizing the response over the whole selection range therefore *reduces* the training density in the decision zone. That is a structural property of this problem, not an accident of one design.
+
+**But it is a property of this parameter domain, not of slope stability.** BARL's LHS set, filtered to the same kind of interval, is skewed the *other* way: 25% of its points lie below FOS 1.29 and the median is 2.09, so the region its authors call under-represented is 4–6, not 0.5–1 (their Table 1 and §5.4). Same family of designs, mirror-image imbalance, because the parameter ranges differ. Whichever direction the skew runs, the argument of this study is the same — the allocation follows the density actually achieved — but no claim may be made about *which* zone is rare in general.
 
 ### 4.3 The decision zone is the flattest part of the response
 
