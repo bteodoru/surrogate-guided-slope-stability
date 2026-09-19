@@ -7,8 +7,9 @@ Four procedures, one per ``SetRole.design``:
   stratified-random  screener-predicted FOS bins, random selection inside a
                      bin (the target-stratified test set);
   guided-log-deficit screener-predicted log(FOS) bins, the budget water-filled
-                     against the seed's solved FOS per bin, greedy max-min
-                     inside a bin (the seed-aware guided variant).
+                     against the seed's solved FOS per bin, random selection
+                     inside a bin (the seed-aware guided variant; max-min
+                     would push the points to the corners of the domain).
 The screener is refitted in memory whenever a screener role is built; the fit
 takes seconds and is deterministic.
 """
@@ -223,39 +224,39 @@ def deficit_allocation(have, budget: int) -> np.ndarray:
     return total - have
 
 
-def guided_log_deficit(model, *, rng, allocation, n_pool, draw_factor, selection_range) -> pd.DataFrame:
+def guided_log_deficit(model, *, rng, allocation, n_pool, selection_range) -> pd.DataFrame:
     """The seed-aware guided selection on log(FOS) bins.
 
     ``allocation[b]`` points go to geometric bin ``b`` of the selection range.
-    One generator, in this order: the pool, then per bin (lowest FOS first,
-    bins with no allocation skipped) a max-min draw of
-    ``ceil(draw_factor * k)`` candidates and a permutation of which the first
-    ``k`` are kept. Bins are (lo, hi] on screener-predicted FOS, the first closed.
+    Inside a bin the points are a random draw of the candidates, not a
+    max-min selection: max-min picks the mutually most distant candidates,
+    which in a box are its corners, and would spend the budget on extreme
+    parameter combinations. A random draw keeps the natural distribution of
+    the parameters given FOS. One generator, in this order: the pool, then
+    per bin (lowest FOS first, bins with no allocation skipped) one draw
+    without replacement. Bins are (lo, hi] on screener-predicted FOS, the
+    first closed.
     """
     params = list(config.PARAMS)
     allocation = np.asarray(allocation, dtype=int)
     edges = bin_edges_log(len(allocation), selection_range)
-    drawn = np.ceil(draw_factor * allocation).astype(int)
     pool = uniform_pool(rng, n_pool)
     pool["FOS_pred"] = predict_fos(model, pool)
     pred = pool["FOS_pred"].to_numpy()
     available = bin_counts(pred, edges)
-    thin = np.flatnonzero(available < drawn)
+    thin = np.flatnonzero(available < allocation)
     if len(thin):
-        rows = ", ".join(f"bin {b} ({edges[b]:.3f}, {edges[b + 1]:.3f}]: {available[b]} < {drawn[b]}"
+        rows = ", ".join(f"bin {b} ({edges[b]:.3f}, {edges[b + 1]:.3f}]: {available[b]} < {allocation[b]}"
                          for b in thin)
-        raise DesignError(f"bins with fewer than the candidates to draw: {rows}")
+        raise DesignError(f"bins with fewer than the points to select: {rows}")
 
-    mu, sd = pool[params].mean(), pool[params].std()
     chosen, bins = [], []
     for b, (a, z) in enumerate(zip(edges[:-1], edges[1:])):
         if allocation[b] == 0:
             continue
         lower = pred >= a if b == 0 else pred > a
-        candidates = pool[lower & (pred <= z)]
-        Xs = ((candidates[params] - mu) / sd).to_numpy()
-        picked = candidates.index.to_numpy()[greedy_maxmin(Xs, int(drawn[b]), rng)]
-        kept = picked[rng.permutation(len(picked))[:allocation[b]]]
+        candidates = np.flatnonzero(lower & (pred <= z))
+        kept = candidates[rng.choice(len(candidates), allocation[b], replace=False)]
         chosen.extend(kept.tolist())
         bins.extend([b] * len(kept))
     out = pool.loc[chosen, params + ["FOS_pred"]].reset_index(drop=True)

@@ -183,7 +183,7 @@ ALLOCATION = np.array([4, 0, 3, 2, 1])
 
 def _guided_log(rng_seed=42, allocation=ALLOCATION, n_pool=6000):
     return design.guided_log_deficit(FormulaModel(), rng=np.random.default_rng(rng_seed),
-                                     allocation=allocation, n_pool=n_pool, draw_factor=1.5,
+                                     allocation=allocation, n_pool=n_pool,
                                      selection_range=(0.5, 6.0))
 
 
@@ -213,6 +213,37 @@ def test_guided_log_is_deterministic_and_seed_sensitive():
 def test_guided_log_refuses_thin_bins():
     with pytest.raises(design.DesignError, match="fewer than"):
         _guided_log(0, allocation=np.array([60, 0, 0, 0, 0]), n_pool=200)
+
+
+def test_guided_log_does_not_push_points_to_the_domain_edges():
+    allocation = np.array([40, 40, 40, 40, 40])
+    frame = _guided_log(7, allocation=allocation, n_pool=20000)
+    pool = design.uniform_pool(np.random.default_rng(7), 20000)
+
+    def near_edge(f):
+        u = data.normalize(f)
+        return float(np.mean((np.minimum(u, 1 - u) < 0.05).sum(1) >= 2))
+
+    assert near_edge(frame) < 0.2 and near_edge(frame) < 2 * near_edge(pool) + 0.05
+
+
+def test_guided_log_selects_from_the_bin_at_random():
+    # Stream contract: pool, then per bin (skipping empty allocations) one
+    # rng.choice over the bin's candidate indices, without replacement.
+    frame = _guided_log(42)
+    rng = np.random.default_rng(42)
+    pool = design.uniform_pool(rng, 6000)
+    pred = design.predict_fos(FormulaModel(), pool)
+    edges = design.bin_edges_log(len(ALLOCATION), (0.5, 6.0))
+    expected = []
+    for b, k in enumerate(ALLOCATION):
+        if k == 0:
+            continue
+        lower = pred >= edges[b] if b == 0 else pred > edges[b]
+        candidates = np.flatnonzero(lower & (pred <= edges[b + 1]))
+        expected.extend(candidates[rng.choice(len(candidates), k, replace=False)].tolist())
+    np.testing.assert_allclose(frame[list(config.PARAMS)].to_numpy(),
+                               pool.loc[expected, list(config.PARAMS)].to_numpy())
 
 
 # --- screener roles through build() -------------------------------------------------------
