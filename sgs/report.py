@@ -68,8 +68,10 @@ def global_frame(metrics: dict) -> pd.DataFrame:
             m = arms[arm]
             g = m["global"]
             rows.append({"family": family, "arm": arm_label(arm), "R2": g["r2"], "RMSE": g["rmse"],
-                         "MAE": g["mae"], "bias": g["bias"], "max |e|": g["max_abs_error"],
-                         "minimax": m["minimax"]["rmse"], "worst zone": m["minimax"]["zone"]})
+                         "log-RMSE": g["log_rmse"], "MAE": g["mae"], "bias": g["bias"],
+                         "max |e|": g["max_abs_error"], "minimax": m["minimax"]["rmse"],
+                         "worst zone": m["minimax"]["zone"],
+                         "minimax log": m["minimax_log"]["log_rmse"]})
     return pd.DataFrame(rows)
 
 

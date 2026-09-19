@@ -48,6 +48,7 @@ def test_every_results_table_includes_the_ablation(root):
     assert "C0 (ablation)" in report.zone_frame(metrics, "rf").columns
     assert "C0 (ablation)" in report.conformal_frame(metrics)["arm"].tolist()
     assert "C vs C0" in report.comparison_frame(metrics)["comparison"].tolist()
+    assert {"log-RMSE", "minimax log"} <= set(report.global_frame(metrics).columns)
 
 
 def test_learning_curve_figure_reads_the_rows():
