@@ -316,7 +316,8 @@ def build(role: str) -> tuple[pd.DataFrame, dict]:
             edges = bin_edges_log(config.N_BINS, config.SELECTION_RANGE)
             have = bin_counts(training["FOS"].to_numpy(float), edges)
             allocation = deficit_allocation(have, spec.n)
-            info["allocation"] = {"edges": edges.tolist(), "trained_counts": have.tolist(),
+            counts_key = "seed_counts" if trained == ("seed",) else "trained_counts"
+            info["allocation"] = {"edges": edges.tolist(), counts_key: have.tolist(),
                                   "added": allocation.tolist()}
             frame = guided_log_deficit(model, rng=np.random.default_rng(seeds[0]),
                                        allocation=allocation, n_pool=config.N_GUIDED_POOL,
