@@ -130,6 +130,296 @@
       },
       "updated": "2026-09-19T09:49:46+00:00"
     },
+    "guided-seq-1": {
+      "allocation": {
+        "added": [
+          22,
+          19,
+          16,
+          13,
+          7,
+          3,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          2,
+          1,
+          16
+        ],
+        "edges": [
+          0.5,
+          0.5900861491455028,
+          0.6964033268267372,
+          0.8218759147586129,
+          0.9699551872306948,
+          1.1447142425533319,
+          1.3509600385206135,
+          1.594365613560178,
+          1.8816261304714648,
+          2.22064303492292,
+          2.6207413942088964,
+          3.092926394429888,
+          3.650186051359235,
+          4.307848461422399,
+          5.084003419406245,
+          6.0
+        ],
+        "trained_counts": [
+          1,
+          4,
+          7,
+          10,
+          16,
+          20,
+          37,
+          26,
+          22,
+          29,
+          27,
+          26,
+          20,
+          21,
+          6
+        ]
+      },
+      "design_sha256": "90234f6bf92b7569e8f9f1012cd2996de324960a85d9b5fa1d0231bbbee3ee7c",
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "4494b3d74fe63b4bb2569d3f2e7c75c4fc01cfe029fb26a55e675ac91d7409b7",
+      "n": 100,
+      "repair": {
+        "n_boundary": 0,
+        "n_repaired": 0,
+        "n_rows": 100,
+        "n_solver_error": 0,
+        "n_unresolved": 0
+      },
+      "results_sha256": "928873cda76dc4ab6d4665631146c78e87e2ca43f1f046e4e758a1df9746da81",
+      "screener": {
+        "n_train": 300,
+        "oob_r2_log": 0.956549202277174,
+        "oof_rmse": 0.79665558209963,
+        "oof_rmse_selection_range": 0.3851779423052841,
+        "oof_spearman": 0.9729485883176479,
+        "trained_on": "seed",
+        "trained_on_sha256": "b7976b24e6dfeb1f3e6009e21b1f5ef9dd83b654be654f7a0f249da7f464a30f"
+      },
+      "seeds": {
+        "guided_seq_1_stream": 20260924
+      },
+      "updated": "2026-09-19T17:45:24+00:00"
+    },
+    "guided-seq-2": {
+      "allocation": {
+        "added": [
+          13,
+          7,
+          12,
+          14,
+          7,
+          5,
+          0,
+          2,
+          6,
+          0,
+          0,
+          1,
+          8,
+          6,
+          19
+        ],
+        "edges": [
+          0.5,
+          0.5900861491455028,
+          0.6964033268267372,
+          0.8218759147586129,
+          0.9699551872306948,
+          1.1447142425533319,
+          1.3509600385206135,
+          1.594365613560178,
+          1.8816261304714648,
+          2.22064303492292,
+          2.6207413942088964,
+          3.092926394429888,
+          3.650186051359235,
+          4.307848461422399,
+          5.084003419406245,
+          6.0
+        ],
+        "trained_counts": [
+          16,
+          22,
+          17,
+          15,
+          21,
+          23,
+          39,
+          26,
+          22,
+          29,
+          28,
+          27,
+          20,
+          22,
+          9
+        ]
+      },
+      "design_sha256": "b405dfca95f99275ce4d9f90b57bc9ddf14574b9b32261e940c0509edc5c32ba",
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "8db751ae2ce7a0ce1cdf66d8940b7d35d3b7d28417ff26a088a2bc5e0cd1ec4d",
+      "n": 100,
+      "repair": {
+        "n_boundary": 1,
+        "n_repaired": 1,
+        "n_rows": 100,
+        "n_solver_error": 0,
+        "n_unresolved": 0
+      },
+      "results_sha256": "da0c7dab2238fa19800026a33e455bc4df76d5e15ac63a729791e7e8ad5a3821",
+      "screener": {
+        "n_train": 400,
+        "oob_r2_log": 0.977487935334605,
+        "oof_rmse": 0.8138933691263338,
+        "oof_rmse_selection_range": 0.33064919420264044,
+        "oof_spearman": 0.9887488046800291,
+        "trained_on": [
+          "seed",
+          "guided-seq-1"
+        ],
+        "trained_on_sha256": {
+          "guided-seq-1": "4494b3d74fe63b4bb2569d3f2e7c75c4fc01cfe029fb26a55e675ac91d7409b7",
+          "seed": "b7976b24e6dfeb1f3e6009e21b1f5ef9dd83b654be654f7a0f249da7f464a30f"
+        }
+      },
+      "seeds": {
+        "guided_seq_2_stream": 20260925
+      },
+      "updated": "2026-09-19T17:49:29+00:00"
+    },
+    "guided-seq-3": {
+      "allocation": {
+        "added": [
+          12,
+          4,
+          6,
+          11,
+          5,
+          7,
+          0,
+          6,
+          8,
+          4,
+          6,
+          5,
+          9,
+          8,
+          9
+        ],
+        "edges": [
+          0.5,
+          0.5900861491455028,
+          0.6964033268267372,
+          0.8218759147586129,
+          0.9699551872306948,
+          1.1447142425533319,
+          1.3509600385206135,
+          1.594365613560178,
+          1.8816261304714648,
+          2.22064303492292,
+          2.6207413942088964,
+          3.092926394429888,
+          3.650186051359235,
+          4.307848461422399,
+          5.084003419406245,
+          6.0
+        ],
+        "trained_counts": [
+          23,
+          31,
+          29,
+          24,
+          30,
+          27,
+          42,
+          28,
+          26,
+          30,
+          28,
+          29,
+          25,
+          26,
+          25
+        ]
+      },
+      "design_sha256": "9215c0b30639c3dde8f8911d8158c37dda1ea99eece6c3ec00b09fb67f158127",
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "0d7efb8863265400b193182fc2e7734f0ae1c3c399b8e5b231c6aa709495cc64",
+      "n": 100,
+      "repair": {
+        "n_boundary": 0,
+        "n_repaired": 0,
+        "n_rows": 100,
+        "n_solver_error": 0,
+        "n_unresolved": 0
+      },
+      "results_sha256": "9bd3b4db85efb8b41bb6ce9576926f9f19304d4264a751aa56b5d11144097f39",
+      "screener": {
+        "n_train": 500,
+        "oob_r2_log": 0.980644719166412,
+        "oof_rmse": 0.7428743911980864,
+        "oof_rmse_selection_range": 0.2839599103736725,
+        "oof_spearman": 0.9912670370681482,
+        "trained_on": [
+          "seed",
+          "guided-seq-1",
+          "guided-seq-2"
+        ],
+        "trained_on_sha256": {
+          "guided-seq-1": "4494b3d74fe63b4bb2569d3f2e7c75c4fc01cfe029fb26a55e675ac91d7409b7",
+          "guided-seq-2": "8db751ae2ce7a0ce1cdf66d8940b7d35d3b7d28417ff26a088a2bc5e0cd1ec4d",
+          "seed": "b7976b24e6dfeb1f3e6009e21b1f5ef9dd83b654be654f7a0f249da7f464a30f"
+        }
+      },
+      "seeds": {
+        "guided_seq_3_stream": 20260926
+      },
+      "updated": "2026-09-19T17:53:46+00:00"
+    },
     "lhs-extension": {
       "design_sha256": "d28f0908e26d8ae4d273fc1cf8dae379a0291dc9b7af30719bc521a5c64ad1c4",
       "environment": {
