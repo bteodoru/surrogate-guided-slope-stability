@@ -1,0 +1,23 @@
+\begin{table}[htbp]
+\centering
+\caption{RMSE on test-stratified by subset, log and FOS scale. The decision range [0.5, 2) carries the primary criterion (log scale).}
+\label{tab:test-stratified__fos-rmse:subsets}
+\begin{tabular}{lrrrrrrr}
+\toprule
+family & arm & log-RMSE all & log-RMSE selection-range & log-RMSE decision-range & RMSE all & RMSE selection-range & RMSE decision-range \\
+\midrule
+rf & A & 0.176 & 0.121 & 0.129 & 0.843 & 0.384 & 0.142 \\
+rf & B & 0.114 & 0.089 & 0.098 & 0.548 & 0.289 & 0.102 \\
+rf & C & 0.103 & 0.090 & 0.117 & 0.437 & 0.258 & 0.124 \\
+rf & C0 (ablation) & 0.131 & 0.119 & 0.177 & 0.464 & 0.284 & 0.204 \\
+rf & C-log & 0.114 & 0.102 & 0.123 & 0.530 & 0.301 & 0.164 \\
+rf & C0-log (ablation) & 0.172 & 0.168 & 0.207 & 0.704 & 0.508 & 0.313 \\
+gbm & A & 0.072 & 0.065 & 0.078 & 0.277 & 0.194 & 0.093 \\
+gbm & B & 0.047 & 0.045 & 0.049 & 0.214 & 0.144 & 0.055 \\
+gbm & C & 0.045 & 0.043 & 0.045 & 0.192 & 0.141 & 0.049 \\
+gbm & C0 (ablation) & 0.085 & 0.078 & 0.087 & 0.304 & 0.212 & 0.110 \\
+gbm & C-log & 0.055 & 0.049 & 0.041 & 0.259 & 0.163 & 0.060 \\
+gbm & C0-log (ablation) & 0.078 & 0.078 & 0.088 & 0.317 & 0.243 & 0.120 \\
+\bottomrule
+\end{tabular}
+\end{table}

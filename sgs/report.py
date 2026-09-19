@@ -73,13 +73,27 @@ def global_frame(metrics: dict) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def zone_frame(metrics: dict, family: str) -> pd.DataFrame:
+def zone_frame(metrics: dict, family: str, key: str = "rmse") -> pd.DataFrame:
     arms = metrics["arms"][family]
     reference = arms[next(iter(config.ARMS))]["zones"]
     table = {"zone": [z["zone"] for z in reference], "n": [z["n"] for z in reference]}
     for arm in config.ARMS:
-        table[arm_label(arm)] = [z["rmse"] for z in arms[arm]["zones"]]
+        table[arm_label(arm)] = [z[key] for z in arms[arm]["zones"]]
     return pd.DataFrame(table)
+
+
+def subset_frame(metrics: dict) -> pd.DataFrame:
+    """Log- and FOS-scale RMSE per arm on every subset; the decision range carries the primary criterion."""
+    rows = []
+    for family, arms in metrics["arms"].items():
+        for arm in config.ARMS:
+            row = {"family": family, "arm": arm_label(arm)}
+            for subset, m in arms[arm]["subsets"].items():
+                row[f"log-RMSE {subset}"] = m["log_rmse"]
+            for subset, m in arms[arm]["subsets"].items():
+                row[f"RMSE {subset}"] = m["rmse"]
+            rows.append(row)
+    return pd.DataFrame(rows)
 
 
 def _format_pvalue(p: float) -> str:
@@ -92,7 +106,7 @@ def comparison_frame(metrics: dict) -> pd.DataFrame:
     rows = []
     for c in metrics["comparisons"]:
         w, b = c["wilcoxon"], c["bootstrap"]
-        rows.append({"family": c["family"], "subset": c["subset"],
+        rows.append({"family": c["family"], "subset": c["subset"], "scale": c["scale"],
                      "comparison": f"{c['first']} vs {c['second']}", "alternative": w["alternative"],
                      "n": w["n"], "median d": w["median_d"], "P(d<0)": w["p_d_lt_0"],
                      "p": _format_pvalue(w["pvalue"]),
@@ -156,8 +170,8 @@ def budget_frame() -> pd.DataFrame:
                          for arm, spec in config.ARMS.items() if not spec.ablation])
 
 
-def fig_zone_rmse(metrics: dict, family: str):
-    frame = zone_frame(metrics, family)
+def fig_zone_rmse(metrics: dict, family: str, key: str = "rmse"):
+    frame = zone_frame(metrics, family, key)
     labels = [arm_label(a) for a in config.ARMS]
     x = np.arange(len(frame))
     width = 0.8 / len(labels)
@@ -165,7 +179,7 @@ def fig_zone_rmse(metrics: dict, family: str):
     for i, label in enumerate(labels):
         ax.bar(x + i * width, frame[label].astype(float), width, label=label)
     ax.set_xticks(x + width * (len(labels) - 1) / 2, frame["zone"])
-    ax.set_ylabel("RMSE (FOS)")
+    ax.set_ylabel("RMSE (log FOS)" if key == "log_rmse" else "RMSE (FOS)")
     ax.set_title(f"{metrics['test']} — {family}")
     ax.legend(frameon=False)
     fig.tight_layout()
@@ -239,11 +253,17 @@ def run() -> None:
             _save_table(tables / f"{stem}__conformal.tex", booktabs(
                 conformal_frame(metrics), caption=f"Cross-conformal-style intervals on {test}, "
                 "empirical coverage.", label=f"tab:{stem}:conformal"))
+            _save_table(tables / f"{stem}__subsets.tex", booktabs(
+                subset_frame(metrics), caption=f"RMSE on {test} by subset, log and FOS scale. "
+                "The decision range [0.5, 2) carries the primary criterion (log scale).",
+                label=f"tab:{stem}:subsets"))
             for family in metrics["arms"]:
-                _save_table(tables / f"{stem}__zones_{family}.tex", booktabs(
-                    zone_frame(metrics, family), caption=f"Zone RMSE on {test}, {family}.",
-                    label=f"tab:{stem}:zones:{family}"))
-                _save_figure(figures / f"{stem}__zones_{family}.pdf", fig_zone_rmse(metrics, family))
+                for key, tag in (("rmse", "zones"), ("log_rmse", "zones_log")):
+                    scale = "log FOS" if key == "log_rmse" else "FOS"
+                    _save_table(tables / f"{stem}__{tag}_{family}.tex", booktabs(
+                        zone_frame(metrics, family, key), caption=f"Zone RMSE ({scale}) on {test}, {family}.",
+                        label=f"tab:{stem}:{tag}:{family}"))
+                    _save_figure(figures / f"{stem}__{tag}_{family}.pdf", fig_zone_rmse(metrics, family, key))
 
     if len(config.ACTIVE_SCORINGS) > 1:
         by_test = {test: {s: load_metrics(test, s) for s in config.ACTIVE_SCORINGS

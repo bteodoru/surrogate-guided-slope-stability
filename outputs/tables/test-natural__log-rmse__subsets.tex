@@ -1,0 +1,23 @@
+\begin{table}[htbp]
+\centering
+\caption{RMSE on test-natural by subset, log and FOS scale. The decision range [0.5, 2) carries the primary criterion (log scale).}
+\label{tab:test-natural__log-rmse:subsets}
+\begin{tabular}{lrrrrrrr}
+\toprule
+family & arm & log-RMSE all & log-RMSE selection-range & log-RMSE decision-range & RMSE all & RMSE selection-range & RMSE decision-range \\
+\midrule
+rf & A & 0.169 & 0.133 & 0.140 & 0.572 & 0.350 & 0.155 \\
+rf & B & 0.133 & 0.096 & 0.098 & 0.455 & 0.263 & 0.120 \\
+rf & C & 0.118 & 0.093 & 0.111 & 0.385 & 0.212 & 0.139 \\
+rf & C0 (ablation) & 0.222 & 0.121 & 0.152 & 1.453 & 0.240 & 0.179 \\
+rf & C-log & 0.135 & 0.116 & 0.119 & 0.438 & 0.308 & 0.156 \\
+rf & C0-log (ablation) & 0.247 & 0.183 & 0.195 & 1.542 & 0.472 & 0.290 \\
+gbm & A & 0.088 & 0.071 & 0.076 & 0.351 & 0.188 & 0.096 \\
+gbm & B & 0.059 & 0.044 & 0.050 & 0.290 & 0.109 & 0.064 \\
+gbm & C & 0.062 & 0.053 & 0.057 & 0.271 & 0.131 & 0.075 \\
+gbm & C0 (ablation) & 0.177 & 0.088 & 0.098 & 1.383 & 0.203 & 0.141 \\
+gbm & C-log & 0.056 & 0.049 & 0.052 & 0.305 & 0.129 & 0.071 \\
+gbm & C0-log (ablation) & 0.169 & 0.089 & 0.084 & 1.419 & 0.243 & 0.121 \\
+\bottomrule
+\end{tabular}
+\end{table}

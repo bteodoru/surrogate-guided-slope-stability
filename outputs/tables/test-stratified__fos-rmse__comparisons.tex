@@ -2,46 +2,118 @@
 \centering
 \caption{Paired comparisons on test-stratified: Wilcoxon on d = |e1| - |e2| (smaller absolute errors) and bootstrap ΔRMSE.}
 \label{tab:test-stratified__fos-rmse:comparisons}
-\begin{tabular}{lrrrrrrrrrr}
+\begin{tabular}{lrrrrrrrrrrr}
 \toprule
-family & subset & comparison & alternative & n & median d & P(d<0) & p & ΔRMSE & CI low & CI high \\
+family & subset & scale & comparison & alternative & n & median d & P(d<0) & p & ΔRMSE & CI low & CI high \\
 \midrule
-gbm & all & C vs B & less & 150 & -0.003 & 0.527 & 0.170 & -0.022 & -0.068 & 0.023 \\
-gbm & selection-range & C vs B & less & 124 & -0.001 & 0.516 & 0.238 & -0.003 & -0.028 & 0.023 \\
-gbm & all & C vs A & less & 150 & -0.033 & 0.667 & <0.001 & -0.086 & -0.124 & -0.048 \\
-gbm & selection-range & C vs A & less & 124 & -0.029 & 0.653 & <0.001 & -0.054 & -0.097 & -0.014 \\
-gbm & all & C vs C0 & two-sided & 150 & -0.043 & 0.660 & <0.001 & -0.113 & -0.177 & -0.052 \\
-gbm & selection-range & C vs C0 & two-sided & 124 & -0.036 & 0.653 & <0.001 & -0.071 & -0.109 & -0.034 \\
-gbm & all & C0 vs B & two-sided & 150 & 0.043 & 0.373 & <0.001 & 0.090 & 0.020 & 0.163 \\
-gbm & selection-range & C0 vs B & two-sided & 124 & 0.039 & 0.379 & 0.002 & 0.068 & 0.032 & 0.105 \\
-gbm & all & C-log vs B & less & 150 & 0.009 & 0.440 & 0.943 & 0.045 & -0.014 & 0.100 \\
-gbm & selection-range & C-log vs B & less & 124 & 0.006 & 0.452 & 0.878 & 0.019 & -0.003 & 0.042 \\
-gbm & all & C-log vs A & less & 150 & -0.022 & 0.573 & 0.094 & -0.018 & -0.070 & 0.032 \\
-gbm & selection-range & C-log vs A & less & 124 & -0.024 & 0.581 & 0.137 & -0.031 & -0.077 & 0.012 \\
-gbm & all & C-log vs C & two-sided & 150 & 0.007 & 0.433 & 0.043 & 0.067 & 0.020 & 0.114 \\
-gbm & selection-range & C-log vs C & two-sided & 124 & 0.007 & 0.435 & 0.106 & 0.022 & -0.004 & 0.047 \\
-gbm & all & C-log vs C0-log & two-sided & 150 & -0.026 & 0.587 & 0.019 & -0.058 & -0.131 & 0.015 \\
-gbm & selection-range & C-log vs C0-log & two-sided & 124 & -0.029 & 0.605 & 0.007 & -0.080 & -0.136 & -0.027 \\
-gbm & all & C0-log vs B & two-sided & 150 & 0.043 & 0.367 & <0.001 & 0.103 & 0.057 & 0.150 \\
-gbm & selection-range & C0-log vs B & two-sided & 124 & 0.037 & 0.379 & <0.001 & 0.099 & 0.054 & 0.147 \\
-rf & all & C vs B & less & 150 & -0.032 & 0.580 & 0.016 & -0.111 & -0.206 & -0.015 \\
-rf & selection-range & C vs B & less & 124 & -0.022 & 0.573 & 0.033 & -0.031 & -0.079 & 0.017 \\
-rf & all & C vs A & less & 150 & -0.085 & 0.760 & <0.001 & -0.406 & -0.534 & -0.280 \\
-rf & selection-range & C vs A & less & 124 & -0.050 & 0.710 & <0.001 & -0.126 & -0.170 & -0.083 \\
-rf & all & C vs C0 & two-sided & 150 & -0.023 & 0.600 & 0.004 & -0.027 & -0.050 & -0.004 \\
-rf & selection-range & C vs C0 & two-sided & 124 & -0.014 & 0.581 & 0.030 & -0.026 & -0.057 & 0.004 \\
-rf & all & C0 vs B & two-sided & 150 & 0.002 & 0.487 & 0.944 & -0.084 & -0.178 & 0.016 \\
-rf & selection-range & C0 vs B & two-sided & 124 & 0.003 & 0.476 & 0.623 & -0.005 & -0.057 & 0.046 \\
-rf & all & C-log vs B & less & 150 & 0.004 & 0.493 & 0.834 & -0.018 & -0.091 & 0.063 \\
-rf & selection-range & C-log vs B & less & 124 & 0.004 & 0.492 & 0.815 & 0.012 & -0.030 & 0.055 \\
-rf & all & C-log vs A & less & 150 & -0.070 & 0.700 & <0.001 & -0.314 & -0.404 & -0.217 \\
-rf & selection-range & C-log vs A & less & 124 & -0.034 & 0.645 & <0.001 & -0.083 & -0.128 & -0.036 \\
-rf & all & C-log vs C & two-sided & 150 & 0.015 & 0.453 & 0.010 & 0.093 & 0.017 & 0.169 \\
-rf & selection-range & C-log vs C & two-sided & 124 & 0.008 & 0.476 & 0.069 & 0.044 & 0.002 & 0.087 \\
-rf & all & C-log vs C0-log & two-sided & 150 & -0.086 & 0.733 & <0.001 & -0.174 & -0.251 & -0.107 \\
-rf & selection-range & C-log vs C0-log & two-sided & 124 & -0.093 & 0.750 & <0.001 & -0.207 & -0.308 & -0.117 \\
-rf & all & C0-log vs B & two-sided & 150 & 0.088 & 0.353 & <0.001 & 0.156 & 0.068 & 0.252 \\
-rf & selection-range & C0-log vs B & two-sided & 124 & 0.088 & 0.339 & <0.001 & 0.219 & 0.135 & 0.306 \\
+gbm & all & log & C vs B & less & 150 & -0.003 & 0.533 & 0.227 & -0.002 & -0.009 & 0.004 \\
+gbm & all & fos & C vs B & less & 150 & -0.003 & 0.527 & 0.170 & -0.022 & -0.068 & 0.023 \\
+gbm & selection-range & log & C vs B & less & 124 & -0.001 & 0.524 & 0.320 & -0.002 & -0.008 & 0.005 \\
+gbm & selection-range & fos & C vs B & less & 124 & -0.001 & 0.516 & 0.238 & -0.003 & -0.028 & 0.023 \\
+gbm & decision-range & log & C vs B & less & 36 & 0.002 & 0.444 & 0.528 & -0.005 & -0.017 & 0.007 \\
+gbm & decision-range & fos & C vs B & less & 36 & 0.002 & 0.417 & 0.503 & -0.006 & -0.021 & 0.009 \\
+gbm & all & log & C vs A & less & 150 & -0.013 & 0.667 & <0.001 & -0.027 & -0.040 & -0.017 \\
+gbm & all & fos & C vs A & less & 150 & -0.033 & 0.667 & <0.001 & -0.086 & -0.124 & -0.048 \\
+gbm & selection-range & log & C vs A & less & 124 & -0.013 & 0.653 & <0.001 & -0.021 & -0.030 & -0.013 \\
+gbm & selection-range & fos & C vs A & less & 124 & -0.029 & 0.653 & <0.001 & -0.054 & -0.097 & -0.014 \\
+gbm & decision-range & log & C vs A & less & 36 & -0.019 & 0.750 & <0.001 & -0.033 & -0.046 & -0.020 \\
+gbm & decision-range & fos & C vs A & less & 36 & -0.023 & 0.750 & <0.001 & -0.044 & -0.063 & -0.023 \\
+gbm & all & log & C vs C0 & two-sided & 150 & -0.017 & 0.660 & <0.001 & -0.041 & -0.053 & -0.028 \\
+gbm & all & fos & C vs C0 & two-sided & 150 & -0.043 & 0.660 & <0.001 & -0.113 & -0.177 & -0.052 \\
+gbm & selection-range & log & C vs C0 & two-sided & 124 & -0.013 & 0.653 & <0.001 & -0.034 & -0.047 & -0.022 \\
+gbm & selection-range & fos & C vs C0 & two-sided & 124 & -0.036 & 0.653 & <0.001 & -0.071 & -0.109 & -0.034 \\
+gbm & decision-range & log & C vs C0 & two-sided & 36 & -0.013 & 0.639 & 0.017 & -0.043 & -0.068 & -0.018 \\
+gbm & decision-range & fos & C vs C0 & two-sided & 36 & -0.011 & 0.639 & 0.018 & -0.061 & -0.100 & -0.025 \\
+gbm & all & log & C0 vs B & two-sided & 150 & 0.016 & 0.367 & <0.001 & 0.038 & 0.025 & 0.051 \\
+gbm & all & fos & C0 vs B & two-sided & 150 & 0.043 & 0.373 & <0.001 & 0.090 & 0.020 & 0.163 \\
+gbm & selection-range & log & C0 vs B & two-sided & 124 & 0.016 & 0.371 & <0.001 & 0.033 & 0.021 & 0.045 \\
+gbm & selection-range & fos & C0 vs B & two-sided & 124 & 0.039 & 0.379 & 0.002 & 0.068 & 0.032 & 0.105 \\
+gbm & decision-range & log & C0 vs B & two-sided & 36 & 0.027 & 0.278 & 0.032 & 0.038 & 0.015 & 0.060 \\
+gbm & decision-range & fos & C0 vs B & two-sided & 36 & 0.020 & 0.278 & 0.024 & 0.055 & 0.021 & 0.086 \\
+gbm & all & log & C-log vs B & less & 150 & 0.003 & 0.440 & 0.878 & 0.008 & 0.000 & 0.016 \\
+gbm & all & fos & C-log vs B & less & 150 & 0.009 & 0.440 & 0.943 & 0.045 & -0.014 & 0.100 \\
+gbm & selection-range & log & C-log vs B & less & 124 & 0.003 & 0.452 & 0.746 & 0.005 & -0.003 & 0.012 \\
+gbm & selection-range & fos & C-log vs B & less & 124 & 0.006 & 0.452 & 0.878 & 0.019 & -0.003 & 0.042 \\
+gbm & decision-range & log & C-log vs B & less & 36 & -0.011 & 0.583 & 0.081 & -0.008 & -0.025 & 0.009 \\
+gbm & decision-range & fos & C-log vs B & less & 36 & -0.008 & 0.583 & 0.150 & 0.005 & -0.020 & 0.027 \\
+gbm & all & log & C-log vs A & less & 150 & -0.011 & 0.580 & 0.004 & -0.017 & -0.029 & -0.006 \\
+gbm & all & fos & C-log vs A & less & 150 & -0.022 & 0.573 & 0.094 & -0.018 & -0.070 & 0.032 \\
+gbm & selection-range & log & C-log vs A & less & 124 & -0.011 & 0.581 & 0.007 & -0.015 & -0.025 & -0.005 \\
+gbm & selection-range & fos & C-log vs A & less & 124 & -0.024 & 0.581 & 0.137 & -0.031 & -0.077 & 0.012 \\
+gbm & decision-range & log & C-log vs A & less & 36 & -0.042 & 0.806 & <0.001 & -0.037 & -0.052 & -0.020 \\
+gbm & decision-range & fos & C-log vs A & less & 36 & -0.045 & 0.806 & <0.001 & -0.033 & -0.055 & -0.008 \\
+gbm & all & log & C-log vs C & two-sided & 150 & 0.004 & 0.440 & 0.123 & 0.011 & 0.003 & 0.018 \\
+gbm & all & fos & C-log vs C & two-sided & 150 & 0.007 & 0.433 & 0.043 & 0.067 & 0.020 & 0.114 \\
+gbm & selection-range & log & C-log vs C & two-sided & 124 & 0.003 & 0.444 & 0.277 & 0.006 & -0.001 & 0.014 \\
+gbm & selection-range & fos & C-log vs C & two-sided & 124 & 0.007 & 0.435 & 0.106 & 0.022 & -0.004 & 0.047 \\
+gbm & decision-range & log & C-log vs C & two-sided & 36 & -0.006 & 0.556 & 0.245 & -0.003 & -0.019 & 0.013 \\
+gbm & decision-range & fos & C-log vs C & two-sided & 36 & -0.007 & 0.556 & 0.346 & 0.011 & -0.012 & 0.031 \\
+gbm & all & log & C-log vs C0-log & two-sided & 150 & -0.016 & 0.593 & 0.001 & -0.023 & -0.035 & -0.010 \\
+gbm & all & fos & C-log vs C0-log & two-sided & 150 & -0.026 & 0.587 & 0.019 & -0.058 & -0.131 & 0.015 \\
+gbm & selection-range & log & C-log vs C0-log & two-sided & 124 & -0.017 & 0.613 & <0.001 & -0.028 & -0.041 & -0.016 \\
+gbm & selection-range & fos & C-log vs C0-log & two-sided & 124 & -0.029 & 0.605 & 0.007 & -0.080 & -0.136 & -0.027 \\
+gbm & decision-range & log & C-log vs C0-log & two-sided & 36 & -0.040 & 0.722 & <0.001 & -0.047 & -0.066 & -0.027 \\
+gbm & decision-range & fos & C-log vs C0-log & two-sided & 36 & -0.027 & 0.722 & <0.001 & -0.060 & -0.086 & -0.032 \\
+gbm & all & log & C0-log vs B & two-sided & 150 & 0.014 & 0.367 & <0.001 & 0.031 & 0.021 & 0.041 \\
+gbm & all & fos & C0-log vs B & two-sided & 150 & 0.043 & 0.367 & <0.001 & 0.103 & 0.057 & 0.150 \\
+gbm & selection-range & log & C0-log vs B & two-sided & 124 & 0.014 & 0.379 & <0.001 & 0.033 & 0.021 & 0.044 \\
+gbm & selection-range & fos & C0-log vs B & two-sided & 124 & 0.037 & 0.379 & <0.001 & 0.099 & 0.054 & 0.147 \\
+gbm & decision-range & log & C0-log vs B & two-sided & 36 & 0.029 & 0.361 & 0.008 & 0.039 & 0.016 & 0.063 \\
+gbm & decision-range & fos & C0-log vs B & two-sided & 36 & 0.037 & 0.361 & 0.004 & 0.065 & 0.030 & 0.100 \\
+rf & all & log & C vs B & less & 150 & -0.012 & 0.580 & 0.104 & -0.011 & -0.030 & 0.006 \\
+rf & all & fos & C vs B & less & 150 & -0.032 & 0.580 & 0.016 & -0.111 & -0.206 & -0.015 \\
+rf & selection-range & log & C vs B & less & 124 & -0.009 & 0.573 & 0.137 & 0.001 & -0.011 & 0.014 \\
+rf & selection-range & fos & C vs B & less & 124 & -0.022 & 0.573 & 0.033 & -0.031 & -0.079 & 0.017 \\
+rf & decision-range & log & C vs B & less & 36 & 0.017 & 0.417 & 0.941 & 0.020 & -0.002 & 0.043 \\
+rf & decision-range & fos & C vs B & less & 36 & 0.024 & 0.417 & 0.926 & 0.022 & -0.005 & 0.051 \\
+rf & all & log & C vs A & less & 150 & -0.042 & 0.753 & <0.001 & -0.073 & -0.099 & -0.050 \\
+rf & all & fos & C vs A & less & 150 & -0.085 & 0.760 & <0.001 & -0.406 & -0.534 & -0.280 \\
+rf & selection-range & log & C vs A & less & 124 & -0.025 & 0.702 & <0.001 & -0.031 & -0.044 & -0.017 \\
+rf & selection-range & fos & C vs A & less & 124 & -0.050 & 0.710 & <0.001 & -0.126 & -0.170 & -0.083 \\
+rf & decision-range & log & C vs A & less & 36 & -0.017 & 0.611 & 0.129 & -0.011 & -0.036 & 0.016 \\
+rf & decision-range & fos & C vs A & less & 36 & -0.022 & 0.611 & 0.136 & -0.018 & -0.050 & 0.012 \\
+rf & all & log & C vs C0 & two-sided & 150 & -0.007 & 0.600 & 0.006 & -0.028 & -0.043 & -0.013 \\
+rf & all & fos & C vs C0 & two-sided & 150 & -0.023 & 0.600 & 0.004 & -0.027 & -0.050 & -0.004 \\
+rf & selection-range & log & C vs C0 & two-sided & 124 & -0.006 & 0.581 & 0.032 & -0.029 & -0.046 & -0.011 \\
+rf & selection-range & fos & C vs C0 & two-sided & 124 & -0.014 & 0.581 & 0.030 & -0.026 & -0.057 & 0.004 \\
+rf & decision-range & log & C vs C0 & two-sided & 36 & -0.011 & 0.556 & 0.083 & -0.060 & -0.097 & -0.023 \\
+rf & decision-range & fos & C vs C0 & two-sided & 36 & -0.011 & 0.556 & 0.127 & -0.080 & -0.138 & -0.024 \\
+rf & all & log & C0 vs B & two-sided & 150 & 0.002 & 0.487 & 0.454 & 0.017 & -0.005 & 0.039 \\
+rf & all & fos & C0 vs B & two-sided & 150 & 0.002 & 0.487 & 0.944 & -0.084 & -0.178 & 0.016 \\
+rf & selection-range & log & C0 vs B & two-sided & 124 & 0.002 & 0.476 & 0.293 & 0.030 & 0.009 & 0.050 \\
+rf & selection-range & fos & C0 vs B & two-sided & 124 & 0.003 & 0.476 & 0.623 & -0.005 & -0.057 & 0.046 \\
+rf & decision-range & log & C0 vs B & two-sided & 36 & 0.039 & 0.278 & 0.002 & 0.080 & 0.038 & 0.120 \\
+rf & decision-range & fos & C0 vs B & two-sided & 36 & 0.051 & 0.278 & 0.002 & 0.101 & 0.047 & 0.153 \\
+rf & all & log & C-log vs B & less & 150 & 0.002 & 0.487 & 0.806 & 0.001 & -0.015 & 0.016 \\
+rf & all & fos & C-log vs B & less & 150 & 0.004 & 0.493 & 0.834 & -0.018 & -0.091 & 0.063 \\
+rf & selection-range & log & C-log vs B & less & 124 & 0.002 & 0.484 & 0.846 & 0.013 & 0.000 & 0.025 \\
+rf & selection-range & fos & C-log vs B & less & 124 & 0.004 & 0.492 & 0.815 & 0.012 & -0.030 & 0.055 \\
+rf & decision-range & log & C-log vs B & less & 36 & 0.016 & 0.361 & 0.961 & 0.026 & -0.001 & 0.050 \\
+rf & decision-range & fos & C-log vs B & less & 36 & 0.014 & 0.361 & 0.986 & 0.062 & 0.024 & 0.101 \\
+rf & all & log & C-log vs A & less & 150 & -0.029 & 0.693 & <0.001 & -0.062 & -0.086 & -0.039 \\
+rf & all & fos & C-log vs A & less & 150 & -0.070 & 0.700 & <0.001 & -0.314 & -0.404 & -0.217 \\
+rf & selection-range & log & C-log vs A & less & 124 & -0.014 & 0.637 & <0.001 & -0.019 & -0.035 & -0.003 \\
+rf & selection-range & fos & C-log vs A & less & 124 & -0.034 & 0.645 & <0.001 & -0.083 & -0.128 & -0.036 \\
+rf & decision-range & log & C-log vs A & less & 36 & -0.010 & 0.556 & 0.240 & -0.005 & -0.040 & 0.026 \\
+rf & decision-range & fos & C-log vs A & less & 36 & -0.012 & 0.583 & 0.301 & 0.022 & -0.023 & 0.069 \\
+rf & all & log & C-log vs C & two-sided & 150 & 0.008 & 0.453 & 0.076 & 0.012 & -0.004 & 0.027 \\
+rf & all & fos & C-log vs C & two-sided & 150 & 0.015 & 0.453 & 0.010 & 0.093 & 0.017 & 0.169 \\
+rf & selection-range & log & C-log vs C & two-sided & 124 & 0.003 & 0.476 & 0.199 & 0.012 & -0.003 & 0.027 \\
+rf & selection-range & fos & C-log vs C & two-sided & 124 & 0.008 & 0.476 & 0.069 & 0.044 & 0.002 & 0.087 \\
+rf & decision-range & log & C-log vs C & two-sided & 36 & -0.010 & 0.556 & 0.681 & 0.006 & -0.026 & 0.037 \\
+rf & decision-range & fos & C-log vs C & two-sided & 36 & -0.009 & 0.556 & 0.957 & 0.040 & -0.003 & 0.087 \\
+rf & all & log & C-log vs C0-log & two-sided & 150 & -0.026 & 0.733 & <0.001 & -0.058 & -0.079 & -0.038 \\
+rf & all & fos & C-log vs C0-log & two-sided & 150 & -0.086 & 0.733 & <0.001 & -0.174 & -0.251 & -0.107 \\
+rf & selection-range & log & C-log vs C0-log & two-sided & 124 & -0.033 & 0.750 & <0.001 & -0.065 & -0.091 & -0.042 \\
+rf & selection-range & fos & C-log vs C0-log & two-sided & 124 & -0.093 & 0.750 & <0.001 & -0.207 & -0.308 & -0.117 \\
+rf & decision-range & log & C-log vs C0-log & two-sided & 36 & -0.040 & 0.722 & 0.002 & -0.083 & -0.123 & -0.039 \\
+rf & decision-range & fos & C-log vs C0-log & two-sided & 36 & -0.041 & 0.722 & 0.001 & -0.149 & -0.230 & -0.063 \\
+rf & all & log & C0-log vs B & two-sided & 150 & 0.036 & 0.353 & <0.001 & 0.059 & 0.033 & 0.084 \\
+rf & all & fos & C0-log vs B & two-sided & 150 & 0.088 & 0.353 & <0.001 & 0.156 & 0.068 & 0.252 \\
+rf & selection-range & log & C0-log vs B & two-sided & 124 & 0.037 & 0.339 & <0.001 & 0.078 & 0.053 & 0.104 \\
+rf & selection-range & fos & C0-log vs B & two-sided & 124 & 0.088 & 0.339 & <0.001 & 0.219 & 0.135 & 0.306 \\
+rf & decision-range & log & C0-log vs B & two-sided & 36 & 0.067 & 0.306 & 0.002 & 0.109 & 0.054 & 0.157 \\
+rf & decision-range & fos & C0-log vs B & two-sided & 36 & 0.057 & 0.306 & <0.001 & 0.211 & 0.122 & 0.292 \\
 \bottomrule
 \end{tabular}
 \end{table}

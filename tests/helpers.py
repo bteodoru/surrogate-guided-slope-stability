@@ -102,8 +102,8 @@ def stub_test(n=60, seed=3, name="test-natural"):
 
 
 EVAL_KWARGS = dict(alpha=0.10, zones=config.ZONE_EDGES, comparisons=config.COMPARISONS,
-                   selection_range=config.SELECTION_RANGE, n_boot=300, bootstrap_seed=1,
-                   bootstrap_ci=0.95)
+                   selection_range=config.SELECTION_RANGE, decision_range=config.DECISION_RANGE,
+                   n_boot=300, bootstrap_seed=1, bootstrap_ci=0.95)
 
 
 def write_all_finals(monkeypatch, n=60):

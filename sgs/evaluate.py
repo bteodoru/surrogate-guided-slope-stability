@@ -20,7 +20,10 @@ from scipy import stats
 from sgs import config, data, models
 from sgs.models import FitArtifact
 
-SUBSETS = ("all", "selection-range")
+SUBSETS = ("all", "selection-range", "decision-range")
+# Paired comparisons run on both scales: log is the trained response and the
+# primary criterion, FOS the secondary one.
+SCALES = ("log", "fos")
 CONFORMAL_PROCEDURE = ("Cross-conformal-style: nested-CV out-of-fold residuals on log(FOS), "
                        "multiplicative intervals around the refit model. Coverage is reported "
                        "empirically; no formal guarantee is claimed.")
@@ -53,11 +56,20 @@ def rmse(y, p) -> float:
     return float(np.sqrt(np.mean((np.asarray(p) - np.asarray(y)) ** 2)))
 
 
+def on_scale(values, scale: str) -> np.ndarray:
+    if scale == "log":
+        return np.log(np.asarray(values, dtype=float))
+    if scale == "fos":
+        return np.asarray(values, dtype=float)
+    raise ValueError(f"unknown scale {scale!r}")
+
+
 def global_metrics(y, p) -> dict:
     e = p - y
     return {"n": int(len(y)),
             "r2": float(1 - np.sum(e ** 2) / np.sum((y - y.mean()) ** 2)),
             "rmse": rmse(y, p),
+            "log_rmse": rmse(np.log(y), np.log(p)),
             "mae": float(np.abs(e).mean()),
             "bias": float(e.mean()),
             "max_abs_error": float(np.abs(e).max())}
@@ -91,18 +103,19 @@ def zone_metrics(y, p, edges) -> list[dict]:
         mask = _zone_mask(y, lo, hi)
         n = int(mask.sum())
         row = {"zone": label, "lo": _finite(lo), "hi": _finite(hi), "n": n,
-               "rmse": None, "mae": None, "bias": None}
+               "rmse": None, "log_rmse": None, "mae": None, "bias": None}
         if n:
             e = p[mask] - y[mask]
-            row.update(rmse=float(np.sqrt(np.mean(e ** 2))), mae=float(np.abs(e).mean()),
-                       bias=float(e.mean()))
+            row.update(rmse=float(np.sqrt(np.mean(e ** 2))),
+                       log_rmse=rmse(np.log(y[mask]), np.log(p[mask])),
+                       mae=float(np.abs(e).mean()), bias=float(e.mean()))
         rows.append(row)
     return rows
 
 
-def minimax(zone_rows) -> dict:
-    worst = max((r for r in zone_rows if r["n"]), key=lambda r: r["rmse"])
-    return {"zone": worst["zone"], "rmse": worst["rmse"]}
+def minimax(zone_rows, key: str = "rmse") -> dict:
+    worst = max((r for r in zone_rows if r["n"]), key=lambda r: r[key])
+    return {"zone": worst["zone"], key: worst[key]}
 
 
 def conformal_quantile(scores, alpha: float) -> float:
@@ -133,13 +146,29 @@ def conformal(pred: Prediction, scores, *, alpha: float, edges) -> dict:
             "zones": per_zone, "procedure": CONFORMAL_PROCEDURE}
 
 
-def subset_mask(y, subset: str, selection_range) -> np.ndarray:
+def subset_mask(y, subset: str, selection_range, decision_range=None) -> np.ndarray:
     if subset == "all":
         return np.ones(len(y), dtype=bool)
     if subset == "selection-range":
         lo, hi = selection_range
         return (y >= lo) & (y <= hi)
+    if subset == "decision-range":
+        if decision_range is None:
+            raise ValueError("the decision-range subset needs decision_range")
+        lo, hi = decision_range
+        return (y >= lo) & (y < hi)
     raise ValueError(f"unknown subset {subset!r}")
+
+
+def subset_metrics(y, p, selection_range, decision_range) -> dict:
+    out = {}
+    for subset in SUBSETS:
+        m = subset_mask(y, subset, selection_range, decision_range)
+        n = int(m.sum())
+        out[subset] = {"n": n,
+                       "rmse": rmse(y[m], p[m]) if n else None,
+                       "log_rmse": rmse(np.log(y[m]), np.log(p[m])) if n else None}
+    return out
 
 
 # --- paired comparisons ---------------------------------------------------------------------
@@ -175,14 +204,16 @@ def _mask(p: Prediction, mask):
     return np.ones(len(p.ids), dtype=bool) if mask is None else np.asarray(mask, dtype=bool)
 
 
-def wilcoxon_abs(p1: Prediction, p2: Prediction, *, registry, mask=None) -> dict:
-    """Wilcoxon signed-rank on d = |e1| - |e2| with the registered alternative."""
+def wilcoxon_abs(p1: Prediction, p2: Prediction, *, registry, mask=None, scale: str = "fos") -> dict:
+    """Wilcoxon signed-rank on d = |e1| - |e2| with the registered alternative;
+    errors on the given scale (log: e = log p - log y)."""
     _check_aligned(p1, p2)
     comparison = registered(p1.arm, p2.arm, registry)
     m = _mask(p1, mask)
-    d = np.abs(p1.y_pred[m] - p1.y_true[m]) - np.abs(p2.y_pred[m] - p2.y_true[m])
+    y = on_scale(p1.y_true[m], scale)
+    d = np.abs(on_scale(p1.y_pred[m], scale) - y) - np.abs(on_scale(p2.y_pred[m], scale) - y)
     result = stats.wilcoxon(d, alternative=comparison.alternative)
-    return {"first": p1.arm, "second": p2.arm, "n": int(m.sum()),
+    return {"first": p1.arm, "second": p2.arm, "scale": scale, "n": int(m.sum()),
             "median_d": float(np.median(d)), "p_d_lt_0": float(np.mean(d < 0)),
             "statistic": float(result.statistic), "pvalue": float(result.pvalue),
             "alternative": comparison.alternative, "hypothesised": comparison.hypothesised,
@@ -190,17 +221,17 @@ def wilcoxon_abs(p1: Prediction, p2: Prediction, *, registry, mask=None) -> dict
 
 
 def paired_bootstrap(p1: Prediction, p2: Prediction, *, registry, n_boot: int, seed: int,
-                     ci: float, mask=None) -> dict:
-    """Percentile interval for RMSE(first) - RMSE(second), rows resampled jointly."""
+                     ci: float, mask=None, scale: str = "fos") -> dict:
+    """Percentile interval for RMSE(first) - RMSE(second) on the given scale, rows resampled jointly."""
     _check_aligned(p1, p2)
     registered(p1.arm, p2.arm, registry)
     m = _mask(p1, mask)
-    y, a, b = p1.y_true[m], p1.y_pred[m], p2.y_pred[m]
+    y, a, b = (on_scale(v[m], scale) for v in (p1.y_true, p1.y_pred, p2.y_pred))
     draws = np.random.default_rng(seed).integers(0, len(y), size=(n_boot, len(y)))
     delta = (np.sqrt(((a[draws] - y[draws]) ** 2).mean(axis=1))
              - np.sqrt(((b[draws] - y[draws]) ** 2).mean(axis=1)))
     tail = (1 - ci) / 2
-    return {"delta_rmse": rmse(y, a) - rmse(y, b),
+    return {"scale": scale, "delta_rmse": rmse(y, a) - rmse(y, b),
             "ci": [float(np.quantile(delta, tail)), float(np.quantile(delta, 1 - tail))],
             "ci_level": ci, "p_delta_lt_0": float(np.mean(delta < 0)), "n_boot": int(n_boot),
             "limitation": BOOTSTRAP_LIMITATION}
@@ -233,7 +264,7 @@ class EvalResult:
 
 
 def evaluate(fits: Mapping[str, FitArtifact], test: data.TestSet, *, alpha, zones, comparisons,
-             selection_range, n_boot, bootstrap_seed, bootstrap_ci) -> EvalResult:
+             selection_range, decision_range, n_boot, bootstrap_seed, bootstrap_ci) -> EvalResult:
     scorings = {fit.scoring for fit in fits.values()}
     if len(scorings) != 1:
         raise ValueError(f"evaluate takes fits of exactly one scoring, got {sorted(scorings)}")
@@ -248,6 +279,8 @@ def evaluate(fits: Mapping[str, FitArtifact], test: data.TestSet, *, alpha, zone
             "global": global_metrics(pred.y_true, pred.y_pred),
             "zones": zone_rows,
             "minimax": minimax(zone_rows),
+            "minimax_log": minimax(zone_rows, key="log_rmse"),
+            "subsets": subset_metrics(pred.y_true, pred.y_pred, selection_range, decision_range),
             "conformal": conformal(pred, fit.scores, alpha=alpha, edges=zones),
             "best_params": fit.best_params,
             "n_train": int(len(fit.train_ids)),
@@ -262,14 +295,17 @@ def evaluate(fits: Mapping[str, FitArtifact], test: data.TestSet, *, alpha, zone
                 raise ValueError(f"{family}: {comparison.first} vs {comparison.second} needs both arms; "
                                  "every arm, C0 included, must be evaluated")
             for subset in SUBSETS:
-                mask = subset_mask(test.y, subset, selection_range)
-                rows.append({
-                    "family": family, "subset": subset,
-                    "first": comparison.first, "second": comparison.second,
-                    "wilcoxon": wilcoxon_abs(first, second, registry=comparisons, mask=mask),
-                    "bootstrap": paired_bootstrap(first, second, registry=comparisons, n_boot=n_boot,
-                                                  seed=bootstrap_seed, ci=bootstrap_ci, mask=mask),
-                })
+                mask = subset_mask(test.y, subset, selection_range, decision_range)
+                for scale in SCALES:
+                    rows.append({
+                        "family": family, "subset": subset, "scale": scale,
+                        "first": comparison.first, "second": comparison.second,
+                        "wilcoxon": wilcoxon_abs(first, second, registry=comparisons, mask=mask,
+                                                 scale=scale),
+                        "bootstrap": paired_bootstrap(first, second, registry=comparisons,
+                                                      n_boot=n_boot, seed=bootstrap_seed,
+                                                      ci=bootstrap_ci, mask=mask, scale=scale),
+                    })
 
     predictions = {"row_id": test.ids.tolist(), "y_true": test.y.tolist()}
     for (family, arm), pred in sorted(preds.items()):
@@ -296,7 +332,8 @@ def run() -> None:
         for test_role in config.TEST_ROLES:
             result = evaluate(fits, data.load_test(test_role), alpha=config.ALPHA,
                               zones=config.ZONE_EDGES, comparisons=config.COMPARISONS,
-                              selection_range=config.SELECTION_RANGE, n_boot=config.N_BOOTSTRAP,
+                              selection_range=config.SELECTION_RANGE,
+                              decision_range=config.DECISION_RANGE, n_boot=config.N_BOOTSTRAP,
                               bootstrap_seed=config.SEEDS["bootstrap_resampling"],
                               bootstrap_ci=config.BOOTSTRAP_CI)
             payload = result.to_json()

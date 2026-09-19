@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 from sgs import config, evaluate, models
-from tests.helpers import EVAL_KWARGS, stub_fit, stub_fits, stub_test, ARM_SCALES, write_all_finals
+from tests.helpers import EVAL_KWARGS, OffsetModel, stub_fit, stub_fits, stub_test, ARM_SCALES, write_all_finals
 
 
 def _pred(y_true, y_pred, arm="C", family="rf", test="test-natural", ids=None):
@@ -26,17 +26,27 @@ def test_global_metrics():
 
 def test_zone_labels_and_half_open_bounds():
     labels = [z[0] for z in evaluate.zones(config.ZONE_EDGES)]
-    assert labels == ["FOS < 1", "1–1.3", "1.3–3", "3–6", "FOS ≥ 6"]
-    rows = evaluate.zone_metrics(np.array([1.0, 1.3, 6.0]), np.array([1.0, 1.3, 6.0]), config.ZONE_EDGES)
-    assert [r["n"] for r in rows] == [0, 1, 1, 0, 1]
-    assert rows[0]["rmse"] is None and rows[0]["lo"] is None and rows[-1]["hi"] is None
+    assert labels == ["FOS < 0.5", "0.5–1", "1–2", "2–6", "FOS ≥ 6"]
+    y = np.array([0.5, 1.0, 2.0, 6.0])
+    rows = evaluate.zone_metrics(y, y, config.ZONE_EDGES)
+    assert [r["n"] for r in rows] == [0, 1, 1, 1, 1]
+    assert rows[0]["rmse"] is None and rows[0]["log_rmse"] is None
+    assert rows[0]["lo"] is None and rows[-1]["hi"] is None
+
+
+def test_zone_metrics_report_the_log_scale():
+    y = np.array([1.0, 1.5])
+    p = y * np.exp([0.1, -0.1])
+    (row,) = [r for r in evaluate.zone_metrics(y, p, config.ZONE_EDGES) if r["n"]]
+    assert row["zone"] == "1–2" and row["log_rmse"] == pytest.approx(0.1)
 
 
 def test_minimax_is_the_worst_zone_rmse():
     y = np.array([0.8, 0.9, 1.1, 1.2, 2.0, 2.5, 4.0, 7.0])
     p = y + np.array([0.1, -0.1, 0.0, 0.0, 0.5, -0.5, 0.2, 0.0])
-    worst = evaluate.minimax(evaluate.zone_metrics(y, p, config.ZONE_EDGES))
-    assert worst == {"zone": "1.3–3", "rmse": pytest.approx(0.5)}
+    rows = evaluate.zone_metrics(y, p, config.ZONE_EDGES)
+    assert evaluate.minimax(rows) == {"zone": "2–6", "rmse": pytest.approx(math.sqrt(0.18))}
+    assert evaluate.minimax(rows, key="log_rmse")["zone"] == "2–6"
 
 
 def test_conformal_quantile_is_an_order_statistic():
@@ -49,21 +59,39 @@ def test_conformal_quantile_is_an_order_statistic():
 
 def test_conformal_intervals_are_multiplicative():
     y_pred = np.array([1.0, 2.0, 2.5, 8.0])
-    y_true = y_pred * np.exp([0.1, -0.2, 0.6, -0.05])   # zones 1–1.3, 1.3–3, 3–6, ≥6
+    y_true = y_pred * np.exp([0.1, -0.2, 0.6, -0.05])   # zones 1–2, 1–2, 2–6, ≥6
     out = evaluate.conformal(_pred(y_true, y_pred), np.array([0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.5, 0.5, 0.5, 0.5]),
                              alpha=0.10, edges=config.ZONE_EDGES)
     assert out["q_log"] == 0.5 and out["factor"] == pytest.approx(math.exp(0.5))
     assert out["coverage"] == 0.75                          # |0.6| > 0.5 is the only miss
     assert "no formal guarantee" in out["procedure"]
-    assert [z["n"] for z in out["zones"]] == [0, 1, 1, 1, 1]
+    assert [z["n"] for z in out["zones"]] == [0, 0, 2, 1, 1]
 
 
 def test_subset_mask():
-    y = np.array([0.4, 0.5, 3.0, 6.0, 6.1])
+    y = np.array([0.4, 0.5, 1.99, 2.0, 3.0, 6.0, 6.1])
     assert evaluate.subset_mask(y, "all", (0.5, 6.0)).all()
-    assert evaluate.subset_mask(y, "selection-range", (0.5, 6.0)).tolist() == [False, True, True, True, False]
+    assert evaluate.subset_mask(y, "selection-range", (0.5, 6.0)).tolist() == [
+        False, True, True, True, True, True, False]
+    assert evaluate.subset_mask(y, "decision-range", (0.5, 6.0), (0.5, 2.0)).tolist() == [
+        False, True, True, False, False, False, False]
     with pytest.raises(ValueError):
         evaluate.subset_mask(y, "band", (0.5, 6.0))
+    with pytest.raises(ValueError, match="decision_range"):
+        evaluate.subset_mask(y, "decision-range", (0.5, 6.0))
+
+
+def test_wilcoxon_and_bootstrap_on_the_log_scale():
+    c, b = _pair()
+    out = evaluate.wilcoxon_abs(c, b, registry=REG, scale="log")
+    d = (np.abs(np.log(c.y_pred) - np.log(c.y_true)) - np.abs(np.log(b.y_pred) - np.log(b.y_true)))
+    assert out["scale"] == "log" and out["median_d"] == pytest.approx(np.median(d))
+    boot = evaluate.paired_bootstrap(c, b, registry=REG, n_boot=200, seed=7, ci=0.95, scale="log")
+    expected = (evaluate.rmse(np.log(c.y_true), np.log(c.y_pred))
+               - evaluate.rmse(np.log(b.y_true), np.log(b.y_pred)))
+    assert boot["scale"] == "log" and boot["delta_rmse"] == pytest.approx(expected)
+    with pytest.raises(ValueError):
+        evaluate.on_scale(c.y_true, "sqrt")
 
 
 def test_predict_exponentiates_log_models():
@@ -152,11 +180,27 @@ def test_evaluate_covers_every_arm_and_registered_comparison():
     result = evaluate.evaluate(fits, stub_test(), **EVAL_KWARGS)
     assert set(result.arms) == {"rf", "gbm"}
     assert set(result.arms["rf"]) == set(config.ARMS)
-    assert len(result.comparisons) == 2 * len(config.COMPARISONS) * len(evaluate.SUBSETS)
+    assert len(result.comparisons) == (2 * len(config.COMPARISONS) * len(evaluate.SUBSETS)
+                                       * len(evaluate.SCALES))
+    assert {r["scale"] for r in result.comparisons} == set(evaluate.SCALES)
     payload = json.loads(json.dumps(result.to_json()))
     assert payload["predictions"]["row_id"][0] == "test-natural:0"
     assert "rf__C0" in payload["predictions"]
     assert "test-sampling variability only" in payload["notes"]["bootstrap"]
+
+
+def test_evaluate_reports_the_decision_range_on_the_log_scale():
+    test = stub_test()
+    result = evaluate.evaluate(stub_fits("rf"), test, **EVAL_KWARGS)
+    arm = result.arms["rf"]["B"]
+    lo, hi = config.DECISION_RANGE
+    mask = (test.y >= lo) & (test.y < hi)
+    p = np.exp(OffsetModel(ARM_SCALES["B"]).predict(test.X))
+    assert arm["subsets"]["decision-range"]["n"] == int(mask.sum())
+    assert arm["subsets"]["decision-range"]["log_rmse"] == pytest.approx(
+        evaluate.rmse(np.log(test.y[mask]), np.log(p[mask])))
+    assert set(arm["subsets"]) == set(evaluate.SUBSETS)
+    assert "log_rmse" in arm["global"] and arm["minimax_log"]["zone"]
 
 
 def test_evaluate_refuses_a_missing_arm():

@@ -238,11 +238,21 @@ ARMS = {
 
 TEST_ROLES = ("test-natural", "test-stratified")
 
-# Zones are half-open [lo, hi): FOS < 1.0, 1.0–1.3, 1.3–3.0, 3.0–6.0, ≥ 6.0.
-# 1.3 is the customary normative threshold for permanent drained conditions,
-# so 1.0–1.3 is the zone where an error has design consequence. Minimax is the
-# RMSE of the worst zone.
-ZONE_EDGES = (1.0, 1.3, 3.0, 6.0)
+# Reporting zones, half-open [lo, hi): FOS < 0.5 | 0.5–1 | 1–2 | 2–6 | FOS ≥ 6.
+# 0.5 and 6 are the ends of the selection range, 1 is limiting equilibrium and
+# 2 mirrors 0.5 around 1 in log space. Below 1 the slope is unstable, 1–2 is
+# where design decisions are taken, above 2 the reserve is comfortable. No
+# normative threshold (1.3, 1.5) is an edge. Declared 2026-09-19, replacing
+# (1.0, 1.3, 3.0, 6.0); a reporting change, no design or fit depends on it.
+# Minimax is the RMSE of the worst zone.
+ZONE_EDGES = (0.5, 1.0, 2.0, 6.0)
+
+# Primary criterion: log-RMSE on the decision range [0.5, 2), the two zones
+# around equilibrium. Declared 2026-09-19, after the C-log results and before
+# C-seq was run. It is built only from the lower end of the
+# selection range and its mirror around 1 in log space; its errors on the
+# existing arms were not computed before this declaration.
+DECISION_RANGE = (0.5, 2.0)
 
 ALPHA = 0.10
 N_BOOTSTRAP = 10_000

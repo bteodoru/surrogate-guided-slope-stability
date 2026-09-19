@@ -29,11 +29,11 @@ def test_budget_table_excludes_the_ablation():
 
 def test_comparison_frame_formats_tiny_pvalues():
     metrics = {"comparisons": [
-        {"family": "rf", "subset": "global", "first": "C", "second": "C0",
+        {"family": "rf", "subset": "global", "scale": "fos", "first": "C", "second": "C0",
          "wilcoxon": {"alternative": "less", "n": 10, "median_d": -0.1, "p_d_lt_0": 0.9,
                       "pvalue": 0.00005},
          "bootstrap": {"delta_rmse": -0.2, "ci": [-0.3, -0.1]}},
-        {"family": "rf", "subset": "global", "first": "B", "second": "A",
+        {"family": "rf", "subset": "global", "scale": "fos", "first": "B", "second": "A",
          "wilcoxon": {"alternative": "less", "n": 10, "median_d": -0.05, "p_d_lt_0": 0.7,
                       "pvalue": 0.042},
          "bootstrap": {"delta_rmse": -0.1, "ci": [-0.2, 0.0]}},
@@ -68,9 +68,18 @@ def test_run_writes_tables_and_figures(root):
     report.run()
     tables = {p.name for p in config.tables_dir().glob("*.tex")}
     assert {"budget.tex", "test-natural__log-rmse__global.tex", "test-natural__log-rmse__comparisons.tex",
-            "test-natural__log-rmse__conformal.tex", "test-natural__log-rmse__zones_rf.tex"} <= tables
-    figure = config.figures_dir() / "test-natural__log-rmse__zones_gbm.pdf"
-    assert figure.read_bytes()[:4] == b"%PDF"
+            "test-natural__log-rmse__conformal.tex", "test-natural__log-rmse__zones_rf.tex",
+            "test-natural__log-rmse__zones_log_rf.tex", "test-natural__log-rmse__subsets.tex"} <= tables
+    for name in ("test-natural__log-rmse__zones_gbm.pdf", "test-natural__log-rmse__zones_log_gbm.pdf"):
+        assert (config.figures_dir() / name).read_bytes()[:4] == b"%PDF"
+
+
+def test_subset_frame_has_every_arm_and_both_scales(root):
+    metrics = _write_metrics()
+    frame = report.subset_frame(metrics)
+    assert len(frame) == len(config.FAMILIES) * len(config.ARMS)
+    assert {"log-RMSE decision-range", "RMSE decision-range", "log-RMSE all"} <= set(frame.columns)
+    assert "C0 (ablation)" in frame["arm"].tolist()
 
 
 def test_scoring_frames_compare_the_selection_criteria():
