@@ -103,7 +103,46 @@ This is the study's central observation. Response-space allocation targets **rar
 
 Part of the gain below 1 is simply density: guided-log puts 97 points in 0.5–1, against about 33 for an LHS extension. That is the mechanism, not a confound, but it must be said explicitly.
 
-## 5. The thesis that follows
+## 5. What this study does not do: filter the training set on the response
+
+The question is prompted by BARL, which builds its training set by running the solver on an LHS design and then **discarding every analysis whose FOS falls outside [0.3, 6]**, keeping 300. It is worth stating plainly what we do instead, and why, because the two choices look similar and are not.
+
+**We never discard a solved point.** The only exclusions in `sgs` are `solver_error` and `unresolved` (`data.EXCLUSION_REASONS`); no set is filtered by the value of FOS. The selection range constrains which candidates the guided arm may *choose* from the pool, using the screener's **predicted** FOS — that is, before the analysis is paid for. Whatever the solver then returns is kept. The difference is not cosmetic:
+
+- BARL's filter is applied to the **true** FOS, so it runs the solver and then throws the result away. At a fixed budget those runs are spent and yield no training point. Ours is applied to a **predicted** FOS, so nothing paid for is wasted.
+- A filter on the true value cannot be applied at deployment, because the true value is what the model is for.
+
+**The tails in our guided sets are screener errors, and they are load-bearing.** Because the gate is on a prediction, points still land outside the range: guided-log has 45 points below 0.5 and 19 above 6, guided has 3 and 37, the three sequential batches 32 and 24 together. Those points were never intended, and they are the only reason the guided arms can say anything about the tails.
+
+### 5.1 What truncating the training response costs
+
+A tree ensemble cannot predict outside the range of its training targets. Truncation therefore does not degrade tail accuracy gradually — it caps it. The arms here measure the size of the effect, because the guided sets are truncated near 6 by construction while the LHS sets are not:
+
+| training set | n with FOS ≥ 6 | max FOS | tail quartiles |
+|---|---|---|---|
+| seed (LHS) | 20 | 21.05 | 7.99 / 10.36 / 12.83 |
+| LHS extension | 25 | 22.46 | 7.10 / 8.50 / 11.56 |
+| guided | 37 | 11.45 | 6.47 / 6.94 / 8.00 |
+| guided-log | 19 | 8.46 | 6.28 / 6.60 / 7.20 |
+
+The guided sets hold **more** points above 6 than the seed and still reach barely past it. Zone FOS ≥ 6 on test-natural, GBM, 24 test points:
+
+| arm | training | log-RMSE | MAE | bias |
+|---|---|---|---|---|
+| A | seed only | 0.108 | 0.80 | −0.54 |
+| B | seed + LHS | 0.078 | 0.55 | −0.38 |
+| C-log | seed + guided-log | 0.095 | 0.75 | −0.47 |
+| **C₀-log** | **guided-log only** | **0.508** | **3.16** | **−3.15** |
+| C₀ | guided only | 0.485 | 3.20 | −3.20 |
+| C₀-seq | sequential only | 0.490 | 3.08 | −3.04 |
+
+In every C₀ arm the bias equals the MAE to two decimals: **every** tail point is under-predicted. That is saturation, not noise. The obvious alternative explanation was checked and fails — the median distance from a tail test point to its nearest training point is 0.249 for C₀ and 0.250 for A, so parameter-space coverage is the same; what differs is that C₀'s training response stops at 11.45 with most of its mass at 6.9, while A's reaches 21.05.
+
+**Consequence for the question.** Filtering on the response is justified only if deployment is conditional on the same filter — that is, only if something independent and cheap establishes that a case lies inside the range before the surrogate is asked. Otherwise the model is deployed on a distribution whose tail it structurally cannot represent, and the failure is invisible in any metric computed on a test set filtered the same way. BARL's training maximum is 5.98 and its test pool is restricted to the same interval, so its reported R² = 0.97 is conditional on the filter. Our test-natural set keeps the full LHS response distribution, tails included, which is what makes the numbers above measurable at all.
+
+This also sharpens the reading of the guided arms: part of what the response-space allocation buys below FOS 1 is paid for above 6, and the seed's unfiltered LHS backbone is what keeps the bill small.
+
+## 6. The thesis that follows
 
 > At a fixed simulation budget, uniformizing the response space does not improve global accuracy over uniform sampling of the parameter space. It relocates accuracy along the FOS axis, following the training density actually achieved rather than the one intended; the screener controls the gap between the two. The advantage appears only where rarity, difficulty and engineering relevance coincide — in this problem, below FOS 1. In the decision zone 1–2, which LHS already covers well and where the response is flat, guided allocation loses.
 
@@ -111,10 +150,11 @@ Two caveats travel with it:
 - one realization per design so far; the replications measure the between-design variability;
 - the decision-range criterion was defined after the C-log results and before C-seq was run; it is built only from the lower end of the selection range and its log mirror around 1.
 
-## 6. Reproducing the numbers here
+## 7. Reproducing the numbers here
 
 - **Zone shares (4.2):** `data.load_role(...)` and `design.bin_counts`, per zone with `config.ZONE_EDGES`.
 - **Neighbour sensitivity (4.3):** `scipy.spatial.cKDTree` on `data.normalize`, k = 6, on the concatenation of seed, lhs-extension, test-natural, guided, guided-log and test-stratified.
 - **Gradient sensitivity (4.3):** `models.load_fit("gbm", "B", "log-rmse")`, central differences of ±5% of each parameter's range, `data.add_features` recomputed after each perturbation.
 - **Zone errors (4.4):** `outputs/metrics/test-*__log-rmse.json`, `arms[family][arm]["zones"]`.
+- **Training tails and zone bias (5.1):** `data.load_role(...)["FOS"]` per role for the tail table; `outputs/metrics/test-natural__log-rmse.json`, `arms[family][arm]["zones"]`, last entry, for log-RMSE, MAE and bias; `scipy.spatial.cKDTree` on `data.normalize` for the nearest-training-point distances.
 - **Predictions and their outcomes:** `docs/predictions-and-outcomes.md`.
