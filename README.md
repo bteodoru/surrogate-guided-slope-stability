@@ -57,6 +57,8 @@ the pipeline.
 The HYRCAN generator used in an earlier version of this study is preserved at
 the git tag `hyrcan-final`.
 
+Declared predictions and their observed outcomes: docs/predictions-and-outcomes.md.
+
 ## Notebook
 
 `notebooks/surrogate_guided_sampling.ipynb` holds the narrative and figures. It imports
