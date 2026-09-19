@@ -26,5 +26,12 @@ the *guided* set, and `results_test_bishop.csv` holds the *natural* test.
 | `results_test_bishop.csv`            | `test_natural_300.csv`     | natural-300 test            |
 | `results_test_150_bishop.csv`        | `test_stratified_150.csv`  | target-stratified-150 test  |
 
+Sets added after the last Zenodo version have no old name:
+
+| file | role |
+|---|---|
+| `surrogate_guided_log_300.csv` | guided-log selection, arms C-log and C₀-log |
+| `surrogate_guided_seq1_100.csv`, `surrogate_guided_seq2_100.csv`, `surrogate_guided_seq3_100.csv` | sequential guided-log batches, arms C-seq and C₀-seq |
+
 Rows with a non-empty `excluded` column (`solver_error`, `unresolved`) are kept
 in `final/` for transparency and dropped at load time.

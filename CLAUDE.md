@@ -5,16 +5,23 @@ Context for working on this repository. Read fully before changing code.
 ## What this project is
 
 Research code for a journal paper in applied machine learning for geotechnical
-engineering. The thesis is **data-centric**: for a surrogate model of slope
-stability, how a fixed budget of expensive physics-based analyses is allocated
-across the **response space** (Factor of Safety, FOS) matters more than the
-choice of learner.
+engineering. The study is **data-centric**: for a surrogate model of slope
+stability, it asks how a fixed budget of expensive physics-based analyses
+should be allocated across the **response space** (Factor of Safety, FOS).
 
-A preliminary Random Forest, trained on an initial Latin hypercube seed,
-screens a large pool of candidate parameter combinations; the remaining
-analysis budget is spent on candidates chosen for uniform coverage of the FOS
-range of engineering interest. The claim is validated in a budget-fair
-comparison against continued Latin hypercube sampling.
+A preliminary Random Forest (the screener), trained on an initial Latin
+hypercube seed, screens a large pool of candidate parameter combinations; the
+remaining analysis budget is spent on candidates chosen to even out the FOS
+distribution of the training set over the selection range. This is compared,
+budget-fair, against continued Latin hypercube sampling.
+
+Working thesis (reframed 2026-09-19, after the tuned-GBM and C-log results
+refuted "guided beats LHS" and "allocation matters more than the learner"):
+at a fixed budget, uniformizing the response space does not systematically
+improve accuracy over uniform sampling of the parameter space; it relocates
+accuracy along the FOS axis, following the training density actually
+achieved, and the screener controls how far that departs from the intended
+one.
 
 **The model is a measuring instrument, not an object of study.** The relevant
 comparison is always vertical (same learner, different sampling arm), never
@@ -33,9 +40,18 @@ built only in `sgs/data.py:add_features`. Target: **FOS, trained on log(FOS)**.
 "near failure", "band" or "critical band" — it is the interval targeted by the
 guided selection, nothing more.
 
-Arms (A, B, C, C₀) and set roles (seed, lhs-extension, guided, test-natural,
-test-stratified) are declared in `config.ARMS` and `config.ROLES`. C₀ is an
-ablation, not a budget arm (`budget=None, ablation=True`).
+**Decision range**: FOS ∈ [0.5, 2), log-symmetric around 1. Log-RMSE on it,
+against B, is the primary criterion; both halves are reported. Reporting zones
+are FOS < 0.5 | 0.5–1 | 1–2 | 2–6 | ≥ 6 (`config.ZONE_EDGES`). 1.3 is not an
+edge: it would read as a normative threshold. Log scale is primary, FOS scale
+secondary.
+
+Arms (A, B, C, C₀, C-log, C₀-log, C-seq, C₀-seq) and set roles (seed,
+lhs-extension, guided, test-natural, test-stratified, guided-log,
+guided-seq-1..3) are declared in `config.ARMS` and `config.ROLES`. Every C₀
+variant is an ablation, not a budget arm (`budget=None, ablation=True`). A
+screener role learns from the solved roles in `SetRole.trained_on` (default:
+the seed); the sequential batches list the seed and every earlier batch.
 
 The two test sets are two deployment scenarios, not two tests of the same
 thing. Both are disjoint from every other set by normalized distance;
@@ -43,8 +59,8 @@ thing. Both are disjoint from every other set by normalized distance;
 
 ## Non-negotiable disciplines
 
-1. **C₀ appears in every analysis**, including robustness checks. Omitting it
-   is selective reporting.
+1. **Every C₀ variant (C₀, C₀-log, C₀-seq) appears in every analysis**,
+   including robustness checks. Omitting it is selective reporting.
 2. **No threshold misclassification analysis anywhere** — no false-stable
    counts, no FOS = 1.0 crossing metrics, no classification metrics. This is a
    regression study; an engineer treats FOS 0.9 and 1.1 as effectively the
