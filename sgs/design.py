@@ -316,7 +316,14 @@ def build(role: str) -> tuple[pd.DataFrame, dict]:
             edges = bin_edges_log(config.N_BINS, config.SELECTION_RANGE)
             have = bin_counts(training["FOS"].to_numpy(float), edges)
             allocation = deficit_allocation(have, spec.n)
-            counts_key = "seed_counts" if trained == ("seed",) else "trained_counts"
+            # Keyed on the role's own declaration, not on how many roles it
+            # resolves to: a role with no `trained_on` (the SCREENER default,
+            # "seed") keeps the legacy "seed_counts" key even though it is a
+            # single role; a role that names `trained_on` explicitly always
+            # writes "trained_counts", including a sequential batch whose
+            # first entry is only ("seed",). This is what keeps every
+            # already-committed role's metadata shape unchanged.
+            counts_key = "trained_counts" if spec.trained_on else "seed_counts"
             info["allocation"] = {"edges": edges.tolist(), counts_key: have.tolist(),
                                   "added": allocation.tolist()}
             frame = guided_log_deficit(model, rng=np.random.default_rng(seeds[0]),

@@ -327,3 +327,16 @@ def test_single_role_allocation_keeps_the_original_record_format(small_designs, 
     _, info = design.build("guided-log")
     assert set(info["allocation"]) == {"edges", "seed_counts", "added"}
     assert info["screener"]["trained_on"] == "seed"
+
+
+def test_an_explicit_trained_on_of_just_the_seed_still_writes_trained_counts(small_designs, monkeypatch):
+    # The key follows the role's own declaration, not how many roles it
+    # resolves to: guided-seq-1 names trained_on=("seed",) explicitly (it is
+    # the first of a sequential family) and must keep "trained_counts", unlike
+    # guided-log, which has no trained_on and keeps the legacy "seed_counts".
+    _add_roles(monkeypatch, **{"batch-y": config.SetRole(
+        n=20, design="guided-log-deficit", seeds=("guided_log_stream",), stem="by", screener=True,
+        trained_on=("seed",))})
+    _, info = design.build("batch-y")
+    assert set(info["allocation"]) == {"edges", "trained_counts", "added"}
+    assert info["screener"]["trained_on"] == "seed"
