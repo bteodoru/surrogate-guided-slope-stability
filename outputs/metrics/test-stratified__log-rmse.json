@@ -811,6 +811,274 @@
           "min_samples_leaf": 1
         },
         "n_train": 300
+      },
+      "C-seq": {
+        "global": {
+          "n": 150,
+          "r2": 0.9600276921128541,
+          "rmse": 0.4207301379307467,
+          "log_rmse": 0.09917131348541866,
+          "mae": 0.2844679165992931,
+          "bias": -0.11845125159571628,
+          "max_abs_error": 2.0134687277290766
+        },
+        "zones": [
+          {
+            "zone": "FOS < 0.5",
+            "lo": null,
+            "hi": 0.5,
+            "n": 3,
+            "rmse": 0.09830005886662226,
+            "log_rmse": 0.22879651233016682,
+            "mae": 0.09333314859537069,
+            "bias": 0.00465946070092214
+          },
+          {
+            "zone": "0.5\u20131",
+            "lo": 0.5,
+            "hi": 1.0,
+            "n": 12,
+            "rmse": 0.08663133977662547,
+            "log_rmse": 0.10865685679943517,
+            "mae": 0.06272883222251709,
+            "bias": 0.05806276112358721
+          },
+          {
+            "zone": "1\u20132",
+            "lo": 1.0,
+            "hi": 2.0,
+            "n": 24,
+            "rmse": 0.15640605023207235,
+            "log_rmse": 0.09719119203164625,
+            "mae": 0.11596697871137267,
+            "bias": 0.00825595134331611
+          },
+          {
+            "zone": "2\u20136",
+            "lo": 2.0,
+            "hi": 6.0,
+            "n": 88,
+            "rmse": 0.31750371987164133,
+            "log_rmse": 0.08576403254760753,
+            "mae": 0.25267831981459055,
+            "bias": -0.023386587073887636
+          },
+          {
+            "zone": "FOS \u2265 6",
+            "lo": 6.0,
+            "hi": null,
+            "n": 23,
+            "rmse": 0.8590885575285855,
+            "log_rmse": 0.11468951779254279,
+            "mae": 0.7225453228122057,
+            "bias": -0.7225453228122057
+          }
+        ],
+        "minimax": {
+          "zone": "FOS \u2265 6",
+          "rmse": 0.8590885575285855
+        },
+        "minimax_log": {
+          "zone": "FOS < 0.5",
+          "log_rmse": 0.22879651233016682
+        },
+        "subsets": {
+          "all": {
+            "n": 150,
+            "rmse": 0.4207301379307467,
+            "log_rmse": 0.09917131348541866
+          },
+          "selection-range": {
+            "n": 124,
+            "rmse": 0.27749347852266776,
+            "log_rmse": 0.09050325757352048
+          },
+          "decision-range": {
+            "n": 36,
+            "rmse": 0.13715039692479714,
+            "log_rmse": 0.10115758028376262
+          }
+        },
+        "conformal": {
+          "alpha": 0.1,
+          "q_log": 0.18482221012102973,
+          "factor": 1.2030045390821342,
+          "n_calibration": 600,
+          "coverage": 0.9533333333333334,
+          "mean_width": 1.2786713752879808,
+          "zones": [
+            {
+              "zone": "FOS < 0.5",
+              "n": 3,
+              "coverage": 0.6666666666666666,
+              "mean_width": 0.17074013736630914
+            },
+            {
+              "zone": "0.5\u20131",
+              "n": 12,
+              "coverage": 0.9166666666666666,
+              "mean_width": 0.281540115401458
+            },
+            {
+              "zone": "1\u20132",
+              "n": 24,
+              "coverage": 0.9166666666666666,
+              "mean_width": 0.5461338676359592
+            },
+            {
+              "zone": "2\u20136",
+              "n": 88,
+              "coverage": 0.9886363636363636,
+              "mean_width": 1.3537198826119374
+            },
+            {
+              "zone": "FOS \u2265 6",
+              "n": 23,
+              "coverage": 0.9130434782608695,
+              "mean_width": 2.4206713914420512
+            }
+          ],
+          "procedure": "Cross-conformal-style: nested-CV out-of-fold residuals on log(FOS), multiplicative intervals around the refit model. Coverage is reported empirically; no formal guarantee is claimed."
+        },
+        "best_params": {
+          "max_features": 1.0,
+          "min_samples_leaf": 1
+        },
+        "n_train": 600
+      },
+      "C0-seq": {
+        "global": {
+          "n": 150,
+          "r2": 0.910055440766514,
+          "rmse": 0.6311192975996459,
+          "log_rmse": 0.18832325778064354,
+          "mae": 0.4475786789839851,
+          "bias": -0.10204644715419561,
+          "max_abs_error": 2.1414918656859774
+        },
+        "zones": [
+          {
+            "zone": "FOS < 0.5",
+            "lo": null,
+            "hi": 0.5,
+            "n": 3,
+            "rmse": 0.05813588959687398,
+            "log_rmse": 0.11980119993734062,
+            "mae": 0.04985487360871756,
+            "bias": 0.04418666617124813
+          },
+          {
+            "zone": "0.5\u20131",
+            "lo": 0.5,
+            "hi": 1.0,
+            "n": 12,
+            "rmse": 0.12145365915629451,
+            "log_rmse": 0.13781441331246827,
+            "mae": 0.08786996498073207,
+            "bias": 0.05730155570745777
+          },
+          {
+            "zone": "1\u20132",
+            "lo": 1.0,
+            "hi": 2.0,
+            "n": 24,
+            "rmse": 0.5222462201947453,
+            "log_rmse": 0.27760096695342856,
+            "mae": 0.2991827396573739,
+            "bias": 0.02318333721699827
+          },
+          {
+            "zone": "2\u20136",
+            "lo": 2.0,
+            "hi": 6.0,
+            "n": 88,
+            "rmse": 0.561736524926958,
+            "log_rmse": 0.17428591556891915,
+            "mae": 0.4245011933577626,
+            "bias": 0.05355410280002501
+          },
+          {
+            "zone": "FOS \u2265 6",
+            "lo": 6.0,
+            "hi": null,
+            "n": 23,
+            "rmse": 1.0476802515643249,
+            "log_rmse": 0.1512743668885518,
+            "mae": 0.9302742121627281,
+            "bias": -0.9302742121627281
+          }
+        ],
+        "minimax": {
+          "zone": "FOS \u2265 6",
+          "rmse": 1.0476802515643249
+        },
+        "minimax_log": {
+          "zone": "1\u20132",
+          "log_rmse": 0.27760096695342856
+        },
+        "subsets": {
+          "all": {
+            "n": 150,
+            "rmse": 0.6311192975996459,
+            "log_rmse": 0.18832325778064354
+          },
+          "selection-range": {
+            "n": 124,
+            "rmse": 0.5274024593086102,
+            "log_rmse": 0.19572981597552272
+          },
+          "decision-range": {
+            "n": 36,
+            "rmse": 0.4321393372273385,
+            "log_rmse": 0.24022031986186965
+          }
+        },
+        "conformal": {
+          "alpha": 0.1,
+          "q_log": 0.2590148911112924,
+          "factor": 1.2956530983988812,
+          "n_calibration": 300,
+          "coverage": 0.9133333333333333,
+          "mean_width": 1.8103870630121817,
+          "zones": [
+            {
+              "zone": "FOS < 0.5",
+              "n": 3,
+              "coverage": 1.0,
+              "mean_width": 0.2612982856292284
+            },
+            {
+              "zone": "0.5\u20131",
+              "n": 12,
+              "coverage": 0.9166666666666666,
+              "mean_width": 0.3963233249046092
+            },
+            {
+              "zone": "1\u20132",
+              "n": 24,
+              "coverage": 0.875,
+              "mean_width": 0.7773843820726022
+            },
+            {
+              "zone": "2\u20136",
+              "n": 88,
+              "coverage": 0.9090909090909091,
+              "mean_width": 1.9478501672842712
+            },
+            {
+              "zone": "FOS \u2265 6",
+              "n": 23,
+              "coverage": 0.9565217391304348,
+              "mean_width": 3.302184556753301
+            }
+          ],
+          "procedure": "Cross-conformal-style: nested-CV out-of-fold residuals on log(FOS), multiplicative intervals around the refit model. Coverage is reported empirically; no formal guarantee is claimed."
+        },
+        "best_params": {
+          "max_features": 1.0,
+          "min_samples_leaf": 1
+        },
+        "n_train": 300
       }
     },
     "gbm": {
@@ -1618,6 +1886,278 @@
               "n": 23,
               "coverage": 0.8695652173913043,
               "mean_width": 1.7760547711318624
+            }
+          ],
+          "procedure": "Cross-conformal-style: nested-CV out-of-fold residuals on log(FOS), multiplicative intervals around the refit model. Coverage is reported empirically; no formal guarantee is claimed."
+        },
+        "best_params": {
+          "learning_rate": 0.1,
+          "max_iter": 8000,
+          "max_leaf_nodes": 3,
+          "min_samples_leaf": 5
+        },
+        "n_train": 300
+      },
+      "C-seq": {
+        "global": {
+          "n": 150,
+          "r2": 0.9895097318210949,
+          "rmse": 0.21553475302544925,
+          "log_rmse": 0.0568607899912351,
+          "mae": 0.14884237001184294,
+          "bias": -0.01867459069506321,
+          "max_abs_error": 0.7923829048346276
+        },
+        "zones": [
+          {
+            "zone": "FOS < 0.5",
+            "lo": null,
+            "hi": 0.5,
+            "n": 3,
+            "rmse": 0.04677795980490079,
+            "log_rmse": 0.093394237307562,
+            "mae": 0.0368747854063722,
+            "bias": 0.02589760801241044
+          },
+          {
+            "zone": "0.5\u20131",
+            "lo": 0.5,
+            "hi": 1.0,
+            "n": 12,
+            "rmse": 0.034672540951890395,
+            "log_rmse": 0.054187384092236564,
+            "mae": 0.025970241013529263,
+            "bias": 0.009711496977572912
+          },
+          {
+            "zone": "1\u20132",
+            "lo": 1.0,
+            "hi": 2.0,
+            "n": 24,
+            "rmse": 0.08760921617832867,
+            "log_rmse": 0.05759900676392145,
+            "mae": 0.06655540683224406,
+            "bias": -0.012862656819886362
+          },
+          {
+            "zone": "2\u20136",
+            "lo": 2.0,
+            "hi": 6.0,
+            "n": 88,
+            "rmse": 0.20934455578458944,
+            "log_rmse": 0.05701431476718619,
+            "mae": 0.15519508539996796,
+            "bias": -0.010384523522163302
+          },
+          {
+            "zone": "FOS \u2265 6",
+            "lo": 6.0,
+            "hi": null,
+            "n": 23,
+            "rmse": 0.3554832674523554,
+            "log_rmse": 0.050169528357412216,
+            "mae": 0.2891126510532143,
+            "bias": -0.07708163297391062
+          }
+        ],
+        "minimax": {
+          "zone": "FOS \u2265 6",
+          "rmse": 0.3554832674523554
+        },
+        "minimax_log": {
+          "zone": "FOS < 0.5",
+          "log_rmse": 0.093394237307562
+        },
+        "subsets": {
+          "all": {
+            "n": 150,
+            "rmse": 0.21553475302544925,
+            "log_rmse": 0.0568607899912351
+          },
+          "selection-range": {
+            "n": 124,
+            "rmse": 0.18084139822317516,
+            "log_rmse": 0.056861063612531675
+          },
+          "decision-range": {
+            "n": 36,
+            "rmse": 0.07428085131181246,
+            "log_rmse": 0.05648469927080581
+          }
+        },
+        "conformal": {
+          "alpha": 0.1,
+          "q_log": 0.1044452415861196,
+          "factor": 1.110094605182049,
+          "n_calibration": 600,
+          "coverage": 0.92,
+          "mean_width": 0.7406822979305794,
+          "zones": [
+            {
+              "zone": "FOS < 0.5",
+              "n": 3,
+              "coverage": 0.6666666666666666,
+              "mean_width": 0.10055919751459032
+            },
+            {
+              "zone": "0.5\u20131",
+              "n": 12,
+              "coverage": 0.9166666666666666,
+              "mean_width": 0.14836877711981553
+            },
+            {
+              "zone": "1\u20132",
+              "n": 24,
+              "coverage": 0.9166666666666666,
+              "mean_width": 0.30301542785915075
+            },
+            {
+              "zone": "2\u20136",
+              "n": 88,
+              "coverage": 0.9204545454545454,
+              "mean_width": 0.7647699636820454
+            },
+            {
+              "zone": "FOS \u2265 6",
+              "n": 23,
+              "coverage": 0.9565217391304348,
+              "mean_width": 1.497744117346336
+            }
+          ],
+          "procedure": "Cross-conformal-style: nested-CV out-of-fold residuals on log(FOS), multiplicative intervals around the refit model. Coverage is reported empirically; no formal guarantee is claimed."
+        },
+        "best_params": {
+          "learning_rate": 0.03,
+          "max_iter": 8000,
+          "max_leaf_nodes": 3,
+          "min_samples_leaf": 2
+        },
+        "n_train": 600
+      },
+      "C0-seq": {
+        "global": {
+          "n": 150,
+          "r2": 0.9768918649423997,
+          "rmse": 0.31989426877111254,
+          "log_rmse": 0.09595135237677777,
+          "mae": 0.2251145011434221,
+          "bias": -0.053873429913183,
+          "max_abs_error": 1.0286501195046864
+        },
+        "zones": [
+          {
+            "zone": "FOS < 0.5",
+            "lo": null,
+            "hi": 0.5,
+            "n": 3,
+            "rmse": 0.051791281007261485,
+            "log_rmse": 0.10652752918930802,
+            "mae": 0.051086906507731934,
+            "bias": 0.051086906507731934
+          },
+          {
+            "zone": "0.5\u20131",
+            "lo": 0.5,
+            "hi": 1.0,
+            "n": 12,
+            "rmse": 0.04273735792350542,
+            "log_rmse": 0.05588622086001499,
+            "mae": 0.03449043353648573,
+            "bias": 0.019448714634230552
+          },
+          {
+            "zone": "1\u20132",
+            "lo": 1.0,
+            "hi": 2.0,
+            "n": 24,
+            "rmse": 0.18772012371612312,
+            "log_rmse": 0.12268554186637677,
+            "mae": 0.14117430083566215,
+            "bias": -0.03381754982623652
+          },
+          {
+            "zone": "2\u20136",
+            "lo": 2.0,
+            "hi": 6.0,
+            "n": 88,
+            "rmse": 0.3329952361097887,
+            "log_rmse": 0.09820809917430244,
+            "mae": 0.24970297403734218,
+            "bias": -0.009964611297772678
+          },
+          {
+            "zone": "FOS \u2265 6",
+            "lo": 6.0,
+            "hi": null,
+            "n": 23,
+            "rmse": 0.45282694703513365,
+            "log_rmse": 0.06576929573541752,
+            "mae": 0.34078192670479546,
+            "bias": -0.2947457735685974
+          }
+        ],
+        "minimax": {
+          "zone": "FOS \u2265 6",
+          "rmse": 0.45282694703513365
+        },
+        "minimax_log": {
+          "zone": "1\u20132",
+          "log_rmse": 0.12268554186637677
+        },
+        "subsets": {
+          "all": {
+            "n": 150,
+            "rmse": 0.31989426877111254,
+            "log_rmse": 0.09595135237677777
+          },
+          "selection-range": {
+            "n": 124,
+            "rmse": 0.2927291335421642,
+            "log_rmse": 0.10030060278656125
+          },
+          "decision-range": {
+            "n": 36,
+            "rmse": 0.15524622535215357,
+            "log_rmse": 0.10524060377393532
+          }
+        },
+        "conformal": {
+          "alpha": 0.1,
+          "q_log": 0.13991951407317701,
+          "factor": 1.150181221730054,
+          "n_calibration": 300,
+          "coverage": 0.9066666666666666,
+          "mean_width": 0.9838020937573814,
+          "zones": [
+            {
+              "zone": "FOS < 0.5",
+              "n": 3,
+              "coverage": 1.0,
+              "mean_width": 0.14198014116466692
+            },
+            {
+              "zone": "0.5\u20131",
+              "n": 12,
+              "coverage": 1.0,
+              "mean_width": 0.20178228043785804
+            },
+            {
+              "zone": "1\u20132",
+              "n": 24,
+              "coverage": 0.8333333333333334,
+              "mean_width": 0.40063617244897914
+            },
+            {
+              "zone": "2\u20136",
+              "n": 88,
+              "coverage": 0.9090909090909091,
+              "mean_width": 1.0261176869270625
+            },
+            {
+              "zone": "FOS \u2265 6",
+              "n": 23,
+              "coverage": 0.9130434782608695,
+              "mean_width": 1.948233116804432
             }
           ],
           "procedure": "Cross-conformal-style: nested-CV out-of-fold residuals on log(FOS), multiplicative intervals around the refit model. Coverage is reported empirically; no formal guarantee is claimed."
@@ -3362,6 +3902,966 @@
       }
     },
     {
+      "family": "gbm",
+      "subset": "all",
+      "scale": "log",
+      "first": "C-seq",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "B",
+        "scale": "log",
+        "n": 150,
+        "median_d": 0.007615073871436229,
+        "p_d_lt_0": 0.38,
+        "statistic": 4036.0,
+        "pvalue": 0.002275467378362092,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_B|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": 0.016397290073812763,
+        "ci": [
+          0.0078095925530190825,
+          0.02520742828572222
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0001,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "all",
+      "scale": "fos",
+      "first": "C-seq",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "B",
+        "scale": "fos",
+        "n": 150,
+        "median_d": 0.021126644093220348,
+        "p_d_lt_0": 0.38666666666666666,
+        "statistic": 3909.0,
+        "pvalue": 0.0010019239402367362,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_B|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": 0.06851859342945568,
+        "ci": [
+          0.029787397537649266,
+          0.10702889349531049
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "selection-range",
+      "scale": "log",
+      "first": "C-seq",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "B",
+        "scale": "log",
+        "n": 124,
+        "median_d": 0.008004346911621052,
+        "p_d_lt_0": 0.3629032258064516,
+        "statistic": 2671.0,
+        "pvalue": 0.002678719234497989,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_B|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": 0.01842060025649217,
+        "ci": [
+          0.008357345988460465,
+          0.02832600858057694
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0001,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "selection-range",
+      "scale": "fos",
+      "first": "C-seq",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "B",
+        "scale": "fos",
+        "n": 124,
+        "median_d": 0.02188981520322414,
+        "p_d_lt_0": 0.3709677419354839,
+        "statistic": 2525.0,
+        "pvalue": 0.0007613875039440178,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_B|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": 0.058998611939901704,
+        "ci": [
+          0.018368644824579956,
+          0.09962390812183178
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0019,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "decision-range",
+      "scale": "log",
+      "first": "C-seq",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "B",
+        "scale": "log",
+        "n": 36,
+        "median_d": 0.003628634087719483,
+        "p_d_lt_0": 0.4444444444444444,
+        "statistic": 288.0,
+        "pvalue": 0.4890561629727017,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_B|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": 0.011202180831605617,
+        "ci": [
+          -0.007181727397946689,
+          0.02871630080374975
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.1191,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "decision-range",
+      "scale": "fos",
+      "first": "C-seq",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "B",
+        "scale": "fos",
+        "n": 36,
+        "median_d": 0.0036391726096066113,
+        "p_d_lt_0": 0.4444444444444444,
+        "statistic": 268.0,
+        "pvalue": 0.31492819578852504,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_B|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": 0.02014608078766266,
+        "ci": [
+          -0.006167805128049665,
+          0.045291520518458576
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0718,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "all",
+      "scale": "log",
+      "first": "C-seq",
+      "second": "A",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "A",
+        "scale": "log",
+        "n": 150,
+        "median_d": -0.011337701052163036,
+        "p_d_lt_0": 0.6,
+        "statistic": 4014.0,
+        "pvalue": 0.0019815696801337994,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_A|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": -0.011664919237886512,
+        "ci": [
+          -0.01962453680688856,
+          -0.0036600964072399616
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.9988,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "all",
+      "scale": "fos",
+      "first": "C-seq",
+      "second": "A",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "A",
+        "scale": "fos",
+        "n": 150,
+        "median_d": -0.023459346960640115,
+        "p_d_lt_0": 0.6066666666666667,
+        "statistic": 4492.0,
+        "pvalue": 0.028082045263200437,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_A|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": -0.04819632424946621,
+        "ci": [
+          -0.08867138547331715,
+          -0.006545543503980211
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.9905,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "selection-range",
+      "scale": "log",
+      "first": "C-seq",
+      "second": "A",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "A",
+        "scale": "log",
+        "n": 124,
+        "median_d": -0.010798762243260929,
+        "p_d_lt_0": 0.5645161290322581,
+        "statistic": 3048.0,
+        "pvalue": 0.039181999730972424,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_A|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": -0.0070811322841399585,
+        "ci": [
+          -0.01622617599414637,
+          0.0015551223440350764
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.9439,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "selection-range",
+      "scale": "fos",
+      "first": "C-seq",
+      "second": "A",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "A",
+        "scale": "fos",
+        "n": 124,
+        "median_d": -0.021514722369960604,
+        "p_d_lt_0": 0.5725806451612904,
+        "statistic": 3407.0,
+        "pvalue": 0.24319398879220944,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_A|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": -0.0026033154516791612,
+        "ci": [
+          -0.04428448798994656,
+          0.03996658916559702
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.5403,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "decision-range",
+      "scale": "log",
+      "first": "C-seq",
+      "second": "A",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "A",
+        "scale": "log",
+        "n": 36,
+        "median_d": -0.027028359168690883,
+        "p_d_lt_0": 0.7222222222222222,
+        "statistic": 150.0,
+        "pvalue": 0.003301490069134161,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_A|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": -0.025511897347392773,
+        "ci": [
+          -0.03939065815926597,
+          -0.012022192720134862
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 1.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "decision-range",
+      "scale": "fos",
+      "first": "C-seq",
+      "second": "A",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "A",
+        "scale": "fos",
+        "n": 36,
+        "median_d": -0.026043651787559463,
+        "p_d_lt_0": 0.7222222222222222,
+        "statistic": 173.0,
+        "pvalue": 0.010977849655319005,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_A|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": -0.021227632445383282,
+        "ci": [
+          -0.035520113936464044,
+          -0.005775482685016994
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.9945,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "all",
+      "scale": "log",
+      "first": "C-seq",
+      "second": "C-log",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "C-log",
+        "scale": "log",
+        "n": 150,
+        "median_d": 0.007172340234972631,
+        "p_d_lt_0": 0.4266666666666667,
+        "statistic": 4869.0,
+        "pvalue": 0.13654108902862594,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_C-log|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": 0.0074731220067336054,
+        "ci": [
+          -0.0013375266560828292,
+          0.01593827087680658
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0473,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "all",
+      "scale": "fos",
+      "first": "C-seq",
+      "second": "C-log",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "C-log",
+        "scale": "fos",
+        "n": 150,
+        "median_d": 0.012770276884329385,
+        "p_d_lt_0": 0.4266666666666667,
+        "statistic": 5171.0,
+        "pvalue": 0.35643902018868634,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_C-log|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": -0.02581216701478306,
+        "ci": [
+          -0.07067499365529675,
+          0.02119790013837117
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.8631,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "selection-range",
+      "scale": "log",
+      "first": "C-seq",
+      "second": "C-log",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "C-log",
+        "scale": "log",
+        "n": 124,
+        "median_d": 0.007697872870336964,
+        "p_d_lt_0": 0.4032258064516129,
+        "statistic": 2937.0,
+        "pvalue": 0.019331889672795904,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_C-log|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": 0.015364303388212132,
+        "ci": [
+          0.006591663022973671,
+          0.02393951740126442
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0001,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "selection-range",
+      "scale": "fos",
+      "first": "C-seq",
+      "second": "C-log",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "C-log",
+        "scale": "fos",
+        "n": 124,
+        "median_d": 0.014119458387375716,
+        "p_d_lt_0": 0.4032258064516129,
+        "statistic": 3102.0,
+        "pvalue": 0.0539034212309853,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_C-log|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": 0.041443860210776395,
+        "ci": [
+          0.009233092303127542,
+          0.07331088658091192
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0057,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "decision-range",
+      "scale": "log",
+      "first": "C-seq",
+      "second": "C-log",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "C-log",
+        "scale": "log",
+        "n": 36,
+        "median_d": 0.012370435118877515,
+        "p_d_lt_0": 0.3333333333333333,
+        "statistic": 192.0,
+        "pvalue": 0.026030924898805097,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_C-log|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": 0.01789042574762415,
+        "ci": [
+          0.004618014266546019,
+          0.030415005479806165
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0038,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "decision-range",
+      "scale": "fos",
+      "first": "C-seq",
+      "second": "C-log",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "C-log",
+        "scale": "fos",
+        "n": 36,
+        "median_d": 0.01074623786236406,
+        "p_d_lt_0": 0.3333333333333333,
+        "statistic": 205.0,
+        "pvalue": 0.04422121457173489,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_C-log|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": 0.01877334615420715,
+        "ci": [
+          0.004219263877057926,
+          0.030942153224224566
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0061,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "all",
+      "scale": "log",
+      "first": "C-seq",
+      "second": "C0-seq",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "C0-seq",
+        "scale": "log",
+        "n": 150,
+        "median_d": -0.015400055074538538,
+        "p_d_lt_0": 0.6466666666666666,
+        "statistic": 3255.0,
+        "pvalue": 6.270812544962775e-06,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_C0-seq|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": -0.03909056238554266,
+        "ci": [
+          -0.05588077670404435,
+          -0.022868789198698447
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 1.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "all",
+      "scale": "fos",
+      "first": "C-seq",
+      "second": "C0-seq",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "C0-seq",
+        "scale": "fos",
+        "n": 150,
+        "median_d": -0.03631661520519683,
+        "p_d_lt_0": 0.6466666666666666,
+        "statistic": 3429.0,
+        "pvalue": 2.782412137942613e-05,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_C0-seq|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": -0.1043595157456633,
+        "ci": [
+          -0.15689359256744906,
+          -0.05207553920490951
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 1.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "selection-range",
+      "scale": "log",
+      "first": "C-seq",
+      "second": "C0-seq",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "C0-seq",
+        "scale": "log",
+        "n": 124,
+        "median_d": -0.01922306523560896,
+        "p_d_lt_0": 0.6693548387096774,
+        "statistic": 1976.0,
+        "pvalue": 2.185248459212476e-06,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_C0-seq|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": -0.043439539174029575,
+        "ci": [
+          -0.06173277075818444,
+          -0.025543554038183015
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 1.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "selection-range",
+      "scale": "fos",
+      "first": "C-seq",
+      "second": "C0-seq",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "C0-seq",
+        "scale": "fos",
+        "n": 124,
+        "median_d": -0.04174271224032189,
+        "p_d_lt_0": 0.6693548387096774,
+        "statistic": 1942.0,
+        "pvalue": 1.4335937487853138e-06,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_C0-seq|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": -0.11188773531898902,
+        "ci": [
+          -0.1565496757070044,
+          -0.06471610683422391
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 1.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "decision-range",
+      "scale": "log",
+      "first": "C-seq",
+      "second": "C0-seq",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "C0-seq",
+        "scale": "log",
+        "n": 36,
+        "median_d": -0.026787034345940812,
+        "p_d_lt_0": 0.6944444444444444,
+        "statistic": 144.0,
+        "pvalue": 0.002339415514143184,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_C0-seq|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": -0.04875590450312951,
+        "ci": [
+          -0.07731683553065537,
+          -0.01939514359844542
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 1.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "decision-range",
+      "scale": "fos",
+      "first": "C-seq",
+      "second": "C0-seq",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "C0-seq",
+        "scale": "fos",
+        "n": 36,
+        "median_d": -0.028859168380734157,
+        "p_d_lt_0": 0.6944444444444444,
+        "statistic": 130.0,
+        "pvalue": 0.000991061155218631,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_C0-seq|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": -0.08096537404034111,
+        "ci": [
+          -0.12279965506573434,
+          -0.034787243485917115
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 1.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "all",
+      "scale": "log",
+      "first": "C0-seq",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C0-seq",
+        "second": "B",
+        "scale": "log",
+        "n": 150,
+        "median_d": 0.02335325615329631,
+        "p_d_lt_0": 0.2866666666666667,
+        "statistic": 2255.0,
+        "pvalue": 1.623581453459204e-10,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C0-seq| - |e_B|; d < 0 means C0-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": 0.055487852459355426,
+        "ci": [
+          0.03627140557118212,
+          0.07585751433462329
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "all",
+      "scale": "fos",
+      "first": "C0-seq",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C0-seq",
+        "second": "B",
+        "scale": "fos",
+        "n": 150,
+        "median_d": 0.06245519045203485,
+        "p_d_lt_0": 0.2866666666666667,
+        "statistic": 2439.0,
+        "pvalue": 1.466022202456264e-09,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C0-seq| - |e_B|; d < 0 means C0-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": 0.17287810917511898,
+        "ci": [
+          0.1225374180522356,
+          0.22217615442043623
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "selection-range",
+      "scale": "log",
+      "first": "C0-seq",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C0-seq",
+        "second": "B",
+        "scale": "log",
+        "n": 124,
+        "median_d": 0.02700580632069849,
+        "p_d_lt_0": 0.25806451612903225,
+        "statistic": 1334.0,
+        "pvalue": 2.3514723017919464e-10,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C0-seq| - |e_B|; d < 0 means C0-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": 0.061860139430521745,
+        "ci": [
+          0.040525099852799826,
+          0.08483699787381514
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "selection-range",
+      "scale": "fos",
+      "first": "C0-seq",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C0-seq",
+        "second": "B",
+        "scale": "fos",
+        "n": 124,
+        "median_d": 0.07130767902308977,
+        "p_d_lt_0": 0.25806451612903225,
+        "statistic": 1324.0,
+        "pvalue": 1.9996400874376267e-10,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C0-seq| - |e_B|; d < 0 means C0-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": 0.17088634725889074,
+        "ci": [
+          0.11919202922575432,
+          0.22231741663992446
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "decision-range",
+      "scale": "log",
+      "first": "C0-seq",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C0-seq",
+        "second": "B",
+        "scale": "log",
+        "n": 36,
+        "median_d": 0.04248405909409607,
+        "p_d_lt_0": 0.19444444444444445,
+        "statistic": 123.0,
+        "pvalue": 0.0006253640458453447,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C0-seq| - |e_B|; d < 0 means C0-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": 0.05995808533473513,
+        "ci": [
+          0.027085138392455733,
+          0.09563404243920944
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "gbm",
+      "subset": "decision-range",
+      "scale": "fos",
+      "first": "C0-seq",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C0-seq",
+        "second": "B",
+        "scale": "fos",
+        "n": 36,
+        "median_d": 0.050536124682364125,
+        "p_d_lt_0": 0.19444444444444445,
+        "statistic": 98.0,
+        "pvalue": 9.956923895515501e-05,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C0-seq| - |e_B|; d < 0 means C0-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": 0.10111145482800377,
+        "ci": [
+          0.046781722048138526,
+          0.15998328698139078
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
       "family": "rf",
       "subset": "all",
       "scale": "log",
@@ -5088,6 +6588,966 @@
         "n_boot": 10000,
         "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
       }
+    },
+    {
+      "family": "rf",
+      "subset": "all",
+      "scale": "log",
+      "first": "C-seq",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "B",
+        "scale": "log",
+        "n": 150,
+        "median_d": 0.0006661616044737473,
+        "p_d_lt_0": 0.49333333333333335,
+        "statistic": 5352.0,
+        "pvalue": 0.5601812179763606,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_B|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": -0.014387992004094977,
+        "ci": [
+          -0.027736384275625445,
+          -0.000668006311180676
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.9798,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "all",
+      "scale": "fos",
+      "first": "C-seq",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "B",
+        "scale": "fos",
+        "n": 150,
+        "median_d": 0.0014366324644669026,
+        "p_d_lt_0": 0.49333333333333335,
+        "statistic": 5316.0,
+        "pvalue": 0.5156166622794436,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_B|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": -0.12688005341514458,
+        "ci": [
+          -0.20384858230463965,
+          -0.0435414703922531
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.998,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "selection-range",
+      "scale": "log",
+      "first": "C-seq",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "B",
+        "scale": "log",
+        "n": 124,
+        "median_d": 0.0015352516981168435,
+        "p_d_lt_0": 0.4838709677419355,
+        "statistic": 3714.0,
+        "pvalue": 0.6880653591922505,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_B|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": 0.00146836352049097,
+        "ci": [
+          -0.011901905214863836,
+          0.013838056490884931
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.4054,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "selection-range",
+      "scale": "fos",
+      "first": "C-seq",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "B",
+        "scale": "fos",
+        "n": 124,
+        "median_d": 0.0022786656779715253,
+        "p_d_lt_0": 0.4838709677419355,
+        "statistic": 3784.0,
+        "pvalue": 0.8204824087308669,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_B|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": -0.011497488971106362,
+        "ci": [
+          -0.057989167643892656,
+          0.03315799812850046
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.6904,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "decision-range",
+      "scale": "log",
+      "first": "C-seq",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "B",
+        "scale": "log",
+        "n": 36,
+        "median_d": 0.009192018593175477,
+        "p_d_lt_0": 0.4722222222222222,
+        "statistic": 283.0,
+        "pvalue": 0.4413570295437239,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_B|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": 0.0033324659427635683,
+        "ci": [
+          -0.029155785650416606,
+          0.032692339782272706
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.4093,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "decision-range",
+      "scale": "fos",
+      "first": "C-seq",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "B",
+        "scale": "fos",
+        "n": 36,
+        "median_d": 0.01035845381914291,
+        "p_d_lt_0": 0.4722222222222222,
+        "statistic": 274.0,
+        "pvalue": 0.36241441484889947,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_B|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": 0.03491482131372328,
+        "ci": [
+          -0.00680419466892935,
+          0.07418588934419626
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0538,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "all",
+      "scale": "log",
+      "first": "C-seq",
+      "second": "A",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "A",
+        "scale": "log",
+        "n": 150,
+        "median_d": -0.028612224149271212,
+        "p_d_lt_0": 0.6533333333333333,
+        "statistic": 2634.0,
+        "pvalue": 1.3297982610663058e-08,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_A|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": -0.07432892470750166,
+        "ci": [
+          -0.09515080052251948,
+          -0.052912236988011084
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 1.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "all",
+      "scale": "fos",
+      "first": "C-seq",
+      "second": "A",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "A",
+        "scale": "fos",
+        "n": 150,
+        "median_d": -0.07234434530567391,
+        "p_d_lt_0": 0.6533333333333333,
+        "statistic": 2727.0,
+        "pvalue": 3.635502251091266e-08,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_A|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": -0.4108079113754786,
+        "ci": [
+          -0.5183581942337416,
+          -0.2925265137727185
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 1.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "selection-range",
+      "scale": "log",
+      "first": "C-seq",
+      "second": "A",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "A",
+        "scale": "log",
+        "n": 124,
+        "median_d": -0.013026679177827738,
+        "p_d_lt_0": 0.5806451612903226,
+        "statistic": 2559.0,
+        "pvalue": 0.0010319131022496974,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_A|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": -0.028525853432142048,
+        "ci": [
+          -0.043516685744830065,
+          -0.013936449020302409
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 1.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "selection-range",
+      "scale": "fos",
+      "first": "C-seq",
+      "second": "A",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "A",
+        "scale": "fos",
+        "n": 124,
+        "median_d": -0.02277485109970928,
+        "p_d_lt_0": 0.5806451612903226,
+        "statistic": 2666.0,
+        "pvalue": 0.0025710231597501107,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_A|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": -0.09704929384271394,
+        "ci": [
+          -0.14579741509892222,
+          -0.049487685177296625
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 1.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "decision-range",
+      "scale": "log",
+      "first": "C-seq",
+      "second": "A",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "A",
+        "scale": "log",
+        "n": 36,
+        "median_d": -0.013265115468777844,
+        "p_d_lt_0": 0.5833333333333334,
+        "statistic": 236.0,
+        "pvalue": 0.13066144444746897,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_A|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": -0.023096981234685038,
+        "ci": [
+          -0.05922128994770988,
+          0.010250501070861218
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.9146,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "decision-range",
+      "scale": "fos",
+      "first": "C-seq",
+      "second": "A",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "A",
+        "scale": "fos",
+        "n": 36,
+        "median_d": -0.017937070775467023,
+        "p_d_lt_0": 0.5833333333333334,
+        "statistic": 239.0,
+        "pvalue": 0.1432931168237701,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_A|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": -0.001279582368937382,
+        "ci": [
+          -0.05196582643323793,
+          0.04806359646718471
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.5456,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "all",
+      "scale": "log",
+      "first": "C-seq",
+      "second": "C-log",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "C-log",
+        "scale": "log",
+        "n": 150,
+        "median_d": -0.0019308168054902632,
+        "p_d_lt_0": 0.5333333333333333,
+        "statistic": 4969.0,
+        "pvalue": 0.19319956027830765,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_C-log|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": -0.015293395574958762,
+        "ci": [
+          -0.02933540092798057,
+          -0.0011300662803947583
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.983,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "all",
+      "scale": "fos",
+      "first": "C-seq",
+      "second": "C-log",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "C-log",
+        "scale": "fos",
+        "n": 150,
+        "median_d": -0.00385335893120331,
+        "p_d_lt_0": 0.5333333333333333,
+        "statistic": 4632.0,
+        "pvalue": 0.05317896740704188,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_C-log|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": -0.10882137836924871,
+        "ci": [
+          -0.16353218057049593,
+          -0.058125212204177996
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 1.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "selection-range",
+      "scale": "log",
+      "first": "C-seq",
+      "second": "C-log",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "C-log",
+        "scale": "log",
+        "n": 124,
+        "median_d": 0.0013837064750444328,
+        "p_d_lt_0": 0.5,
+        "statistic": 3835.0,
+        "pvalue": 0.9205451409568505,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_C-log|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": -0.011530318647575866,
+        "ci": [
+          -0.027545846000245962,
+          0.003225434207570515
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.9307,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "selection-range",
+      "scale": "fos",
+      "first": "C-seq",
+      "second": "C-log",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "C-log",
+        "scale": "fos",
+        "n": 124,
+        "median_d": 0.001225853825798373,
+        "p_d_lt_0": 0.5,
+        "statistic": 3741.0,
+        "pvalue": 0.7382643797149111,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_C-log|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": -0.023915068489791358,
+        "ci": [
+          -0.05868645500836284,
+          0.008867720127816961
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.9246,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "decision-range",
+      "scale": "log",
+      "first": "C-seq",
+      "second": "C-log",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "C-log",
+        "scale": "log",
+        "n": 36,
+        "median_d": 0.0042541004555675666,
+        "p_d_lt_0": 0.4722222222222222,
+        "statistic": 325.0,
+        "pvalue": 0.9073552150803152,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_C-log|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": -0.022299998704199506,
+        "ci": [
+          -0.06340480731372831,
+          0.013450002619687427
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.8612,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "decision-range",
+      "scale": "fos",
+      "first": "C-seq",
+      "second": "C-log",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "C-log",
+        "scale": "fos",
+        "n": 36,
+        "median_d": 0.003408019708550314,
+        "p_d_lt_0": 0.4722222222222222,
+        "statistic": 330.0,
+        "pvalue": 0.969057968002744,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_C-log|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": -0.02666459376599381,
+        "ci": [
+          -0.08626470052463105,
+          0.024426910655657188
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.8256,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "all",
+      "scale": "log",
+      "first": "C-seq",
+      "second": "C0-seq",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "C0-seq",
+        "scale": "log",
+        "n": 150,
+        "median_d": -0.03430883910074001,
+        "p_d_lt_0": 0.7,
+        "statistic": 2545.0,
+        "pvalue": 4.940124466322909e-09,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_C0-seq|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": -0.08915194429522488,
+        "ci": [
+          -0.12660206235626928,
+          -0.04996510098422047
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 1.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "all",
+      "scale": "fos",
+      "first": "C-seq",
+      "second": "C0-seq",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "C0-seq",
+        "scale": "fos",
+        "n": 150,
+        "median_d": -0.10420816044487224,
+        "p_d_lt_0": 0.7,
+        "statistic": 2514.0,
+        "pvalue": 3.4767572836752526e-09,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_C0-seq|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": -0.2103891596688992,
+        "ci": [
+          -0.29885494211557595,
+          -0.13361584568292084
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 1.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "selection-range",
+      "scale": "log",
+      "first": "C-seq",
+      "second": "C0-seq",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "C0-seq",
+        "scale": "log",
+        "n": 124,
+        "median_d": -0.03820137877989871,
+        "p_d_lt_0": 0.7016129032258065,
+        "statistic": 1705.0,
+        "pvalue": 6.257659816811409e-08,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_C0-seq|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": -0.10522655840200223,
+        "ci": [
+          -0.14689604038518658,
+          -0.06272525783177915
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 1.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "selection-range",
+      "scale": "fos",
+      "first": "C-seq",
+      "second": "C0-seq",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "C0-seq",
+        "scale": "fos",
+        "n": 124,
+        "median_d": -0.09294598107874041,
+        "p_d_lt_0": 0.7016129032258065,
+        "statistic": 1795.0,
+        "pvalue": 2.1388436560946888e-07,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_C0-seq|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": -0.24990898078594243,
+        "ci": [
+          -0.3552301301302218,
+          -0.14425420390118754
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 1.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "decision-range",
+      "scale": "log",
+      "first": "C-seq",
+      "second": "C0-seq",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "C0-seq",
+        "scale": "log",
+        "n": 36,
+        "median_d": -0.048208151507580316,
+        "p_d_lt_0": 0.75,
+        "statistic": 94.0,
+        "pvalue": 7.190476753748953e-05,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_C0-seq|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": -0.13906273957810703,
+        "ci": [
+          -0.21980268931052874,
+          -0.0464862282935626
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 1.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "decision-range",
+      "scale": "fos",
+      "first": "C-seq",
+      "second": "C0-seq",
+      "wilcoxon": {
+        "first": "C-seq",
+        "second": "C0-seq",
+        "scale": "fos",
+        "n": 36,
+        "median_d": -0.049451620451348044,
+        "p_d_lt_0": 0.75,
+        "statistic": 96.0,
+        "pvalue": 8.471510955132544e-05,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C-seq| - |e_C0-seq|; d < 0 means C-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": -0.29498894030254136,
+        "ci": [
+          -0.4998628921076031,
+          -0.06937284049906177
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 1.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "all",
+      "scale": "log",
+      "first": "C0-seq",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C0-seq",
+        "second": "B",
+        "scale": "log",
+        "n": 150,
+        "median_d": 0.03254692028726702,
+        "p_d_lt_0": 0.32,
+        "statistic": 3401.0,
+        "pvalue": 2.2043782799136993e-05,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C0-seq| - |e_B|; d < 0 means C0-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": 0.0747639522911299,
+        "ci": [
+          0.03098463889414601,
+          0.11835546527151246
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "all",
+      "scale": "fos",
+      "first": "C0-seq",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C0-seq",
+        "second": "B",
+        "scale": "fos",
+        "n": 150,
+        "median_d": 0.080603621215807,
+        "p_d_lt_0": 0.32,
+        "statistic": 3434.0,
+        "pvalue": 2.899750694126166e-05,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C0-seq| - |e_B|; d < 0 means C0-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": 0.08350910625375463,
+        "ci": [
+          -0.024380438946272915,
+          0.20392484083035994
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0632,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "selection-range",
+      "scale": "log",
+      "first": "C0-seq",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C0-seq",
+        "second": "B",
+        "scale": "log",
+        "n": 124,
+        "median_d": 0.03667119242524686,
+        "p_d_lt_0": 0.2903225806451613,
+        "statistic": 1876.0,
+        "pvalue": 6.200696364938402e-07,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C0-seq| - |e_B|; d < 0 means C0-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": 0.1066949219224932,
+        "ci": [
+          0.06026424562038482,
+          0.15317804455540013
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "selection-range",
+      "scale": "fos",
+      "first": "C0-seq",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C0-seq",
+        "second": "B",
+        "scale": "fos",
+        "n": 124,
+        "median_d": 0.08681357021440594,
+        "p_d_lt_0": 0.2903225806451613,
+        "statistic": 1819.0,
+        "pvalue": 2.9439752621255706e-07,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C0-seq| - |e_B|; d < 0 means C0-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": 0.23841149181483606,
+        "ci": [
+          0.13904815190446004,
+          0.33867583067503826
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "decision-range",
+      "scale": "log",
+      "first": "C0-seq",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C0-seq",
+        "second": "B",
+        "scale": "log",
+        "n": 36,
+        "median_d": 0.04663095376879228,
+        "p_d_lt_0": 0.25,
+        "statistic": 124.0,
+        "pvalue": 0.0006687742134090513,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C0-seq| - |e_B|; d < 0 means C0-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "log",
+        "delta_rmse": 0.1423952055208706,
+        "ci": [
+          0.03377228976048529,
+          0.23948501069083755
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0004,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
+    },
+    {
+      "family": "rf",
+      "subset": "decision-range",
+      "scale": "fos",
+      "first": "C0-seq",
+      "second": "B",
+      "wilcoxon": {
+        "first": "C0-seq",
+        "second": "B",
+        "scale": "fos",
+        "n": 36,
+        "median_d": 0.0479440637526084,
+        "p_d_lt_0": 0.25,
+        "statistic": 106.0,
+        "pvalue": 0.00018572056433185935,
+        "alternative": "two-sided",
+        "hypothesised": false,
+        "reading": "d = |e_C0-seq| - |e_B|; d < 0 means C0-seq has smaller absolute errors"
+      },
+      "bootstrap": {
+        "scale": "fos",
+        "delta_rmse": 0.32990376161626467,
+        "ci": [
+          0.07426505628735995,
+          0.5670275878865134
+        ],
+        "ci_level": 0.95,
+        "p_delta_lt_0": 0.0,
+        "n_boot": 10000,
+        "limitation": "Paired bootstrap over test rows: covers test-sampling variability only, not seed or selection variability."
+      }
     }
   ],
   "predictions": {
@@ -6003,6 +8463,158 @@
       6.7450341846316935,
       6.489609106011766
     ],
+    "gbm__C-seq": [
+      0.6911739491316163,
+      0.5358867364208663,
+      0.682217324527722,
+      0.7406121024498316,
+      0.46674823390905734,
+      0.5804022298706296,
+      0.4706623748475129,
+      0.5424628615297765,
+      0.42793536826005696,
+      0.80062452551463,
+      0.546884221868117,
+      1.2346217432674844,
+      0.9845496435640556,
+      0.8408527004060034,
+      1.1294598805713083,
+      0.8919188990012527,
+      0.9024702139449091,
+      0.8284870460861247,
+      1.0576011147608388,
+      1.10989542868515,
+      1.27221912270569,
+      1.4071917146341357,
+      1.650523551776797,
+      1.3141020375372037,
+      1.4613111401178935,
+      1.448916873358047,
+      1.4792925050603114,
+      1.3163203223875648,
+      1.4602984558495375,
+      0.9520434365550178,
+      1.7226419676495848,
+      1.4212664733310147,
+      1.59021912840592,
+      2.354427246254312,
+      1.7414524038724994,
+      1.8513320822350117,
+      1.8886990568524733,
+      2.100073405607911,
+      1.7471515594654499,
+      1.5685793311985647,
+      2.3513350704811087,
+      2.5920294502983534,
+      2.461524020898158,
+      2.2499676260154713,
+      2.3142412080579815,
+      1.987422766292209,
+      2.1977124257710807,
+      2.0651993151892407,
+      2.1580583715431922,
+      1.6926259391082732,
+      3.035876654690011,
+      2.4805816349946115,
+      2.6936561205840346,
+      2.9724240762939758,
+      2.882692039829338,
+      2.852821882369048,
+      2.661785995130552,
+      2.7210348034462117,
+      2.452390827177729,
+      2.7991620867978875,
+      3.0581650441142134,
+      2.699949866191028,
+      2.3458129677653914,
+      3.2886476680109404,
+      3.0424941362210234,
+      2.348276710576367,
+      2.440876784000313,
+      3.1492793555262657,
+      3.1570348999121167,
+      3.7756095453245546,
+      3.9781747461071357,
+      4.135409516781951,
+      3.5338618008826863,
+      3.8316546772467386,
+      2.8101061868976718,
+      3.161508479435894,
+      3.61146192725144,
+      3.12979680966788,
+      2.1546540042336773,
+      3.042152333639813,
+      3.693754806804634,
+      3.0311216831586343,
+      2.9786900524303537,
+      3.6238205051569645,
+      3.520040822887995,
+      3.30081464685742,
+      3.656163811116779,
+      4.413743780302135,
+      3.6778086240242986,
+      3.3062908793403585,
+      3.849413472308347,
+      3.735560177199228,
+      3.8391927948163054,
+      3.336035973856927,
+      4.140133815093942,
+      3.669225104639346,
+      4.891785214073769,
+      3.935599532267403,
+      4.141237668110701,
+      3.284752379565874,
+      4.044114946247158,
+      5.141456636929237,
+      4.649687259758142,
+      5.094132321546038,
+      3.4408727043765563,
+      4.967127655447834,
+      5.281074635999096,
+      4.958292140848987,
+      5.914685993169125,
+      4.198210978719343,
+      4.480853702352117,
+      4.6242626353092025,
+      4.3558297251860845,
+      4.540868848738668,
+      5.276712632638189,
+      6.7170126074979075,
+      3.563611696361199,
+      6.0709222298901295,
+      5.016231802275413,
+      4.992413612325167,
+      6.121456207946451,
+      4.699280011047347,
+      5.164497771854128,
+      6.6015927286030225,
+      5.367015203972364,
+      5.009283299313629,
+      5.339379873593634,
+      6.324394596448575,
+      4.659864249325077,
+      7.644063078057704,
+      6.893322322302035,
+      5.658718438863332,
+      6.923750105433752,
+      6.289620410476489,
+      6.408484095165372,
+      7.318216373597348,
+      6.0083228352280384,
+      6.586534709420962,
+      7.062845894478349,
+      8.155646262881637,
+      7.2281647825135895,
+      7.659827353853674,
+      8.35101058010519,
+      9.305823079807999,
+      6.522300001650892,
+      7.273295028509416,
+      7.339416435897867,
+      9.651773733323948,
+      5.9391134217629284,
+      6.5115158124513055
+    ],
     "gbm__C0": [
       0.7678304236522498,
       0.5516084776741067,
@@ -6306,6 +8918,158 @@
       8.35156440278714,
       6.292382315346726,
       6.717575608851574
+    ],
+    "gbm__C0-seq": [
+      0.6926599509948848,
+      0.5847326729273561,
+      0.6635834756779618,
+      0.7280044405815652,
+      0.5362061068135802,
+      0.5371830671378612,
+      0.5796501844862145,
+      0.5184747762762748,
+      0.4511958992999543,
+      0.7458478431723329,
+      0.5297337134096614,
+      1.2462744650603248,
+      0.9382662650330725,
+      0.8198240545999034,
+      1.113133835427522,
+      0.9398101420833309,
+      0.9737682789495743,
+      0.8410786887235068,
+      0.8846913807820931,
+      1.131317573703844,
+      1.171302324783657,
+      1.4852766371769688,
+      1.9381264598959138,
+      1.2717173837328641,
+      1.4774284059020881,
+      1.3967756012835386,
+      1.3840391946131165,
+      1.1667655325489243,
+      1.7006597989765102,
+      0.9827067545863861,
+      1.6865350779618287,
+      1.539106004950176,
+      1.7010733923354506,
+      2.106323489221632,
+      1.7546490697490966,
+      1.9280704468034726,
+      1.8039465597037587,
+      2.059426793886657,
+      1.7748268551423345,
+      1.2870512126876632,
+      2.594074693831684,
+      2.438676240363606,
+      2.393271939295479,
+      2.3839753189185275,
+      2.4968063095808297,
+      2.231059189244371,
+      2.2392983449052233,
+      2.0554312713802676,
+      2.5336178869785395,
+      1.3530422242465336,
+      3.0796166486120815,
+      2.024466421498028,
+      2.880400901858708,
+      2.9956700163454757,
+      2.646419628477771,
+      2.6030719499357757,
+      3.185453353783269,
+      2.7183163281252094,
+      2.561183625201734,
+      2.821955833707548,
+      3.1829239694024904,
+      3.0552136076839993,
+      2.3119470275927214,
+      3.1369373475679496,
+      3.1036312702351854,
+      1.7419508804953137,
+      2.4879448807629254,
+      3.0638657284905264,
+      3.6096381619211293,
+      3.789064508539351,
+      4.306438507978944,
+      4.21118719871196,
+      3.3557487205154533,
+      4.1808039879999495,
+      3.0957383169056336,
+      3.218478097316197,
+      3.2031553352373616,
+      3.2173684299382157,
+      2.351389591077285,
+      3.152820051570173,
+      3.4806440568211707,
+      2.807732025166908,
+      2.9261160100124655,
+      3.7381041177103995,
+      3.6253131605917477,
+      3.1638778238177503,
+      3.8150223012547575,
+      4.660917534731636,
+      3.586557214833726,
+      3.6982414862432424,
+      3.5211702740627278,
+      3.532275724078666,
+      4.005513215388883,
+      3.1532838906093463,
+      4.380661183019967,
+      3.3778568935295774,
+      4.686198108474561,
+      4.149739418873682,
+      4.139544338387795,
+      3.510661405210599,
+      3.756563355634652,
+      5.378620502027392,
+      4.683461161484133,
+      4.387043863774693,
+      3.438464828884415,
+      4.969939904208219,
+      4.520088296260541,
+      5.515855620309238,
+      4.754922380179821,
+      4.561326288165991,
+      5.1332054066174,
+      4.717598282549382,
+      4.454440966484163,
+      4.602685014442842,
+      5.196542313933815,
+      6.6819218789442605,
+      3.5372709830812754,
+      5.079148446665082,
+      5.449742901207979,
+      5.256495594249,
+      6.357114005216211,
+      4.518752066248488,
+      4.969850669694881,
+      5.724732114538312,
+      4.49257231036541,
+      5.500966692654022,
+      5.234064947636653,
+      6.543946626338887,
+      4.917177629652758,
+      7.124255339627281,
+      6.705248273845449,
+      5.496980602344536,
+      6.667772377992378,
+      6.327317023911369,
+      6.833930022938205,
+      7.089376299958308,
+      5.204377958961331,
+      7.326442153925307,
+      7.1463271481895605,
+      7.44392793379034,
+      6.8678745760622375,
+      6.94533067264604,
+      8.06949965663857,
+      9.217291115455797,
+      6.413620347591471,
+      6.943387637779789,
+      6.899798408248215,
+      8.656348793187323,
+      6.356241321811402,
+      6.510671056531835
     ],
     "rf__A": [
       0.6496688498108991,
@@ -6915,6 +9679,158 @@
       5.546123452704094,
       6.073803661722816
     ],
+    "rf__C-seq": [
+      0.7213465573447363,
+      0.5891453338526734,
+      0.708037051138577,
+      0.7575679149536799,
+      0.5724252112086493,
+      0.5360851013804572,
+      0.6260411609066303,
+      0.5830848749496096,
+      0.4691337027357899,
+      0.7970534720259635,
+      0.3362944681583272,
+      1.235746073736916,
+      0.9991236044198899,
+      0.9842296560054976,
+      1.1622395573825914,
+      0.9078063323924805,
+      1.0269625694503495,
+      0.8506261090823917,
+      1.0690855349959958,
+      1.1587498958126716,
+      1.2705120058352806,
+      1.3270578103641808,
+      1.6539210221804501,
+      1.340333420847845,
+      1.563489656947878,
+      1.4920288887645878,
+      1.2086280276386134,
+      1.2806337498551603,
+      1.5659618567233262,
+      1.274422683121147,
+      1.7801525102075415,
+      1.6233772695003068,
+      1.6792216780272644,
+      2.1364186889177774,
+      1.8206344137170207,
+      1.8929062013285103,
+      1.7766563337641297,
+      1.8398541650801932,
+      2.016242535235335,
+      1.5347503385060737,
+      2.3896094438422595,
+      2.201764121052502,
+      2.2134372402770532,
+      2.235384062861891,
+      2.2902335483583873,
+      2.140080731358118,
+      2.3413719088616474,
+      2.1518686850585653,
+      2.224244114415826,
+      1.5850797995751873,
+      2.768586711528611,
+      2.38388332344664,
+      2.526169431146483,
+      2.5802165840813753,
+      2.6621076642066335,
+      2.8090629926598507,
+      2.8419369560041003,
+      2.337675724134811,
+      2.3440042703125585,
+      2.5260546189717883,
+      2.8743454903375936,
+      2.8903826156847554,
+      2.494367857542094,
+      3.249499932841462,
+      3.195767351790981,
+      3.077041566091781,
+      2.5491700792641554,
+      2.9861389653359027,
+      3.207470855928247,
+      3.0124175881798925,
+      3.6992237206811405,
+      3.8520222173560437,
+      3.420669595433432,
+      3.519650710790511,
+      3.42470750042005,
+      3.202204233124525,
+      2.959448938839769,
+      3.543821686993978,
+      2.6589134596384163,
+      3.0228310498247923,
+      3.513716589381423,
+      2.8918945812588968,
+      3.363837562796526,
+      3.5274787981728317,
+      3.5778605018089484,
+      3.85003788190967,
+      3.492456355817582,
+      3.731561852355815,
+      3.838038508120348,
+      3.191874238048121,
+      3.8977937061660684,
+      4.076823061361852,
+      3.9685688366233403,
+      3.726925540323134,
+      4.301069615107339,
+      3.359149885302076,
+      4.770367418074709,
+      3.802409007681138,
+      4.358040407211937,
+      3.311164892992256,
+      4.180647238252248,
+      5.3789431400909695,
+      4.75237759464057,
+      4.48769183613056,
+      3.8858446122465966,
+      5.185378694580053,
+      5.284615834282898,
+      4.670545210334693,
+      5.442960216993681,
+      3.9359888780867363,
+      4.554964136319129,
+      4.542095129193261,
+      4.37188291023729,
+      3.8566791659746964,
+      5.189848519537881,
+      6.338696855613162,
+      4.128835754903117,
+      5.988164684565194,
+      4.732251700244328,
+      5.114547872850021,
+      6.118680791813362,
+      5.188461658625305,
+      5.424443987869608,
+      5.821139151845424,
+      5.436612486981639,
+      5.430775057540695,
+      5.193156335897658,
+      6.124151713345167,
+      5.048703242747631,
+      6.5905866369993715,
+      6.463372704974464,
+      5.313027639495962,
+      6.330674390295985,
+      6.120432779113906,
+      6.360122543209268,
+      6.422703528471693,
+      6.208136024887831,
+      6.7299539716222085,
+      6.337075644197139,
+      6.842561802647634,
+      6.774709242846055,
+      6.313975214969057,
+      7.5826630421386305,
+      7.844314667263864,
+      5.803695148396481,
+      6.43857921937507,
+      6.511505620463359,
+      7.510485272270923,
+      5.882355353456342,
+      6.634649374539416
+    ],
     "rf__C0": [
       0.8934056988968727,
       0.6420691777146964,
@@ -7218,6 +10134,158 @@
       7.476251292115024,
       5.378863550024931,
       6.355247965761641
+    ],
+    "rf__C0-seq": [
+      0.7454570840460301,
+      0.5396529222854316,
+      0.709553742664791,
+      0.7544609338110704,
+      0.5614187484505047,
+      0.530453380147095,
+      0.6365301278250363,
+      0.5823150241019056,
+      0.47421356121944386,
+      0.7501835432198477,
+      0.4608026888437959,
+      1.1826725362687065,
+      0.946252342080074,
+      0.9583848033689277,
+      1.2117383646471644,
+      0.9554794637231467,
+      1.2078349445882313,
+      0.70854569870798,
+      0.7939582072349921,
+      1.109894847119604,
+      1.1083944048186756,
+      1.3245082332652083,
+      1.8096865959179254,
+      1.1445186658712898,
+      1.473746485565982,
+      1.3373117514790782,
+      1.2404499451326925,
+      0.974207548729514,
+      1.7839535331193404,
+      1.2480335450871933,
+      1.8625250825623878,
+      1.7793998218036753,
+      1.81747152433793,
+      2.0505061271349523,
+      1.924280790547544,
+      1.8214613674494187,
+      1.5277166346715887,
+      1.9526440621970729,
+      3.6810056644693057,
+      1.496255054955705,
+      3.7585935656745693,
+      2.4447684675907793,
+      2.4568386699332674,
+      2.2543555024708946,
+      2.2974670635576464,
+      2.045308205068914,
+      2.350655911091833,
+      1.9932387472406945,
+      2.1217599065430064,
+      0.8855344513253082,
+      3.0272821344632863,
+      1.3836842079735656,
+      2.570919016147056,
+      2.72645626108989,
+      2.5573377201474123,
+      2.4135724603181936,
+      3.8062889963319857,
+      2.2341563343321766,
+      2.316943430732667,
+      2.7108095284792073,
+      2.392151735746884,
+      2.54781570916274,
+      2.611458369005341,
+      2.8652983213035346,
+      3.188370058051283,
+      1.469808228030807,
+      2.8762358276367475,
+      2.9156010291494208,
+      4.004434802651427,
+      3.336037593713183,
+      4.429246827657307,
+      4.333667294876481,
+      3.058455469446686,
+      4.321496996636231,
+      3.6412643852582858,
+      3.5580918103817476,
+      2.6596361746167907,
+      3.6625432020950615,
+      3.0721476744621863,
+      3.2961855900509596,
+      2.6271486824757573,
+      3.310463625715149,
+      3.430048292326144,
+      3.5874846796197444,
+      3.8400505557254387,
+      3.838715399021123,
+      3.7689900738219406,
+      4.6345180795422145,
+      4.019081835524988,
+      3.497372509622941,
+      4.564122666713757,
+      4.03518658246025,
+      3.8932864287674263,
+      3.8783675639915103,
+      4.063082561961283,
+      3.7371980058725605,
+      5.069289134283213,
+      4.880671415729346,
+      4.206662115731101,
+      3.926854827556619,
+      4.643545092831095,
+      5.56555198107012,
+      4.612938870107782,
+      4.175851370661663,
+      4.177237556358521,
+      5.111383762577938,
+      4.2686984260126595,
+      5.344701461471185,
+      3.665694433109206,
+      4.5494753302096544,
+      5.408785425471633,
+      4.330650791064101,
+      4.3035362956299466,
+      4.859133923706554,
+      5.554189191014618,
+      6.329220556456306,
+      4.334955919813068,
+      4.433156884263183,
+      4.9030920098956186,
+      5.309044994060312,
+      6.005799111255909,
+      5.433727124271171,
+      5.494338148330267,
+      5.85074484342875,
+      5.610139652515339,
+      5.8538139752452265,
+      5.249077888275871,
+      6.2383381004268985,
+      4.728546836953973,
+      6.0362558707857,
+      6.293959168959564,
+      5.0330102059820705,
+      6.3538043553046295,
+      5.78099837051639,
+      6.431832306678711,
+      6.043721946062765,
+      4.525745249079187,
+      6.622207315988479,
+      6.504138715006389,
+      6.359434607202905,
+      6.470065590606895,
+      5.981317060790448,
+      7.6160269719509985,
+      7.745491666713236,
+      5.5610906927331225,
+      6.301572101770281,
+      6.29060521478865,
+      7.382462134314022,
+      5.628709112585964,
+      6.507097792183454
     ]
   },
   "notes": {
@@ -7232,7 +10300,10 @@
       "guided": "1fe194868fc7ab7f3aab7d3d5268c12378f754425e4f6f72be7a3b2d637a1651",
       "test-natural": "2e4f6acd3f77a202cc6a002aea6abbd35a3faba762903c0e56accafe2fec2ff7",
       "test-stratified": "98fa335b1199cf3c21158f85d26105a1e9c61be397489909e2b123564a33ad77",
-      "guided-log": "7949a6ffd82e93ff6367c3606fbe6fb2d0dd44e0c05b81066c16be47ae463660"
+      "guided-log": "7949a6ffd82e93ff6367c3606fbe6fb2d0dd44e0c05b81066c16be47ae463660",
+      "guided-seq-1": "4494b3d74fe63b4bb2569d3f2e7c75c4fc01cfe029fb26a55e675ac91d7409b7",
+      "guided-seq-2": "8db751ae2ce7a0ce1cdf66d8940b7d35d3b7d28417ff26a088a2bc5e0cd1ec4d",
+      "guided-seq-3": "0d7efb8863265400b193182fc2e7734f0ae1c3c399b8e5b231c6aa709495cc64"
     },
     "fit_fingerprints": {
       "rf__log-rmse": "09b23d70830a449170a46ab6aff33f4896749c54bcb1a22b989ae056fff8698d",
