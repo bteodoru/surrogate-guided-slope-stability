@@ -237,6 +237,37 @@ def paired_bootstrap(p1: Prediction, p2: Prediction, *, registry, n_boot: int, s
             "limitation": BOOTSTRAP_LIMITATION}
 
 
+# --- replication statistics ------------------------------------------------------------------
+
+def welch_interval(a, b, level: float) -> dict:
+    """Interval for mean(a) - mean(b) from independent samples, unequal variances."""
+    a, b = np.asarray(a, dtype=float), np.asarray(b, dtype=float)
+    va, vb = a.var(ddof=1) / len(a), b.var(ddof=1) / len(b)
+    diff, se = float(a.mean() - b.mean()), float(np.sqrt(va + vb))
+    if se == 0.0:
+        return {"diff": diff, "se": 0.0, "df": None, "t": None, "ci": [diff, diff], "level": level}
+    df = float((va + vb) ** 2 / (va ** 2 / (len(a) - 1) + vb ** 2 / (len(b) - 1)))
+    t = float(stats.t.ppf(0.5 + level / 2, df))
+    return {"diff": diff, "se": se, "df": df, "t": t, "ci": [diff - t * se, diff + t * se], "level": level}
+
+
+def paired_interval(a, b, level: float) -> dict:
+    """Interval for the mean of a - b over naturally paired observations."""
+    d = np.asarray(a, dtype=float) - np.asarray(b, dtype=float)
+    n = len(d)
+    diff, se = float(d.mean()), float(d.std(ddof=1) / np.sqrt(n))
+    t = float(stats.t.ppf(0.5 + level / 2, n - 1))
+    return {"diff": diff, "se": se, "df": n - 1, "t": t, "ci": [diff - t * se, diff + t * se], "level": level}
+
+
+def prob_less(a, b) -> float:
+    """Share of all (a_i, b_j) pairs with a_i < b_j, ties counted 1/2. Descriptive:
+    the pairs are not independent observations."""
+    a = np.asarray(a, dtype=float)[:, None]
+    b = np.asarray(b, dtype=float)[None, :]
+    return float(np.mean((a < b) + 0.5 * (a == b)))
+
+
 # --- one test set, every arm ----------------------------------------------------------------
 
 @dataclass

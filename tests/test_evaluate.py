@@ -3,6 +3,7 @@ import math
 
 import numpy as np
 import pytest
+from scipy import stats as _stats
 
 from sgs import config, evaluate, models
 from tests.helpers import EVAL_KWARGS, OffsetModel, stub_fit, stub_fits, stub_test, ARM_SCALES, write_all_finals
@@ -261,3 +262,33 @@ def test_learning_curve_metrics_refuse_misaligned_predictions():
     with pytest.raises(evaluate.MisalignedPair):
         evaluate.learning_curve_metrics({("rf", "lhs", 100): [unit]}, {"test-natural": test},
                                         selection_range=config.SELECTION_RANGE, edges=config.ZONE_EDGES)
+
+
+# --- replication statistics -----------------------------------------------------------------
+
+A5 = np.array([0.10, 0.12, 0.11, 0.13, 0.09])
+B5 = np.array([0.10, 0.10, 0.10, 0.11, 0.12])
+
+
+def test_welch_interval_matches_scipy():
+    out = evaluate.welch_interval(A5, B5, 0.95)
+    ref = _stats.ttest_ind(A5, B5, equal_var=False).confidence_interval(0.95)
+    assert out["diff"] == pytest.approx(A5.mean() - B5.mean())
+    assert out["ci"] == pytest.approx([ref.low, ref.high])
+    assert out["level"] == 0.95 and out["df"] < 8
+
+
+def test_welch_interval_with_no_spread_is_a_point():
+    out = evaluate.welch_interval(np.full(5, 0.1), np.full(5, 0.2), 0.95)
+    assert out["ci"] == pytest.approx([-0.1, -0.1]) and out["se"] == 0.0 and out["df"] is None
+
+
+def test_paired_interval_matches_scipy():
+    out = evaluate.paired_interval(A5, B5, 0.95)
+    ref = _stats.ttest_rel(A5, B5).confidence_interval(0.95)
+    assert out["ci"] == pytest.approx([ref.low, ref.high]) and out["df"] == 4
+
+
+def test_prob_less_counts_all_pairs_and_halves_ties():
+    assert evaluate.prob_less([1.0, 2.0], [1.5, 2.5]) == pytest.approx(3 / 4)
+    assert evaluate.prob_less([1.0], [1.0]) == pytest.approx(0.5)
