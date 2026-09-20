@@ -272,22 +272,29 @@ def replication_interaction_frame(rep: dict) -> pd.DataFrame:
 def fig_replication_bins(rep: dict, test: str, family: str):
     """Diagnostic: log-RMSE per design bin (confirmatory mean, min-max across
     realizations), test points per bin and the mean training count per bin."""
-    arms = ("B", "C-log", "C-seq")
+    arms = ("B", "C-log", "C-seq", "C0-log", "C0-seq")
     rows = [v for v in rep["values"] if v["test"] == test and v["family"] == family
             and v["realization"] in rep["confirmatory"]]
     labels = [b["zone"] for b in rows[0]["bins"]]
     x = np.arange(len(labels))
     fig, (top, bottom) = plt.subplots(2, 1, figsize=(10, 6.5), sharex=True, height_ratios=(2, 1))
     for arm in arms:
-        grid = np.array([[np.nan if b["log_rmse"] is None else b["log_rmse"] for b in v["bins"]]
-                         for v in rows if v["arm"] == arm], dtype=float)
-        top.plot(x, np.nanmean(grid, axis=0), "o-", label=arm)
-        top.fill_between(x, np.nanmin(grid, axis=0), np.nanmax(grid, axis=0), alpha=0.15)
-        counts = np.array([v["train_counts"] for v in rows if v["arm"] == arm], dtype=float)
-        bottom.plot(x, counts.mean(axis=0), "o-", label=f"{arm} training")
+        arm_rows = [v for v in rows if v["arm"] == arm]
+        if not arm_rows:
+            continue
+        ablation = arm.startswith("C0")
+        style = "o--" if ablation else "o-"
+        grid = np.ma.masked_invalid(np.array(
+            [[np.nan if b["log_rmse"] is None else b["log_rmse"] for b in v["bins"]] for v in arm_rows],
+            dtype=float))
+        top.plot(x, grid.mean(axis=0).filled(np.nan), style, label=arm)
+        if not ablation:
+            top.fill_between(x, grid.min(axis=0).filled(np.nan), grid.max(axis=0).filled(np.nan), alpha=0.15)
+        counts = np.array([v["train_counts"] for v in arm_rows], dtype=float)
+        bottom.plot(x, counts.mean(axis=0), style, label=f"{arm} training")
     bottom.bar(x, [b["n"] for b in rows[0]["bins"]], alpha=0.3, color="grey", label="test points")
     top.set_ylabel("log-RMSE")
-    top.set_title(f"{test}, {family.upper()}: mean and min–max over realizations {rep['confirmatory']}")
+    top.set_title(f"{test}, {family.upper()}: mean over realizations {rep['confirmatory']}, min–max for budget arms")
     top.legend(frameon=False)
     bottom.set_ylabel("points per bin")
     bottom.legend(frameon=False, fontsize=8)

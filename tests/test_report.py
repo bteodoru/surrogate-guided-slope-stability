@@ -141,3 +141,11 @@ def test_run_writes_replication_outputs_when_present(root):
     assert {"replications__test-natural__values.tex", "replications__test-natural__comparisons.tex",
             "replications__interactions.tex"} <= tables
     assert (config.figures_dir() / "replications__test-natural__gbm.pdf").read_bytes()[:4] == b"%PDF"
+
+
+def test_replication_bin_figure_has_ablations_and_no_warning(root, recwarn):
+    rep = _write_replications(root)
+    fig = report.fig_replication_bins(rep, "test-natural", "gbm")
+    labels = {line.get_label() for line in fig.axes[0].lines}
+    assert {"C0-log", "C0-seq"} <= labels
+    assert not [w for w in recwarn if issubclass(w.category, RuntimeWarning)]
