@@ -127,6 +127,18 @@ alone (`config.LC_PARAMS`), since the seed is shared by both curves.
 - Paired bootstrap for ΔRMSE covers test-sampling variability only, not seed
   or selection variability; the limitation is written into the output.
 
+**Replications** (`sgs replicate`, the `REP_*` block of `config.py`): five new
+realizations of the points each strategy adds, on the fixed seed, the fixed test
+sets and the common hyper-parameters fixed from the seed — every conclusion is
+conditional on those three. Realization r0 is the existing sets, refitted the
+same way; it shaped the variants and the predictions, so it is exploratory,
+reported apart, and enters no interval. Arms that share no points get a Welch
+interval, arms sharing points within a realization a paired interval. P̂(first <
+second) over the realization pairs is descriptive only — the pairs are not
+independent. An interval containing 0 is inconclusive, never a tie and never
+evidence of equivalence. A learner interaction is claimed only from the
+interaction interval, never from comparing two arms' intervals.
+
 ## Pipeline
 
 `sgs generate | fit | evaluate | report` (see `README.md`). `data/results/` is
