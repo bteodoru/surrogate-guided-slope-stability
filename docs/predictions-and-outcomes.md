@@ -130,13 +130,14 @@ selection range: C-log against B −0.654 [−1.002, −0.306] and C-seq against
 −0.069] on test-stratified. Every other row contains 0: every C-seq row but the
 one named, and every test-stratified row but the one named. What can be claimed
 is therefore narrow: on test-natural the RF-to-GBM gap is smaller under C-log
-than under B across the reported measures, and in FOS ≥ 6 both guided arms
-narrow it. These are two tree-ensemble families fitted with hyper-parameters
-fixed from the seed and support nothing about learners in general.
+than under B across the reported measures, and on that same test both guided
+arms narrow it in FOS ≥ 6. These are two tree-ensemble families fitted with
+hyper-parameters fixed from the seed and support nothing about learners in
+general.
 
 r0, the existing sets, lies outside the r1–r5 range on the decision range in 6
 of the 20 family × test × arm cells, and for C-log under RF it is worse than
 every one of the five new realizations on both tests (0.119 against a replicated
-mean of 0.095 on test-natural, 0.124 against 0.096 on test-stratified). That is
+mean of 0.095 on test-natural, 0.123 against 0.096 on test-stratified). That is
 why it is reported apart: it is the draw that shaped the variants and the
 predictions.
