@@ -7,6 +7,18 @@ Realization r0 is the existing main-pipeline sets refitted the same way
 (exploratory); r1..rN are new (confirmatory). The seed, both test sets, the
 model seed and the hyper-parameters are fixed; every conclusion is conditional
 on them.
+
+Resume contract (generation takes hours and may be killed at any moment):
+a set is reused only when its stored design is the design the configuration
+produces now, its metadata entry exists with the same solver fingerprint, the
+recorded hashes match the results and final files on disk, and the final still
+satisfies the data contract for its expected size. Any other state of a set
+whose stored design still matches -- no metadata entry, a missing or stale
+results or final file, a final that fails the contract -- is an interrupted
+run: that one set is solved again, with a printed reason, and its stale files
+are overwritten. Nothing else is touched and no ``--force`` is needed.
+``--force`` is reserved for a real configuration mismatch: a stored design or
+solver fingerprint that differs from what the configuration produces now.
 """
 
 from __future__ import annotations
@@ -44,20 +56,25 @@ def load_set(key: str) -> pd.DataFrame:
     return data.load_final(config.replication_path("final", key), f"rep:{key}")
 
 
+def expected_n(strategy: str, batch: int) -> int:
+    """How many points the set of one strategy adds."""
+    return config.REP_SEQ_BATCHES[batch - 1] if strategy == "guided-seq" else config.REP_EXTENSION
+
+
 def build_design(key: str, strategy: str, realization: int, batch: int) -> tuple[pd.DataFrame, dict]:
     """The design of one replicated set, and what produced it. Guided sets are
     disjoint from the seed, both test sets and, for a sequential batch, the
     realization's earlier batches."""
     seed = rep_seed(strategy, realization, batch)
+    n = expected_n(strategy, batch)
     info = {"strategy": strategy, "realization": realization, "batch": batch, "seed": seed}
     references = {role: design.read_design(role) for role in ("seed", *config.TEST_ROLES)}
     if strategy == "lhs":
-        unit, frame = design.lhs(config.REP_EXTENSION, seed)
+        unit, frame = design.lhs(n, seed)
         if not design.lhs_strata_complete(unit):
             raise design.DesignError(f"{key}: LHS stratification incomplete")
     else:
         earlier = [f"guided_seq_r{realization}_b{b}" for b in range(1, batch)] if strategy == "guided-seq" else []
-        n = config.REP_SEQ_BATCHES[batch - 1] if strategy == "guided-seq" else config.REP_EXTENSION
         for k in earlier:
             references[k] = pd.read_csv(config.replication_path("designs", k))
         training = pd.concat([data.load_role("seed"), *(load_set(k) for k in earlier)], ignore_index=True)
@@ -65,30 +82,62 @@ def build_design(key: str, strategy: str, realization: int, batch: int) -> tuple
         edges = design.bin_edges_log(config.N_BINS, config.SELECTION_RANGE)
         have = design.bin_counts(training["FOS"].to_numpy(float), edges)
         allocation = design.deficit_allocation(have, n)
-        info["screener"] = {**diagnostics, "trained_on": ["seed", *earlier]}
+        # The solved files the screener learned from, as design._training_record
+        # writes them for a role trained on more than one set.
+        trained_paths = {"seed": config.final_path("seed"),
+                         **{k: config.replication_path("final", k) for k in earlier}}
+        info["screener"] = {**diagnostics, "trained_on": ["seed", *earlier],
+                            "trained_on_sha256": {k: data.sha256_file(p)
+                                                  for k, p in trained_paths.items()}}
         info["allocation"] = {"edges": edges.tolist(), "trained_counts": have.tolist(),
                               "added": allocation.tolist()}
         frame = design.guided_log_deficit(model, rng=np.random.default_rng(seed), allocation=allocation,
                                           n_pool=config.N_GUIDED_POOL, selection_range=config.SELECTION_RANGE)
+    if len(frame) != n:
+        raise design.DesignError(f"{key}: {len(frame)} points, expected {n}")
     design.assert_disjoint(frame, references, config.MIN_DISTANCE)
     return frame, info
 
 
+def _incomplete(paths: dict, previous: dict, n: int) -> str | None:
+    """Why the stored set cannot be reused as it stands, or None when it can.
+    Its design is already known to be the one the configuration produces now."""
+    if not previous:
+        return "it has no metadata entry"
+    for stage, path in (("design", paths["designs"]), ("results", paths["results"]),
+                        ("final", paths["final"])):
+        if not path.exists():
+            return f"{path.name} is missing"
+        if previous.get(f"{stage}_sha256") != data.sha256_file(path):
+            return f"{path.name} is not the file that was recorded"
+    problems = data.frame_problems(data.read_table(paths["final"]), n)
+    return "; ".join(problems) if problems else None
+
+
 def generate_set(key: str, strategy: str, realization: int, batch: int, *, workers: int,
                  force: bool = False, fn=None) -> dict:
-    """Design, solve and repair one replicated set; reuse it when its stored
-    design is the one the configuration produces now."""
+    """Design, solve and repair one replicated set; reuse it when it is complete
+    and matches the configuration, and solve it again when an interrupted run
+    left it half-written (see the resume contract at the top of the module)."""
     frame, info = build_design(key, strategy, realization, batch)
     paths = {stage: config.replication_path(stage, key) for stage in ("designs", "results", "final")}
     text = frame.to_csv(index=False)
+    n = expected_n(strategy, batch)
+    fingerprint = config.solver_fingerprint()
     previous = data.read_metadata().get("replications", {}).get(key, {})
-    if paths["final"].exists() and not force:
-        if (paths["designs"].exists() and paths["designs"].read_text() == text
-                and previous.get("design_sha256") == data.sha256_file(paths["designs"])):
+    if not force:
+        if paths["designs"].exists() and paths["designs"].read_text() != text:
+            raise ReplicationError(f"{key}: the stored design is not the one the configuration "
+                                   "produces now; rerun with --force")
+        if previous and previous.get("solver_fingerprint") != fingerprint:
+            raise ReplicationError(f"{key}: the stored set was solved under other solver settings; "
+                                   "rerun with --force")
+        reason = _incomplete(paths, previous, n)
+        if reason is None:
             print(f"[{key}] up to date")
             return previous
-        raise ReplicationError(f"{key}: the stored set does not match the design the configuration "
-                               "produces now; rerun with --force")
+        if any(path.exists() for path in paths.values()):
+            print(f"[{key}] incomplete ({reason}); solving it again", flush=True)
     for path in paths.values():
         path.parent.mkdir(parents=True, exist_ok=True)
     paths["designs"].write_text(text)
@@ -97,10 +146,11 @@ def generate_set(key: str, strategy: str, realization: int, batch: int, *, worke
     rows, _ = solver.read_rows(paths["results"])
     repair = solver.repair_rows(rows)
     solver.write_rows(paths["final"], rows, data.FINAL_COLUMNS)
-    problems = data.frame_problems(data.read_table(paths["final"]), len(frame))
+    problems = data.frame_problems(data.read_table(paths["final"]), n)
     if problems:
         raise ReplicationError(f"{key}: {'; '.join(problems)}")
-    entry = {**info, "n": int(len(frame)), "repair": repair, "environment": data.environment(),
+    entry = {**info, "n": n, "repair": repair, "environment": data.environment(),
+             "solver_fingerprint": fingerprint,
              **{f"{stage}_sha256": data.sha256_file(path) for stage, path in
                 (("design", paths["designs"]), ("results", paths["results"]), ("final", paths["final"]))},
              "updated": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")}

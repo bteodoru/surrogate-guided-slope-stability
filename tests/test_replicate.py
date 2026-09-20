@@ -1,3 +1,5 @@
+import json
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -70,6 +72,98 @@ def test_generate_set_reuses_and_refuses(small_reps, monkeypatch):
     monkeypatch.setitem(config.SEEDS, "replication_design", 1)
     with pytest.raises(replicate.ReplicationError, match="--force"):
         replicate.generate_set("lhs_r1", "lhs", 1, 0, workers=1, fn=fake_analyse)
+
+
+# --- resuming an interrupted generation ------------------------------------------------------
+
+def _generate_one(key="lhs_r1", strategy="lhs", batch=0, realization=1, **kw):
+    return replicate.generate_set(key, strategy, realization, batch, workers=1, fn=fake_analyse, **kw)
+
+
+def _count_solves(monkeypatch):
+    """Count solver calls while still solving."""
+    calls = []
+    original = replicate.solver.run_set
+
+    def counted(*args, **kwargs):
+        calls.append(1)
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(replicate.solver, "run_set", counted)
+    return calls
+
+
+def _write_metadata(meta):
+    config.metadata_path().write_text(json.dumps(meta))
+
+
+def test_generate_set_resolves_when_the_metadata_entry_is_missing(small_reps, monkeypatch, capsys):
+    entry = _generate_one()
+    meta = data.read_metadata()
+    del meta["replications"]["lhs_r1"]
+    _write_metadata(meta)
+    calls = _count_solves(monkeypatch)
+    again = _generate_one()
+    assert calls == [1]
+    assert again["final_sha256"] == entry["final_sha256"]
+    assert data.read_metadata()["replications"]["lhs_r1"]["final_sha256"] == entry["final_sha256"]
+    assert "lhs_r1" in capsys.readouterr().out
+
+
+def test_generate_set_resolves_after_each_partial_state(small_reps, monkeypatch):
+    entry = _generate_one()
+    paths = {stage: config.replication_path(stage, "lhs_r1")
+             for stage in ("designs", "results", "final")}
+    calls = _count_solves(monkeypatch)
+    for missing in (("results", "final"), ("final",), ()):
+        for stage in missing:
+            paths[stage].unlink()
+        if not missing:                      # stale results and final of an interrupted run
+            paths["results"].write_text("angle\n1.0\n")
+            paths["final"].write_text("angle\n1.0\n")
+        calls.clear()
+        again = _generate_one()
+        assert calls == [1], f"not re-solved after {missing or 'a stale results/final pair'}"
+        assert again["final_sha256"] == entry["final_sha256"]
+        assert len(replicate.load_set("lhs_r1")) == config.REP_EXTENSION
+
+
+def test_generate_set_resolves_when_the_final_violates_the_contract(small_reps, monkeypatch):
+    entry = _generate_one()
+    final = config.replication_path("final", "lhs_r1")
+    data.read_table(final).iloc[:-1].to_csv(final, index=False)
+    meta = data.read_metadata()
+    meta["replications"]["lhs_r1"]["final_sha256"] = data.sha256_file(final)
+    _write_metadata(meta)
+    calls = _count_solves(monkeypatch)
+    again = _generate_one()
+    assert calls == [1] and again["final_sha256"] == entry["final_sha256"]
+    assert len(replicate.load_set("lhs_r1")) == config.REP_EXTENSION
+
+
+def test_generate_set_refuses_other_solver_settings(small_reps, monkeypatch):
+    entry = _generate_one()
+    assert entry["solver_fingerprint"] == config.solver_fingerprint()
+    monkeypatch.setattr(config, "REPAIR_VARIANTS", ((2.0, None),))
+    with pytest.raises(replicate.ReplicationError, match="--force"):
+        _generate_one()
+
+
+def test_build_design_checks_the_size(small_reps, monkeypatch):
+    monkeypatch.setattr(design, "guided_log_deficit",
+                        lambda *a, **k: pd.DataFrame({p: [0.0] for p in config.PARAMS}))
+    with pytest.raises(design.DesignError, match="expected"):
+        replicate.build_design("guided_log_r1", "guided-log", 1, 0)
+
+
+def test_screener_records_the_training_hashes(small_reps):
+    b1 = _generate_one("guided_seq_r1_b1", "guided-seq", 1)
+    b2 = _generate_one("guided_seq_r1_b2", "guided-seq", 2)
+    seed_sha = data.sha256_file(config.final_path("seed"))
+    assert b1["screener"]["trained_on_sha256"] == {"seed": seed_sha}
+    assert b2["screener"]["trained_on_sha256"] == {
+        "seed": seed_sha,
+        "guided_seq_r1_b1": data.sha256_file(config.replication_path("final", "guided_seq_r1_b1"))}
 
 
 @pytest.fixture

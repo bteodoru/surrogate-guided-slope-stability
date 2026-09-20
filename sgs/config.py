@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -402,6 +402,11 @@ REP_INTERACTIONS = (("C-log", "B"), ("C-seq", "B"))
 def _digest(payload) -> str:
     text = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(text.encode()).hexdigest()
+
+
+def solver_fingerprint() -> str:
+    """Everything a solved set depends on, apart from its design."""
+    return _digest({"solver": asdict(SOLVER), "repair_variants": REPAIR_VARIANTS})
 
 
 def fit_fingerprint(family: str, scoring: str) -> str:
