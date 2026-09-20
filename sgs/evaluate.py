@@ -89,6 +89,9 @@ def zones(edges) -> list[tuple[str, float, float]]:
     return out
 
 
+_zone_bounds = zones
+
+
 def _zone_mask(y, lo, hi):
     return (y >= lo) & (y < hi)
 
@@ -430,5 +433,114 @@ def run_learning_curve() -> None:
     result = learning_curve_metrics(models.load_lc_units(), tests, selection_range=config.SELECTION_RANGE,
                                     edges=config.ZONE_EDGES)
     path = config.learning_curve_metrics_path()
+    _write_json(path, result)
+    print(f"[evaluate] wrote {path.name}")
+
+
+# --- replications ---------------------------------------------------------------------------
+
+REPLICATION_PROCEDURE = (
+    "Common fixed hyper-parameters (config.LC_PARAMS, chosen by CV on the seed alone) for every arm and "
+    "realization; conclusions are conditional on the seed, the test sets and these hyper-parameters. "
+    "r0 = the existing sets (exploratory, reported apart); r1.. = new realizations (confirmatory). "
+    "Independent arms: Welch interval; arms sharing points within a realization: paired interval. "
+    "P(first<second) over all realization pairs, ties 1/2, is descriptive (the pairs are not independent). "
+    "Scales: log-RMSE (absolute) and log(log-RMSE) (relative). An interval containing 0 is inconclusive, "
+    "not a tie. These intervals cover variability between designs only. Because both test sets are held "
+    "fixed, test-sampling error is a component common to every realization: it does not widen the spread "
+    "between them and does not average out over them. It is covered separately by the paired bootstrap of "
+    "`sgs evaluate`, and the two components are never combined.")
+
+
+def _measure_value(row: dict, measure: str):
+    if measure in row["subsets"]:
+        return row["subsets"][measure]["log_rmse"]
+    return next(z["log_rmse"] for z in row["zones"] if z["zone"] == measure)
+
+
+def replication_metrics(units: Mapping, tests: Mapping[str, data.TestSet], *, zones, bins, selection_range,
+                        decision_range, level, welch, paired, interactions) -> dict:
+    values = []
+    for (family, r), stored in sorted(units.items()):
+        for arm, unit in stored["arms"].items():
+            for name, test in tests.items():
+                if not np.array_equal(stored["test_ids"][name], test.ids):
+                    raise MisalignedPair(f"replication {family} r{r}: predictions for {name} are not aligned")
+                p = np.asarray(unit["predictions"][name], dtype=float)
+                train = np.asarray(unit["train_fos"], dtype=float)
+                values.append({
+                    "family": family, "test": name, "arm": arm, "realization": int(r),
+                    "subsets": subset_metrics(test.y, p, selection_range, decision_range),
+                    "zones": zone_metrics(test.y, p, zones),
+                    "bins": zone_metrics(test.y, p, bins),
+                    "train_counts": [int(_zone_mask(train, lo, hi).sum()) for _, lo, hi in _zone_bounds(bins)],
+                })
+    realizations = sorted({v["realization"] for v in values})
+    confirm = [r for r in realizations if r >= 1]
+    measures = [*SUBSETS, *(label for label, _, _ in _zone_bounds(zones))]
+    index = {(v["family"], v["test"], v["arm"], v["realization"]): v for v in values}
+    families = sorted({v["family"] for v in values})
+
+    def series(family, test, arm, measure):
+        out = [_measure_value(index[(family, test, arm, r)], measure) for r in confirm
+               if (family, test, arm, r) in index]
+        return None if len(out) < 2 or any(x is None for x in out) else [float(x) for x in out]
+
+    summaries, comparisons, inter = [], [], []
+    for family in families:
+        for test in tests:
+            for arm in sorted({v["arm"] for v in values}):
+                for measure in measures:
+                    s = series(family, test, arm, measure)
+                    r0 = index.get((family, test, arm, 0))
+                    summaries.append({"family": family, "test": test, "arm": arm, "measure": measure,
+                                      "r0": None if r0 is None else _measure_value(r0, measure),
+                                      "values": s, "mean": None if s is None else float(np.mean(s)),
+                                      "sd": None if s is None else float(np.std(s, ddof=1)),
+                                      "min": None if s is None else float(min(s)),
+                                      "max": None if s is None else float(max(s))})
+            for measure in measures:
+                for method, pairs in (("welch", welch), ("paired", paired)):
+                    for first, second in pairs:
+                        a, b = series(family, test, first, measure), series(family, test, second, measure)
+                        if a is None or b is None:
+                            continue
+                        for scale, (x, y) in (("log-rmse", (a, b)),
+                                              ("relative", (list(np.log(a)), list(np.log(b))))):
+                            interval = (welch_interval(x, y, level) if method == "welch"
+                                        else paired_interval(x, y, level))
+                            p_less = (prob_less(x, y) if method == "welch"
+                                      else float(np.mean(np.asarray(x) < np.asarray(y))))
+                            comparisons.append({"family": family, "test": test, "measure": measure,
+                                                "first": first, "second": second, "method": method,
+                                                "scale": scale, **interval, "p_first_less": p_less,
+                                                "first_values": a, "second_values": b})
+    if {"rf", "gbm"} <= set(families):
+        for test in tests:
+            for measure in measures:
+                for first, second in interactions:
+                    deltas = {}
+                    for arm in (first, second):
+                        rf, gbm = series("rf", test, arm, measure), series("gbm", test, arm, measure)
+                        deltas[arm] = None if rf is None or gbm is None else list(np.log(rf) - np.log(gbm))
+                    if deltas[first] is None or deltas[second] is None:
+                        continue
+                    inter.append({"test": test, "measure": measure, "first": first, "second": second,
+                                  **welch_interval(deltas[first], deltas[second], level),
+                                  "first_values": [float(x) for x in deltas[first]],
+                                  "second_values": [float(x) for x in deltas[second]]})
+    return {"procedure": REPLICATION_PROCEDURE, "realizations": realizations, "confirmatory": confirm,
+            "values": values, "summaries": summaries, "comparisons": comparisons, "interactions": inter}
+
+
+def run_replications() -> None:
+    from sgs import design, replicate
+    tests = {role: data.load_test(role) for role in config.TEST_ROLES}
+    result = replication_metrics(
+        replicate.load_units(), tests, zones=config.ZONE_EDGES,
+        bins=tuple(design.bin_edges_log(config.N_BINS, config.SELECTION_RANGE)),
+        selection_range=config.SELECTION_RANGE, decision_range=config.DECISION_RANGE, level=config.REP_CI,
+        welch=config.REP_WELCH, paired=config.REP_PAIRED, interactions=config.REP_INTERACTIONS)
+    path = config.replication_metrics_path()
     _write_json(path, result)
     print(f"[evaluate] wrote {path.name}")

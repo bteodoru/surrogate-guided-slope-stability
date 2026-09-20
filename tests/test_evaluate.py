@@ -292,3 +292,60 @@ def test_paired_interval_matches_scipy():
 def test_prob_less_counts_all_pairs_and_halves_ties():
     assert evaluate.prob_less([1.0, 2.0], [1.5, 2.5]) == pytest.approx(3 / 4)
     assert evaluate.prob_less([1.0], [1.0]) == pytest.approx(0.5)
+
+
+def _fake_units(tests, realizations=(0, 1, 2, 3), scale=None):
+    """units shaped like replicate.load_units(): arm error grows with its scale."""
+    scale = scale or {"A": 0.30, "B": 0.10, "C-log": 0.12, "C0-log": 0.25, "C-seq": 0.11, "C0-seq": 0.24}
+    units = {}
+    for family in ("rf", "gbm"):
+        for r in realizations:
+            arms = {}
+            for arm, s in scale.items():
+                if arm == "A" and r != 0:
+                    continue
+                noise = s * (1 + 0.1 * r) * (1.5 if family == "rf" else 1.0)
+                arms[arm] = {"n_train": 10, "train_ids": np.array([f"x:{i}" for i in range(10)]),
+                             "train_fos": np.linspace(0.4, 7.0, 10),
+                             "predictions": {n: t.y * np.exp(noise * np.sin(np.arange(len(t.y)) + r))
+                                             for n, t in tests.items()}}
+            units[(family, r)] = {"test_ids": {n: t.ids for n, t in tests.items()}, "arms": arms}
+    return units
+
+
+REP_KW = dict(zones=config.ZONE_EDGES, bins=(0.5, 1.0, 2.0, 6.0), selection_range=config.SELECTION_RANGE,
+              decision_range=config.DECISION_RANGE, level=0.95, welch=(("C-seq", "B"), ("C-log", "B")),
+              paired=(("C-seq", "C0-seq"),), interactions=(("C-seq", "B"),))
+
+
+def test_replication_metrics_separate_r0_and_compare_confirmatory_realizations():
+    tests = {"test-natural": stub_test(80, 3), "test-stratified": stub_test(50, 4, name="test-stratified")}
+    out = evaluate.replication_metrics(_fake_units(tests), tests, **REP_KW)
+    assert out["realizations"] == [0, 1, 2, 3] and out["confirmatory"] == [1, 2, 3]
+    s = next(x for x in out["summaries"] if x["family"] == "gbm" and x["test"] == "test-natural"
+             and x["arm"] == "B" and x["measure"] == "decision-range")
+    assert len(s["values"]) == 3 and s["r0"] is not None and s["mean"] == pytest.approx(np.mean(s["values"]))
+    c = next(x for x in out["comparisons"] if x["first"] == "C-seq" and x["second"] == "B"
+             and x["family"] == "gbm" and x["test"] == "test-natural" and x["measure"] == "all"
+             and x["scale"] == "log-rmse")
+    assert c["method"] == "welch" and c["first_values"] and len(c["second_values"]) == 3
+    ref = evaluate.welch_interval(c["first_values"], c["second_values"], 0.95)
+    assert c["ci"] == pytest.approx(ref["ci"]) and 0.0 <= c["p_first_less"] <= 1.0
+    rel = next(x for x in out["comparisons"] if x["first"] == "C-seq" and x["second"] == "B"
+               and x["family"] == "gbm" and x["test"] == "test-natural" and x["measure"] == "all"
+               and x["scale"] == "relative")
+    assert rel["diff"] == pytest.approx(np.mean(np.log(c["first_values"])) - np.mean(np.log(c["second_values"])))
+    assert any(x["method"] == "paired" for x in out["comparisons"])
+    i = next(x for x in out["interactions"] if x["test"] == "test-natural" and x["measure"] == "all")
+    assert len(i["first_values"]) == 3 and "ci" in i
+    v = out["values"][0]
+    assert {"subsets", "zones", "bins", "train_counts"} <= set(v) and len(v["train_counts"]) == len(v["bins"])
+    json.dumps(out)   # serializable
+
+
+def test_replication_metrics_refuse_misaligned_predictions():
+    tests = {"test-natural": stub_test(80, 3)}
+    units = _fake_units(tests, realizations=(0, 1))
+    units[("rf", 1)]["test_ids"]["test-natural"] = units[("rf", 1)]["test_ids"]["test-natural"][::-1]
+    with pytest.raises(evaluate.MisalignedPair):
+        evaluate.replication_metrics(units, tests, **REP_KW)
