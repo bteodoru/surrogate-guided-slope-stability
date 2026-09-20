@@ -75,8 +75,8 @@ GBM/natural, GBM/stratified, RF/natural, RF/stratified. r0 enters no interval.
 | prediction | outcome | held? |
 |---|---|---|
 | **Decision range:** for neither C-log nor C-seq is the Welch interval against B entirely below 0 in all four cells | no interval against B is entirely below 0 in any cell. C-log − B: +0.009 [+0.002, +0.016] (entirely *above* 0), −0.004 [−0.019, +0.010], −0.009 [−0.020, +0.002], −0.006 [−0.017, +0.006]. C-seq − B: +0.004 [−0.002, +0.011], −0.004 [−0.018, +0.010], +0.002 [−0.017, +0.020], −0.002 [−0.017, +0.012] | yes |
-| **Zones:** the mean C-seq − B difference is negative in 0.5–1 and positive in 1–2, in all four cells | 8 of 8 signs as declared. In 0.5–1: −0.014 [−0.024, −0.005], −0.011 [−0.036, +0.013], −0.031 [−0.068, +0.006], −0.031 [−0.059, −0.003]. In 1–2: +0.011 [+0.003, +0.019], +0.001 [−0.013, +0.015], +0.018 [+0.006, +0.030], +0.018 [+0.008, +0.029] | yes |
-| **C-seq vs C-log:** under GBM the interval contains 0 on both tests; under RF the mean difference is negative on both tests | the GBM half held on the decision range: −0.005 [−0.013, +0.003] and +0.001 [−0.011, +0.012]; on the whole test set it fails on test-stratified, +0.004 [+0.000, +0.008]. The RF half failed: the mean difference is **positive** on both tests, +0.011 [−0.007, +0.029] and +0.003 [−0.011, +0.018] | **no** |
+| **Zones:** the mean C-seq − B difference is negative in 0.5–1 and positive in 1–2, in all four cells | 8 of 8 signs as declared. In 0.5–1: −0.014 [−0.024, −0.005], −0.011 [−0.036, +0.013], −0.031 [−0.068, +0.006], −0.031 [−0.059, −0.003]. In 1–2: +0.011 [+0.003, +0.019], +0.001 [−0.012, +0.014], +0.018 [+0.006, +0.030], +0.018 [+0.008, +0.029] | yes |
+| **C-seq vs C-log:** under GBM the interval contains 0 on both tests; under RF the mean difference is negative on both tests | the declaration names no measure, so reading it on the decision range is post hoc. There the GBM half held: −0.005 [−0.013, +0.003] and +0.001 [−0.011, +0.012]; on the whole test set it fails on test-stratified, +0.0041 [+0.0005, +0.0078]. The RF half failed on the decision range, on the whole test set and on the selection range alike: the mean difference is **positive** on both tests, +0.011 [−0.007, +0.028] and +0.003 [−0.011, +0.018] | **no** |
 
 What the replications can and cannot settle: they measure the variability
 **between designs** on a fixed seed, with fixed hyper-parameters. They do not
@@ -101,14 +101,15 @@ interval is entirely below 0 in 2 of 4 cells and inconclusive in the other two;
 in 1–2 it is entirely above 0 in 3 of 4 and inconclusive on stratified GBM. The
 cost side is better resolved than the gain side, as it was on the single
 realization. C-log relocates the same way: entirely below 0 in 0.5–1 under RF on
-both tests (−0.052 [−0.070, −0.034] natural, −0.036 [−0.056, −0.017]
+both tests (−0.052 [−0.070, −0.034] natural, −0.036 [−0.055, −0.017]
 stratified) and entirely above 0 in 1–2 in 3 of 4 cells.
 
-On the decision range, the primary criterion, no guided arm has an interval
-against B entirely below 0 in any of the four cells, and the only interval there
-that excludes 0 puts C-log *above* B (natural, GBM). Every other cell is
-inconclusive, which is what a five-realization Welch interval (df ≤ 8) buys —
-not evidence that the arms are equivalent.
+On the decision range, the primary criterion, neither C-log nor C-seq has an
+interval against B entirely below 0 in any of the four cells, and the only C-log
+or C-seq interval against B that excludes 0 there puts C-log *above* B (natural,
+GBM). Every other one of those eight cells is inconclusive, which is what a
+five-realization Welch interval (df ≤ 8) buys — not evidence that the arms are
+equivalent.
 
 The ablations separate the seed from the added points, and do so in every cell.
 On the decision range C₀-log and C₀-seq are above B in 4 of 4 cells with
@@ -118,13 +119,20 @@ the paired intervals C-log − C₀-log and C-seq − C₀-seq are entirely belo
 replaces the seed.
 
 The interaction intervals — log(log-RMSE_rf) − log(log-RMSE_gbm), Welch between
-the two arms — exclude 0 only on test-natural and only for C-log against B:
-−0.249 [−0.350, −0.148] on the decision range, and likewise on all, on the
-selection range, in 0.5–1 and in 1–2. Every C-seq-against-B interaction
-interval, and every interaction interval on test-stratified, contains 0. The one
-interaction that can be claimed is therefore narrow: on test-natural the
-RF-to-GBM gap is smaller under C-log than under B. These are two tuned
-tree-ensemble families and support nothing about learners in general.
+the two arms — exclude 0 in 8 of the 32 stored rows (2 tests × 8 measures × 2
+contrasts). Of the five measures the reported table carries, the only ones that
+exclude 0 are C-log against B on test-natural, and there in all five: −0.249
+[−0.350, −0.148] on the decision range, −0.195 [−0.293, −0.097] on all, −0.122
+[−0.193, −0.051] on the selection range, −0.234 [−0.434, −0.033] in 0.5–1 and
+−0.172 [−0.285, −0.059] in 1–2. The other three sit in FOS ≥ 6, outside the
+selection range: C-log against B −0.654 [−1.002, −0.306] and C-seq against B
+−0.558 [−0.877, −0.238] on test-natural, and C-log against B −0.318 [−0.567,
+−0.069] on test-stratified. Every other row contains 0: every C-seq row but the
+one named, and every test-stratified row but the one named. What can be claimed
+is therefore narrow: on test-natural the RF-to-GBM gap is smaller under C-log
+than under B across the reported measures, and in FOS ≥ 6 both guided arms
+narrow it. These are two tree-ensemble families fitted with hyper-parameters
+fixed from the seed and support nothing about learners in general.
 
 r0, the existing sets, lies outside the r1–r5 range on the decision range in 6
 of the 20 family × test × arm cells, and for C-log under RF it is worse than

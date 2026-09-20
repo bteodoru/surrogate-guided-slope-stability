@@ -46,8 +46,9 @@ optional RF and GBM learning curves (fixed hyper-parameters, not part of `sgs al
 `sgs replicate --workers 2` is optional as well and is not part of `sgs all`: it
 generates and solves five further realizations of the points each strategy adds
 to the fixed seed (B, C-log, C-seq), fits them with common fixed
-hyper-parameters and writes the interval metrics; about six hours of solver time
-with 2 workers.
+hyper-parameters and writes the interval metrics. Summed over the per-row
+`Runtime_s` of `data/replications/final/`, the 4500 replicated rows cost about
+six hours of solver time, so roughly three hours of wall clock with 2 workers.
 A command reuses outputs that already exist and stops, naming the cause, if a
 design, a results file or a fit no longer matches the current configuration or
 data; `--force` regenerates. All scientific parameters live in

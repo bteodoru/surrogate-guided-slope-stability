@@ -132,11 +132,11 @@ realizations of the points each strategy adds, on the fixed seed, the fixed test
 sets and the common hyper-parameters fixed from the seed — every conclusion is
 conditional on those three. Realization r0 is the existing sets, refitted the
 same way; it shaped the variants and the predictions, so it is exploratory,
-reported apart, and enters no interval. Arms that share no points get a Welch
-interval, arms sharing points within a realization a paired interval. P̂(first <
-second) over the realization pairs is descriptive only — the pairs are not
-independent. An interval containing 0 is inconclusive, never a tie and never
-evidence of equivalence. A learner interaction is claimed only from the
+reported apart, and enters no interval. Arms with no common realization-varying
+draw get a Welch interval; arms sharing a realization's added points get a paired
+interval. P̂(first < second) over the realization pairs is descriptive only — the
+pairs are not independent. An interval containing 0 is inconclusive, never a tie
+and never evidence of equivalence. A learner interaction is claimed only from the
 interaction interval, never from comparing two arms' intervals.
 
 ## Pipeline
