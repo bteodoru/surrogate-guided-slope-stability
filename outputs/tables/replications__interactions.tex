@@ -1,0 +1,31 @@
+\begin{table}[htbp]
+\centering
+\caption{Learner interaction: Welch interval on log(log-RMSE_rf) - log(log-RMSE_gbm) between arms.}
+\label{tab:rep:interactions}
+\begin{tabular}{lrrrrrr}
+\toprule
+test & measure & contrast & diff & CI low & CI high & df \\
+\midrule
+test-natural & all & C-log vs B & -0.195 & -0.293 & -0.097 & 6.460 \\
+test-natural & all & C-seq vs B & -0.100 & -0.219 & 0.020 & 7.949 \\
+test-natural & selection-range & C-log vs B & -0.122 & -0.193 & -0.051 & 7.950 \\
+test-natural & selection-range & C-seq vs B & -0.008 & -0.119 & 0.103 & 6.301 \\
+test-natural & decision-range & C-log vs B & -0.249 & -0.350 & -0.148 & 6.188 \\
+test-natural & decision-range & C-seq vs B & -0.066 & -0.177 & 0.045 & 5.836 \\
+test-natural & 0.5–1 & C-log vs B & -0.234 & -0.434 & -0.033 & 7.433 \\
+test-natural & 0.5–1 & C-seq vs B & 0.012 & -0.237 & 0.260 & 6.405 \\
+test-natural & 1–2 & C-log vs B & -0.172 & -0.285 & -0.059 & 7.812 \\
+test-natural & 1–2 & C-seq vs B & -0.021 & -0.147 & 0.105 & 7.319 \\
+test-stratified & all & C-log vs B & -0.172 & -0.401 & 0.056 & 5.160 \\
+test-stratified & all & C-seq vs B & -0.167 & -0.412 & 0.079 & 7.464 \\
+test-stratified & selection-range & C-log vs B & -0.050 & -0.261 & 0.161 & 6.420 \\
+test-stratified & selection-range & C-seq vs B & -0.054 & -0.262 & 0.153 & 5.675 \\
+test-stratified & decision-range & C-log vs B & 0.027 & -0.263 & 0.317 & 7.088 \\
+test-stratified & decision-range & C-seq vs B & 0.042 & -0.191 & 0.274 & 7.984 \\
+test-stratified & 0.5–1 & C-log vs B & 0.081 & -0.229 & 0.391 & 6.881 \\
+test-stratified & 0.5–1 & C-seq vs B & -0.094 & -0.421 & 0.233 & 7.657 \\
+test-stratified & 1–2 & C-log vs B & 0.109 & -0.257 & 0.474 & 7.971 \\
+test-stratified & 1–2 & C-seq vs B & 0.186 & -0.144 & 0.515 & 7.039 \\
+\bottomrule
+\end{tabular}
+\end{table}
