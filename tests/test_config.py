@@ -24,7 +24,7 @@ def test_every_role_seed_is_declared():
 def test_every_declared_seed_has_a_user():
     used = {s for role in config.ROLES.values() for s in role.seeds}
     used |= {"screener_fit", "screener_cv", "protocol_cv_split", "protocol_estimator",
-             "bootstrap_resampling", "learning_curve_subsampling"}
+             "bootstrap_resampling", "learning_curve_subsampling", "replication_design"}
     assert used == set(config.SEEDS)
 
 
@@ -164,3 +164,27 @@ def test_sequential_arms_and_comparisons():
     new = {("C-seq", "B"), ("C-seq", "A"), ("C-seq", "C-log"), ("C-seq", "C0-seq"), ("C0-seq", "B")}
     pairs = {(c.first, c.second): c.alternative for c in config.COMPARISONS}
     assert new <= set(pairs) and all(pairs[p] == "two-sided" for p in new)
+
+
+def test_replication_declaration():
+    assert config.REP_REALIZATIONS == 5 and config.REP_EXTENSION == 300
+    assert config.REP_SEQ_BATCHES == (100, 100, 100) and sum(config.REP_SEQ_BATCHES) == config.REP_EXTENSION
+    assert config.REP_STRATEGIES == ("lhs", "guided-log", "guided-seq")
+    assert set(config.REP_FAMILIES) <= set(config.LC_FAMILIES)
+    arms = {"A", "B", "C-log", "C0-log", "C-seq", "C0-seq"}
+    for pairs in (config.REP_WELCH, config.REP_PAIRED, config.REP_INTERACTIONS):
+        assert all(first in arms and second in arms for first, second in pairs)
+
+
+def test_replication_fingerprint_follows_its_settings(monkeypatch):
+    before = config.replication_fingerprint("rf")
+    assert before != config.replication_fingerprint("gbm")
+    monkeypatch.setattr(config, "REP_EXTENSION", 20)
+    assert config.replication_fingerprint("rf") != before
+
+
+def test_replication_paths_follow_root(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "ROOT", tmp_path)
+    assert config.replication_path("final", "lhs_r1") == tmp_path / "data" / "replications" / "final" / "lhs_r1.csv"
+    assert config.replication_fit_path("gbm", "r2") == tmp_path / "artifacts" / "replications" / "gbm__r2.joblib"
+    assert config.replication_metrics_path() == tmp_path / "outputs" / "metrics" / "replications.json"

@@ -76,11 +76,22 @@ def _final_table(role: str) -> pd.DataFrame:
     return read_table(path)
 
 
+def _with_ids(frame: pd.DataFrame, prefix: str) -> pd.DataFrame:
+    frame.insert(0, "row_id", [f"{prefix}:{i}" for i in range(len(frame))])
+    return add_features(usable(frame)).reset_index(drop=True)
+
+
 def load_role(role: str) -> pd.DataFrame:
     """Usable rows of a final set, with row identifiers and features."""
-    frame = _final_table(role)
-    frame.insert(0, "row_id", [f"{role}:{i}" for i in range(len(frame))])
-    return add_features(usable(frame)).reset_index(drop=True)
+    return _with_ids(_final_table(role), role)
+
+
+def load_final(path, prefix: str) -> pd.DataFrame:
+    """Usable rows of a final file outside the role registry (the replications)."""
+    path = Path(path)
+    if not path.exists():
+        raise FileNotFoundError(f"{path.name} is missing; run `sgs replicate`")
+    return _with_ids(read_table(path), prefix)
 
 
 def load_arm(arm: str) -> pd.DataFrame:
@@ -109,12 +120,12 @@ def load_test(role: str) -> TestSet:
 
 # --- validation -----------------------------------------------------------------
 
-def set_problems(frame: pd.DataFrame, role: str) -> list[str]:
-    """Violations of the data contract by one final set; empty when clean."""
+def frame_problems(frame: pd.DataFrame, n: int) -> list[str]:
+    """Violations of the data contract by one final set of expected size n; empty when clean."""
     if list(frame.columns) != FINAL_COLUMNS:
         return [f"schema: columns {list(frame.columns)}"]
     problems = []
-    expected = config.ROLES[role].n
+    expected = n
     if len(frame) != expected:
         problems.append(f"row_count: {len(frame)} rows, expected {expected}")
     outside = {p: int((~frame[p].between(lo, hi)).sum()) for p, (lo, hi) in config.DOMAIN.items()}
@@ -135,6 +146,11 @@ def set_problems(frame: pd.DataFrame, role: str) -> list[str]:
     if closest <= config.MIN_DISTANCE:
         problems.append(f"no_internal_duplicates: closest pair {closest:.2e}")
     return problems
+
+
+def set_problems(frame: pd.DataFrame, role: str) -> list[str]:
+    """Violations of the data contract by one final set; empty when clean."""
+    return frame_problems(frame, config.ROLES[role].n)
 
 
 def validate_sets(roles) -> None:

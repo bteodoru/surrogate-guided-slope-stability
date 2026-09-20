@@ -145,6 +145,9 @@ SEEDS = {
     "guided_seq_1_stream": 20260924,
     "guided_seq_2_stream": 20260925,
     "guided_seq_3_stream": 20260926,
+    # Replications (declared 2026-09-19 before any replication was solved):
+    # entropy of a SeedSequence keyed on (strategy index, realization, batch).
+    "replication_design": 20260929,
 }
 
 
@@ -360,6 +363,40 @@ LC_PARAMS = {
 }
 
 
+# --- replications (optional; fixed hyper-parameters, both families) ---------------------
+
+# Declared 2026-09-19, before any replication was solved. New realizations of
+# the points each strategy adds to the fixed seed: an independent LHS extension
+# (B), a guided-log selection (C-log), and sequential guided-log batches (C-seq,
+# screener and deficit recomputed on the seed and the realization's earlier
+# batches). The seed, both test sets, the model seed and the hyper-parameters
+# (LC_PARAMS, chosen by CV on the seed alone, common to every arm) are fixed:
+# every conclusion is conditional on them. The existing sets are refitted the
+# same way as realization r0 and reported apart, as exploratory: they shaped
+# the variants and the predictions.
+REP_REALIZATIONS = 5
+REP_STRATEGIES = ("lhs", "guided-log", "guided-seq")
+REP_EXTENSION = 300
+REP_SEQ_BATCHES = (100, 100, 100)
+REP_FAMILIES = ("rf", "gbm")
+REP_CI = 0.95
+# Independent arms (no common factor pairs realization i of one arm with
+# realization i of the other): Welch interval.
+REP_WELCH = (("C-log", "B"), ("C-seq", "B"), ("C0-log", "B"), ("C0-seq", "B"), ("C-seq", "C-log"))
+# Arms sharing points within a realization: paired interval.
+REP_PAIRED = (("C-log", "C0-log"), ("C-seq", "C0-seq"))
+# Learner interaction: per generated set, log(log-RMSE_rf) - log(log-RMSE_gbm)
+# (a natural pair); Welch between the two arms on that contrast.
+REP_INTERACTIONS = (("C-log", "B"), ("C-seq", "B"))
+# Predictions, declared with the above:
+#   decision range: for neither C-log nor C-seq is the Welch interval against B
+#   entirely below 0 in all four family x test cells;
+#   zones: the mean C-seq - B log-RMSE difference is negative in 0.5-1 and
+#   positive in 1-2 in all four cells (the relocation is repeatable);
+#   C-seq vs C-log: under GBM the interval contains 0 on both tests; under RF
+#   the mean difference is negative on both tests.
+
+
 # --- fingerprints -------------------------------------------------------------------
 
 def _digest(payload) -> str:
@@ -382,6 +419,16 @@ def learning_curve_fingerprint(family: str) -> str:
         "family": family, "base": LC_BASE_ROLE, "strategies": LC_STRATEGIES, "budgets": LC_BUDGETS,
         "repeats": LC_REPEATS, "fixed": ESTIMATOR_FIXED[family], "params": LC_PARAMS[family],
         "seeds": {k: SEEDS[k] for k in ("protocol_estimator", "learning_curve_subsampling")},
+        "target": TARGET, "features": FEATURES,
+    })
+
+
+def replication_fingerprint(family: str) -> str:
+    return _digest({
+        "family": family, "realizations": REP_REALIZATIONS, "strategies": REP_STRATEGIES,
+        "extension": REP_EXTENSION, "seq_batches": REP_SEQ_BATCHES,
+        "fixed": ESTIMATOR_FIXED[family], "params": LC_PARAMS[family],
+        "seeds": {k: SEEDS[k] for k in ("protocol_estimator", "replication_design")},
         "target": TARGET, "features": FEATURES,
     })
 
@@ -422,6 +469,19 @@ def metrics_path(test: str, scoring: str) -> Path:
 
 def learning_curve_metrics_path() -> Path:
     return ROOT / "outputs" / "metrics" / "learning_curve.json"
+
+
+def replication_path(stage: str, key: str) -> Path:
+    """stage: designs | results | final."""
+    return ROOT / "data" / "replications" / stage / f"{key}.csv"
+
+
+def replication_fit_path(family: str, realization: str) -> Path:
+    return ROOT / "artifacts" / "replications" / f"{family}__{realization}.joblib"
+
+
+def replication_metrics_path() -> Path:
+    return ROOT / "outputs" / "metrics" / "replications.json"
 
 
 def tables_dir() -> Path:

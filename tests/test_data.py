@@ -126,3 +126,18 @@ def test_record_merges_entries_and_serializes_numpy(root):
 def test_environment_lists_the_pinned_packages():
     env = data.environment()
     assert env["python"] and set(env["packages"]) >= {"numpy", "scikit-learn", "xslope"}
+
+
+def test_frame_problems_checks_an_expected_size(tmp_path):
+    frame = synthetic_final(30, 4)
+    assert data.frame_problems(frame, 30) == []
+    assert any(p.startswith("row_count") for p in data.frame_problems(frame, 31))
+
+
+def test_load_final_prefixes_row_ids_and_adds_features(tmp_path):
+    path = tmp_path / "x.csv"
+    synthetic_final(12, 5).to_csv(path, index=False)
+    frame = data.load_final(path, "rep:x")
+    assert frame["row_id"].iloc[0] == "rep:x:0" and "gamma_H_c" in frame and len(frame) == 12
+    with pytest.raises(FileNotFoundError, match="missing.csv"):
+        data.load_final(tmp_path / "missing.csv", "rep:y")
