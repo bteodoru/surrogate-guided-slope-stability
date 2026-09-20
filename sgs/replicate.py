@@ -9,21 +9,29 @@ model seed and the hyper-parameters are fixed; every conclusion is conditional
 on them.
 
 Resume contract (generation takes hours and may be killed at any moment):
-a set is reused only when its stored design is the design the configuration
-produces now, its metadata entry exists with the same solver fingerprint, the
-recorded hashes match the results and final files on disk, and the final still
-satisfies the data contract for its expected size. Any other state of a set
-whose stored design still matches -- no metadata entry, a missing or stale
-results or final file, a final that fails the contract -- is an interrupted
-run: that one set is solved again, with a printed reason, and its stale files
-are overwritten. Nothing else is touched and no ``--force`` is needed.
-``--force`` is reserved for a real configuration mismatch: a stored design or
+a set is reused only when its metadata entry exists, records the design the
+configuration produces now and the same solver fingerprint, its recorded
+hashes match the design, results and final files on disk, and the final still
+satisfies the data contract for its expected size. Any other state -- no
+metadata entry, a missing, torn or stale file, a final that fails the contract
+-- is an interrupted run: that one set is solved again, with a printed reason,
+and its files are overwritten (the design is written atomically, so a kill
+cannot tear it). Nothing else is touched and no ``--force`` is needed.
+``--force`` is reserved for a real configuration mismatch, which is read from
+the metadata, never from a file that may be damaged: a recorded design hash or
 solver fingerprint that differs from what the configuration produces now.
+
+A set that is complete but whose screener learned from files that have since
+been solved again (the same design and the same FOS, other runtimes) keeps its
+data and has only its provenance re-recorded.
 """
 
 from __future__ import annotations
 
 import datetime as _dt
+import hashlib
+import os
+
 import joblib
 
 import numpy as np
@@ -61,6 +69,13 @@ def expected_n(strategy: str, batch: int) -> int:
     return config.REP_SEQ_BATCHES[batch - 1] if strategy == "guided-seq" else config.REP_EXTENSION
 
 
+def read_set_design(key: str) -> pd.DataFrame:
+    path = config.replication_path("designs", key)
+    if not path.exists():
+        raise FileNotFoundError(f"{path.name} is missing; run `sgs replicate`")
+    return pd.read_csv(path)
+
+
 def build_design(key: str, strategy: str, realization: int, batch: int) -> tuple[pd.DataFrame, dict]:
     """The design of one replicated set, and what produced it. Guided sets are
     disjoint from the seed, both test sets and, for a sequential batch, the
@@ -76,7 +91,7 @@ def build_design(key: str, strategy: str, realization: int, batch: int) -> tuple
     else:
         earlier = [f"guided_seq_r{realization}_b{b}" for b in range(1, batch)] if strategy == "guided-seq" else []
         for k in earlier:
-            references[k] = pd.read_csv(config.replication_path("designs", k))
+            references[k] = read_set_design(k)
         training = pd.concat([data.load_role("seed"), *(load_set(k) for k in earlier)], ignore_index=True)
         model, diagnostics = design.fit_screener(training)
         edges = design.bin_edges_log(config.N_BINS, config.SELECTION_RANGE)
@@ -99,19 +114,48 @@ def build_design(key: str, strategy: str, realization: int, batch: int) -> tuple
     return frame, info
 
 
+def _text_sha256(text: str) -> str:
+    return hashlib.sha256(text.encode()).hexdigest()
+
+
+def _write_design(path, text: str) -> None:
+    """Write the design atomically, so a kill cannot leave it torn."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(f".{path.name}.tmp")
+    tmp.write_text(text)
+    os.replace(tmp, path)
+
+
 def _incomplete(paths: dict, previous: dict, n: int) -> str | None:
     """Why the stored set cannot be reused as it stands, or None when it can.
-    Its design is already known to be the one the configuration produces now."""
+    Its metadata entry is already known to record the design the configuration
+    produces now, so a file that differs from it is a damaged one."""
     if not previous:
         return "it has no metadata entry"
-    for stage, path in (("design", paths["designs"]), ("results", paths["results"]),
-                        ("final", paths["final"])):
+    for stage, recorded in (("designs", "design"), ("results", "results"), ("final", "final")):
+        path = paths[stage]
         if not path.exists():
-            return f"{path.name} is missing"
-        if previous.get(f"{stage}_sha256") != data.sha256_file(path):
-            return f"{path.name} is not the file that was recorded"
+            return f"the {stage} file is missing"
+        if previous.get(f"{recorded}_sha256") != data.sha256_file(path):
+            return f"the {stage} file is not the one that was recorded"
     problems = data.frame_problems(data.read_table(paths["final"]), n)
     return "; ".join(problems) if problems else None
+
+
+def _reuse(key: str, previous: dict, info: dict) -> dict:
+    """A complete, matching set. When the files its screener learned from were
+    solved again (same design, same FOS, other runtimes), only its provenance is
+    stale: re-record it, and keep the data."""
+    stored = previous.get("screener", {}).get("trained_on_sha256")
+    fresh = info.get("screener", {}).get("trained_on_sha256")
+    if fresh is None or stored == fresh:
+        print(f"[{key}] up to date")
+        return previous
+    entry = {**previous, **info,
+             "updated": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")}
+    data.record("replications", key, entry)
+    print(f"[{key}] up to date; its training files were solved again, screener provenance re-recorded")
+    return entry
 
 
 def generate_set(key: str, strategy: str, realization: int, batch: int, *, workers: int,
@@ -126,21 +170,20 @@ def generate_set(key: str, strategy: str, realization: int, batch: int, *, worke
     fingerprint = config.solver_fingerprint()
     previous = data.read_metadata().get("replications", {}).get(key, {})
     if not force:
-        if paths["designs"].exists() and paths["designs"].read_text() != text:
-            raise ReplicationError(f"{key}: the stored design is not the one the configuration "
-                                   "produces now; rerun with --force")
+        if previous and previous.get("design_sha256") != _text_sha256(text):
+            raise ReplicationError(f"{key}: the stored set was solved from another design than the "
+                                   "one the configuration produces now; rerun with --force")
         if previous and previous.get("solver_fingerprint") != fingerprint:
             raise ReplicationError(f"{key}: the stored set was solved under other solver settings; "
                                    "rerun with --force")
         reason = _incomplete(paths, previous, n)
         if reason is None:
-            print(f"[{key}] up to date")
-            return previous
+            return _reuse(key, previous, info)
         if any(path.exists() for path in paths.values()):
             print(f"[{key}] incomplete ({reason}); solving it again", flush=True)
     for path in paths.values():
         path.parent.mkdir(parents=True, exist_ok=True)
-    paths["designs"].write_text(text)
+    _write_design(paths["designs"], text)
     rows = solver.run_set(frame[list(config.PARAMS)].to_numpy(float), workers=workers, label=key, fn=fn)
     solver.write_rows(paths["results"], rows, data.RESULT_COLUMNS)
     rows, _ = solver.read_rows(paths["results"])

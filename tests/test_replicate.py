@@ -110,22 +110,76 @@ def test_generate_set_resolves_when_the_metadata_entry_is_missing(small_reps, mo
     assert "lhs_r1" in capsys.readouterr().out
 
 
-def test_generate_set_resolves_after_each_partial_state(small_reps, monkeypatch):
+def test_generate_set_resolves_after_each_partial_state(small_reps, monkeypatch, capsys):
     entry = _generate_one()
     paths = {stage: config.replication_path(stage, "lhs_r1")
              for stage in ("designs", "results", "final")}
     calls = _count_solves(monkeypatch)
-    for missing in (("results", "final"), ("final",), ()):
+    for missing, named in ((("results", "final"), "results"), (("final",), "final"),
+                           ((), "results")):
         for stage in missing:
             paths[stage].unlink()
         if not missing:                      # stale results and final of an interrupted run
             paths["results"].write_text("angle\n1.0\n")
             paths["final"].write_text("angle\n1.0\n")
         calls.clear()
+        capsys.readouterr()
         again = _generate_one()
         assert calls == [1], f"not re-solved after {missing or 'a stale results/final pair'}"
         assert again["final_sha256"] == entry["final_sha256"]
         assert len(replicate.load_set("lhs_r1")) == config.REP_EXTENSION
+        reason = capsys.readouterr().out.split("solving it again")[0]
+        assert named in reason and paths[named].name not in reason
+
+
+def test_generate_set_overwrites_a_torn_design_when_nothing_was_solved(small_reps, monkeypatch):
+    path = config.replication_path("designs", "lhs_r1")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("")                      # killed while the design was being written
+    calls = _count_solves(monkeypatch)
+    entry = _generate_one()
+    assert calls == [1] and len(replicate.load_set("lhs_r1")) == config.REP_EXTENSION
+    assert entry["design_sha256"] == data.sha256_file(path)
+    assert [p.name for p in path.parent.iterdir()] == [path.name]
+
+
+def test_generate_set_resolves_a_torn_design_of_a_complete_set(small_reps, monkeypatch):
+    entry = _generate_one()
+    _generate_one("guided_log_r1", "guided-log", 0)
+    untouched = data.read_metadata()["replications"]["guided_log_r1"]
+    config.replication_path("designs", "lhs_r1").write_text("")
+    calls = _count_solves(monkeypatch)
+    again = _generate_one()
+    assert calls == [1]
+    assert again["design_sha256"] == entry["design_sha256"]
+    assert again["final_sha256"] == entry["final_sha256"]
+    assert data.read_metadata()["replications"]["guided_log_r1"] == untouched
+
+
+def test_reuse_re_records_stale_screener_provenance(small_reps, monkeypatch):
+    _generate_one("guided_seq_r1_b1", "guided-seq", 1)
+    b2 = _generate_one("guided_seq_r1_b2", "guided-seq", 2)
+    final = config.replication_path("final", "guided_seq_r1_b1")
+    table = data.read_table(final)           # b1 re-solved: same FOS, another runtime
+    table["Runtime_s"] = table["Runtime_s"].astype(float) + 1.0
+    table.to_csv(final, index=False)
+    meta = data.read_metadata()
+    meta["replications"]["guided_seq_r1_b1"]["final_sha256"] = data.sha256_file(final)
+    _write_metadata(meta)
+    calls = _count_solves(monkeypatch)
+    again = _generate_one("guided_seq_r1_b2", "guided-seq", 2)
+    assert calls == []
+    assert again["final_sha256"] == b2["final_sha256"]
+    fresh = data.sha256_file(final)
+    assert again["screener"]["trained_on_sha256"]["guided_seq_r1_b1"] == fresh
+    recorded = data.read_metadata()["replications"]["guided_seq_r1_b2"]
+    assert recorded["screener"]["trained_on_sha256"]["guided_seq_r1_b1"] == fresh
+    assert recorded["final_sha256"] == b2["final_sha256"]
+
+
+def test_build_design_reports_a_missing_earlier_batch_design(small_reps):
+    with pytest.raises(FileNotFoundError, match="sgs replicate"):
+        replicate.build_design("guided_seq_r1_b2", "guided-seq", 1, 2)
 
 
 def test_generate_set_resolves_when_the_final_violates_the_contract(small_reps, monkeypatch):
