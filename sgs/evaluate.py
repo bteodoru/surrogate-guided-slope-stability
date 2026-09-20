@@ -271,6 +271,14 @@ def prob_less(a, b) -> float:
     return float(np.mean((a < b) + 0.5 * (a == b)))
 
 
+def prob_less_paired(a, b) -> float:
+    """Share of within-realization pairs with a_i < b_i, ties counted 1/2. Descriptive:
+    the pairs are not independent observations."""
+    a = np.asarray(a, dtype=float)
+    b = np.asarray(b, dtype=float)
+    return float(np.mean((a < b) + 0.5 * (a == b)))
+
+
 # --- one test set, every arm ----------------------------------------------------------------
 
 @dataclass
@@ -444,7 +452,9 @@ REPLICATION_PROCEDURE = (
     "realization; conclusions are conditional on the seed, the test sets and these hyper-parameters. "
     "r0 = the existing sets (exploratory, reported apart); r1.. = new realizations (confirmatory). "
     "Independent arms: Welch interval; arms sharing points within a realization: paired interval. "
-    "P(first<second) over all realization pairs, ties 1/2, is descriptive (the pairs are not independent). "
+    "P(first<second) is descriptive (the pairs are not independent): for Welch comparisons it is taken "
+    "over all n x n realization pairs and, for paired comparisons, over the n within-realization pairs; "
+    "ties count 1/2 in both. "
     "Scales: log-RMSE (absolute) and log(log-RMSE) (relative). An interval containing 0 is inconclusive, "
     "not a tie. These intervals cover variability between designs only. Because both test sets are held "
     "fixed, test-sampling error is a component common to every realization: it does not widen the spread "
@@ -510,7 +520,7 @@ def replication_metrics(units: Mapping, tests: Mapping[str, data.TestSet], *, zo
                             interval = (welch_interval(x, y, level) if method == "welch"
                                         else paired_interval(x, y, level))
                             p_less = (prob_less(x, y) if method == "welch"
-                                      else float(np.mean(np.asarray(x) < np.asarray(y))))
+                                      else prob_less_paired(x, y))
                             comparisons.append({"family": family, "test": test, "measure": measure,
                                                 "first": first, "second": second, "method": method,
                                                 "scale": scale, **interval, "p_first_less": p_less,

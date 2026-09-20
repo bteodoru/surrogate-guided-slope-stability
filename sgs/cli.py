@@ -141,7 +141,7 @@ def build_parser() -> argparse.ArgumentParser:
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
 
-    def command(name, handler, help, *, role=False, workers=False, force=False):
+    def command(name, handler, help, *, role=False, workers=False, force=False, force_help=None):
         p = sub.add_parser(name, help=help)
         if role:
             p.add_argument("--role", choices=tuple(config.ROLES), default=None,
@@ -150,7 +150,7 @@ def build_parser() -> argparse.ArgumentParser:
             p.add_argument("--workers", type=int, default=1, help="solver processes")
         if force:
             p.add_argument("--force", action="store_true",
-                           help="regenerate outputs instead of reusing or refusing them")
+                           help=force_help or "regenerate outputs instead of reusing or refusing them")
         p.set_defaults(handler=handler)
 
     command("generate", _generate, "design, solve and repair the data sets", role=True, workers=True, force=True)
@@ -160,7 +160,11 @@ def build_parser() -> argparse.ArgumentParser:
     command("learning-curve", _learning_curve, "optional: RF and GBM learning curves with fixed hyper-parameters",
             force=True)
     command("replicate", _replicate, "optional: replicated designs of the added points, fixed-HP fits, "
-            "interval metrics", workers=True, force=True)
+            "interval metrics", workers=True, force=True,
+            force_help="regenerate outputs instead of reusing or refusing them; WARNING: this flag is "
+                       "shared with generation, so it re-solves all replicated sets (hours of solver "
+                       "time). An interrupted run resumes without it; use it only for a real "
+                       "configuration mismatch")
     p = sub.add_parser("inspect", help="rerun one stored row and draw it with xslope's plots")
     p.add_argument("--role", choices=tuple(config.ROLES), required=True)
     p.add_argument("--row", type=int, required=True, help="1-based row, in design order")

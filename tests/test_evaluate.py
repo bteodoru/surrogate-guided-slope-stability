@@ -294,6 +294,12 @@ def test_prob_less_counts_all_pairs_and_halves_ties():
     assert evaluate.prob_less([1.0], [1.0]) == pytest.approx(0.5)
 
 
+def test_prob_less_paired_counts_within_realization_pairs_and_halves_ties():
+    assert evaluate.prob_less_paired([1.0, 2.0], [1.5, 2.5]) == pytest.approx(1.0)
+    assert evaluate.prob_less_paired([1.0, 3.0], [2.0, 3.0]) == pytest.approx(3 / 4)
+    assert evaluate.prob_less_paired([1.0], [1.0]) == pytest.approx(0.5)
+
+
 def _fake_units(tests, realizations=(0, 1, 2, 3), scale=None):
     """units shaped like replicate.load_units(): arm error grows with its scale."""
     scale = scale or {"A": 0.30, "B": 0.10, "C-log": 0.12, "C0-log": 0.25, "C-seq": 0.11, "C0-seq": 0.24}
@@ -335,7 +341,9 @@ def test_replication_metrics_separate_r0_and_compare_confirmatory_realizations()
                and x["family"] == "gbm" and x["test"] == "test-natural" and x["measure"] == "all"
                and x["scale"] == "relative")
     assert rel["diff"] == pytest.approx(np.mean(np.log(c["first_values"])) - np.mean(np.log(c["second_values"])))
-    assert any(x["method"] == "paired" for x in out["comparisons"])
+    p = next(x for x in out["comparisons"] if x["method"] == "paired")
+    assert p["p_first_less"] == pytest.approx(
+        evaluate.prob_less_paired(p["first_values"], p["second_values"]))
     i = next(x for x in out["interactions"] if x["test"] == "test-natural" and x["measure"] == "all")
     assert len(i["first_values"]) == 3 and "ci" in i
     v = out["values"][0]

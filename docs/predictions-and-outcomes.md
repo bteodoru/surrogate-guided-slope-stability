@@ -82,9 +82,11 @@ What the replications can and cannot settle: they measure the variability
 **between designs** on a fixed seed, with fixed hyper-parameters. They do not
 measure seed variability, and they do not replicate the tuned comparison. With
 n = 5 the Welch degrees of freedom are at most 8, so intervals will be wide and
-"inconclusive" is the expected outcome for small effects; P̂(first < second) over
-the 25 pairs is reported beside each interval as a descriptive companion, and an
-interval containing 0 is never written up as a tie.
+"inconclusive" is the expected outcome for small effects; P̂(first < second) is
+reported beside each interval as a descriptive companion — over the 25
+realization pairs for the Welch (independent-arm) comparisons and, for paired
+comparisons, over the 5 within-realization pairs, ties counting ½ in both — and
+an interval containing 0 is never written up as a tie.
 
 **Observed, 2026-09-20** (`outputs/metrics/replications.json`; tables
 `replications__*`). On every row that decides one of the three predictions the

@@ -364,11 +364,15 @@ def run() -> None:
             _save_table(tables / f"replications__{test}__values.tex", booktabs(
                 replication_value_frame(rep, test, "decision-range"),
                 caption=f"Log-RMSE on the decision range, {test}, every realization; r0 = existing sets "
-                        "(exploratory). Common fixed hyper-parameters.", label=f"tab:rep:{test}:values"))
+                        "(exploratory). Common fixed hyper-parameters. C0-log and C0-seq are ablations "
+                        "without the seed and carry no budget: they train on 300 points against the 600 "
+                        "of B, C-log and C-seq.", label=f"tab:rep:{test}:values"))
             _save_table(tables / f"replications__{test}__comparisons.tex", booktabs(
                 replication_comparison_frame(rep, test),
                 caption=f"Replicated comparisons on {test}: Welch (independent arms) or paired intervals, "
-                        "log-RMSE and relative scale; P(first<second) is descriptive.",
+                        "log-RMSE and relative scale; P(first<second) is descriptive. C0-log and C0-seq "
+                        "are ablations without the seed and carry no budget: they train on 300 points "
+                        "against the 600 of B, C-log and C-seq.",
                 label=f"tab:rep:{test}:comparisons"))
             for family in config.REP_FAMILIES:
                 _save_figure(figures / f"replications__{test}__{family}.pdf", fig_replication_bins(rep, test, family))
