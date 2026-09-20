@@ -123,3 +123,9 @@ def test_missing_metadata_entry_is_reported_as_no_record(fake_solver):
     path.write_text(json.dumps(meta))
     with pytest.raises(cli.GenerateError, match="no record"):
         cli.generate("seed")
+
+
+def test_replicate_command_takes_only_execution_controls():
+    from sgs import cli
+    args = cli.build_parser().parse_args(["replicate", "--workers", "2", "--force"])
+    assert args.workers == 2 and args.force and args.handler is cli._replicate

@@ -5,6 +5,7 @@
   sgs evaluate        metrics on the test sets (seconds)
   sgs report          booktabs tables and figures
   sgs learning-curve  optional; RF and GBM with fixed hyper-parameters
+  sgs replicate       optional; replicated designs, fixed-HP fits, interval metrics
   sgs all             generate, fit, evaluate, report
   sgs inspect         rerun one stored row and draw it with xslope's plots
 
@@ -108,6 +109,13 @@ def _learning_curve(args):
     evaluate.run_learning_curve()
 
 
+def _replicate(args):
+    from sgs import evaluate, replicate
+    replicate.generate_all(workers=args.workers, force=args.force)
+    replicate.fit_all(force=args.force)
+    evaluate.run_replications()
+
+
 def _inspect(args):
     from sgs import inspection
     found = inspection.inspect_row(args.role, args.row, args.stage)
@@ -151,6 +159,8 @@ def build_parser() -> argparse.ArgumentParser:
     command("report", _report, "booktabs tables and figures from outputs/metrics")
     command("learning-curve", _learning_curve, "optional: RF and GBM learning curves with fixed hyper-parameters",
             force=True)
+    command("replicate", _replicate, "optional: replicated designs of the added points, fixed-HP fits, "
+            "interval metrics", workers=True, force=True)
     p = sub.add_parser("inspect", help="rerun one stored row and draw it with xslope's plots")
     p.add_argument("--role", choices=tuple(config.ROLES), required=True)
     p.add_argument("--row", type=int, required=True, help="1-based row, in design order")

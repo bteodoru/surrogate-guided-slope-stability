@@ -109,3 +109,35 @@ def test_run_writes_scoring_tables_when_both_scorings_are_active(root, monkeypat
     tables = {p.name for p in config.tables_dir().glob("*.tex")}
     assert {"test-natural__scorings.tex", "scorings_params.tex"} <= tables
     assert "test-stratified__scorings.tex" not in tables
+
+
+def _write_replications(root):
+    from tests.test_evaluate import REP_KW, _fake_units
+    tests = {"test-natural": stub_test(80, 3), "test-stratified": stub_test(50, 4, name="test-stratified")}
+    kw = {**REP_KW, "bins": (0.5, 1.0, 2.0, 6.0)}
+    rep = evaluate.replication_metrics(_fake_units(tests), tests, **kw)
+    path = config.replication_metrics_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(rep))
+    return rep
+
+
+def test_replication_frames_show_every_value_and_the_ablations(root):
+    rep = _write_replications(root)
+    frame = report.replication_value_frame(rep, "test-natural", "decision-range")
+    assert {"r0 (exploratory)", "r1", "r2", "r3", "mean", "sd"} <= set(frame.columns)
+    assert {"C0-log", "C0-seq"} <= set(frame["arm"])
+    comp = report.replication_comparison_frame(rep, "test-natural")
+    assert {"CI low", "CI high", "P(first<second)", "method", "scale"} <= set(comp.columns)
+    assert set(comp["measure"]) <= {"decision-range", "0.5–1", "1–2", "selection-range", "all"}
+    assert len(report.replication_interaction_frame(rep)) > 0
+
+
+def test_run_writes_replication_outputs_when_present(root):
+    _write_metrics()
+    _write_replications(root)
+    report.run()
+    tables = {p.name for p in config.tables_dir().glob("*.tex")}
+    assert {"replications__test-natural__values.tex", "replications__test-natural__comparisons.tex",
+            "replications__interactions.tex"} <= tables
+    assert (config.figures_dir() / "replications__test-natural__gbm.pdf").read_bytes()[:4] == b"%PDF"

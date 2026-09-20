@@ -233,6 +233,69 @@ def _save_figure(path, fig) -> None:
     plt.close(fig)
 
 
+REPLICATION_MEASURES = ("decision-range", "0.5–1", "1–2", "selection-range", "all")
+
+
+def load_replications() -> dict:
+    return _read(config.replication_metrics_path())
+
+
+def replication_value_frame(rep: dict, test: str, measure: str) -> pd.DataFrame:
+    """Every realization's log-RMSE on one measure; r0 apart, as exploratory."""
+    rows = []
+    for s in rep["summaries"]:
+        if s["test"] != test or s["measure"] != measure:
+            continue
+        row = {"family": s["family"], "arm": s["arm"], "r0 (exploratory)": s["r0"]}
+        for r, v in zip(rep["confirmatory"], s["values"] or [None] * len(rep["confirmatory"])):
+            row[f"r{r}"] = v
+        row.update(mean=s["mean"], sd=s["sd"])
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def replication_comparison_frame(rep: dict, test: str) -> pd.DataFrame:
+    rows = [{"family": c["family"], "measure": c["measure"], "comparison": f"{c['first']} vs {c['second']}",
+             "method": c["method"], "scale": c["scale"], "diff": c["diff"], "CI low": c["ci"][0],
+             "CI high": c["ci"][1], "df": c["df"], "P(first<second)": c["p_first_less"]}
+            for c in rep["comparisons"] if c["test"] == test and c["measure"] in REPLICATION_MEASURES]
+    return pd.DataFrame(rows)
+
+
+def replication_interaction_frame(rep: dict) -> pd.DataFrame:
+    return pd.DataFrame([{"test": i["test"], "measure": i["measure"],
+                          "contrast": f"{i['first']} vs {i['second']}", "diff": i["diff"],
+                          "CI low": i["ci"][0], "CI high": i["ci"][1], "df": i["df"]}
+                         for i in rep["interactions"] if i["measure"] in REPLICATION_MEASURES])
+
+
+def fig_replication_bins(rep: dict, test: str, family: str):
+    """Diagnostic: log-RMSE per design bin (confirmatory mean, min-max across
+    realizations), test points per bin and the mean training count per bin."""
+    arms = ("B", "C-log", "C-seq")
+    rows = [v for v in rep["values"] if v["test"] == test and v["family"] == family
+            and v["realization"] in rep["confirmatory"]]
+    labels = [b["zone"] for b in rows[0]["bins"]]
+    x = np.arange(len(labels))
+    fig, (top, bottom) = plt.subplots(2, 1, figsize=(10, 6.5), sharex=True, height_ratios=(2, 1))
+    for arm in arms:
+        grid = np.array([[np.nan if b["log_rmse"] is None else b["log_rmse"] for b in v["bins"]]
+                         for v in rows if v["arm"] == arm], dtype=float)
+        top.plot(x, np.nanmean(grid, axis=0), "o-", label=arm)
+        top.fill_between(x, np.nanmin(grid, axis=0), np.nanmax(grid, axis=0), alpha=0.15)
+        counts = np.array([v["train_counts"] for v in rows if v["arm"] == arm], dtype=float)
+        bottom.plot(x, counts.mean(axis=0), "o-", label=f"{arm} training")
+    bottom.bar(x, [b["n"] for b in rows[0]["bins"]], alpha=0.3, color="grey", label="test points")
+    top.set_ylabel("log-RMSE")
+    top.set_title(f"{test}, {family.upper()}: mean and min–max over realizations {rep['confirmatory']}")
+    top.legend(frameon=False)
+    bottom.set_ylabel("points per bin")
+    bottom.legend(frameon=False, fontsize=8)
+    bottom.set_xticks(x, labels, rotation=60, fontsize=7)
+    fig.tight_layout()
+    return fig
+
+
 def run() -> None:
     tables, figures = config.tables_dir(), config.figures_dir()
     _save_table(tables / "budget.tex", booktabs(
@@ -288,4 +351,21 @@ def run() -> None:
             for family in sorted({r["family"] for r in lc["rows"]}):
                 _save_figure(figures / f"learning_curve__{test}__{family}.pdf",
                              fig_learning_curve(lc, test, family))
+    if config.replication_metrics_path().exists():
+        rep = load_replications()
+        for test in config.TEST_ROLES:
+            _save_table(tables / f"replications__{test}__values.tex", booktabs(
+                replication_value_frame(rep, test, "decision-range"),
+                caption=f"Log-RMSE on the decision range, {test}, every realization; r0 = existing sets "
+                        "(exploratory). Common fixed hyper-parameters.", label=f"tab:rep:{test}:values"))
+            _save_table(tables / f"replications__{test}__comparisons.tex", booktabs(
+                replication_comparison_frame(rep, test),
+                caption=f"Replicated comparisons on {test}: Welch (independent arms) or paired intervals, "
+                        "log-RMSE and relative scale; P(first<second) is descriptive.",
+                label=f"tab:rep:{test}:comparisons"))
+            for family in config.REP_FAMILIES:
+                _save_figure(figures / f"replications__{test}__{family}.pdf", fig_replication_bins(rep, test, family))
+        _save_table(tables / "replications__interactions.tex", booktabs(
+            replication_interaction_frame(rep), caption="Learner interaction: Welch interval on "
+            "log(log-RMSE_rf) - log(log-RMSE_gbm) between arms.", label="tab:rep:interactions"))
     print(f"[report] wrote {tables} and {figures}")
