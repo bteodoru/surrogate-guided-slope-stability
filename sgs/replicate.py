@@ -12,11 +12,12 @@ on them.
 from __future__ import annotations
 
 import datetime as _dt
+import joblib
 
 import numpy as np
 import pandas as pd
 
-from sgs import config, data, design, solver
+from sgs import config, data, design, models, solver
 
 
 class ReplicationError(RuntimeError):
@@ -114,3 +115,87 @@ def generate_all(*, workers: int, force: bool = False, fn=None) -> None:
     for r in range(1, config.REP_REALIZATIONS + 1):
         for key, strategy, batch in set_keys(r):
             generate_set(key, strategy, r, batch, workers=workers, force=force, fn=fn)
+
+
+# --- fitting (fixed hyper-parameters) --------------------------------------------------------
+
+REP_ARMS = ("A", "B", "C-log", "C0-log", "C-seq", "C0-seq")
+SEQ_ROLES_R0 = tuple(f"guided-seq-{b}" for b in range(1, 4))
+
+
+def arm_frames(realization: int) -> dict[str, pd.DataFrame]:
+    """Training frames of one realization. r0 is the existing main-pipeline sets
+    (A, the seed alone, is fitted only there)."""
+    seed = data.load_role("seed")
+    if realization == 0:
+        extension, guided = data.load_role("lhs-extension"), data.load_role("guided-log")
+        batches = [data.load_role(role) for role in SEQ_ROLES_R0]
+        out = {"A": seed}
+    else:
+        keys = [key for key, _, _ in set_keys(realization)]
+        extension, guided = load_set(keys[0]), load_set(keys[1])
+        batches = [load_set(key) for key in keys[2:]]
+        out = {}
+    sequential = pd.concat(batches, ignore_index=True)
+    out.update({"B": pd.concat([seed, extension], ignore_index=True),
+                "C-log": pd.concat([seed, guided], ignore_index=True), "C0-log": guided,
+                "C-seq": pd.concat([seed, sequential], ignore_index=True), "C0-seq": sequential})
+    return out
+
+
+def data_hashes(realization: int) -> dict:
+    paths = [config.final_path(role) for role in ("seed", *config.TEST_ROLES)]
+    if realization == 0:
+        paths += [config.final_path(role) for role in ("lhs-extension", "guided-log", *SEQ_ROLES_R0)]
+    else:
+        paths += [config.replication_path("final", key) for key, _, _ in set_keys(realization)]
+    return {path.name: data.sha256_file(path) for path in paths}
+
+
+def _state(family: str, realization: int) -> dict:
+    return {"fingerprint": config.replication_fingerprint(family), "data": data_hashes(realization)}
+
+
+def fit_realization(family: str, realization: int, tests) -> dict:
+    arms = {}
+    for arm, frame in arm_frames(realization).items():
+        model = models.lc_estimator(family).fit(frame[list(config.FEATURES)],
+                                                np.log(frame["FOS"].to_numpy(float)))
+        arms[arm] = {"n_train": int(len(frame)), "train_ids": frame["row_id"].to_numpy(str),
+                     "train_fos": frame["FOS"].to_numpy(float),
+                     "predictions": {name: np.exp(model.predict(test.X)) for name, test in tests.items()}}
+    return arms
+
+
+def fit_all(*, force: bool = False) -> None:
+    data.validate_sets(("seed", *config.TEST_ROLES, "lhs-extension", "guided-log", *SEQ_ROLES_R0))
+    tests = {role: data.load_test(role) for role in config.TEST_ROLES}
+    for family in config.REP_FAMILIES:
+        for r in range(0, config.REP_REALIZATIONS + 1):
+            path = config.replication_fit_path(family, f"r{r}")
+            state = _state(family, r)
+            if path.exists():
+                if joblib.load(path)["state"] == state:
+                    print(f"[replicate] {path.name}: up to date")
+                    continue
+                if not force:
+                    raise models.StaleFit(f"{path.name} was fitted under another configuration or other "
+                                          "data; rerun with --force")
+            print(f"[replicate] fit {family} r{r}", flush=True)
+            models._dump(path, {"state": state, "family": family, "realization": r,
+                                "test_ids": {name: test.ids for name, test in tests.items()},
+                                "arms": fit_realization(family, r, tests)})
+
+
+def load_units() -> dict:
+    out = {}
+    for family in config.REP_FAMILIES:
+        for r in range(0, config.REP_REALIZATIONS + 1):
+            path = config.replication_fit_path(family, f"r{r}")
+            if not path.exists():
+                raise FileNotFoundError(f"{path.name} is missing; run `sgs replicate`")
+            stored = joblib.load(path)
+            if stored["state"] != _state(family, r):
+                raise models.StaleFit(f"{path.name} is stale; run `sgs replicate --force`")
+            out[(family, r)] = stored
+    return out

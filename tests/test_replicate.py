@@ -70,3 +70,37 @@ def test_generate_set_reuses_and_refuses(small_reps, monkeypatch):
     monkeypatch.setitem(config.SEEDS, "replication_design", 1)
     with pytest.raises(replicate.ReplicationError, match="--force"):
         replicate.generate_set("lhs_r1", "lhs", 1, 0, workers=1, fn=fake_analyse)
+
+
+@pytest.fixture
+def small_fit(small_reps, monkeypatch):
+    monkeypatch.setattr(config, "ESTIMATOR_FIXED", {"rf": {"n_estimators": 20}, "gbm": {"early_stopping": False}})
+    monkeypatch.setitem(config.LC_PARAMS, "gbm", {**config.LC_PARAMS["gbm"], "max_iter": 20})
+    # r0 roles: the existing main-pipeline sets, synthetic here
+    shrink_roles(monkeypatch, {"lhs-extension": 20, "guided-log": 20, "guided-seq-1": 10, "guided-seq-2": 10,
+                               "guided-seq-3": 10})
+    monkeypatch.setattr(config, "REP_SEQ_BATCHES", (10, 10, 10))
+    for i, role in enumerate(("lhs-extension", "guided-log", "guided-seq-1", "guided-seq-2", "guided-seq-3")):
+        write_final(role, synthetic_final(config.ROLES[role].n, 80 + i))
+    replicate.generate_all(workers=1, fn=fake_analyse)
+
+
+def test_arm_frames_compose_seed_and_added_points(small_fit):
+    r0, r1 = replicate.arm_frames(0), replicate.arm_frames(1)
+    assert set(r0) == set(replicate.REP_ARMS) and set(r1) == set(replicate.REP_ARMS) - {"A"}
+    assert len(r1["B"]) == 300 + config.REP_EXTENSION and len(r1["C0-seq"]) == sum(config.REP_SEQ_BATCHES)
+    assert r1["C-log"]["row_id"].str.startswith("rep:guided_log_r1").sum() == config.REP_EXTENSION
+    assert len(r0["C-seq"]) == 300 + 30 and len(r0["A"]) == 300
+
+
+def test_fit_all_is_cached_and_refuses_stale_state(small_fit, monkeypatch):
+    replicate.fit_all()
+    units = replicate.load_units()
+    assert set(units) == {(f, r) for f in config.REP_FAMILIES for r in range(0, config.REP_REALIZATIONS + 1)}
+    stored = units[("gbm", 1)]
+    pred = stored["arms"]["C-seq"]["predictions"]["test-natural"]
+    assert len(pred) == 60 and (pred > 0).all()
+    replicate.fit_all()   # up to date: no refit
+    monkeypatch.setattr(config, "REP_EXTENSION", 21)
+    with pytest.raises(replicate.models.StaleFit):
+        replicate.load_units()
