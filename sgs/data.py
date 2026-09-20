@@ -8,6 +8,7 @@ import itertools
 import json
 import os
 import platform
+import sys
 from dataclasses import dataclass
 from importlib import metadata as _metadata
 from pathlib import Path
@@ -38,6 +39,10 @@ TRACKED_PACKAGES = ("numpy", "pandas", "scipy", "scikit-learn", "joblib", "shape
 
 class DataError(RuntimeError):
     """A final set, or a pair of them, violates the data contract."""
+
+
+class MetadataError(RuntimeError):
+    """The run metadata file and its backup are both unreadable."""
 
 
 def add_features(frame: pd.DataFrame) -> pd.DataFrame:
@@ -193,17 +198,86 @@ def _json_default(value):
     raise TypeError(f"not JSON serializable: {type(value).__name__}")
 
 
+def _backup_path(path: Path) -> Path:
+    return path.with_name(path.name + ".bak")
+
+
+def _parsed(path: Path) -> dict | None:
+    """The file as a JSON object, or None when it is missing, empty or damaged."""
+    try:
+        meta = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return None
+    return meta if isinstance(meta, dict) else None
+
+
 def read_metadata() -> dict:
     path = config.metadata_path()
-    return json.loads(path.read_text()) if path.exists() else {}
+    if not path.exists():
+        return {}
+    meta = _parsed(path)
+    if meta is not None:
+        return meta
+    backup = _backup_path(path)
+    fallback = _parsed(backup)
+    if fallback is not None:
+        print(f"warning: {path} is unreadable (empty or truncated); reading {backup} "
+              f"instead. Entries written after that backup are lost; the next successful "
+              f"write repairs {path.name}.", file=sys.stderr)
+        return fallback
+    raise MetadataError(
+        f"{path} is unreadable and so is its backup {backup}. It was not read as empty, "
+        f"because that would silently discard every recorded run. To recover: restore the "
+        f"tracked file with `git checkout -- {path.parent.name}/{path.name}`, which brings "
+        f"back the dataset and fit entries; replication entries are untracked, so any that "
+        f"the restored file lacks must be re-solved with `sgs replicate`.")
+
+
+def _fsync_dir(directory: Path) -> None:
+    """Best effort: durably record the rename in the containing directory."""
+    try:
+        fd = os.open(directory, os.O_RDONLY)
+    except OSError:
+        return
+    try:
+        os.fsync(fd)
+    except OSError:
+        pass
+    finally:
+        os.close(fd)
+
+
+def _write_durably(path: Path, payload: bytes) -> None:
+    tmp = path.with_name(f".{path.name}.tmp")
+    with tmp.open("wb") as stream:
+        stream.write(payload)
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.replace(tmp, path)
+
+
+def _back_up(path: Path) -> None:
+    """Keep the current file as ``<name>.bak``, but only if it parses."""
+    if _parsed(path) is None:                 # nothing good to keep; leave the old backup
+        return
+    try:
+        _write_durably(_backup_path(path), path.read_bytes())
+    except OSError:                           # a failed backup must not stop the write
+        pass
 
 
 def record(section: str, key: str, entry: dict) -> None:
-    """Set ``run_metadata.json[section][key] = entry`` and write the file."""
+    """Set ``run_metadata.json[section][key] = entry`` and write the file.
+
+    Power-cut safe: the previous good file is kept as ``run_metadata.json.bak``
+    and both writes are fsynced, so an interrupted run never loses more than
+    the entry being written.
+    """
     meta = read_metadata()
     meta.setdefault(section, {})[key] = entry
     path = config.metadata_path()
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_name(f".{path.name}.tmp")
-    tmp.write_text(json.dumps(meta, indent=2, sort_keys=True, default=_json_default) + "\n")
-    os.replace(tmp, path)
+    payload = json.dumps(meta, indent=2, sort_keys=True, default=_json_default) + "\n"
+    _back_up(path)
+    _write_durably(path, payload.encode())
+    _fsync_dir(path.parent)

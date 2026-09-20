@@ -123,6 +123,70 @@ def test_record_merges_entries_and_serializes_numpy(root):
     assert data.read_metadata()["fits"]["rf__A__log-rmse"]["best_params"] == {"min_samples_leaf": 1}
 
 
+def _backup(root):
+    path = config.metadata_path()
+    return path.with_name(path.name + ".bak")
+
+
+def test_record_writes_the_documented_bytes(root):
+    data.record("datasets", "seed", {"n": 3})
+    data.record("fits", "rf__A__log-rmse", {"ok": True})
+    expected = json.dumps({"datasets": {"seed": {"n": 3}},
+                           "fits": {"rf__A__log-rmse": {"ok": True}}},
+                          indent=2, sort_keys=True) + "\n"
+    assert config.metadata_path().read_bytes() == expected.encode()
+
+
+def test_record_keeps_a_backup_of_the_previous_state(root):
+    assert not _backup(root).exists()
+    data.record("datasets", "seed", {"n": 3})
+    assert not _backup(root).exists()          # nothing good to back up yet
+    first = config.metadata_path().read_bytes()
+    data.record("datasets", "lhs-extension", {"n": 5})
+    assert _backup(root).read_bytes() == first
+    assert json.loads(_backup(root).read_text()) == {"datasets": {"seed": {"n": 3}}}
+
+
+@pytest.mark.parametrize("broken", ["", "{\"datasets\": {\"seed\": {\"n\": 3", "not json"])
+def test_read_metadata_falls_back_to_the_backup(root, capsys, broken):
+    data.record("datasets", "seed", {"n": 3})
+    data.record("datasets", "lhs-extension", {"n": 5})
+    good = json.loads(config.metadata_path().read_text())
+    good.pop("datasets")["lhs-extension"]                      # the backup lacks the last entry
+    config.metadata_path().write_text(broken)
+
+    recovered = data.read_metadata()
+    assert recovered == {"datasets": {"seed": {"n": 3}}}
+    warning = capsys.readouterr().err
+    assert "run_metadata.json" in warning and "run_metadata.json.bak" in warning
+
+    data.record("datasets", "guided", {"n": 7})                # the next write repairs the file
+    assert json.loads(config.metadata_path().read_text()) == {
+        "datasets": {"seed": {"n": 3}, "guided": {"n": 7}}}
+    assert json.loads(_backup(root).read_text()) == {"datasets": {"seed": {"n": 3}}}
+
+
+def test_read_metadata_raises_a_recovery_hint_when_both_are_unreadable(root):
+    data.record("datasets", "seed", {"n": 3})
+    data.record("datasets", "lhs-extension", {"n": 5})
+    config.metadata_path().write_text("")
+    _backup(root).write_text("{oops")
+    with pytest.raises(data.MetadataError, match="run_metadata.json.bak"):
+        data.read_metadata()
+    with pytest.raises(data.MetadataError, match="git checkout"):
+        data.read_metadata()
+    with pytest.raises(data.MetadataError, match="re-solve|replicate"):
+        data.read_metadata()
+
+
+def test_read_metadata_never_silently_starts_over(root):
+    data.record("datasets", "seed", {"n": 3})
+    config.metadata_path().write_text("")
+    _backup(root).unlink(missing_ok=True)
+    with pytest.raises(data.MetadataError):
+        data.read_metadata()
+
+
 def test_environment_lists_the_pinned_packages():
     env = data.environment()
     assert env["python"] and set(env["packages"]) >= {"numpy", "scikit-learn", "xslope"}

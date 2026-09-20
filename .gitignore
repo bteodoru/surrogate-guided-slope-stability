@@ -12,5 +12,6 @@ CLAUDE.local.md
 data/**/*.csv
 artifacts/
 
-# In-flight writes.
+# In-flight writes and the crash backup of the metadata file.
 **/.*.tmp
+data/run_metadata.json.bak
