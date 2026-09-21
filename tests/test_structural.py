@@ -56,3 +56,87 @@ def test_density_rows_refuse_a_cell_dependent_density():
 def test_outside_density_rows_read_the_two_outer_bins():
     rep = _rep_stub({"C-log": [1] * config.N_BINS}, below=45, above=19)
     assert structural.outside_density_rows(rep)[("C-log", 1)] == (45, 19)
+
+
+def test_prior_counts_accepts_both_spellings_and_refuses_ambiguity():
+    counts = [1, 2, 3]
+    assert structural._prior_counts({"seed_counts": counts}).tolist() == counts
+    assert structural._prior_counts({"trained_counts": counts}).tolist() == counts
+    with pytest.raises(structural.StructuralError, match="prior counts"):
+        structural._prior_counts({"seed_counts": counts, "trained_counts": counts})
+    with pytest.raises(structural.StructuralError, match="prior counts"):
+        structural._prior_counts({"added": counts})
+
+
+def test_allocation_rows_use_the_stored_provenance(monkeypatch):
+    seed_counts = [2] * config.N_BINS
+    added = [4] * config.N_BINS
+    achieved = list(added)
+    achieved[0] -= 1                 # one point landed one bin higher than asked
+    achieved[1] += 1
+    monkeypatch.setattr(structural, "_sets_of",
+                        lambda r: {"C-log": [("k", {"seed_counts": seed_counts, "added": added})]})
+    monkeypatch.setattr(structural, "_achieved_counts",
+                        lambda realization, label: np.array(achieved))
+
+    rows = structural.allocation_rows(1)["C-log"]
+    assert rows["seed"] == seed_counts and rows["intended"] == added
+    assert rows["achieved"] == achieved
+    assert rows["deviation"][0] == -1 and rows["deviation"][1] == 1
+    assert rows["abs_deviation"] == 2
+
+
+def test_allocation_deviation_is_zero_when_the_screener_was_exact(monkeypatch):
+    added = [4] * config.N_BINS
+    monkeypatch.setattr(structural, "_sets_of",
+                        lambda r: {"C-log": [("k", {"trained_counts": [0] * config.N_BINS,
+                                                    "added": added})]})
+    monkeypatch.setattr(structural, "_achieved_counts",
+                        lambda realization, label: np.array(added))
+    assert structural.allocation_rows(1)["C-log"]["abs_deviation"] == 0
+
+
+def test_sets_of_reads_r0_from_the_main_pipeline_roles():
+    sets = structural._sets_of(0)
+    assert [label for label, _ in sets["C-log"]] == ["guided-log"]
+    assert [label for label, _ in sets["C-seq"]] == ["guided-seq-1", "guided-seq-2", "guided-seq-3"]
+
+
+def test_allocation_rows_work_for_r0_including_the_seed_counts_spelling():
+    """C-log at r0 stores its prior counts as seed_counts; a literal key raises."""
+    rows = structural.allocation_rows(0)
+    assert set(rows) == {"C-log", "C-seq"}
+    assert len(rows["C-log"]["intended"]) == config.N_BINS
+    # The budget is not a named constant; it is the metadata entry's own n.
+    meta = json.loads(config.metadata_path().read_text())
+    assert sum(rows["C-log"]["intended"]) == meta["datasets"]["guided-log"]["n"]
+    assert sum(rows["C-seq"]["intended"]) == sum(
+        meta["datasets"][role]["n"] for role in replicate.SEQ_ROLES_R0)
+
+
+def test_stored_allocation_equals_the_generator_recomputation():
+    """intended = deficit_allocation(prior counts, n), as build_design computed it."""
+    meta = json.loads(config.metadata_path().read_text())
+    for section in ("replications", "datasets"):
+        for key, entry in meta[section].items():
+            if "allocation" not in entry:
+                continue
+            prior = structural._prior_counts(entry["allocation"])
+            recomputed = design.deficit_allocation(prior, entry["n"])
+            assert recomputed.tolist() == entry["allocation"]["added"], f"{section}:{key}"
+
+
+def test_selected_equals_intended_for_every_guided_set():
+    """The generator refuses a thin bin and otherwise draws exactly allocation[b],
+    so every stored design reproduces its own allocation."""
+    meta = json.loads(config.metadata_path().read_text())
+    for key, entry in meta["replications"].items():
+        if entry["strategy"] == "lhs":
+            continue
+        frame = replicate.read_set_design(key)
+        selected = np.bincount(frame["bin"].to_numpy(dtype=int), minlength=config.N_BINS)
+        assert selected.tolist() == entry["allocation"]["added"], key
+    for role in ("guided-log", *replicate.SEQ_ROLES_R0):
+        frame = design.read_design(role)
+        selected = np.bincount(frame["bin"].to_numpy(dtype=int), minlength=config.N_BINS)
+        assert selected.tolist() == meta["datasets"][role]["allocation"]["added"], role
