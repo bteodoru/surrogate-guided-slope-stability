@@ -2,8 +2,9 @@
 error, and the fidelity of the delivered allocation.
 
 Design: docs/superpowers/specs/2026-09-20-structural-analysis-design.md.
-Procedure declared in docs/predictions-and-outcomes.md before this module
-existed. Nothing here computes a test or states an inferential claim; Welch
+Procedure fixed in docs/predictions-and-outcomes.md before this module was
+written, on replication results that were already computed; it is not a
+preregistration, and the limit of its blinding is stated there. Nothing here computes a test or states an inferential claim; Welch
 intervals are reused only to visualize variability between designs.
 """
 from __future__ import annotations
@@ -547,7 +548,9 @@ def ablation_fraction_rows(rep: dict) -> list[dict]:
 
 ABLATION_PROCEDURE = (
     "Amendment 1, 2026-09-21: an extension decided after the review of Tasks 0-4, not part of the "
-    "original declaration, committed before any bin-level C0 result was read. Supplementary; it "
+    "original procedure. It was fixed on replication results already computed: the bin-level C0 "
+    "results had existed since 075edb7. It is not a preregistration; that they had not been "
+    "inspected is the author's statement and cannot be verified from the repository. Supplementary; it "
     "enters neither the main figure nor the concordance count. For C0-log and C0-seq, over r1..r5 "
     "and the 17 reporting bins of the replication metrics ([lo, hi)): log-RMSE against B by a Welch "
     "interval, and against the corresponding C by a paired interval (C - C0), because within a "

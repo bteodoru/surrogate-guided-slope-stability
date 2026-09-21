@@ -144,15 +144,27 @@ mean of 0.095 on test-natural, 0.123 against 0.096 on test-stratified). That is
 why it is reported apart: it is the draw that shaped the variants and the
 predictions.
 
-## Structural analysis — a pre-declared procedure, with no hypothesis attached
+## Structural analysis — a procedure fixed before the analysis, with no hypothesis attached
 
-The design was fixed on 2026-09-20 and this declaration was committed on
-2026-09-21, before the analysis was implemented and before any of its output
-existed: at the time of the commit neither `sgs/structural.py` nor
-`outputs/metrics/structural.json` existed. It takes no `outcome` and no `held?`
-column, because it is not a prediction: it fixes a procedure so that the
-weighting, the bin set and the thresholds cannot be chosen after seeing the
-result.
+The design was fixed on 2026-09-20 and this procedure was committed on
+2026-09-21, before the structural analysis was implemented: at that commit
+neither `sgs/structural.py` nor `outputs/metrics/structural.json` had been
+committed. It was fixed **on replication data already computed**. The
+bin-level replication results of every arm had existed since 075edb7
+(2026-09-20): in `outputs/metrics/replications.json` and drawn in
+`outputs/figures/replications__*.pdf`. **This is not a preregistration made
+before the bin-level results were obtained**, and it must not be presented as
+one. It takes no `outcome` and no `held?` column, because it is not a
+prediction. It fixes the procedure of the structural analysis — the weighting,
+the bin set, the thresholds and the summary statistic — before that analysis
+was run. The limit of what that protects is stated below.
+
+*Corrected 2026-09-21, after the review of the complete structural work.* The
+first version of this section said that the procedure was committed "before
+any of its output existed". Of the structural artifact itself, that was true.
+Of the bin-level results it reorganizes, it was not, since they had been
+computed and drawn the day before. The same wording has been removed from
+Amendment 1 below.
 
 - **Bins.** The 15 geometric bins of the selection range, `config.N_BINS`. The
   two bins outside it have no defined intended density; they appear in the
@@ -188,19 +200,30 @@ result.
 - **What none of it does.** It does not separate the allocation rule from the
   screener's error. That needs a reference without screener error; the oracle
   keeps that job.
-- **Blinding, and its limit.** The blinding is partial, and its scope is stated
-  exactly. What was **not** read before this commit: the bin-level errors of any
-  guided arm — the fifteen-bin breakdown that the figure shows. What **was**
-  read: the zone-level replication results of the guided arms, recorded earlier
-  in this document (for instance C-log − B in 0.5–1 across the four cells);
-  one bin-level row of `replications.json` for a non-guided arm — arm A, GBM,
-  test-natural, r0; and the design columns of `data/replications/designs/`,
-  including the per-bin selected counts of `guided_log_r1` while checking that
-  selected equals intended. Knowing that 0.5–1 gains and 1–2 loses already
-  implies, roughly, what the bins inside those zones will show. The blinding
-  therefore protects the bin-level detail and the choice of procedure — the
-  bins, thresholds, weighting and summary statistic above — not the direction
-  of the zone-level pattern. This is one reason the analysis is descriptive.
+- **Blinding, and its limit.** The blinding is partial.
+  - **What existed.** The bin-level errors and mean training counts of every arm
+    were computed and committed before this procedure: `replications.json` and
+    `replications__{test}__{family}.pdf` (075edb7, 2026-09-20). Those figures
+    draw, on the same 17 bins, the mean log-RMSE over r1–r5 of B, C-log, C-seq,
+    C₀-log and C₀-seq.
+  - **What was read.** The zone-level replication results of the guided arms,
+    recorded earlier in this document (for instance C-log − B in 0.5–1 across
+    the four cells). One bin-level row of `replications.json` for a non-guided
+    arm: arm A, GBM, test-natural, r0. The design columns of
+    `data/replications/designs/`, including the per-bin selected counts of
+    `guided_log_r1`, seen while checking that selected equals intended.
+  - **What is stated as not inspected.** The author states that the bin-level
+    errors of the guided arms were not inspected before this procedure was
+    fixed. That statement cannot be verified from the repository, because
+    those results were available. A file existing does not show that it was
+    inspected, and the fact that it was available does not show that it was
+    not.
+  - **What the procedure therefore protects.** At most, the choice of the
+    bins, thresholds, weighting and summary statistic above, to the extent the
+    statement holds. It does not protect the direction of the zone-level
+    pattern: knowing that 0.5–1 gains and 1–2 loses already implies, roughly,
+    what the bins inside those zones will show. This is one reason the
+    analysis is descriptive.
 
 ### Amendment 1 (2026-09-21): the C₀ ablations — an extension decided after the review of Tasks 0–4
 
@@ -209,11 +232,15 @@ of the implemented Tasks 0–4 found that the procedure, the design and the
 module covered only C-log and C-seq against B, leaving out C₀-log and C₀-seq
 contrary to the repository's rule that every C₀ variant appears in every
 analysis. The omission was in the declaration itself, not only in the code.
-This amendment was committed before any bin-level error or bin-level training
-count of C₀-log or C₀-seq was read or computed. What was already known is the
-zone- and decision-range-level C₀ replication result recorded earlier in this
-document, and, from the main pipeline, that the original C₀ under-predicts
-every FOS ≥ 6 test point.
+The amendment was committed before the C₀ rows of the structural artifact were
+built. The bin-level C₀ results it reorganizes were not new. The bin-level
+errors and training counts of C₀-log and C₀-seq had been computed and drawn in
+`replications__*.pdf` since 075edb7, like those of every other arm. The author
+states that they were not inspected before this amendment was fixed. As with
+the declaration above, the repository cannot verify that statement. What was
+known for certain is the zone- and decision-range-level C₀ replication result
+recorded earlier in this document. From the main pipeline, it was also known
+that the original C₀ under-predicts every FOS ≥ 6 test point.
 
 - **Unchanged.** The main figure and the concordance count stay C-log and
   C-seq against B, the arms with the same budget (600). No C₀ row enters
