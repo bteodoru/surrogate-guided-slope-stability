@@ -361,12 +361,29 @@ def check_structural_fresh(struct: dict) -> None:
 
     # The design and final file of every guided set read for allocation and
     # displacement. The realization is stored with the hash, so the path does
-    # not depend on how a label is spelled.
-    for label, hashes in provenance.get("sets_sha256", {}).items():
-        realization = hashes.get("realization")
-        if realization is None:
+    # not depend on how a label is spelled. The manifest itself must be
+    # complete: a missing or shortened list would otherwise verify nothing.
+    sets = provenance.get("sets_sha256")
+    if not isinstance(sets, dict) or not sets:
+        raise StaleStructuralError("structural.json provenance carries no set manifest; "
+                                   "rerun `sgs structural`")
+    for label, hashes in sets.items():
+        if not isinstance(hashes, dict) or hashes.get("realization") is None:
             raise StaleStructuralError(f"provenance of {label} carries no realization; "
                                        "rerun `sgs structural`")
+    # Per realization: one guided-log set and one set per C-seq batch, r0 included.
+    expected = 1 + len(config.REP_SEQ_BATCHES)
+    found = {r: sum(1 for h in sets.values() if h["realization"] == r)
+             for r in range(config.REP_REALIZATIONS + 1)}
+    unknown = sorted({h["realization"] for h in sets.values()} - set(found), key=str)
+    short = {r: n for r, n in found.items() if n != expected}
+    if unknown or short:
+        raise StaleStructuralError(
+            f"structural.json set manifest is incomplete: expected {expected} sets for each "
+            f"realization 0..{config.REP_REALIZATIONS}, found {short or 'the right counts'}"
+            f"{f' and unknown realizations {unknown}' if unknown else ''}; rerun `sgs structural`")
+    for label, hashes in sets.items():
+        realization = hashes["realization"]
         paths = ({"design": config.design_path(label), "final": config.final_path(label)}
                  if realization == 0 else
                  {"design": config.replication_path("designs", label),

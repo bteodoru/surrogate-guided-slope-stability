@@ -332,27 +332,6 @@ def test_structural_ablation_fraction_frame_reports_fractions_not_counts():
     assert set(frame["arm"]) == {"C0-log", "C0-seq"}
 
 
-def test_structural_freshness_refuses_a_missing_or_changed_provenance(root):
-    path = config.replication_metrics_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("{}")
-    meta_path = config.metadata_path()
-    meta_path.parent.mkdir(parents=True, exist_ok=True)
-    meta_path.write_text('{}')
-    rep_hash = data.sha256_file(path)
-    meta_hash = data.sha256_file(meta_path)
-
-    with pytest.raises(report.StaleStructuralError, match="no provenance"):
-        report.check_structural_fresh({})
-    with pytest.raises(report.StaleStructuralError, match="another"):
-        report.check_structural_fresh({"provenance": {"replications_sha256": "0" * 64,
-                                                        "run_metadata_sha256": meta_hash,
-                                                        "sets_sha256": {}}})
-    report.check_structural_fresh({"provenance": {"replications_sha256": rep_hash,
-                                                    "run_metadata_sha256": meta_hash,
-                                                    "sets_sha256": {}}})
-
-
 def test_booktabs_escapes_the_caption():
     text = report.booktabs(pd.DataFrame({"a": [1]}), caption="n_bin / N_total, 95% & more",
                            label="tab:x")
@@ -396,97 +375,39 @@ def test_run_writes_structural_outputs_when_present(root, monkeypatch):
         assert text.rstrip().endswith(r"\end{table}"), name       # the note sits inside the float
 
 
-def test_check_structural_fresh_verifies_all_provenance_hashes(root, monkeypatch):
-    """check_structural_fresh verifies replications, metadata, and all design/final files."""
-    # Set up minimal valid paths and hashes
-    rep_path = config.replication_metrics_path()
-    rep_path.parent.mkdir(parents=True, exist_ok=True)
-    rep_path.write_text("{}")
-    
-    meta_path = config.metadata_path()
-    meta_path.parent.mkdir(parents=True, exist_ok=True)
-    meta_path.write_text('{"datasets": {}, "replications": {}}')
-    
-    rep_hash = data.sha256_file(rep_path)
-    meta_hash = data.sha256_file(meta_path)
-    
-    struct = {
-        "provenance": {
-            "replications_sha256": rep_hash,
-            "run_metadata_sha256": meta_hash,
-            "sets_sha256": {}
-        }
-    }
-    
-    # Should pass with no sets
-    report.check_structural_fresh(struct)
-    
-    # Should fail if replications_sha256 is missing
-    struct_bad = {"provenance": {"run_metadata_sha256": meta_hash, "sets_sha256": {}}}
-    with pytest.raises(report.StaleStructuralError, match="missing replications_sha256"):
-        report.check_structural_fresh(struct_bad)
-    
-    # Should fail if run_metadata_sha256 is missing
-    struct_bad2 = {"provenance": {"replications_sha256": rep_hash, "sets_sha256": {}}}
-    with pytest.raises(report.StaleStructuralError, match="missing run_metadata_sha256"):
-        report.check_structural_fresh(struct_bad2)
-    
-    # Should fail if run_metadata.json is missing
-    meta_path.unlink()
-    with pytest.raises(report.StaleStructuralError, match="missing.*structural"):
-        report.check_structural_fresh(struct)
-
-
-def test_check_structural_fresh_detects_modified_metadata(root):
-    """check_structural_fresh fails when run_metadata.json has been modified."""
-    rep_path = config.replication_metrics_path()
-    rep_path.parent.mkdir(parents=True, exist_ok=True)
-    rep_path.write_text("{}")
-    
-    meta_path = config.metadata_path()
-    meta_path.parent.mkdir(parents=True, exist_ok=True)
-    meta_path.write_text('{"datasets": {}}')
-    
-    rep_hash = data.sha256_file(rep_path)
-    original_meta_hash = data.sha256_file(meta_path)
-    
-    struct = {
-        "provenance": {
-            "replications_sha256": rep_hash,
-            "run_metadata_sha256": original_meta_hash,
-            "sets_sha256": {}
-        }
-    }
-    
-    # Should pass initially
-    report.check_structural_fresh(struct)
-    
-    # Modify the metadata file
-    meta_path.write_text('{"datasets": {}, "modified": true}')
-    
-    # Should fail now
-    with pytest.raises(report.StaleStructuralError, match="another.*metadata"):
-        report.check_structural_fresh(struct)
+def _set_labels():
+    """The full manifest: guided-log and every C-seq batch, for r0 and r1..rN."""
+    labels = {0: ["guided-log", *(f"guided-seq-{b}" for b in range(1, len(config.REP_SEQ_BATCHES) + 1))]}
+    for r in range(1, config.REP_REALIZATIONS + 1):
+        labels[r] = [f"guided_log_r{r}",
+                     *(f"guided_seq_r{r}_b{b}" for b in range(1, len(config.REP_SEQ_BATCHES) + 1))]
+    return labels
 
 
 def _fresh_inputs(root_dir):
-    """A replications.json, a metadata file and one r0 and one r1 set on disk,
-    with the provenance that describes them."""
-    files = {"rep": config.replication_metrics_path(), "meta": config.metadata_path(),
+    """replications.json, the metadata and every guided set's design and final
+    on disk, with the provenance that describes them. `files` names the ones
+    the parametrized test changes."""
+    rep, meta = config.replication_metrics_path(), config.metadata_path()
+    sets = {}
+    for path in (rep, meta):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(f"{path.name}\n")
+    for r, labels in _set_labels().items():
+        for label in labels:
+            paths = ({"design": config.design_path(label), "final": config.final_path(label)} if r == 0
+                     else {"design": config.replication_path("designs", label),
+                           "final": config.replication_path("final", label)})
+            for kind, path in paths.items():
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(f"{label} {kind}\n")
+            sets[label] = {"realization": r, **{k: data.sha256_file(v) for k, v in paths.items()}}
+    files = {"rep": rep, "meta": meta,
              "design0": config.design_path("guided-log"), "final0": config.final_path("guided-log"),
              "design1": config.replication_path("designs", "guided_log_r1"),
              "final1": config.replication_path("final", "guided_log_r1")}
-    for name, path in files.items():
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(f"{name}\n")
-    provenance = {"replications_sha256": data.sha256_file(files["rep"]),
-                  "run_metadata_sha256": data.sha256_file(files["meta"]),
-                  "sets_sha256": {
-                      "guided-log": {"realization": 0, "design": data.sha256_file(files["design0"]),
-                                     "final": data.sha256_file(files["final0"])},
-                      "guided_log_r1": {"realization": 1,
-                                        "design": data.sha256_file(files["design1"]),
-                                        "final": data.sha256_file(files["final1"])}}}
+    provenance = {"replications_sha256": data.sha256_file(rep),
+                  "run_metadata_sha256": data.sha256_file(meta), "sets_sha256": sets}
     return files, {"provenance": provenance}
 
 
@@ -525,3 +446,52 @@ def test_run_checks_structural_freshness_before_rendering(root, monkeypatch):
         report.run()
     assert seen and seen[0]["figure_caption"] == struct["figure_caption"]
     assert not (config.figures_dir() / "structural__bins.pdf").exists()
+
+
+@pytest.mark.parametrize("damage, message", [
+    (lambda sets: sets.clear(), "no set manifest"),
+    (lambda sets: sets.pop("guided_seq_r3_b2"), "incomplete"),
+    (lambda sets: sets.pop("guided-log"), "incomplete"),
+    (lambda sets: [sets.pop(k) for k in [k for k, v in sets.items() if v["realization"] == 5]],
+     "incomplete"),
+    (lambda sets: sets.update({"stray": {"realization": 9, "design": "0", "final": "0"}}),
+     "unknown realizations"),
+])
+def test_structural_freshness_refuses_an_incomplete_manifest(root, damage, message):
+    _, struct = _fresh_inputs(root)
+    report.check_structural_fresh(struct)                   # complete: passes
+    damage(struct["provenance"]["sets_sha256"])
+    with pytest.raises(report.StaleStructuralError, match=message):
+        report.check_structural_fresh(struct)
+
+
+def test_structural_freshness_refuses_a_missing_manifest_field(root):
+    _, struct = _fresh_inputs(root)
+    del struct["provenance"]["sets_sha256"]
+    with pytest.raises(report.StaleStructuralError, match="no set manifest"):
+        report.check_structural_fresh(struct)
+
+
+def test_the_committed_artifact_passes_the_freshness_check():
+    """The real manifest is complete and matches the files on disk."""
+    report.check_structural_fresh(report.load_structural())
+
+
+def test_structural_freshness_refuses_missing_provenance_fields(root):
+    with pytest.raises(report.StaleStructuralError, match="no provenance"):
+        report.check_structural_fresh({})
+    for field, message in (("replications_sha256", "missing replications_sha256"),
+                           ("run_metadata_sha256", "missing run_metadata_sha256")):
+        _, struct = _fresh_inputs(root)
+        del struct["provenance"][field]
+        with pytest.raises(report.StaleStructuralError, match=message):
+            report.check_structural_fresh(struct)
+
+
+def test_structural_freshness_refuses_a_missing_input_file(root):
+    files, struct = _fresh_inputs(root)
+    for name in ("meta", "final1"):
+        files, struct = _fresh_inputs(root)
+        files[name].unlink()
+        with pytest.raises(report.StaleStructuralError, match="missing"):
+            report.check_structural_fresh(struct)
