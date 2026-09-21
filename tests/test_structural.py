@@ -471,6 +471,8 @@ def test_build_records_the_provenance_of_its_inputs():
     assert out["provenance"]["replications_sha256"] == data.sha256_file(config.replication_metrics_path())
     assert out["provenance"]["run_metadata_sha256"] == data.sha256_file(config.metadata_path())
     assert "guided-log" in out["provenance"]["sets_sha256"]
+    assert out["provenance"]["sets_sha256"]["guided-log"]["realization"] == 0
+    assert out["provenance"]["sets_sha256"]["guided_log_r1"]["realization"] == 1
     assert len(out["provenance"]["sets_sha256"]) == 4 * (config.REP_REALIZATIONS + 1)
 
 
@@ -500,18 +502,14 @@ def test_allocation_rows_verifies_allocation_against_recomputation(monkeypatch):
 def test_batch_allocation_rows_verifies_allocation_against_recomputation(monkeypatch):
     """batch_allocation_rows checks that each batch's allocation is correct."""
     original_metadata = structural._metadata()
-    batch_key = [k for k in original_metadata["replications"].keys() if k.startswith("guided_seq_r1")]
-    if batch_key:
-        batch_key = batch_key[0]
-        # This should pass: allocation is correct
-        rows = structural.batch_allocation_rows(1)
-        assert len(rows) > 0
-
-        # Corrupt the allocation and verify it raises
-        corrupt_meta = json.loads(json.dumps(original_metadata))  # deep copy
-        corrupt_meta["replications"][batch_key]["allocation"]["added"][0] = 999
-        monkeypatch.setattr(structural, "_metadata", lambda: corrupt_meta)
-        with pytest.raises(structural.StructuralError, match="allocation.added.*does not match"):
+    keys = [key for key, _ in structural._sets_of(1)["C-seq"]]
+    assert len(keys) == len(config.REP_SEQ_BATCHES)
+    assert len(structural.batch_allocation_rows(1)) == len(keys)     # intact metadata passes
+    for key in keys:                                                 # every batch is checked
+        corrupt_meta = json.loads(json.dumps(original_metadata))
+        corrupt_meta["replications"][key]["allocation"]["added"][0] += 1
+        monkeypatch.setattr(structural, "_metadata", lambda meta=corrupt_meta: meta)
+        with pytest.raises(structural.StructuralError, match=rf"{key}: allocation.added.*does not match"):
             structural.batch_allocation_rows(1)
 
 
@@ -520,5 +518,11 @@ def test_build_includes_matrix_and_batches_captions():
     out = structural.build()
     assert "matrix_caption" in out
     assert "batches_caption" in out
-    assert "{arm}" in out["matrix_caption"]  # template placeholder
-    assert "oracle" in out["batches_caption"]  # should mention oracle limitation
+    matrix = out["matrix_caption"]
+    assert "only on the points it selected" in matrix and "candidate pool" in matrix
+    assert "normalized" in matrix and "r0 is excluded" in matrix
+    assert "(lo, hi]" in matrix and "FOS > 6" in matrix
+    for caption in (matrix, out["batches_caption"]):
+        assert caption.endswith(structural.ORACLE_SENTENCE)
+    assert "conformal" not in matrix.lower()           # a reserved term in this repository
+    assert "intended" in out["batches_caption"]

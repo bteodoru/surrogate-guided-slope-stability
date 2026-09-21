@@ -1,0 +1,30 @@
+\begin{table}[htbp]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{C-seq batch by batch: the intended count per bin and the deviation, achieved minus intended, then the cumulative deviation after batches 2 and 3 (cum.); mean ± sd over r1-r5, r0 (exploratory) apart. Each batch reallocates against what the earlier batches actually returned; the cumulative columns show whether retraining corrects a deviation or moves it. The outside rows count points whose true FOS left the selection range, where nothing was intended (generator bins, outer bin FOS > 6). None of this says what a perfect implementation would do; that is the oracle's question. This table is r0 alone: exploratory, never averaged in. C0-log and C0-seq train on the same guided points as C-log and C-seq in every realization, so their allocation, batch and displacement rows are those of C, shared rather than duplicated.}
+\label{tab:structural:batches:r0}
+\begin{tabular}{lrrrrrrrr}
+\toprule
+bin & int. 1 & dev. 1 & int. 2 & dev. 2 & int. 3 & dev. 3 & cum. 2 & cum. 3 \\
+\midrule
+0.50-0.59 & 22 & -7 & 13 & -6 & 12 & -2 & -13 & -15 \\
+0.59-0.70 & 19 & -1 & 7 & 2 & 4 & -1 & 1 & 0 \\
+0.70-0.82 & 16 & -6 & 12 & 0 & 6 & -4 & -6 & -10 \\
+0.82-0.97 & 13 & -8 & 14 & -5 & 11 & -1 & -13 & -14 \\
+0.97-1.14 & 7 & -2 & 7 & 2 & 5 & 1 & 0 & 1 \\
+1.14-1.35 & 3 & 0 & 5 & -1 & 7 & 2 & -1 & 1 \\
+1.35-1.59 & 0 & 2 & 0 & 3 & 0 & 1 & 5 & 6 \\
+1.59-1.88 & 0 & 0 & 2 & 0 & 6 & -1 & 0 & -1 \\
+1.88-2.22 & 1 & -1 & 6 & -2 & 8 & -1 & -3 & -4 \\
+2.22-2.62 & 0 & 0 & 0 & 1 & 4 & 2 & 1 & 3 \\
+2.62-3.09 & 0 & 1 & 0 & 0 & 6 & 0 & 1 & 1 \\
+3.09-3.65 & 0 & 1 & 1 & 1 & 5 & 3 & 2 & 5 \\
+3.65-4.31 & 2 & -2 & 8 & -3 & 9 & -5 & -5 & -10 \\
+4.31-5.08 & 1 & 0 & 6 & -2 & 8 & -2 & -2 & -4 \\
+5.08-6.00 & 16 & -13 & 19 & -3 & 9 & 1 & -16 & -15 \\
+< 0.5 (outside) & 0 & 22 & 0 & 6 & 0 & 4 & 28 & 32 \\
+> 6 (outside) & 0 & 14 & 0 & 7 & 0 & 3 & 21 & 24 \\
+\bottomrule
+\end{tabular}
+\end{table}

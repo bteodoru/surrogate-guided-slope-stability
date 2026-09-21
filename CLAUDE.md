@@ -57,9 +57,10 @@ collision with _balanced sampling_ in finite-population survey sampling
 (Deville & Tillé); the paper defines the term once, on first use.
 
 **Structural analysis** (`sgs structural`, `outputs/metrics/structural.json`):
-descriptive, with a procedure fixed in `docs/predictions-and-outcomes.md` before
-the structural analysis was run, on replication results already computed: it is
-never presented as a preregistration, and its blinding claim is the author's
+descriptive, with a procedure in `docs/predictions-and-outcomes.md` committed
+before any structural code or artifact was committed, on replication results
+already computed. It is never presented as a preregistration, no timing claim
+goes beyond what the commits show, and its blinding claim is the author's
 statement, with the limit written there.
 It is never phrased causally — _consistent with density-driven relocation_,
 never _caused by_ — and it is never cited as evidence about the screener.

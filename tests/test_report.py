@@ -277,11 +277,21 @@ def test_structural_allocation_frame_keeps_r0_apart_and_reports_a_spread():
 def test_structural_batch_frame_averages_over_the_confirmatory_realizations():
     frame = report.structural_batch_frame(_struct_stub())
     assert set(frame["set"]) == {"r1-r5", "r0 (exploratory)"}
-    assert {"batch 1", "batch 2", "cum. to 2"} <= set(frame.columns)
+    assert {"int. 1", "dev. 1", "int. 2", "dev. 2", "cum. 2"} <= set(frame.columns)
     confirmatory = frame[(frame["set"] == "r1-r5") & (frame["bin"] == "0.50-1.00")].iloc[0]
-    assert confirmatory["batch 1"] == "-0.5 ± 0.7"      # r1: -1, r2: 0; r0's +89 stays out
+    assert confirmatory["int. 1"] == "2"                # the intended count is visible
+    assert confirmatory["dev. 1"] == "-0.5 ± 0.7"       # r1: -1, r2: 0; r0's +89 stays out
+    assert confirmatory["cum. 2"] == "-1.0 ± 1.4"
     r0 = frame[(frame["set"] == "r0 (exploratory)") & (frame["bin"] == "0.50-1.00")].iloc[0]
-    assert r0["batch 1"] == "89"
+    assert r0["dev. 1"] == "89"
+
+
+def test_structural_batch_frame_outside_rows_intend_nothing():
+    frame = report.structural_batch_frame(_struct_stub())
+    outside = frame[(frame["set"] == "r1-r5") & (frame["bin"] == "< 0.5 (outside)")].iloc[0]
+    assert outside["int. 1"] == "0"
+    assert outside["dev. 1"] == "0.5 ± 0.7"             # achieved outside: r1 0, r2 1
+    assert outside["cum. 2"] == "1.0 ± 1.4"
 
 
 def test_structural_displacement_frame_keeps_r0_apart():
@@ -362,7 +372,8 @@ def test_run_writes_structural_outputs_when_present(root, monkeypatch):
     tables = {p.name for p in config.tables_dir().glob("*.tex")}
     figures = {p.name for p in config.figures_dir().glob("*.pdf")}
     assert {"structural__caption.tex", "structural__allocation_c-log.tex",
-            "structural__concordance.tex",
+            "structural__concordance.tex", "structural__matrix_caption.tex",
+            "structural__batches_r0.tex",
             "structural__allocation_c-seq.tex", "structural__batches.tex",
             "structural__displacement.tex", "structural__outside.tex",
             "structural__ablation_caption.tex", "structural__ablation_fractions.tex",
@@ -456,3 +467,61 @@ def test_check_structural_fresh_detects_modified_metadata(root):
     # Should fail now
     with pytest.raises(report.StaleStructuralError, match="another.*metadata"):
         report.check_structural_fresh(struct)
+
+
+def _fresh_inputs(root_dir):
+    """A replications.json, a metadata file and one r0 and one r1 set on disk,
+    with the provenance that describes them."""
+    files = {"rep": config.replication_metrics_path(), "meta": config.metadata_path(),
+             "design0": config.design_path("guided-log"), "final0": config.final_path("guided-log"),
+             "design1": config.replication_path("designs", "guided_log_r1"),
+             "final1": config.replication_path("final", "guided_log_r1")}
+    for name, path in files.items():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(f"{name}\n")
+    provenance = {"replications_sha256": data.sha256_file(files["rep"]),
+                  "run_metadata_sha256": data.sha256_file(files["meta"]),
+                  "sets_sha256": {
+                      "guided-log": {"realization": 0, "design": data.sha256_file(files["design0"]),
+                                     "final": data.sha256_file(files["final0"])},
+                      "guided_log_r1": {"realization": 1,
+                                        "design": data.sha256_file(files["design1"]),
+                                        "final": data.sha256_file(files["final1"])}}}
+    return files, {"provenance": provenance}
+
+
+@pytest.mark.parametrize("changed, message", [
+    ("rep", "another replications"), ("meta", "another run_metadata"),
+    ("design0", "another guided-log design"), ("final0", "another guided-log final"),
+    ("design1", "another guided_log_r1 design"), ("final1", "another guided_log_r1 final")])
+def test_structural_freshness_refuses_every_changed_input(root, changed, message):
+    files, struct = _fresh_inputs(root)
+    report.check_structural_fresh(struct)                   # intact: passes
+    files[changed].write_text("changed\n")
+    with pytest.raises(report.StaleStructuralError, match=message):
+        report.check_structural_fresh(struct)
+
+
+def test_structural_freshness_refuses_a_set_without_its_realization(root):
+    _, struct = _fresh_inputs(root)
+    del struct["provenance"]["sets_sha256"]["guided-log"]["realization"]
+    with pytest.raises(report.StaleStructuralError, match="no realization"):
+        report.check_structural_fresh(struct)
+
+
+def test_run_checks_structural_freshness_before_rendering(root, monkeypatch):
+    struct = _struct_with_ablation()
+    path = config.structural_metrics_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(struct))
+    seen = []
+
+    def refuse(given):
+        seen.append(given)
+        raise report.StaleStructuralError("stale")
+
+    monkeypatch.setattr(report, "check_structural_fresh", refuse)
+    with pytest.raises(report.StaleStructuralError, match="stale"):
+        report.run()
+    assert seen and seen[0]["figure_caption"] == struct["figure_caption"]
+    assert not (config.figures_dir() / "structural__bins.pdf").exists()

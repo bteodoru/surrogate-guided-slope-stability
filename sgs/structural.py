@@ -2,8 +2,8 @@
 error, and the fidelity of the delivered allocation.
 
 Design: docs/superpowers/specs/2026-09-20-structural-analysis-design.md.
-Procedure fixed in docs/predictions-and-outcomes.md before this module was
-written, on replication results that were already computed; it is not a
+Procedure in docs/predictions-and-outcomes.md, committed before this module
+was committed, on replication results that were already computed; it is not a
 preregistration, and the limit of its blinding is stated there. Nothing here computes a test or states an inferential claim; Welch
 intervals are reused only to visualize variability between designs.
 """
@@ -640,26 +640,27 @@ FIGURE_CAPTION = (
     "half-open reporting zones; the allocation and displacement tables use the generator's "
     "binning instead, which differs only on an exact bin edge.")
 
+# The same sentence closes the allocation and displacement captions in report.
+ORACLE_SENTENCE = ("None of this says what a perfect implementation would do; that is the "
+                   "oracle's question.")
+
 MATRIX_CAPTION = (
-    r"Conformal matrix of the screener {arm} on the set {arm}: predicted bin (rows) vs.\ true bin "
-    r"(columns), aggregated over r1--r5. Rows are normalized to 100\%. The three off-diagonal "
-    "blocks (below main diagonal, above main diagonal, and both) count miscalibration in each "
-    "direction. This describes the screener on the selected points alone, conditioned on being "
-    "selected, not on the full pool. It answers how well the screener's predicted FOS bin matched "
-    "the true one among those it admitted; it does not answer the oracle question, which is how the "
-    "true bin matched the prior belief over the entire pool.")
+    "Predicted bin (rows) against true bin (columns) for the points the screener selected, C-log "
+    "and C-seq, pooled over the confirmatory realizations r1-r5; r0 is excluded. Each row is "
+    "normalized by the number of points selected into that predicted bin, given beside its label; "
+    "a predicted bin into which nothing was selected is shown grey. Bins follow the generator, "
+    "(lo, hi], so the outer columns are FOS < 0.5 and FOS > 6. The matrices describe the screener "
+    "only on the points it selected, which were predicted inside the selection range and inside a "
+    "deficit bin; they are not its accuracy over the candidate pool. Off-diagonal mass includes "
+    "compensating errors, which leave achieved minus intended untouched. " + ORACLE_SENTENCE)
 
 BATCHES_CAPTION = (
-    "C-seq, deviation (achieved minus intended) batch by batch and cumulatively after batches 2 "
-    "and 3; mean ± sd over r1-r5, r0 (exploratory) apart. Each batch reallocates against what the "
-    "earlier batches actually returned; the cumulative columns show whether retraining corrects a "
-    "deviation or moves it. The outside rows count points whose true FOS left the selection range "
-    "(generator bins, outer bin FOS > 6). This describes what the allocation rule produced on the "
-    "points the screener selected, given their true FOS; it does not answer the oracle question, "
-    "which is what would happen if the generator had sampled uniformly over prior belief, "
-    "independent of screener predictions. C0-log and C0-seq train on the same guided points as "
-    "C-log and C-seq in every realization, so their allocation, batch and displacement rows are "
-    "those of C, shared rather than duplicated.")
+    "C-seq batch by batch: the intended count per bin and the deviation, achieved minus intended, "
+    "then the cumulative deviation after batches 2 and 3 (cum.); mean ± sd over r1-r5, r0 (exploratory) "
+    "apart. Each batch reallocates against what the earlier batches actually returned; the "
+    "cumulative columns show whether retraining corrects a deviation or moves it. The outside rows "
+    "count points whose true FOS left the selection range, where nothing was intended (generator "
+    "bins, outer bin FOS > 6). " + ORACLE_SENTENCE)
 
 PROCEDURE = (
     "Descriptive. No new hypothesis test or inferential claim is introduced; Welch intervals are "
@@ -689,7 +690,7 @@ def provenance(realizations) -> dict:
                                else config.replication_path("designs", label))
                 final_path = (config.final_path(label) if r == 0
                               else config.replication_path("final", label))
-                sets[label] = {"design": data.sha256_file(design_path),
+                sets[label] = {"realization": r, "design": data.sha256_file(design_path),
                                "final": data.sha256_file(final_path)}
     return {"replications_sha256": data.sha256_file(config.replication_metrics_path()),
             "run_metadata_sha256": data.sha256_file(config.metadata_path()),

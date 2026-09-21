@@ -1,8 +1,8 @@
 {
   "procedure": "Descriptive. No new hypothesis test or inferential claim is introduced; Welch intervals are reused solely to visualize between-design uncertainty at bin level. Confirmatory realizations r1..r5; r0 is reported apart and never averaged into a confirmatory mean. 15 geometric bins inside the selection range; the two bins outside have no defined intended density and appear in the supplementary rows, as spillover and tail behaviour, never as truncation. Bins with fewer than STRUCTURAL_MIN_TEST_N test points are marked, never dropped, and the concordance count is primarily over the unmarked bins. Concordance is the count of bins with (delta density) x (delta log-RMSE) < 0; bins with either difference exactly zero leave the denominator. achieved - intended is the net distortion of the requested bin-count distribution, not the screener's prediction error; the displacement rows describe the screener on the points it selected, conditioned on selection, and their shift statistics cover only points whose true FOS stayed inside the selection range.",
   "figure_caption": "Per-bin training density (raw counts; B, C-log and C-seq all train on 600 points) and per-bin log-RMSE, each as the difference between an arm's mean over the five confirmatory realizations and B's, with 95% Welch intervals. A negative error difference means a smaller log-RMSE than B. Every interval, on the density panel and on the error panels alike, visualizes variability between designs and constitutes no test; read together they are a per-bin diagnostic, not a set of tests. The pattern is consistent with density-driven relocation; it is not evidence that density caused it. The small numbers above the upper error panels are the test points per bin. Hollow markers, on the error panels, are bins with fewer than 10 of them; they are shown but carry no statement in the text. Both the densities and the errors in this figure are read from the replication metrics and use the half-open reporting zones; the allocation and displacement tables use the generator's binning instead, which differs only on an exact bin edge.",
-  "matrix_caption": "Conformal matrix of the screener {arm} on the set {arm}: predicted bin (rows) vs.\\ true bin (columns), aggregated over r1--r5. Rows are normalized to 100\\%. The three off-diagonal blocks (below main diagonal, above main diagonal, and both) count miscalibration in each direction. This describes the screener on the selected points alone, conditioned on being selected, not on the full pool. It answers how well the screener's predicted FOS bin matched the true one among those it admitted; it does not answer the oracle question, which is how the true bin matched the prior belief over the entire pool.",
-  "batches_caption": "C-seq, deviation (achieved minus intended) batch by batch and cumulatively after batches 2 and 3; mean ± sd over r1-r5, r0 (exploratory) apart. Each batch reallocates against what the earlier batches actually returned; the cumulative columns show whether retraining corrects a deviation or moves it. The outside rows count points whose true FOS left the selection range (generator bins, outer bin FOS > 6). This describes what the allocation rule produced on the points the screener selected, given their true FOS; it does not answer the oracle question, which is what would happen if the generator had sampled uniformly over prior belief, independent of screener predictions. C0-log and C0-seq train on the same guided points as C-log and C-seq in every realization, so their allocation, batch and displacement rows are those of C, shared rather than duplicated.",
+  "matrix_caption": "Predicted bin (rows) against true bin (columns) for the points the screener selected, C-log and C-seq, pooled over the confirmatory realizations r1-r5; r0 is excluded. Each row is normalized by the number of points selected into that predicted bin, given beside its label; a predicted bin into which nothing was selected is shown grey. Bins follow the generator, (lo, hi], so the outer columns are FOS < 0.5 and FOS > 6. The matrices describe the screener only on the points it selected, which were predicted inside the selection range and inside a deficit bin; they are not its accuracy over the candidate pool. Off-diagonal mass includes compensating errors, which leave achieved minus intended untouched. None of this says what a perfect implementation would do; that is the oracle's question.",
+  "batches_caption": "C-seq batch by batch: the intended count per bin and the deviation, achieved minus intended, then the cumulative deviation after batches 2 and 3 (cum.); mean ± sd over r1-r5, r0 (exploratory) apart. Each batch reallocates against what the earlier batches actually returned; the cumulative columns show whether retraining corrects a deviation or moves it. The outside rows count points whose true FOS left the selection range, where nothing was intended (generator bins, outer bin FOS > 6). None of this says what a perfect implementation would do; that is the oracle's question.",
   "bins": {
     "edges": [
       0.5,
@@ -15761,98 +15761,122 @@
     "run_metadata_sha256": "e5918682c9021365d894d414431535c6dd835acfb0bc50395b71ed8686d85062",
     "sets_sha256": {
       "guided-log": {
+        "realization": 0,
         "design": "c2b1b4f30d1b75f2fe77c0e3c59c2886e5b23fbb52f7dc2e7b4eb6dd9668843b",
         "final": "7949a6ffd82e93ff6367c3606fbe6fb2d0dd44e0c05b81066c16be47ae463660"
       },
       "guided-seq-1": {
+        "realization": 0,
         "design": "90234f6bf92b7569e8f9f1012cd2996de324960a85d9b5fa1d0231bbbee3ee7c",
         "final": "4494b3d74fe63b4bb2569d3f2e7c75c4fc01cfe029fb26a55e675ac91d7409b7"
       },
       "guided-seq-2": {
+        "realization": 0,
         "design": "b405dfca95f99275ce4d9f90b57bc9ddf14574b9b32261e940c0509edc5c32ba",
         "final": "8db751ae2ce7a0ce1cdf66d8940b7d35d3b7d28417ff26a088a2bc5e0cd1ec4d"
       },
       "guided-seq-3": {
+        "realization": 0,
         "design": "9215c0b30639c3dde8f8911d8158c37dda1ea99eece6c3ec00b09fb67f158127",
         "final": "0d7efb8863265400b193182fc2e7734f0ae1c3c399b8e5b231c6aa709495cc64"
       },
       "guided_log_r1": {
+        "realization": 1,
         "design": "601ff7403f2b3328d0acba6fcc61bd7bf7d19ee325ed64d02007cd325242f6be",
         "final": "094ef01f79f3f2e5542d0b8cd68b722f936534ff31c99605d02f611133f98aa7"
       },
       "guided_seq_r1_b1": {
+        "realization": 1,
         "design": "36201f02a4b4dba4e7f82c5c6039124e6549046b714be6d624d8b7352e2ffd9d",
         "final": "587d95af3379a8736d1795ab4d40da9ad97f70a8fa24308e238a8dd1fddfee54"
       },
       "guided_seq_r1_b2": {
+        "realization": 1,
         "design": "c4dbe697d00e4251c2cefa37fb1e9872ff91845686ed951e22b3468d6271da86",
         "final": "67bfed3e9aaa8199bafe3ce98a3c91e11425ca08b1c514cb934f4efd34bec77f"
       },
       "guided_seq_r1_b3": {
+        "realization": 1,
         "design": "2429293f363b3566028422a84c0d0dfe2f42b29b16346342d0fb456f18d8533e",
         "final": "de0a4b4c1016fc4131015da805a6c142edf731f12185fd34e2c6adc91bbef22d"
       },
       "guided_log_r2": {
+        "realization": 2,
         "design": "e5a78eca8b64f914f65061b33d970a0ad351ce5307710cebbaba0e308084088b",
         "final": "2426056ae782258ba90ee959e3007944ea59afbe4f849d4aea1e9a5115b5c5ef"
       },
       "guided_seq_r2_b1": {
+        "realization": 2,
         "design": "dbf54b7a769d0fee1ccf8a34c33ac41315a84d3cc9fa621e8800fe55f256a121",
         "final": "267a7dd890270bd20e2f11cdc4630cd25ff79e5188189caaa88d604c46ff66ab"
       },
       "guided_seq_r2_b2": {
+        "realization": 2,
         "design": "8625dfdb889c56ba1feb98852145c0ef7302354ac98b7c8056c1b1a77e2f05c6",
         "final": "6f94f7be729dd97cd7d13550bdaba59e99cba8de8b5dc54c13acdd5ad14ede6f"
       },
       "guided_seq_r2_b3": {
+        "realization": 2,
         "design": "42b6e2772465ebdfe0d7b3b826990851b81d0d11186b4552eb39a1b9bf2d7b3a",
         "final": "612ff9a4cb3b9968d6165f7e49c2a02b89155a789b8cc9ad85760594455b611a"
       },
       "guided_log_r3": {
+        "realization": 3,
         "design": "74ce63d9950cfd6c195e3d08789a05cf1d21808424f9cc6ce2cc96a3bf77f2b0",
         "final": "8bd232614186aed47ce9268192f15d8495805ddd275812c724631cafc8c1f04d"
       },
       "guided_seq_r3_b1": {
+        "realization": 3,
         "design": "9f80e49e3b5071f8ff918b9cdcf6c670a97f9b99c21e54e698c3c8b2ff31534b",
         "final": "06c5f024bde9328a4cd7a7fa7299e2250ffb66359d2ba6b9e51be6c51da5c30d"
       },
       "guided_seq_r3_b2": {
+        "realization": 3,
         "design": "109ba176ce5bf1f2f8e5de105eca8f756c8b93f3a42819c9fed911f48b0ae547",
         "final": "14cc219f340a0a2935355cb926aee30d3636799dd8f33a2e341dca12e3cd5dae"
       },
       "guided_seq_r3_b3": {
+        "realization": 3,
         "design": "04d5a634ae1fdef3086cccfe137ed9ce0016c20fcace57b2973b0bf05bb50deb",
         "final": "4fe3ed464b2b08d98c36ad858f0d1a144e3822b4fed1220f2a3b33e4009027e7"
       },
       "guided_log_r4": {
+        "realization": 4,
         "design": "bfb8b7697ac0d82ba60a01e96435ae92567d82bf588dc368771dc50f6bc3c484",
         "final": "6b2ae391144ce1dff7da8d148c857db6a432ec6a78b391f59ff3726b3967d4a8"
       },
       "guided_seq_r4_b1": {
+        "realization": 4,
         "design": "3c8a3011432d686ff2939b3bd3d5adf6f9371487fb589965a05c899862f49889",
         "final": "bbea6306e2557bd58bedd0d0583e70f14fee036ea12e70118851cf4a00f36979"
       },
       "guided_seq_r4_b2": {
+        "realization": 4,
         "design": "bb37efc66148ebbd15ce31b3f0754c02f82c7d3f14692dea98a8b002c90c8404",
         "final": "b64e27760d222e7b0c549811c49beca704a55980d5e74d47174a143655c63c04"
       },
       "guided_seq_r4_b3": {
+        "realization": 4,
         "design": "184a34c894ccc4fa6754917deba00089cc5e1f882a80a2d7818a6f70970d1c8a",
         "final": "4fa0e9852048753c2ff4b912de28975f07adea467e77f9f8613f5d364b3e7d0c"
       },
       "guided_log_r5": {
+        "realization": 5,
         "design": "af71c80513613658352828b524c092f7b1d9860651a60d7a8ceb142b9e5881af",
         "final": "7047c1c4f4695543dea052a8dd3706a85b29ca6436e0bede4696cd492e42035d"
       },
       "guided_seq_r5_b1": {
+        "realization": 5,
         "design": "496c7fa32533bc4e1c4cacede7df7140571adaf154a9865dba0f24dfe5a079bb",
         "final": "1fb8ae39c6274b3898520dce81bcca77605e8ad86ce25e1a85130dc95cb4115d"
       },
       "guided_seq_r5_b2": {
+        "realization": 5,
         "design": "caceaa0518386d47e37d29cc14255a209391b7104845c67fb6d6fc091eb04e27",
         "final": "55b48b991f195e045c35763496db78ecdacd306c5a2a29ae0b15b9521ce9589d"
       },
       "guided_seq_r5_b3": {
+        "realization": 5,
         "design": "b17f60ae7eaf79f7d8fc730ad4d4e8754114d1beb11e975314cad7b3503d3a59",
         "final": "a8b23fb16581af363fe810f7dc921d58066ffa319395503e3419e87fe4c99c3b"
       }

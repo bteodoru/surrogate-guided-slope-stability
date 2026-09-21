@@ -144,26 +144,34 @@ mean of 0.095 on test-natural, 0.123 against 0.096 on test-stratified). That is
 why it is reported apart: it is the draw that shaped the variants and the
 predictions.
 
-## Structural analysis — a procedure fixed before the analysis, with no hypothesis attached
+## Structural analysis — a procedure committed before the structural code, with no hypothesis attached
 
-The design was fixed on 2026-09-20 and this procedure was committed on
-2026-09-21, before the structural analysis was implemented: at that commit
-neither `sgs/structural.py` nor `outputs/metrics/structural.json` had been
-committed. It was fixed **on replication data already computed**. The
+This procedure was committed in c1681ce (2026-09-21 10:57), which changes only
+this document and CLAUDE.md. At that commit, neither `sgs/structural.py` nor
+`outputs/metrics/structural.json` had been committed. The structural code was
+committed between 2 and 5 minutes later (d5023b3 to 919fd95, the artifact in
+919fd95). It had been drafted before, in an implementation plan that git does
+not track. Git shows the order of these commits, and nothing about when the
+code was written or first run. The design is dated 2026-09-20 in a file git
+does not track either.
+
+The procedure was fixed **on replication data already computed**. The
 bin-level replication results of every arm had existed since 075edb7
-(2026-09-20): in `outputs/metrics/replications.json` and drawn in
-`outputs/figures/replications__*.pdf`. **This is not a preregistration made
-before the bin-level results were obtained**, and it must not be presented as
-one. It takes no `outcome` and no `held?` column, because it is not a
-prediction. It fixes the procedure of the structural analysis — the weighting,
-the bin set, the thresholds and the summary statistic — before that analysis
-was run. The limit of what that protects is stated below.
+(2026-09-20 19:44): in `outputs/metrics/replications.json`, and drawn in
+`outputs/figures/replications__*.pdf`. **The analysis is not preregistered
+before those results were obtained**, and it must not be presented as if it
+were. It takes no `outcome` and no `held?` column, because it is not a
+prediction. What it records is the procedure of the structural analysis: the
+weighting, the bin set, the thresholds and the summary statistic. The limit of
+what that protects is stated below.
 
-*Corrected 2026-09-21, after the review of the complete structural work.* The
+*Corrected 2026-09-21, after the reviews of the complete structural work.* The
 first version of this section said that the procedure was committed "before
-any of its output existed". Of the structural artifact itself, that was true.
-Of the bin-level results it reorganizes, it was not, since they had been
-computed and drawn the day before. The same wording has been removed from
+the analysis was implemented and before any of its output existed". A second
+version kept "before the structural analysis was implemented". Git supports
+neither claim. It shows only that no structural code or artifact had been
+committed, and the bin-level results the analysis reorganizes had been
+computed and drawn the day before. The same correction is applied to
 Amendment 1 below.
 
 - **Bins.** The 15 geometric bins of the selection range, `config.N_BINS`. The
@@ -232,8 +240,11 @@ of the implemented Tasks 0–4 found that the procedure, the design and the
 module covered only C-log and C-seq against B, leaving out C₀-log and C₀-seq
 contrary to the repository's rule that every C₀ variant appears in every
 analysis. The omission was in the declaration itself, not only in the code.
-The amendment was committed before the C₀ rows of the structural artifact were
-built. The bin-level C₀ results it reorganizes were not new. The bin-level
+The amendment was committed in fe77b9a (2026-09-21 11:24), which changes only
+this document. The code and artifact rows for C₀ were committed 2 minutes 18
+seconds later, in 9ece938. Git shows that order and nothing about when that
+code was written or run. The bin-level C₀ results it reorganizes were not
+new. The bin-level
 errors and training counts of C₀-log and C₀-seq had been computed and drawn in
 `replications__*.pdf` since 075edb7, like those of every other arm. The author
 states that they were not inspected before this amendment was fixed. As with

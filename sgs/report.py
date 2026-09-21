@@ -359,30 +359,29 @@ def check_structural_fresh(struct: dict) -> None:
         raise StaleStructuralError(f"structural.json was built from another {meta_path.name}; "
                                    "rerun `sgs structural`")
 
-    # Check design and final files for each guided set
-    recorded_sets = provenance.get("sets_sha256", {})
-    for label, hashes in recorded_sets.items():
-        for file_type in ("design", "final"):
-            recorded_hash = hashes.get(file_type)
+    # The design and final file of every guided set read for allocation and
+    # displacement. The realization is stored with the hash, so the path does
+    # not depend on how a label is spelled.
+    for label, hashes in provenance.get("sets_sha256", {}).items():
+        realization = hashes.get("realization")
+        if realization is None:
+            raise StaleStructuralError(f"provenance of {label} carries no realization; "
+                                       "rerun `sgs structural`")
+        paths = ({"design": config.design_path(label), "final": config.final_path(label)}
+                 if realization == 0 else
+                 {"design": config.replication_path("designs", label),
+                  "final": config.replication_path("final", label)})
+        for kind, file_path in paths.items():
+            recorded_hash = hashes.get(kind)
             if recorded_hash is None:
-                raise StaleStructuralError(
-                    f"structural.json provenance missing {file_type} hash for {label}; "
-                    "rerun `sgs structural`")
-            # Determine if this is a main pipeline (r0) or replication set
-            is_r0 = "_r0" not in label and not any(f"_r{i}" in label for i in range(1, 10))
-            if is_r0:
-                # Main pipeline: label is a role name
-                file_path = config.design_path(label) if file_type == "design" else config.final_path(label)
-            else:
-                # Replication: label includes _r# suffix
-                file_path = (config.replication_path("designs", label) if file_type == "design"
-                           else config.replication_path("final", label))
+                raise StaleStructuralError(f"provenance of {label} carries no {kind} hash; "
+                                           "rerun `sgs structural`")
             if not file_path.exists():
-                raise StaleStructuralError(f"{label} {file_type} file is missing; structural.json cannot be verified")
+                raise StaleStructuralError(f"{label} {kind} file is missing; "
+                                           "structural.json cannot be verified")
             if data.sha256_file(file_path) != recorded_hash:
-                raise StaleStructuralError(
-                    f"structural.json was built from another {label} {file_type} file; "
-                    "rerun `sgs structural`")
+                raise StaleStructuralError(f"structural.json was built from another {label} "
+                                           f"{kind} file; rerun `sgs structural`")
 
 
 def _offsets(names) -> dict:
@@ -538,8 +537,10 @@ def structural_allocation_frame(struct: dict, arm: str) -> pd.DataFrame:
 
 
 def structural_batch_frame(struct: dict) -> pd.DataFrame:
-    """C-seq, intended and deviation (achieved - intended) batch by batch and cumulatively,
-    bins as rows; r1-r5 as mean ± sd, then r0 as its own block."""
+    """C-seq batch by batch: intended and deviation (achieved - intended) per
+    batch, then the cumulative deviation; bins as rows, r1-r5 as mean ± sd,
+    then r0 as its own block. Outside the range nothing was intended, so there
+    the deviation is the achieved count."""
     labels = struct["bins"]["labels"]
     confirmatory = [str(r) for r in struct["confirmatory"]]
     rows = []
@@ -547,34 +548,23 @@ def structural_batch_frame(struct: dict) -> pd.DataFrame:
         batches = [struct["batches"][k] for k in keys]
         n_batches = len(batches[0])
         fmt = _mean_sd if len(keys) > 1 else (lambda v: _plain(v[0]))
-
-        def intended_val(entry, b):
-            return entry["intended"][b]
-
-        def delta(entry, b):
-            return entry["achieved"][b] - entry["intended"][b]
-
-        def cumulative(entry, b):
-            return entry["cumulative_achieved"][b] - entry["cumulative_intended"][b]
-
         for b, label in enumerate([*labels, *STRUCTURAL_OUTSIDE_LABELS]):
-            row = {"set": name, "bin": label}
-            outside = b >= len(labels)
+            side = STRUCTURAL_OUTSIDE_LABELS[b - len(labels)] if b >= len(labels) else None
+
+            def intended(entry):
+                return 0 if side else entry["intended"][b]
+
+            def deviation(entry):
+                return (entry["achieved_outside"][side] if side
+                        else entry["achieved"][b] - entry["intended"][b])
+
+            row = {"set": name, "bin": f"{label} (outside)" if side else label}
             for j in range(n_batches):
-                if outside:
-                    side = STRUCTURAL_OUTSIDE_LABELS[b - len(labels)]
-                    row[f"batch {j + 1} intended"] = fmt([s[j]["achieved_outside"][side] for s in batches])
-                else:
-                    row[f"batch {j + 1} intended"] = fmt([intended_val(s[j], b) for s in batches])
-                    row[f"batch {j + 1}"] = fmt([delta(s[j], b) for s in batches])
+                row[f"int. {j + 1}"] = fmt([intended(s[j]) for s in batches])
+                row[f"dev. {j + 1}"] = fmt([deviation(s[j]) for s in batches])
             for j in range(1, n_batches):
-                column = f"cum. to {j + 1}"
-                if outside:
-                    side = STRUCTURAL_OUTSIDE_LABELS[b - len(labels)]
-                    row[column] = fmt([sum(s[i]["achieved_outside"][side] for i in range(j + 1))
-                                       for s in batches])
-                else:
-                    row[column] = fmt([cumulative(s[j], b) for s in batches])
+                row[f"cum. {j + 1}"] = fmt([sum(deviation(s[i]) for i in range(j + 1))
+                                                    for s in batches])
             rows.append(row)
     return pd.DataFrame(rows)
 
@@ -784,8 +774,6 @@ def run() -> None:
         for arm in ("C-log", "C-seq"):
             _save_figure(figures / f"structural__matrix_{arm.lower()}.pdf",
                          fig_structural_matrix(struct, arm))
-            _save_table(tables / f"structural__matrix_{arm.lower()}_caption.tex",
-                       _structural_text(struct["matrix_caption"].format(arm=arm)))
             _save_table(tables / f"structural__allocation_{arm.lower()}.tex", booktabs(
                 structural_allocation_frame(struct, arm),
                 caption=f"Allocation fidelity for {arm}: mean ± sd over the confirmatory "
@@ -798,10 +786,17 @@ def run() -> None:
                         "(lo, hi], so the outer bin is FOS > 6. Selected equals intended by "
                         f"construction and is not shown. {oracle} {shared}",
                 label=f"tab:structural:allocation:{arm.lower()}", small=True))
-        _save_table(tables / "structural__batches.tex", booktabs(
-            structural_batch_frame(struct),
-            caption=_escape(struct["batches_caption"]) + f" {shared}",
-            label="tab:structural:batches", small=True))
+        _save_table(tables / "structural__matrix_caption.tex",
+                    _structural_text(struct["matrix_caption"]))
+        # Two floats, r1-r5 and r0: r0 stays visibly apart and each fits the text width.
+        batches = structural_batch_frame(struct)
+        for stem, name, note in (("batches", "r1-r5", ""),
+                                 ("batches_r0", "r0 (exploratory)",
+                                  " This table is r0 alone: exploratory, never averaged in.")):
+            _save_table(tables / f"structural__{stem}.tex", booktabs(
+                batches[batches["set"] == name].drop(columns="set"),
+                caption=f"{struct['batches_caption']}{note} {shared}",
+                label=f"tab:structural:{stem.replace('_', ':')}", small=True))
         _save_table(tables / "structural__displacement.tex", booktabs(
             structural_displacement_frame(struct),
             caption="The screener on the points it selected: share staying in the predicted bin, "
