@@ -257,25 +257,25 @@ def _ordered(rows, family, test, arm) -> list[dict]:
 REQUIRED_ARMS = ("B", *ARMS_VS_B)
 
 
-def _require_arms(found, where: str) -> None:
-    """B and both guided arms must be present.
+def _require_arms(found, where: str, arms=REQUIRED_ARMS) -> None:
+    """B and both guided arms (or the arms passed) must be present.
 
     Deriving the arm list from whatever the artifact happens to contain would let
     a whole arm vanish in silence: the analysis would simply not mention C-seq.
     """
-    missing = [arm for arm in REQUIRED_ARMS if arm not in set(found)]
+    missing = [arm for arm in arms if arm not in set(found)]
     if missing:
         raise StructuralError(f"{where}: arms {missing} are missing")
 
 
-def _check_by_arm(keyed, where: str) -> list[int]:
+def _check_by_arm(keyed, where: str, arms=REQUIRED_ARMS) -> list[int]:
     """Every required arm must carry every confirmatory realization.
 
     Checking the union would pass when C-log is missing r5 but B and C-seq are
     not, and the omission would surface later as a KeyError.
     """
-    _require_arms({a for a, _ in keyed}, where)
-    for arm in REQUIRED_ARMS:
+    _require_arms({a for a, _ in keyed}, where, arms)
+    for arm in arms:
         check_realizations({r for a, r in keyed if a == arm}, f"{where}/{arm}")
     return sorted(range(1, config.REP_REALIZATIONS + 1))
 
@@ -388,6 +388,150 @@ def concordance(error_rows_, density_diff_rows_) -> list[dict]:
     return [{"family": f, "test": t, "arm": a, **cell} for (f, t, a), cell in tally.items()]
 
 
+# --- the C0 ablations (Amendment 1, docs/predictions-and-outcomes.md) ------------------------
+# An extension decided after the review of Tasks 0-4, not part of the original
+# declaration. None of it enters the main figure or the concordance count.
+
+# C0 arm -> the C arm whose guided points it trains on, in the same realization.
+ABLATIONS = {"C0-log": "C-log", "C0-seq": "C-seq"}
+ABLATION_ARMS = ("B", *ARMS_VS_B, *ABLATIONS)
+
+
+def reporting_bin_labels() -> list[str]:
+    """The 17 bins of replications.json, [lo, hi): below, the 15 in range, at or above."""
+    return ["below 0.5", *bin_labels(), "at or above 6"]
+
+
+def _declared_intervals() -> None:
+    """The interval type is the one config declares, not a choice made here."""
+    for c0, c in ABLATIONS.items():
+        if (c0, "B") not in config.REP_WELCH:
+            raise StructuralError(f"({c0!r}, 'B') is not declared in REP_WELCH")
+        if (c, c0) not in config.REP_PAIRED:
+            raise StructuralError(f"({c!r}, {c0!r}) is not declared in REP_PAIRED")
+
+
+def _full_counts(rep: dict) -> dict[tuple[str, int], np.ndarray]:
+    """(arm, realization) -> the 17-bin training counts, cell-independent."""
+    out: dict[tuple[str, int], np.ndarray] = {}
+    for row in _confirmatory(rep):
+        key = (row["arm"], row["realization"])
+        below, inside, above = _split(row["train_counts"])
+        counts = np.array([below, *inside, above], dtype=int)
+        if key in out and not np.array_equal(out[key], counts):
+            raise StructuralError(f"train_counts differ between cells for {key}")
+        out[key] = counts
+    return out
+
+
+def ablation_budgets(rep: dict) -> dict[str, int]:
+    """Training-set size per arm, read from the artifact. It must not vary
+    between realizations; the C0 rows are labelled by it."""
+    counts, out = _full_counts(rep), {}
+    for arm in ABLATION_ARMS:
+        sizes = {int(v.sum()) for (a, _), v in counts.items() if a == arm}
+        if len(sizes) != 1:
+            raise StructuralError(f"{arm}: training-set size varies between realizations: {sorted(sizes)}")
+        out[arm] = sizes.pop()
+    return out
+
+
+def ablation_error_rows(rep: dict) -> list[dict]:
+    """Per (family, test, C0 arm, reporting bin): log-RMSE against B by a Welch
+    interval and against the corresponding C by a paired one, over r1..r5.
+
+    Both comparisons join arms trained on different budgets, and every row says
+    so. The paired rows follow config.REP_PAIRED's order: C - C0.
+    """
+    _declared_intervals()
+    values, rows = _confirmatory(rep), []
+    _require_arms({r["arm"] for r in values}, "ablation errors", ABLATION_ARMS)
+    labels = reporting_bin_labels()
+    for family in config.REP_FAMILIES:
+        for test in config.TEST_ROLES:
+            base_rows = _ordered(values, family, test, "B")
+            for c0, c in ABLATIONS.items():
+                c0_rows = _ordered(values, family, test, c0)
+                c_rows = _ordered(values, family, test, c)
+                if [r["realization"] for r in c0_rows] != [r["realization"] for r in c_rows]:
+                    raise StructuralError(f"{family}/{test}: {c} and {c0} cover different realizations")
+                for index, label in enumerate(labels):
+                    def series(ordered, key):
+                        return np.array([r["bins"][index][key] for r in ordered], dtype=float)
+                    counts = set(np.concatenate([series(base_rows, "n"), series(c0_rows, "n"),
+                                                 series(c_rows, "n")]).tolist())
+                    if len(counts) != 1:
+                        raise StructuralError(
+                            f"{test} reporting bin {index}: test count differs between arms or "
+                            f"realizations ({sorted(counts)}); it depends only on the test set")
+                    test_n = int(counts.pop())
+                    common = {"family": family, "test": test, "arm": c0, "reporting_bin": index,
+                              "label": label, "test_n": test_n,
+                              "marked": test_n < config.STRUCTURAL_MIN_TEST_N, "budget_differs": True}
+                    rows.append({**common, "first": c0, "second": "B", "interval": "welch",
+                                 **evaluate.welch_interval(series(c0_rows, "log_rmse"),
+                                                           series(base_rows, "log_rmse"), config.REP_CI)})
+                    rows.append({**common, "first": c, "second": c0, "interval": "paired",
+                                 **evaluate.paired_interval(series(c_rows, "log_rmse"),
+                                                            series(c0_rows, "log_rmse"), config.REP_CI)})
+    return rows
+
+
+def ablation_fraction_rows(rep: dict) -> list[dict]:
+    """Per (C0 arm, reporting bin): the training fraction n_bin / N_total, C0 - B,
+    with a Welch interval over r1..r5. Fractions, because raw counts would carry
+    the budget difference. They enter no concordance and no summary."""
+    _declared_intervals()
+    counts, rows = _full_counts(rep), []
+    realizations = _check_by_arm(counts, "ablation fractions", ABLATION_ARMS)
+
+    def fractions(arm):
+        return np.array([counts[(arm, r)] / counts[(arm, r)].sum() for r in realizations], dtype=float)
+
+    base = fractions("B")
+    for c0 in ABLATIONS:
+        a = fractions(c0)
+        for index, label in enumerate(reporting_bin_labels()):
+            rows.append({"arm": c0, "first": c0, "second": "B", "interval": "welch",
+                         "budget_differs": True, "reporting_bin": index, "label": label,
+                         "first_mean": float(a[:, index].mean()),
+                         "second_mean": float(base[:, index].mean()),
+                         **evaluate.welch_interval(a[:, index], base[:, index], config.REP_CI)})
+    return rows
+
+
+ABLATION_PROCEDURE = (
+    "Amendment 1, 2026-09-21: an extension decided after the review of Tasks 0-4, not part of the "
+    "original declaration, committed before any bin-level C0 result was read. Supplementary; it "
+    "enters neither the main figure nor the concordance count. For C0-log and C0-seq, over r1..r5 "
+    "and the 17 reporting bins of the replication metrics ([lo, hi)): log-RMSE against B by a Welch "
+    "interval, and against the corresponding C by a paired interval (C - C0), because within a "
+    "realization C0 trains on exactly the guided points C adds to the seed. Every row joins arms "
+    "trained on different budgets and is labelled so; it is not a like-for-like comparison. The "
+    "training distribution is compared as fractions n_bin / N_total, never raw counts. Thin bins are "
+    "marked, never dropped. The intervals visualize between-design variability and constitute no "
+    "test; an interval containing 0 is inconclusive, not a tie. r0 does not enter.")
+
+SHARED_ROWS_NOTE = (
+    "C0-log and C0-seq train on the same guided points as C-log and C-seq in every realization, so "
+    "their allocation, batch and displacement rows are those of C, shared rather than duplicated.")
+
+ORIGINAL_C0_NOTE = (
+    "The original C0 (arm C0, role guided) exists only as r0 in the main pipeline. It was never "
+    "replicated, so it has no replication interval, and it predates the log-deficit rule and stores "
+    "no allocation provenance, so it has no allocation row. Nothing is computed for it here.")
+
+
+def ablation(rep: dict) -> dict:
+    return {"procedure": ABLATION_PROCEDURE,
+            "labels": reporting_bin_labels(),
+            "budgets": ablation_budgets(rep),
+            "errors": ablation_error_rows(rep),
+            "fractions": ablation_fraction_rows(rep),
+            "shared_rows": {**ABLATIONS, "note": SHARED_ROWS_NOTE},
+            "original_c0": ORIGINAL_C0_NOTE}
+
+
 FIGURE_CAPTION = (
     "Per-bin training density and per-bin error, both as a difference against B, over the five "
     "confirmatory realizations. Every interval, on the density panel and on the error panels "
@@ -433,6 +577,7 @@ def build() -> dict:
         "allocation": {str(r): allocation_rows(r) for r in everything},
         "batches": {str(r): batch_allocation_rows(r) for r in everything},
         "displacement": {str(r): displacement_rows(r) for r in everything},
+        "ablation": ablation(rep),
     }
 
 

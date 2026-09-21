@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sgs import config, data, design, replicate, structural
+from sgs import config, data, design, evaluate, replicate, structural
 
 
 def test_edges_are_the_declared_fifteen_bins():
@@ -261,3 +261,111 @@ def test_build_is_deterministic(tmp_path, monkeypatch):
     first = (tmp_path / "structural.json").read_bytes()
     structural.run()
     assert (tmp_path / "structural.json").read_bytes() == first
+
+
+# --- the C0 ablations (Amendment 1) -----------------------------------------------------------
+
+def _ablation_stub(*, drop_arm=None, shuffle=False):
+    """Errors vary by realization, so a Welch and a paired interval differ;
+    C0 trains on half of B's budget with the same shape."""
+    budgets = {"B": 2, "C-log": 2, "C-seq": 2, "C0-log": 1, "C0-seq": 1}
+    level = {"B": 0.20, "C-log": 0.15, "C-seq": 0.16, "C0-log": 0.30, "C0-seq": 0.35}
+    values = []
+    for family in config.REP_FAMILIES:
+        for test in config.TEST_ROLES:
+            for arm in budgets:
+                if arm == drop_arm:
+                    continue
+                for r in (1, 2, 3, 4, 5):
+                    # C and C0 move together within a realization: a shared-points effect
+                    err = level[arm] + 0.01 * r * (1.0 if arm != "B" else -0.5)
+                    values.append({"family": family, "test": test, "arm": arm, "realization": r,
+                                   "train_counts": [budgets[arm] * (1 + (b % 3)) for b in range(config.N_BINS + 2)],
+                                   "bins": [{"n": 20, "log_rmse": err} for _ in range(config.N_BINS + 2)]})
+    if shuffle:
+        values = values[::-1]
+    return {"values": values}
+
+
+def test_ablation_covers_both_c0_variants_on_all_reporting_bins():
+    rows = structural.ablation_error_rows(_ablation_stub())
+    assert {r["arm"] for r in rows} == {"C0-log", "C0-seq"}
+    per = len(config.REP_FAMILIES) * len(config.TEST_ROLES) * (config.N_BINS + 2) * 2
+    for arm in ("C0-log", "C0-seq"):
+        assert len([r for r in rows if r["arm"] == arm]) == per
+    assert all(r["budget_differs"] for r in rows)
+
+
+def test_ablation_uses_welch_against_B_and_paired_against_C():
+    stub = _ablation_stub()
+    rows = structural.ablation_error_rows(stub)
+    b = np.array([0.20 - 0.005 * r for r in (1, 2, 3, 4, 5)])
+    c0 = np.array([0.30 + 0.01 * r for r in (1, 2, 3, 4, 5)])
+    c = np.array([0.15 + 0.01 * r for r in (1, 2, 3, 4, 5)])
+    pick = lambda second: next(r for r in rows if r["arm"] == "C0-log" and r["second"] == second
+                               and r["reporting_bin"] == 0)
+    vs_b, vs_c = pick("B"), pick("C0-log")
+    assert vs_b["interval"] == "welch" and vs_b["first"] == "C0-log"
+    assert vs_b["ci"] == pytest.approx(evaluate.welch_interval(c0, b, config.REP_CI)["ci"])
+    assert vs_c["interval"] == "paired" and vs_c["first"] == "C-log"          # REP_PAIRED order
+    assert vs_c["ci"] == pytest.approx(evaluate.paired_interval(c, c0, config.REP_CI)["ci"])
+    assert vs_c["df"] == 4
+    assert vs_c["se"] == pytest.approx(0.0)       # the shared-points effect cancels in the pairs
+
+
+def test_ablation_pairs_by_realization_whatever_the_row_order():
+    ordered = structural.ablation_error_rows(_ablation_stub())
+    shuffled = structural.ablation_error_rows(_ablation_stub(shuffle=True))
+    assert ordered == shuffled
+
+
+@pytest.mark.parametrize("arm", ["C0-log", "C0-seq"])
+def test_ablation_refuses_a_missing_c0_variant(arm):
+    with pytest.raises(structural.StructuralError, match=rf"\['{arm}'\] are missing"):
+        structural.ablation_error_rows(_ablation_stub(drop_arm=arm))
+    with pytest.raises(structural.StructuralError, match=rf"\['{arm}'\] are missing"):
+        structural.ablation_fraction_rows(_ablation_stub(drop_arm=arm))
+
+
+def test_ablation_refuses_an_undeclared_interval_type(monkeypatch):
+    monkeypatch.setattr(config, "REP_PAIRED", (("C-log", "C0-log"),))
+    with pytest.raises(structural.StructuralError, match="REP_PAIRED"):
+        structural.ablation_error_rows(_ablation_stub())
+
+
+def test_ablation_fractions_remove_the_budget():
+    """Same shape, half the budget: raw counts differ, fractions do not."""
+    rows = structural.ablation_fraction_rows(_ablation_stub())
+    assert {r["arm"] for r in rows} == {"C0-log", "C0-seq"}
+    assert all(r["interval"] == "welch" and r["second"] == "B" for r in rows)
+    assert all(r["diff"] == pytest.approx(0.0) for r in rows)
+    for arm in ("C0-log", "C0-seq"):
+        assert sum(r["first_mean"] for r in rows if r["arm"] == arm) == pytest.approx(1.0)
+
+
+def test_ablation_budgets_are_read_from_the_artifact():
+    budgets = structural.ablation_budgets(_ablation_stub())
+    assert budgets["C0-log"] * 2 == budgets["B"]
+
+
+def test_c0_stays_out_of_the_main_figure_and_the_concordance():
+    stub = _ablation_stub()
+    errors = structural.error_rows(stub)
+    densities = structural.density_diff_rows(stub)
+    concordance = structural.concordance(errors, densities)
+    for rows in (errors, densities, concordance):
+        assert {r["arm"] for r in rows} == set(structural.ARMS_VS_B)
+
+
+def test_built_artifact_carries_both_c0_variants_and_the_shared_rows(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "structural_metrics_path", lambda: tmp_path / "structural.json")
+    structural.run()
+    out = json.loads((tmp_path / "structural.json").read_text())
+    section = out["ablation"]
+    assert {r["arm"] for r in section["errors"]} == {"C0-log", "C0-seq"}
+    assert {r["arm"] for r in section["fractions"]} == {"C0-log", "C0-seq"}
+    assert {r["interval"] for r in section["errors"] if r["second"] == "B"} == {"welch"}
+    assert {r["interval"] for r in section["errors"] if r["second"] != "B"} == {"paired"}
+    assert section["shared_rows"]["C0-log"] == "C-log" and section["shared_rows"]["C0-seq"] == "C-seq"
+    assert "only as r0" in section["original_c0"]
+    assert {r["arm"] for r in out["concordance"]} == set(structural.ARMS_VS_B)
