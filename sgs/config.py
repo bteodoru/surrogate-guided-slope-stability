@@ -380,6 +380,10 @@ REP_EXTENSION = 300
 REP_SEQ_BATCHES = (100, 100, 100)
 REP_FAMILIES = ("rf", "gbm")
 REP_CI = 0.95
+# Bins with fewer test points than this are marked in the structural figure and
+# never dropped; no sentence in the text rests on a marked bin. Declared in
+# docs/predictions-and-outcomes.md before the analysis was implemented.
+STRUCTURAL_MIN_TEST_N = 10
 # Independent arms (no common factor pairs realization i of one arm with
 # realization i of the other): Welch interval.
 REP_WELCH = (("C-log", "B"), ("C-seq", "B"), ("C0-log", "B"), ("C0-seq", "B"), ("C-seq", "C-log"))
@@ -487,6 +491,10 @@ def replication_fit_path(family: str, realization: str) -> Path:
 
 def replication_metrics_path() -> Path:
     return ROOT / "outputs" / "metrics" / "replications.json"
+
+
+def structural_metrics_path() -> Path:
+    return ROOT / "outputs" / "metrics" / "structural.json"
 
 
 def tables_dir() -> Path:

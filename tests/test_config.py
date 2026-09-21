@@ -188,3 +188,8 @@ def test_replication_paths_follow_root(tmp_path, monkeypatch):
     assert config.replication_path("final", "lhs_r1") == tmp_path / "data" / "replications" / "final" / "lhs_r1.csv"
     assert config.replication_fit_path("gbm", "r2") == tmp_path / "artifacts" / "replications" / "gbm__r2.joblib"
     assert config.replication_metrics_path() == tmp_path / "outputs" / "metrics" / "replications.json"
+
+
+def test_structural_constants():
+    assert config.STRUCTURAL_MIN_TEST_N == 10
+    assert config.structural_metrics_path().name == "structural.json"
