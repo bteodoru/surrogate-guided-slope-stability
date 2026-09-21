@@ -143,3 +143,61 @@ every one of the five new realizations on both tests (0.119 against a replicated
 mean of 0.095 on test-natural, 0.123 against 0.096 on test-stratified). That is
 why it is reported apart: it is the draw that shaped the variants and the
 predictions.
+
+## Structural analysis — a pre-declared procedure, with no hypothesis attached
+
+The design was fixed on 2026-09-20 and this declaration was committed on
+2026-09-21, before the analysis was implemented and before any of its output
+existed: at the time of the commit neither `sgs/structural.py` nor
+`outputs/metrics/structural.json` existed. It takes no `outcome` and no `held?`
+column, because it is not a prediction: it fixes a procedure so that the
+weighting, the bin set and the thresholds cannot be chosen after seeing the
+result.
+
+- **Bins.** The 15 geometric bins of the selection range, `config.N_BINS`. The
+  two bins outside it have no defined intended density; they appear in the
+  supplementary rows and document out-of-selection-range spillover and tail
+  behaviour, never under the name *truncation*.
+- **Realizations.** r1–r5 confirmatory; r0 reported apart and never averaged
+  into a confirmatory mean.
+- **Thin bins.** Bins with fewer than `config.STRUCTURAL_MIN_TEST_N = 10` test
+  points are marked and never dropped; no statement in the text rests on one.
+- **No pooled weighted statistic.** The figure quotes no aggregate, so the
+  choice between equal and test-count weighting does not arise. The single
+  descriptive number is the count of bins in which the change in density and
+  the change in log-RMSE have opposite signs, `Δdensity × Δlog-RMSE < 0`.
+  Because no sentence may rest on a marked bin, that count is reported over the
+  **unmarked** bins; the count over all 15 is reported beside it as a
+  descriptive sensitivity, together with how many bins were thin. Bins where
+  either difference is exactly zero leave the denominator and are reported.
+- **Status.** No new hypothesis test or inferential claim is introduced. Welch
+  intervals are reused to visualize between-design uncertainty at bin level.
+  Inference remains with the pre-declared zone contrasts.
+- **What `achieved − intended` is.** The net distortion of the requested
+  bin-count distribution induced by screening error — not the screener's
+  prediction error. Two points swapping bins leave it untouched. The
+  supplementary displacement rows measure the individual predictions instead,
+  and then only on the points the screener selected, which are conditioned on
+  having been predicted inside the range and inside a deficit bin.
+- **Binning conventions.** Everything read from `replications.json` — the
+  figure's densities and errors, and both sides of the outside table — uses the
+  half-open reporting zones `[lo, hi)`, whose outer bin is FOS ≥ 6. The
+  allocation and displacement rows follow the generator's `(lo, hi]`, whose outer
+  bin is FOS > 6, because they are compared against the designs' own bins. The
+  two agree except on an exact bin edge.
+- **What none of it does.** It does not separate the allocation rule from the
+  screener's error. That needs a reference without screener error; the oracle
+  keeps that job.
+- **Blinding, and its limit.** The blinding is partial, and its scope is stated
+  exactly. What was **not** read before this commit: the bin-level errors of any
+  guided arm — the fifteen-bin breakdown that the figure shows. What **was**
+  read: the zone-level replication results of the guided arms, recorded earlier
+  in this document (for instance C-log − B in 0.5–1 across the four cells);
+  one bin-level row of `replications.json` for a non-guided arm — arm A, GBM,
+  test-natural, r0; and the design columns of `data/replications/designs/`,
+  including the per-bin selected counts of `guided_log_r1` while checking that
+  selected equals intended. Knowing that 0.5–1 gains and 1–2 loses already
+  implies, roughly, what the bins inside those zones will show. The blinding
+  therefore protects the bin-level detail and the choice of procedure — the
+  bins, thresholds, weighting and summary statistic above — not the direction
+  of the zone-level pattern. This is one reason the analysis is descriptive.

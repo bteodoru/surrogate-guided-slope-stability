@@ -56,6 +56,16 @@ a design is better balanced, or that balancing improved anything. Note the
 collision with _balanced sampling_ in finite-population survey sampling
 (Deville & Tillé); the paper defines the term once, on first use.
 
+**Structural analysis** (`sgs structural`, `outputs/metrics/structural.json`):
+descriptive, with a procedure pre-declared in `docs/predictions-and-outcomes.md`.
+It is never phrased causally — _consistent with density-driven relocation_,
+never _caused by_ — and it is never cited as evidence about the screener.
+`achieved − intended` is net distortion of the requested distribution, not
+prediction error. Everything read from `replications.json` bins as `[lo, hi)`;
+the allocation and displacement rows bin as the generator does, `(lo, hi]`.
+Separating the allocation rule from the screener's error needs the oracle, not
+this.
+
 Arms (A, B, C, C₀, C-log, C₀-log, C-seq, C₀-seq) and set roles (seed,
 lhs-extension, guided, test-natural, test-stratified, guided-log,
 guided-seq-1..3) are declared in `config.ARMS` and `config.ROLES`. Every C₀
