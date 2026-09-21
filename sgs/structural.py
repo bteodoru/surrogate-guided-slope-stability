@@ -50,6 +50,26 @@ def _split(train_counts):
     return int(counts[0]), counts[1:-1], int(counts[-1])
 
 
+def check_edges(rep: dict) -> None:
+    """Every row of replications.json must carry this module's 17 bins.
+
+    Its bins are indexed by position here; were the artifact built on other
+    edges, every row would still line up and every label would be wrong. The
+    open ends are stored as null.
+    """
+    edges = EDGES().tolist()
+    expected = list(zip([None, *edges], [*edges, None]))
+
+    def same(a, b):
+        return a is None and b is None or (a is not None and b is not None and np.isclose(a, b))
+
+    for row in rep["values"]:
+        got = [(b["lo"], b["hi"]) for b in row["bins"]]
+        if len(got) != len(expected) or not all(same(g[0], e[0]) and same(g[1], e[1])
+                                                for g, e in zip(got, expected)):
+            raise StructuralError(f"{row['arm']}/r{row['realization']}: bin edges differ from EDGES()")
+
+
 def _confirmatory(rep: dict) -> list[dict]:
     return [row for row in rep["values"] if 1 <= row["realization"] <= config.REP_REALIZATIONS]
 
@@ -87,6 +107,9 @@ def outside_density_rows(rep: dict) -> dict[tuple[str, int], tuple[int, int]]:
 
 
 PRIOR_COUNT_KEYS = ("seed_counts", "trained_counts")
+# The allocation and displacement rows follow the generator's (lo, hi]: the
+# outer bin is strictly above 6.
+ALLOCATION_OUTSIDE = ("< 0.5", "> 6")
 
 
 def _prior_counts(allocation: dict) -> np.ndarray:
@@ -133,6 +156,13 @@ def _achieved_counts(realization: int, label: str) -> np.ndarray:
     return design.bin_counts(frame["FOS"].to_numpy(dtype=float), EDGES())
 
 
+def _achieved_outside(realization: int, label: str) -> np.ndarray:
+    """Points of one set whose true FOS left the range: [< 0.5, > 6], the
+    generator's convention, so they and the in-range counts add up to the set."""
+    true = _true_bin(_solved(realization, label)["FOS"].to_numpy(dtype=float))
+    return np.array([int((true == config.N_BINS).sum()), int((true == config.N_BINS + 1).sum())])
+
+
 def allocation_rows(realization: int) -> dict[str, dict]:
     """Per arm: what the prior data held, what was asked for, what was delivered.
 
@@ -144,15 +174,20 @@ def allocation_rows(realization: int) -> dict[str, dict]:
         seed = np.zeros(config.N_BINS, dtype=int)
         intended = np.zeros(config.N_BINS, dtype=int)
         achieved = np.zeros(config.N_BINS, dtype=int)
+        outside = np.zeros(2, dtype=int)
         for i, (label, allocation) in enumerate(sets):
             if i == 0:
                 seed = _prior_counts(allocation)
             intended = intended + np.asarray(allocation["added"], dtype=int)
             achieved = achieved + _achieved_counts(realization, label)
+            outside = outside + _achieved_outside(realization, label)
         deviation = achieved - intended
+        # abs_deviation stays over the 15 in-range bins, as declared; the points
+        # that left the range, where nothing was intended, are reported beside it.
         out[arm] = {"seed": seed.tolist(), "intended": intended.tolist(),
                     "achieved": achieved.tolist(), "deviation": deviation.tolist(),
-                    "abs_deviation": int(np.abs(deviation).sum())}
+                    "abs_deviation": int(np.abs(deviation).sum()),
+                    "achieved_outside": dict(zip(ALLOCATION_OUTSIDE, outside.tolist()))}
     return out
 
 
@@ -169,7 +204,9 @@ def batch_allocation_rows(realization: int) -> list[dict]:
         rows.append({"batch": batch, "seed": _prior_counts(allocation).tolist(),
                      "intended": intended.tolist(), "achieved": achieved.tolist(),
                      "cumulative_intended": cum_intended.tolist(),
-                     "cumulative_achieved": cum_achieved.tolist()})
+                     "cumulative_achieved": cum_achieved.tolist(),
+                     "achieved_outside": dict(zip(ALLOCATION_OUTSIDE,
+                                                  _achieved_outside(realization, label).tolist()))})
     return rows
 
 
@@ -350,8 +387,16 @@ def outside_rows(rep: dict) -> list[dict]:
                     base_rows = _ordered(values, family, test, "B")
                     ea = np.array([r["bins"][index]["log_rmse"] for r in arm_rows], dtype=float)
                     eb = np.array([r["bins"][index]["log_rmse"] for r in base_rows], dtype=float)
+                    counts = {r["bins"][index]["n"] for r in (*arm_rows, *base_rows)}
+                    if len(counts) != 1:
+                        raise StructuralError(
+                            f"{test} {side}: test count differs between arms or realizations "
+                            f"({sorted(counts)}); it depends only on the test set")
+                    test_n = int(counts.pop())
                     rows.append({"kind": "error", "family": family, "test": test, "arm": arm,
-                                 "side": side, **evaluate.welch_interval(ea, eb, config.REP_CI)})
+                                 "side": side, "test_n": test_n,
+                                 "marked": test_n < config.STRUCTURAL_MIN_TEST_N,
+                                 **evaluate.welch_interval(ea, eb, config.REP_CI)})
     return rows
 
 
@@ -522,10 +567,31 @@ ORIGINAL_C0_NOTE = (
     "no allocation provenance, so it has no allocation row. Nothing is computed for it here.")
 
 
+ABLATION_CAPTION = (
+    "Supplementary ablation. C0-log and C0-seq train on the guided points alone, without the "
+    "seed. Training-set sizes: {budgets}. Red: C0 minus B, 95% Welch interval. Purple: C minus "
+    "the corresponding C0, 95% paired interval over the realizations, because within a "
+    "realization C0 trains on exactly the guided points that C adds to the seed. The two "
+    "differences are oriented oppositely; in both, a negative value means that the first-named "
+    "arm has the smaller log-RMSE. Every comparison joins arms trained on different budgets and "
+    "is not a like-for-like comparison. Means over the five confirmatory realizations, on the "
+    "half-open reporting zones; grey shading marks the two bins outside the selection range, and "
+    "hollow markers the bins with fewer than {min_n} test points. The intervals visualize "
+    "variability between designs and constitute no test; an interval containing 0 is "
+    "inconclusive, not a tie.")
+
+
+def _budget_text(budgets: dict) -> str:
+    return ", ".join(f"{arm} {n}" for arm, n in budgets.items())
+
+
 def ablation(rep: dict) -> dict:
+    budgets = ablation_budgets(rep)
     return {"procedure": ABLATION_PROCEDURE,
+            "caption": ABLATION_CAPTION.format(budgets=_budget_text(budgets),
+                                               min_n=config.STRUCTURAL_MIN_TEST_N),
             "labels": reporting_bin_labels(),
-            "budgets": ablation_budgets(rep),
+            "budgets": budgets,
             "errors": ablation_error_rows(rep),
             "fractions": ablation_fraction_rows(rep),
             "shared_rows": {**ABLATIONS, "note": SHARED_ROWS_NOTE},
@@ -533,12 +599,14 @@ def ablation(rep: dict) -> dict:
 
 
 FIGURE_CAPTION = (
-    "Per-bin training density and per-bin error, both as a difference against B, over the five "
-    "confirmatory realizations. Every interval, on the density panel and on the error panels "
-    "alike, visualizes variability between designs and constitutes no test; the fifteen intervals "
-    "are a diagnostic, not fifteen tests. The pattern is consistent with density-driven "
-    "relocation; it is not evidence that density caused it. The small numbers above the error "
-    "panels are the test points per bin. Hollow markers, on the error panels, are bins with "
+    "Per-bin training density (raw counts; B, C-log and C-seq all train on {budget} points) and "
+    "per-bin log-RMSE, each as the difference between an arm's mean over the five confirmatory "
+    "realizations and B's, with 95% Welch intervals. A negative error difference means a smaller "
+    "log-RMSE than B. Every interval, on the density panel and on the error panels alike, "
+    "visualizes variability between designs and constitutes no test; read together they are a "
+    "per-bin diagnostic, not a set of tests. The pattern is consistent with density-driven "
+    "relocation; it is not evidence that density caused it. The small numbers above the upper "
+    "error panels are the test points per bin. Hollow markers, on the error panels, are bins with "
     "fewer than {min_n} of them; they are shown but carry no statement in the text. Both the "
     "densities and the errors in this figure are read from the replication metrics and use the "
     "half-open reporting zones; the allocation and displacement tables use the generator's "
@@ -559,14 +627,36 @@ PROCEDURE = (
     "statistics cover only points whose true FOS stayed inside the selection range.")
 
 
+def provenance(realizations) -> dict:
+    """SHA-256 of every input: the replication metrics, the run metadata, and
+    the design and final file of every guided set read for allocation and
+    displacement. `report` refuses an artifact built from another
+    replications.json."""
+    sets = {}
+    for r in realizations:
+        for arm_sets in _sets_of(r).values():
+            for label, _ in arm_sets:
+                design_path = (config.design_path(label) if r == 0
+                               else config.replication_path("designs", label))
+                final_path = (config.final_path(label) if r == 0
+                              else config.replication_path("final", label))
+                sets[label] = {"design": data.sha256_file(design_path),
+                               "final": data.sha256_file(final_path)}
+    return {"replications_sha256": data.sha256_file(config.replication_metrics_path()),
+            "run_metadata_sha256": data.sha256_file(config.metadata_path()),
+            "sets_sha256": sets}
+
+
 def build() -> dict:
     rep = json.loads(config.replication_metrics_path().read_text())
+    check_edges(rep)
     errors = error_rows(rep)
     densities = density_diff_rows(rep)
     everything = (0, *range(1, config.REP_REALIZATIONS + 1))
     return {
         "procedure": PROCEDURE,
-        "figure_caption": FIGURE_CAPTION.format(min_n=config.STRUCTURAL_MIN_TEST_N),
+        "figure_caption": FIGURE_CAPTION.format(min_n=config.STRUCTURAL_MIN_TEST_N,
+                                                budget=ablation_budgets(rep)["B"]),
         "bins": {"edges": EDGES().tolist(), "labels": bin_labels()},
         "min_test_n": config.STRUCTURAL_MIN_TEST_N,
         "confirmatory": list(range(1, config.REP_REALIZATIONS + 1)),
@@ -578,6 +668,7 @@ def build() -> dict:
         "batches": {str(r): batch_allocation_rows(r) for r in everything},
         "displacement": {str(r): displacement_rows(r) for r in everything},
         "ablation": ablation(rep),
+        "provenance": provenance(everything),
     }
 
 

@@ -2,8 +2,9 @@ import json
 
 import numpy as np
 import pandas as pd
+import pytest
 
-from sgs import config, evaluate, report
+from sgs import config, data, evaluate, report
 from tests.helpers import EVAL_KWARGS, stub_fits, stub_test
 
 
@@ -170,14 +171,18 @@ def _struct_stub():
         "outside": [{"kind": "density", "arm": "C-log", "side": "below 0.5",
                      "diff": 20.0, "ci": [10.0, 30.0]}],
         "concordance": [],
-        "allocation": {r: {"C-log": {"seed": [2, 2], "intended": [4, 4], "achieved": [3, 5],
-                                     "deviation": [-1, 1], "abs_deviation": 2},
-                           "C-seq": {"seed": [1, 1], "intended": [3, 3], "achieved": [2, 4],
-                                    "deviation": [-1, 1], "abs_deviation": 2}}
-                       for r in ("0", "1", "2")},
-        "batches": {r: [{"batch": 1, "seed": [0, 0], "intended": [2, 2], "achieved": [1, 3],
-                         "cumulative_intended": [2, 2], "cumulative_achieved": [1, 3]}]
-                    for r in ("0", "1", "2")},
+        # r1 and r2 differ, so there is a spread; r0 is absurd, so a leak shows
+        "allocation": {r: {arm: {"seed": [2, 2], "intended": [4, 4],
+                                 "achieved": [3 + k, 5 - k], "deviation": [-1 + k, 1 - k],
+                                 "abs_deviation": 2 * abs(1 - k),
+                                 "achieved_outside": {"< 0.5": k, "> 6": 0}}
+                           for arm in ("C-log", "C-seq")}
+                       for r, k in (("0", 90), ("1", 0), ("2", 1))},
+        "batches": {r: [{"batch": j, "seed": [0, 0], "intended": [2, 2], "achieved": [1 + k, 3],
+                         "cumulative_intended": [2 * j, 2 * j], "cumulative_achieved": [j + j * k, 3 * j],
+                         "achieved_outside": {"< 0.5": k, "> 6": 0}}
+                        for j in (1, 2)]
+                    for r, k in (("0", 90), ("1", 0), ("2", 1))},
         "displacement": {r: {"C-log": {"n": 4, "stayed": 0.5, "mean_abs_shift": 0.5,
                                        "median_abs_shift": 0.0, "outside": 0.25,
                                        "matrix": [[2, 0, 1, 1], [1, 0, 1, 0]]},
@@ -257,14 +262,24 @@ def test_structural_allocation_frame_keeps_r0_apart_and_reports_a_spread():
     frame = report.structural_allocation_frame(_struct_stub(), "C-log")
     columns = [c.lower() for c in frame.columns]
     assert "selected" not in columns and "intended" in columns
-    assert any("sd" in c for c in columns)
-    assert set(frame["set"]) == {"r1-r5", "r0 (exploratory)"}
+    assert {"intended r0", "achieved r0", "deviation r0"} <= set(columns)
+    first = frame.iloc[0]
+    assert first["achieved"] == "3.5 ± 0.7"             # r1, r2 only: 3 and 4
+    assert first["achieved r0"] == "93"                 # r0 apart, never averaged in
+    assert "93" not in first["achieved"]
+    outside = frame[frame["bin"] == "< 0.5 (outside)"].iloc[0]
+    assert outside["intended"] == "0" and outside["achieved r0"] == "90"
+    assert frame.iloc[-1]["bin"].startswith("Σ|deviation|")
 
 
 def test_structural_batch_frame_averages_over_the_confirmatory_realizations():
     frame = report.structural_batch_frame(_struct_stub())
     assert set(frame["set"]) == {"r1-r5", "r0 (exploratory)"}
-    assert "cum. intended" in frame.columns
+    assert {"batch 1", "batch 2", "cum. to 2"} <= set(frame.columns)
+    confirmatory = frame[(frame["set"] == "r1-r5") & (frame["bin"] == "0.50-1.00")].iloc[0]
+    assert confirmatory["batch 1"] == "-0.5 ± 0.7"      # r1: -1, r2: 0; r0's +89 stays out
+    r0 = frame[(frame["set"] == "r0 (exploratory)") & (frame["bin"] == "0.50-1.00")].iloc[0]
+    assert r0["batch 1"] == "89"
 
 
 def test_structural_displacement_frame_keeps_r0_apart():
@@ -305,8 +320,29 @@ def test_structural_ablation_fraction_frame_reports_fractions_not_counts():
     assert set(frame["arm"]) == {"C0-log", "C0-seq"}
 
 
-def test_run_writes_structural_outputs_when_present(root):
+def test_structural_freshness_refuses_a_missing_or_changed_provenance(root):
+    path = config.replication_metrics_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("{}")
+    with pytest.raises(report.StaleStructuralError, match="no provenance"):
+        report.check_structural_fresh({})
+    with pytest.raises(report.StaleStructuralError, match="another"):
+        report.check_structural_fresh({"provenance": {"replications_sha256": "0" * 64}})
+    report.check_structural_fresh({"provenance": {"replications_sha256": data.sha256_file(path)}})
+
+
+def test_booktabs_escapes_the_caption():
+    text = report.booktabs(pd.DataFrame({"a": [1]}), caption="n_bin / N_total, 95% & more",
+                           label="tab:x")
+    assert r"\caption{n\_bin / N\_total, 95\% \& more}" in text
+
+
+def test_run_writes_structural_outputs_when_present(root, monkeypatch):
+    monkeypatch.setattr(report, "check_structural_fresh", lambda struct: None)
     struct = _struct_with_ablation()
+    struct["concordance"] = [{"family": "rf", "test": "test-natural", "arm": "C-log", "k": 5,
+                              "n": 7, "zero": 0, "thin": 8, "k_all": 9, "n_all": 15, "zero_all": 0}]
+    struct["ablation"]["caption"] = "ablation caption with n_bin"
     path = config.structural_metrics_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(struct))
@@ -314,6 +350,7 @@ def test_run_writes_structural_outputs_when_present(root):
     tables = {p.name for p in config.tables_dir().glob("*.tex")}
     figures = {p.name for p in config.figures_dir().glob("*.pdf")}
     assert {"structural__caption.tex", "structural__allocation_c-log.tex",
+            "structural__concordance.tex",
             "structural__allocation_c-seq.tex", "structural__batches.tex",
             "structural__displacement.tex", "structural__outside.tex",
             "structural__ablation_caption.tex", "structural__ablation_fractions.tex",
@@ -329,4 +366,8 @@ def test_run_writes_structural_outputs_when_present(root):
     original = (config.tables_dir() / "structural__original_c0.tex").read_text()
     assert original.strip() == struct["ablation"]["original_c0"]
     caption = (config.tables_dir() / "structural__ablation_caption.tex").read_text()
-    assert struct["ablation"]["procedure"] in caption and "300" in caption and "600" in caption
+    assert caption.strip() == r"ablation caption with n\_bin"          # the caption, escaped
+    assert struct["ablation"]["procedure"] not in caption
+    for name in ("allocation_c-log", "batches", "displacement"):
+        text = (config.tables_dir() / f"structural__{name}.tex").read_text()
+        assert text.rstrip().endswith(r"\end{table}"), name       # the note sits inside the float

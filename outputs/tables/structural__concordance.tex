@@ -1,0 +1,21 @@
+\begin{table}[htbp]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{Concordance: the number of in-range bins in which the difference in training density and the difference in log-RMSE against B have opposite signs, k of n. Primary over the bins with at least 10 test points; over all 15 as a descriptive sensitivity. Bins where either difference is exactly zero leave the denominator. A count, with no test attached.}
+\label{tab:structural:concordance}
+\begin{tabular}{lrrrrrrr}
+\toprule
+family & test & arm & k / n (unmarked) & zero (unmarked) & thin & k / n (all 15) & zero (all 15) \\
+\midrule
+rf & test-natural & C-log & 11 / 11 & 0 & 4 & 15 / 15 & 0 \\
+rf & test-natural & C-seq & 11 / 11 & 0 & 4 & 15 / 15 & 0 \\
+rf & test-stratified & C-log & 3 / 6 & 0 & 9 & 12 / 15 & 0 \\
+rf & test-stratified & C-seq & 4 / 6 & 0 & 9 & 13 / 15 & 0 \\
+gbm & test-natural & C-log & 10 / 11 & 0 & 4 & 13 / 15 & 0 \\
+gbm & test-natural & C-seq & 10 / 11 & 0 & 4 & 13 / 15 & 0 \\
+gbm & test-stratified & C-log & 4 / 6 & 0 & 9 & 8 / 15 & 0 \\
+gbm & test-stratified & C-seq & 3 / 6 & 0 & 9 & 9 / 15 & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}

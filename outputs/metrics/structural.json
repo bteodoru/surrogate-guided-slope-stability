@@ -1,6 +1,6 @@
 {
   "procedure": "Descriptive. No new hypothesis test or inferential claim is introduced; Welch intervals are reused solely to visualize between-design uncertainty at bin level. Confirmatory realizations r1..r5; r0 is reported apart and never averaged into a confirmatory mean. 15 geometric bins inside the selection range; the two bins outside have no defined intended density and appear in the supplementary rows, as spillover and tail behaviour, never as truncation. Bins with fewer than STRUCTURAL_MIN_TEST_N test points are marked, never dropped, and the concordance count is primarily over the unmarked bins. Concordance is the count of bins with (delta density) x (delta log-RMSE) < 0; bins with either difference exactly zero leave the denominator. achieved - intended is the net distortion of the requested bin-count distribution, not the screener's prediction error; the displacement rows describe the screener on the points it selected, conditioned on selection, and their shift statistics cover only points whose true FOS stayed inside the selection range.",
-  "figure_caption": "Per-bin training density and per-bin error, both as a difference against B, over the five confirmatory realizations. Every interval, on the density panel and on the error panels alike, visualizes variability between designs and constitutes no test; the fifteen intervals are a diagnostic, not fifteen tests. The pattern is consistent with density-driven relocation; it is not evidence that density caused it. The small numbers above the error panels are the test points per bin. Hollow markers, on the error panels, are bins with fewer than 10 of them; they are shown but carry no statement in the text. Both the densities and the errors in this figure are read from the replication metrics and use the half-open reporting zones; the allocation and displacement tables use the generator's binning instead, which differs only on an exact bin edge.",
+  "figure_caption": "Per-bin training density (raw counts; B, C-log and C-seq all train on 600 points) and per-bin log-RMSE, each as the difference between an arm's mean over the five confirmatory realizations and B's, with 95% Welch intervals. A negative error difference means a smaller log-RMSE than B. Every interval, on the density panel and on the error panels alike, visualizes variability between designs and constitutes no test; read together they are a per-bin diagnostic, not a set of tests. The pattern is consistent with density-driven relocation; it is not evidence that density caused it. The small numbers above the upper error panels are the test points per bin. Hollow markers, on the error panels, are bins with fewer than 10 of them; they are shown but carry no statement in the text. Both the densities and the errors in this figure are read from the replication metrics and use the half-open reporting zones; the allocation and displacement tables use the generator's binning instead, which differs only on an exact bin edge.",
   "bins": {
     "edges": [
       0.5,
@@ -2501,6 +2501,8 @@
       "test": "test-natural",
       "arm": "C-log",
       "side": "below 0.5",
+      "test_n": 10,
+      "marked": false,
       "diff": -0.05640804403606864,
       "se": 0.035525296956178495,
       "df": 5.531924087496226,
@@ -2517,6 +2519,8 @@
       "test": "test-stratified",
       "arm": "C-log",
       "side": "below 0.5",
+      "test_n": 3,
+      "marked": true,
       "diff": -0.08898856531988919,
       "se": 0.046333885576513745,
       "df": 7.977819521134991,
@@ -2533,6 +2537,8 @@
       "test": "test-natural",
       "arm": "C-log",
       "side": "below 0.5",
+      "test_n": 10,
+      "marked": false,
       "diff": -0.02317494897470372,
       "se": 0.017947697519318344,
       "df": 7.845063100077241,
@@ -2549,6 +2555,8 @@
       "test": "test-stratified",
       "arm": "C-log",
       "side": "below 0.5",
+      "test_n": 3,
+      "marked": true,
       "diff": -0.02562445211006397,
       "se": 0.02164204010922488,
       "df": 5.257140003168735,
@@ -2579,6 +2587,8 @@
       "test": "test-natural",
       "arm": "C-log",
       "side": "at or above 6",
+      "test_n": 24,
+      "marked": false,
       "diff": -0.03368176907076592,
       "se": 0.014009526359453314,
       "df": 7.513672820795275,
@@ -2595,6 +2605,8 @@
       "test": "test-stratified",
       "arm": "C-log",
       "side": "at or above 6",
+      "test_n": 23,
+      "marked": false,
       "diff": -0.06908629629115381,
       "se": 0.017974453829982435,
       "df": 6.400427437553636,
@@ -2611,6 +2623,8 @@
       "test": "test-natural",
       "arm": "C-log",
       "side": "at or above 6",
+      "test_n": 24,
+      "marked": false,
       "diff": 0.035031950662067254,
       "se": 0.00537815866156435,
       "df": 7.737369067821232,
@@ -2627,6 +2641,8 @@
       "test": "test-stratified",
       "arm": "C-log",
       "side": "at or above 6",
+      "test_n": 23,
+      "marked": false,
       "diff": -0.005877159469984593,
       "se": 0.00572928670596985,
       "df": 7.7357098789763965,
@@ -2657,6 +2673,8 @@
       "test": "test-natural",
       "arm": "C-seq",
       "side": "below 0.5",
+      "test_n": 10,
+      "marked": false,
       "diff": -0.01697821432914154,
       "se": 0.03405000740592825,
       "df": 4.804164053470741,
@@ -2673,6 +2691,8 @@
       "test": "test-stratified",
       "arm": "C-seq",
       "side": "below 0.5",
+      "test_n": 3,
+      "marked": true,
       "diff": -0.02866166069780618,
       "se": 0.06743053243242869,
       "df": 6.127812929949914,
@@ -2689,6 +2709,8 @@
       "test": "test-natural",
       "arm": "C-seq",
       "side": "below 0.5",
+      "test_n": 10,
+      "marked": false,
       "diff": -0.010813009390367306,
       "se": 0.015049099076118648,
       "df": 5.767290960091795,
@@ -2705,6 +2727,8 @@
       "test": "test-stratified",
       "arm": "C-seq",
       "side": "below 0.5",
+      "test_n": 3,
+      "marked": true,
       "diff": -0.02442601129025812,
       "se": 0.021974790263943774,
       "df": 5.518617915370412,
@@ -2735,6 +2759,8 @@
       "test": "test-natural",
       "arm": "C-seq",
       "side": "at or above 6",
+      "test_n": 24,
+      "marked": false,
       "diff": -0.022873662209803136,
       "se": 0.012815032788133352,
       "df": 6.404303870077185,
@@ -2751,6 +2777,8 @@
       "test": "test-stratified",
       "arm": "C-seq",
       "side": "at or above 6",
+      "test_n": 23,
+      "marked": false,
       "diff": -0.048737671910426966,
       "se": 0.01932435668897039,
       "df": 7.348788640052038,
@@ -2767,6 +2795,8 @@
       "test": "test-natural",
       "arm": "C-seq",
       "side": "at or above 6",
+      "test_n": 24,
+      "marked": false,
       "diff": 0.03489748546596268,
       "se": 0.005638585601114669,
       "df": 7.9523944398796775,
@@ -2783,6 +2813,8 @@
       "test": "test-stratified",
       "arm": "C-seq",
       "side": "at or above 6",
+      "test_n": 23,
+      "marked": false,
       "diff": 0.005559469635075719,
       "se": 0.006853283753469106,
       "df": 7.77028779756632,
@@ -2963,7 +2995,11 @@
           0,
           -15
         ],
-        "abs_deviation": 92
+        "abs_deviation": 92,
+        "achieved_outside": {
+          "< 0.5": 45,
+          "> 6": 19
+        }
       },
       "C-seq": {
         "seed": [
@@ -3034,7 +3070,11 @@
           -4,
           -15
         ],
-        "abs_deviation": 90
+        "abs_deviation": 90,
+        "achieved_outside": {
+          "< 0.5": 32,
+          "> 6": 24
+        }
       }
     },
     "1": {
@@ -3107,7 +3147,11 @@
           -5,
           -17
         ],
-        "abs_deviation": 94
+        "abs_deviation": 94,
+        "achieved_outside": {
+          "< 0.5": 49,
+          "> 6": 25
+        }
       },
       "C-seq": {
         "seed": [
@@ -3178,7 +3222,11 @@
           7,
           -27
         ],
-        "abs_deviation": 103
+        "abs_deviation": 103,
+        "achieved_outside": {
+          "< 0.5": 34,
+          "> 6": 25
+        }
       }
     },
     "2": {
@@ -3251,7 +3299,11 @@
           -2,
           -15
         ],
-        "abs_deviation": 76
+        "abs_deviation": 76,
+        "achieved_outside": {
+          "< 0.5": 36,
+          "> 6": 22
+        }
       },
       "C-seq": {
         "seed": [
@@ -3322,7 +3374,11 @@
           -2,
           -20
         ],
-        "abs_deviation": 86
+        "abs_deviation": 86,
+        "achieved_outside": {
+          "< 0.5": 35,
+          "> 6": 25
+        }
       }
     },
     "3": {
@@ -3395,7 +3451,11 @@
           -10,
           -13
         ],
-        "abs_deviation": 100
+        "abs_deviation": 100,
+        "achieved_outside": {
+          "< 0.5": 48,
+          "> 6": 22
+        }
       },
       "C-seq": {
         "seed": [
@@ -3466,7 +3526,11 @@
           -4,
           -22
         ],
-        "abs_deviation": 89
+        "abs_deviation": 89,
+        "achieved_outside": {
+          "< 0.5": 37,
+          "> 6": 24
+        }
       }
     },
     "4": {
@@ -3539,7 +3603,11 @@
           0,
           -18
         ],
-        "abs_deviation": 88
+        "abs_deviation": 88,
+        "achieved_outside": {
+          "< 0.5": 45,
+          "> 6": 23
+        }
       },
       "C-seq": {
         "seed": [
@@ -3610,7 +3678,11 @@
           -2,
           -19
         ],
-        "abs_deviation": 103
+        "abs_deviation": 103,
+        "achieved_outside": {
+          "< 0.5": 29,
+          "> 6": 24
+        }
       }
     },
     "5": {
@@ -3683,7 +3755,11 @@
           -2,
           -13
         ],
-        "abs_deviation": 93
+        "abs_deviation": 93,
+        "achieved_outside": {
+          "< 0.5": 40,
+          "> 6": 23
+        }
       },
       "C-seq": {
         "seed": [
@@ -3754,7 +3830,11 @@
           2,
           -13
         ],
-        "abs_deviation": 99
+        "abs_deviation": 99,
+        "achieved_outside": {
+          "< 0.5": 37,
+          "> 6": 16
+        }
       }
     }
   },
@@ -3846,7 +3926,11 @@
           0,
           1,
           3
-        ]
+        ],
+        "achieved_outside": {
+          "< 0.5": 22,
+          "> 6": 14
+        }
       },
       {
         "batch": 2,
@@ -3934,7 +4018,11 @@
           5,
           5,
           19
-        ]
+        ],
+        "achieved_outside": {
+          "< 0.5": 6,
+          "> 6": 7
+        }
       },
       {
         "batch": 3,
@@ -4022,7 +4110,11 @@
           9,
           11,
           29
-        ]
+        ],
+        "achieved_outside": {
+          "< 0.5": 4,
+          "> 6": 3
+        }
       }
     ],
     "1": [
@@ -4112,7 +4204,11 @@
           0,
           2,
           6
-        ]
+        ],
+        "achieved_outside": {
+          "< 0.5": 22,
+          "> 6": 11
+        }
       },
       {
         "batch": 2,
@@ -4200,7 +4296,11 @@
           6,
           9,
           12
-        ]
+        ],
+        "achieved_outside": {
+          "< 0.5": 9,
+          "> 6": 9
+        }
       },
       {
         "batch": 3,
@@ -4288,7 +4388,11 @@
           12,
           17,
           21
-        ]
+        ],
+        "achieved_outside": {
+          "< 0.5": 3,
+          "> 6": 5
+        }
       }
     ],
     "2": [
@@ -4378,7 +4482,11 @@
           1,
           1,
           3
-        ]
+        ],
+        "achieved_outside": {
+          "< 0.5": 22,
+          "> 6": 13
+        }
       },
       {
         "batch": 2,
@@ -4466,7 +4574,11 @@
           5,
           8,
           15
-        ]
+        ],
+        "achieved_outside": {
+          "< 0.5": 8,
+          "> 6": 8
+        }
       },
       {
         "batch": 3,
@@ -4554,7 +4666,11 @@
           13,
           10,
           28
-        ]
+        ],
+        "achieved_outside": {
+          "< 0.5": 5,
+          "> 6": 4
+        }
       }
     ],
     "3": [
@@ -4644,7 +4760,11 @@
           2,
           0,
           5
-        ]
+        ],
+        "achieved_outside": {
+          "< 0.5": 27,
+          "> 6": 12
+        }
       },
       {
         "batch": 2,
@@ -4732,7 +4852,11 @@
           10,
           6,
           14
-        ]
+        ],
+        "achieved_outside": {
+          "< 0.5": 6,
+          "> 6": 7
+        }
       },
       {
         "batch": 3,
@@ -4820,7 +4944,11 @@
           15,
           11,
           25
-        ]
+        ],
+        "achieved_outside": {
+          "< 0.5": 4,
+          "> 6": 5
+        }
       }
     ],
     "4": [
@@ -4910,7 +5038,11 @@
           0,
           1,
           6
-        ]
+        ],
+        "achieved_outside": {
+          "< 0.5": 20,
+          "> 6": 12
+        }
       },
       {
         "batch": 2,
@@ -4998,7 +5130,11 @@
           7,
           7,
           16
-        ]
+        ],
+        "achieved_outside": {
+          "< 0.5": 7,
+          "> 6": 6
+        }
       },
       {
         "batch": 3,
@@ -5086,7 +5222,11 @@
           13,
           12,
           25
-        ]
+        ],
+        "achieved_outside": {
+          "< 0.5": 2,
+          "> 6": 6
+        }
       }
     ],
     "5": [
@@ -5176,7 +5316,11 @@
           0,
           1,
           3
-        ]
+        ],
+        "achieved_outside": {
+          "< 0.5": 25,
+          "> 6": 13
+        }
       },
       {
         "batch": 2,
@@ -5264,7 +5408,11 @@
           4,
           8,
           22
-        ]
+        ],
+        "achieved_outside": {
+          "< 0.5": 8,
+          "> 6": 2
+        }
       },
       {
         "batch": 3,
@@ -5352,7 +5500,11 @@
           9,
           14,
           28
-        ]
+        ],
+        "achieved_outside": {
+          "< 0.5": 4,
+          "> 6": 1
+        }
       }
     ]
   },
@@ -8900,6 +9052,7 @@
   },
   "ablation": {
     "procedure": "Amendment 1, 2026-09-21: an extension decided after the review of Tasks 0-4, not part of the original declaration, committed before any bin-level C0 result was read. Supplementary; it enters neither the main figure nor the concordance count. For C0-log and C0-seq, over r1..r5 and the 17 reporting bins of the replication metrics ([lo, hi)): log-RMSE against B by a Welch interval, and against the corresponding C by a paired interval (C - C0), because within a realization C0 trains on exactly the guided points C adds to the seed. Every row joins arms trained on different budgets and is labelled so; it is not a like-for-like comparison. The training distribution is compared as fractions n_bin / N_total, never raw counts. Thin bins are marked, never dropped. The intervals visualize between-design variability and constitute no test; an interval containing 0 is inconclusive, not a tie. r0 does not enter.",
+    "caption": "Supplementary ablation. C0-log and C0-seq train on the guided points alone, without the seed. Training-set sizes: B 600, C-log 600, C-seq 600, C0-log 300, C0-seq 300. Red: C0 minus B, 95% Welch interval. Purple: C minus the corresponding C0, 95% paired interval over the realizations, because within a realization C0 trains on exactly the guided points that C adds to the seed. The two differences are oriented oppositely; in both, a negative value means that the first-named arm has the smaller log-RMSE. Every comparison joins arms trained on different budgets and is not a like-for-like comparison. Means over the five confirmatory realizations, on the half-open reporting zones; grey shading marks the two bins outside the selection range, and hollow markers the bins with fewer than 10 test points. The intervals visualize variability between designs and constitute no test; an interval containing 0 is inconclusive, not a tie.",
     "labels": [
       "below 0.5",
       "0.50-0.59",
@@ -15600,5 +15753,107 @@
       "note": "C0-log and C0-seq train on the same guided points as C-log and C-seq in every realization, so their allocation, batch and displacement rows are those of C, shared rather than duplicated."
     },
     "original_c0": "The original C0 (arm C0, role guided) exists only as r0 in the main pipeline. It was never replicated, so it has no replication interval, and it predates the log-deficit rule and stores no allocation provenance, so it has no allocation row. Nothing is computed for it here."
+  },
+  "provenance": {
+    "replications_sha256": "af8940a475711ba7082a78357b32f0238bd56d38ab2bd9fa2f16013f9b9a6ffb",
+    "run_metadata_sha256": "e5918682c9021365d894d414431535c6dd835acfb0bc50395b71ed8686d85062",
+    "sets_sha256": {
+      "guided-log": {
+        "design": "c2b1b4f30d1b75f2fe77c0e3c59c2886e5b23fbb52f7dc2e7b4eb6dd9668843b",
+        "final": "7949a6ffd82e93ff6367c3606fbe6fb2d0dd44e0c05b81066c16be47ae463660"
+      },
+      "guided-seq-1": {
+        "design": "90234f6bf92b7569e8f9f1012cd2996de324960a85d9b5fa1d0231bbbee3ee7c",
+        "final": "4494b3d74fe63b4bb2569d3f2e7c75c4fc01cfe029fb26a55e675ac91d7409b7"
+      },
+      "guided-seq-2": {
+        "design": "b405dfca95f99275ce4d9f90b57bc9ddf14574b9b32261e940c0509edc5c32ba",
+        "final": "8db751ae2ce7a0ce1cdf66d8940b7d35d3b7d28417ff26a088a2bc5e0cd1ec4d"
+      },
+      "guided-seq-3": {
+        "design": "9215c0b30639c3dde8f8911d8158c37dda1ea99eece6c3ec00b09fb67f158127",
+        "final": "0d7efb8863265400b193182fc2e7734f0ae1c3c399b8e5b231c6aa709495cc64"
+      },
+      "guided_log_r1": {
+        "design": "601ff7403f2b3328d0acba6fcc61bd7bf7d19ee325ed64d02007cd325242f6be",
+        "final": "094ef01f79f3f2e5542d0b8cd68b722f936534ff31c99605d02f611133f98aa7"
+      },
+      "guided_seq_r1_b1": {
+        "design": "36201f02a4b4dba4e7f82c5c6039124e6549046b714be6d624d8b7352e2ffd9d",
+        "final": "587d95af3379a8736d1795ab4d40da9ad97f70a8fa24308e238a8dd1fddfee54"
+      },
+      "guided_seq_r1_b2": {
+        "design": "c4dbe697d00e4251c2cefa37fb1e9872ff91845686ed951e22b3468d6271da86",
+        "final": "67bfed3e9aaa8199bafe3ce98a3c91e11425ca08b1c514cb934f4efd34bec77f"
+      },
+      "guided_seq_r1_b3": {
+        "design": "2429293f363b3566028422a84c0d0dfe2f42b29b16346342d0fb456f18d8533e",
+        "final": "de0a4b4c1016fc4131015da805a6c142edf731f12185fd34e2c6adc91bbef22d"
+      },
+      "guided_log_r2": {
+        "design": "e5a78eca8b64f914f65061b33d970a0ad351ce5307710cebbaba0e308084088b",
+        "final": "2426056ae782258ba90ee959e3007944ea59afbe4f849d4aea1e9a5115b5c5ef"
+      },
+      "guided_seq_r2_b1": {
+        "design": "dbf54b7a769d0fee1ccf8a34c33ac41315a84d3cc9fa621e8800fe55f256a121",
+        "final": "267a7dd890270bd20e2f11cdc4630cd25ff79e5188189caaa88d604c46ff66ab"
+      },
+      "guided_seq_r2_b2": {
+        "design": "8625dfdb889c56ba1feb98852145c0ef7302354ac98b7c8056c1b1a77e2f05c6",
+        "final": "6f94f7be729dd97cd7d13550bdaba59e99cba8de8b5dc54c13acdd5ad14ede6f"
+      },
+      "guided_seq_r2_b3": {
+        "design": "42b6e2772465ebdfe0d7b3b826990851b81d0d11186b4552eb39a1b9bf2d7b3a",
+        "final": "612ff9a4cb3b9968d6165f7e49c2a02b89155a789b8cc9ad85760594455b611a"
+      },
+      "guided_log_r3": {
+        "design": "74ce63d9950cfd6c195e3d08789a05cf1d21808424f9cc6ce2cc96a3bf77f2b0",
+        "final": "8bd232614186aed47ce9268192f15d8495805ddd275812c724631cafc8c1f04d"
+      },
+      "guided_seq_r3_b1": {
+        "design": "9f80e49e3b5071f8ff918b9cdcf6c670a97f9b99c21e54e698c3c8b2ff31534b",
+        "final": "06c5f024bde9328a4cd7a7fa7299e2250ffb66359d2ba6b9e51be6c51da5c30d"
+      },
+      "guided_seq_r3_b2": {
+        "design": "109ba176ce5bf1f2f8e5de105eca8f756c8b93f3a42819c9fed911f48b0ae547",
+        "final": "14cc219f340a0a2935355cb926aee30d3636799dd8f33a2e341dca12e3cd5dae"
+      },
+      "guided_seq_r3_b3": {
+        "design": "04d5a634ae1fdef3086cccfe137ed9ce0016c20fcace57b2973b0bf05bb50deb",
+        "final": "4fe3ed464b2b08d98c36ad858f0d1a144e3822b4fed1220f2a3b33e4009027e7"
+      },
+      "guided_log_r4": {
+        "design": "bfb8b7697ac0d82ba60a01e96435ae92567d82bf588dc368771dc50f6bc3c484",
+        "final": "6b2ae391144ce1dff7da8d148c857db6a432ec6a78b391f59ff3726b3967d4a8"
+      },
+      "guided_seq_r4_b1": {
+        "design": "3c8a3011432d686ff2939b3bd3d5adf6f9371487fb589965a05c899862f49889",
+        "final": "bbea6306e2557bd58bedd0d0583e70f14fee036ea12e70118851cf4a00f36979"
+      },
+      "guided_seq_r4_b2": {
+        "design": "bb37efc66148ebbd15ce31b3f0754c02f82c7d3f14692dea98a8b002c90c8404",
+        "final": "b64e27760d222e7b0c549811c49beca704a55980d5e74d47174a143655c63c04"
+      },
+      "guided_seq_r4_b3": {
+        "design": "184a34c894ccc4fa6754917deba00089cc5e1f882a80a2d7818a6f70970d1c8a",
+        "final": "4fa0e9852048753c2ff4b912de28975f07adea467e77f9f8613f5d364b3e7d0c"
+      },
+      "guided_log_r5": {
+        "design": "af71c80513613658352828b524c092f7b1d9860651a60d7a8ceb142b9e5881af",
+        "final": "7047c1c4f4695543dea052a8dd3706a85b29ca6436e0bede4696cd492e42035d"
+      },
+      "guided_seq_r5_b1": {
+        "design": "496c7fa32533bc4e1c4cacede7df7140571adaf154a9865dba0f24dfe5a079bb",
+        "final": "1fb8ae39c6274b3898520dce81bcca77605e8ad86ce25e1a85130dc95cb4115d"
+      },
+      "guided_seq_r5_b2": {
+        "design": "caceaa0518386d47e37d29cc14255a209391b7104845c67fb6d6fc091eb04e27",
+        "final": "55b48b991f195e045c35763496db78ecdacd306c5a2a29ae0b15b9521ce9589d"
+      },
+      "guided_seq_r5_b3": {
+        "design": "b17f60ae7eaf79f7d8fc730ad4d4e8754114d1beb11e975314cad7b3503d3a59",
+        "final": "a8b23fb16581af363fe810f7dc921d58066ffa319395503e3419e87fe4c99c3b"
+      }
+    }
   }
 }

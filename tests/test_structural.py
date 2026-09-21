@@ -78,8 +78,11 @@ def test_allocation_rows_use_the_stored_provenance(monkeypatch):
                         lambda r: {"C-log": [("k", {"seed_counts": seed_counts, "added": added})]})
     monkeypatch.setattr(structural, "_achieved_counts",
                         lambda realization, label: np.array(achieved))
+    monkeypatch.setattr(structural, "_achieved_outside",
+                        lambda realization, label: np.array([3, 1]))
 
     rows = structural.allocation_rows(1)["C-log"]
+    assert rows["achieved_outside"] == {"< 0.5": 3, "> 6": 1}
     assert rows["seed"] == seed_counts and rows["intended"] == added
     assert rows["achieved"] == achieved
     assert rows["deviation"][0] == -1 and rows["deviation"][1] == 1
@@ -93,6 +96,8 @@ def test_allocation_deviation_is_zero_when_the_screener_was_exact(monkeypatch):
                                                     "added": added})]})
     monkeypatch.setattr(structural, "_achieved_counts",
                         lambda realization, label: np.array(added))
+    monkeypatch.setattr(structural, "_achieved_outside",
+                        lambda realization, label: np.array([0, 0]))
     assert structural.allocation_rows(1)["C-log"]["abs_deviation"] == 0
 
 
@@ -369,3 +374,92 @@ def test_built_artifact_carries_both_c0_variants_and_the_shared_rows(tmp_path, m
     assert section["shared_rows"]["C0-log"] == "C-log" and section["shared_rows"]["C0-seq"] == "C-seq"
     assert "only as r0" in section["original_c0"]
     assert {r["arm"] for r in out["concordance"]} == set(structural.ARMS_VS_B)
+
+
+# --- review fixes: r0 contamination, outside rows, edges, provenance ----------------------------
+
+def _with_r0(rep, value=9.9, count=999):
+    """Append r0 rows with absurd values for every arm and cell already present."""
+    extra = []
+    for row in rep["values"]:
+        if row["realization"] != 1:
+            continue
+        clone = json.loads(json.dumps(row))
+        clone["realization"] = 0
+        clone["train_counts"] = [count] * len(clone["train_counts"])
+        for b in clone["bins"]:
+            b["log_rmse"] = value
+        extra.append(clone)
+    return {"values": rep["values"] + extra}
+
+
+def test_r0_rows_change_no_confirmatory_output():
+    clean = _ablation_stub()
+    dirty = _with_r0(_ablation_stub())
+    for fn in (structural.error_rows, structural.density_diff_rows, structural.outside_rows,
+               structural.ablation_error_rows, structural.ablation_fraction_rows,
+               structural.ablation_budgets):
+        assert fn(dirty) == fn(clean), fn.__name__
+
+
+def test_allocation_rows_report_the_points_that_left_the_range(monkeypatch):
+    """Achieved inside plus achieved outside is the whole set."""
+    added = [20] * config.N_BINS
+    achieved = [16] * config.N_BINS
+    monkeypatch.setattr(structural, "_sets_of",
+                        lambda r: {"C-log": [("k", {"trained_counts": [0] * config.N_BINS,
+                                                    "added": added})]})
+    monkeypatch.setattr(structural, "_achieved_counts", lambda realization, label: np.array(achieved))
+    monkeypatch.setattr(structural, "_achieved_outside", lambda realization, label: np.array([45, 15]))
+    row = structural.allocation_rows(1)["C-log"]
+    assert sum(row["achieved"]) + sum(row["achieved_outside"].values()) == sum(row["intended"])
+
+
+def test_achieved_outside_uses_the_generator_convention(monkeypatch):
+    lo, hi = config.SELECTION_RANGE
+    frame = pd.DataFrame({"FOS": [lo - 1e-9, lo, hi, hi + 1e-9, 7.0]})
+    monkeypatch.setattr(structural, "_solved", lambda realization, label: frame)
+    assert structural._achieved_outside(1, "k").tolist() == [1, 2]      # 6 exactly is inside
+
+
+def test_outside_error_rows_carry_test_n_and_mark_thin_bins():
+    rep = _ablation_stub()
+    for row in rep["values"]:
+        row["bins"][0]["n"] = 3                         # below 0.5: thin
+    rows = [r for r in structural.outside_rows(rep) if r["kind"] == "error"]
+    below = [r for r in rows if r["side"] == "below 0.5"]
+    above = [r for r in rows if r["side"] == "at or above 6"]
+    assert all(r["test_n"] == 3 and r["marked"] for r in below)
+    assert all(r["test_n"] == 20 and not r["marked"] for r in above)
+
+
+def _with_edges(rep, edges):
+    bounds = list(zip([None, *edges], [*edges, None]))
+    for row in rep["values"]:
+        for b, (lo, hi) in zip(row["bins"], bounds):
+            b["lo"], b["hi"] = lo, hi
+    return rep
+
+
+def test_check_edges_accepts_the_module_bins_and_refuses_others():
+    edges = structural.EDGES().tolist()
+    structural.check_edges(_with_edges(_ablation_stub(), edges))
+    shifted = [edges[0], edges[1] * 1.01, *edges[2:]]
+    with pytest.raises(structural.StructuralError, match="bin edges differ"):
+        structural.check_edges(_with_edges(_ablation_stub(), shifted))
+
+
+def test_build_records_the_provenance_of_its_inputs():
+    out = structural.build()
+    assert out["provenance"]["replications_sha256"] == data.sha256_file(config.replication_metrics_path())
+    assert out["provenance"]["run_metadata_sha256"] == data.sha256_file(config.metadata_path())
+    assert "guided-log" in out["provenance"]["sets_sha256"]
+    assert len(out["provenance"]["sets_sha256"]) == 4 * (config.REP_REALIZATIONS + 1)
+
+
+def test_captions_state_the_budgets_and_the_interval_level():
+    out = structural.build()
+    assert "95% Welch" in out["figure_caption"] and "raw counts" in out["figure_caption"]
+    caption = out["ablation"]["caption"]
+    assert "C0-log 300" in caption and "B 600" in caption
+    assert "Amendment" not in caption and "Task" not in caption      # paper text, not process
