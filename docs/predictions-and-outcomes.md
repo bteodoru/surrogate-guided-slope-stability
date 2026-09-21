@@ -201,3 +201,51 @@ result.
   therefore protects the bin-level detail and the choice of procedure — the
   bins, thresholds, weighting and summary statistic above — not the direction
   of the zone-level pattern. This is one reason the analysis is descriptive.
+
+### Amendment 1 (2026-09-21): the C₀ ablations — an extension decided after the review of Tasks 0–4
+
+**This is not part of the original declaration above.** The independent review
+of the implemented Tasks 0–4 found that the procedure, the design and the
+module covered only C-log and C-seq against B, leaving out C₀-log and C₀-seq
+contrary to the repository's rule that every C₀ variant appears in every
+analysis. The omission was in the declaration itself, not only in the code.
+This amendment was committed before any bin-level error or bin-level training
+count of C₀-log or C₀-seq was read or computed. What was already known is the
+zone- and decision-range-level C₀ replication result recorded earlier in this
+document, and, from the main pipeline, that the original C₀ under-predicts
+every FOS ≥ 6 test point.
+
+- **Unchanged.** The main figure and the concordance count stay C-log and
+  C-seq against B, the arms with the same budget (600). No C₀ row enters
+  either.
+- **Supplementary ablation rows, error.** For C₀-log and C₀-seq, for each family ×
+  test cell and each of the 17 reporting bins (the 15 in-range bins and the
+  two outside ones, all `[lo, hi)` as read from `replications.json`), the
+  difference in mean log-RMSE over r1–r5:
+  - **against B, by a Welch interval** (`config.REP_WELCH`). Every such row is
+    labelled as a comparison with **different budgets**: C₀ trains on the
+    300 guided points alone, B on 600. The difference mixes the budget with
+    the training distribution and is not a like-for-like comparison.
+  - **against the corresponding C, by a paired interval** (`config.REP_PAIRED`:
+    C-log − C₀-log, C-seq − C₀-seq, in that order). Within a realization, C₀
+    trains on exactly the guided points that C adds to the seed, so the
+    realization index is a genuine pairing factor.
+  Thin bins are marked by the same `STRUCTURAL_MIN_TEST_N` rule and never
+  dropped. r0 does not enter these rows. The intervals visualize
+  between-design variability; they are no test, and an interval containing 0
+  is inconclusive, never a tie.
+- **Supplementary ablation rows, training distribution.** Where the C₀ points
+  are set against B, the quantity is the fraction `n_bin / N_total` over the
+  17 bins, never a difference of raw counts, which would carry the budget
+  difference. It is shown per bin as C₀ − B with a Welch interval, over
+  r1–r5. These fractions do not enter the concordance count or any other
+  summary.
+- **Allocation and displacement.** C₀-log and C₀-seq use the same guided
+  points as C-log and C-seq in each realization. Their allocation, batch and
+  displacement rows are those of C, shared rather than duplicated, and the
+  artifact says so.
+- **The original C₀** (arm `C0`, role `guided`) exists only as r0 in the main
+  pipeline. It was never replicated, so it has no replication interval. It
+  also predates the log-deficit rule and stores no allocation provenance, so
+  it has no allocation row. The artifact names it in a note and computes
+  nothing for it.
