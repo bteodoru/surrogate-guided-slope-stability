@@ -20,8 +20,11 @@ refuted "guided beats LHS" and "allocation matters more than the learner"):
 at a fixed budget, uniformizing the response space does not systematically
 improve accuracy over uniform sampling of the parameter space; it relocates
 accuracy along the FOS axis, following the training density actually
-achieved, and the screener controls how far that departs from the intended
-one.
+achieved, which departs from the intended one. How much of that departure,
+and of its effect, belongs to the screener rather than the allocation rule is
+not isolated: that needs the oracle, deferred (2026-09-21) until after the
+first manuscript. Never write that the screener controls, causes or explains
+the departure.
 
 **The model is a measuring instrument, not an object of study.** The relevant
 comparison is always vertical (same learner, different sampling arm), never
