@@ -328,16 +328,61 @@ def load_structural() -> dict:
 
 
 def check_structural_fresh(struct: dict) -> None:
-    """Refuse to render an artifact whose replication metrics have since changed."""
-    recorded = struct.get("provenance", {}).get("replications_sha256")
-    if recorded is None:
+    """Refuse to render an artifact whose inputs have since changed.
+
+    Verifies hashes of all inputs stored in provenance: the replication metrics,
+    the run metadata, and the design and final files of every guided set.
+    """
+    provenance = struct.get("provenance", {})
+    if not provenance:
         raise StaleStructuralError("structural.json carries no provenance; rerun `sgs structural`")
+
+    # Check replications.json
+    recorded_rep = provenance.get("replications_sha256")
+    if recorded_rep is None:
+        raise StaleStructuralError("structural.json provenance missing replications_sha256; rerun `sgs structural`")
     path = config.replication_metrics_path()
     if not path.exists():
         raise StaleStructuralError(f"{path.name} is missing; structural.json cannot be verified")
-    if data.sha256_file(path) != recorded:
+    if data.sha256_file(path) != recorded_rep:
         raise StaleStructuralError(f"structural.json was built from another {path.name}; "
                                    "rerun `sgs structural`")
+
+    # Check run_metadata.json
+    recorded_meta = provenance.get("run_metadata_sha256")
+    if recorded_meta is None:
+        raise StaleStructuralError("structural.json provenance missing run_metadata_sha256; rerun `sgs structural`")
+    meta_path = config.metadata_path()
+    if not meta_path.exists():
+        raise StaleStructuralError(f"{meta_path.name} is missing; structural.json cannot be verified")
+    if data.sha256_file(meta_path) != recorded_meta:
+        raise StaleStructuralError(f"structural.json was built from another {meta_path.name}; "
+                                   "rerun `sgs structural`")
+
+    # Check design and final files for each guided set
+    recorded_sets = provenance.get("sets_sha256", {})
+    for label, hashes in recorded_sets.items():
+        for file_type in ("design", "final"):
+            recorded_hash = hashes.get(file_type)
+            if recorded_hash is None:
+                raise StaleStructuralError(
+                    f"structural.json provenance missing {file_type} hash for {label}; "
+                    "rerun `sgs structural`")
+            # Determine if this is a main pipeline (r0) or replication set
+            is_r0 = "_r0" not in label and not any(f"_r{i}" in label for i in range(1, 10))
+            if is_r0:
+                # Main pipeline: label is a role name
+                file_path = config.design_path(label) if file_type == "design" else config.final_path(label)
+            else:
+                # Replication: label includes _r# suffix
+                file_path = (config.replication_path("designs", label) if file_type == "design"
+                           else config.replication_path("final", label))
+            if not file_path.exists():
+                raise StaleStructuralError(f"{label} {file_type} file is missing; structural.json cannot be verified")
+            if data.sha256_file(file_path) != recorded_hash:
+                raise StaleStructuralError(
+                    f"structural.json was built from another {label} {file_type} file; "
+                    "rerun `sgs structural`")
 
 
 def _offsets(names) -> dict:
@@ -493,7 +538,7 @@ def structural_allocation_frame(struct: dict, arm: str) -> pd.DataFrame:
 
 
 def structural_batch_frame(struct: dict) -> pd.DataFrame:
-    """C-seq, deviation (achieved - intended) batch by batch and cumulatively,
+    """C-seq, intended and deviation (achieved - intended) batch by batch and cumulatively,
     bins as rows; r1-r5 as mean ± sd, then r0 as its own block."""
     labels = struct["bins"]["labels"]
     confirmatory = [str(r) for r in struct["confirmatory"]]
@@ -502,6 +547,9 @@ def structural_batch_frame(struct: dict) -> pd.DataFrame:
         batches = [struct["batches"][k] for k in keys]
         n_batches = len(batches[0])
         fmt = _mean_sd if len(keys) > 1 else (lambda v: _plain(v[0]))
+
+        def intended_val(entry, b):
+            return entry["intended"][b]
 
         def delta(entry, b):
             return entry["achieved"][b] - entry["intended"][b]
@@ -515,8 +563,9 @@ def structural_batch_frame(struct: dict) -> pd.DataFrame:
             for j in range(n_batches):
                 if outside:
                     side = STRUCTURAL_OUTSIDE_LABELS[b - len(labels)]
-                    row[f"batch {j + 1}"] = fmt([s[j]["achieved_outside"][side] for s in batches])
+                    row[f"batch {j + 1} intended"] = fmt([s[j]["achieved_outside"][side] for s in batches])
                 else:
+                    row[f"batch {j + 1} intended"] = fmt([intended_val(s[j], b) for s in batches])
                     row[f"batch {j + 1}"] = fmt([delta(s[j], b) for s in batches])
             for j in range(1, n_batches):
                 column = f"cum. to {j + 1}"
@@ -735,6 +784,8 @@ def run() -> None:
         for arm in ("C-log", "C-seq"):
             _save_figure(figures / f"structural__matrix_{arm.lower()}.pdf",
                          fig_structural_matrix(struct, arm))
+            _save_table(tables / f"structural__matrix_{arm.lower()}_caption.tex",
+                       _structural_text(struct["matrix_caption"].format(arm=arm)))
             _save_table(tables / f"structural__allocation_{arm.lower()}.tex", booktabs(
                 structural_allocation_frame(struct, arm),
                 caption=f"Allocation fidelity for {arm}: mean ± sd over the confirmatory "
@@ -749,12 +800,7 @@ def run() -> None:
                 label=f"tab:structural:allocation:{arm.lower()}", small=True))
         _save_table(tables / "structural__batches.tex", booktabs(
             structural_batch_frame(struct),
-            caption="C-seq, deviation (achieved minus intended) batch by batch and cumulatively "
-                    "after batches 2 and 3; mean ± sd over r1-r5, r0 (exploratory) apart. Each "
-                    "batch reallocates against what the earlier batches actually returned; the "
-                    "cumulative columns show whether retraining corrects a deviation or moves "
-                    "it. The outside rows count points whose true FOS left the selection range "
-                    f"(generator bins, outer bin FOS > 6). {shared}",
+            caption=_escape(struct["batches_caption"]) + f" {shared}",
             label="tab:structural:batches", small=True))
         _save_table(tables / "structural__displacement.tex", booktabs(
             structural_displacement_frame(struct),

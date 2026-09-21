@@ -147,6 +147,29 @@ def _sets_of(realization: int) -> dict[str, list[tuple[str, dict]]]:
             for arm, names in grouped.items()}
 
 
+def _budget_of(realization: int, label: str) -> int:
+    """The budget n for a given realization and set label."""
+    meta = _metadata()
+    if realization == 0:
+        return meta["datasets"][label]["n"]
+    return meta["replications"][label]["n"]
+
+
+def _verify_allocation(label: str, realization: int, allocation: dict) -> None:
+    """Verify that allocation.added matches the deficit_allocation recomputation.
+
+    Raises StructuralError if metadata or recomputation diverges.
+    """
+    prior = _prior_counts(allocation)
+    budget = _budget_of(realization, label)
+    recomputed = design.deficit_allocation(prior, budget)
+    stored = np.asarray(allocation["added"], dtype=int)
+    if not np.array_equal(stored, recomputed):
+        raise StructuralError(
+            f"{label}: allocation.added {stored.tolist()} does not match "
+            f"deficit_allocation({prior.tolist()}, {budget}) = {recomputed.tolist()}")
+
+
 def _solved(realization: int, label: str) -> pd.DataFrame:
     return data.load_role(label) if realization == 0 else replicate.load_set(label)
 
@@ -177,6 +200,7 @@ def allocation_rows(realization: int) -> dict[str, dict]:
         achieved = np.zeros(config.N_BINS, dtype=int)
         outside = np.zeros(2, dtype=int)
         for i, (label, allocation) in enumerate(sets):
+            _verify_allocation(label, realization, allocation)
             if i == 0:
                 seed = _prior_counts(allocation)
             intended = intended + np.asarray(allocation["added"], dtype=int)
@@ -199,6 +223,7 @@ def batch_allocation_rows(realization: int) -> list[dict]:
     cum_intended = np.zeros(config.N_BINS, dtype=int)
     cum_achieved = np.zeros(config.N_BINS, dtype=int)
     for batch, (label, allocation) in enumerate(_sets_of(realization)["C-seq"], start=1):
+        _verify_allocation(label, realization, allocation)
         intended = np.asarray(allocation["added"], dtype=int)
         achieved = _achieved_counts(realization, label)
         cum_intended, cum_achieved = cum_intended + intended, cum_achieved + achieved
@@ -615,6 +640,27 @@ FIGURE_CAPTION = (
     "half-open reporting zones; the allocation and displacement tables use the generator's "
     "binning instead, which differs only on an exact bin edge.")
 
+MATRIX_CAPTION = (
+    r"Conformal matrix of the screener {arm} on the set {arm}: predicted bin (rows) vs.\ true bin "
+    r"(columns), aggregated over r1--r5. Rows are normalized to 100\%. The three off-diagonal "
+    "blocks (below main diagonal, above main diagonal, and both) count miscalibration in each "
+    "direction. This describes the screener on the selected points alone, conditioned on being "
+    "selected, not on the full pool. It answers how well the screener's predicted FOS bin matched "
+    "the true one among those it admitted; it does not answer the oracle question, which is how the "
+    "true bin matched the prior belief over the entire pool.")
+
+BATCHES_CAPTION = (
+    "C-seq, deviation (achieved minus intended) batch by batch and cumulatively after batches 2 "
+    "and 3; mean ± sd over r1-r5, r0 (exploratory) apart. Each batch reallocates against what the "
+    "earlier batches actually returned; the cumulative columns show whether retraining corrects a "
+    "deviation or moves it. The outside rows count points whose true FOS left the selection range "
+    "(generator bins, outer bin FOS > 6). This describes what the allocation rule produced on the "
+    "points the screener selected, given their true FOS; it does not answer the oracle question, "
+    "which is what would happen if the generator had sampled uniformly over prior belief, "
+    "independent of screener predictions. C0-log and C0-seq train on the same guided points as "
+    "C-log and C-seq in every realization, so their allocation, batch and displacement rows are "
+    "those of C, shared rather than duplicated.")
+
 PROCEDURE = (
     "Descriptive. No new hypothesis test or inferential claim is introduced; Welch intervals are "
     "reused solely to visualize between-design uncertainty at bin level. Confirmatory "
@@ -660,6 +706,8 @@ def build() -> dict:
         "procedure": PROCEDURE,
         "figure_caption": FIGURE_CAPTION.format(min_n=config.STRUCTURAL_MIN_TEST_N,
                                                 budget=ablation_budgets(rep)["B"]),
+        "matrix_caption": MATRIX_CAPTION,
+        "batches_caption": BATCHES_CAPTION,
         "bins": {"edges": EDGES().tolist(), "labels": bin_labels()},
         "min_test_n": config.STRUCTURAL_MIN_TEST_N,
         "confirmatory": list(range(1, config.REP_REALIZATIONS + 1)),

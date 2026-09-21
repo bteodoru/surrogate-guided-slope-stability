@@ -166,7 +166,9 @@ interaction interval, never from comparing two arms' intervals.
 raw solver output; `repair` writes `data/final/`. Fit files store a fingerprint
 of their protocol configuration and training data and fail loudly when either
 changed. `evaluate` is pure and reads fits and a test set passed as arguments.
-`report` reads only `outputs/metrics/`. Provenance lives in
+`report` reads only `outputs/metrics/` for its work. It also reads from `data/` to verify
+hashes stored in the structural artifact's provenance (one hash read per data file,
+without loading their contents), refusing to render if they mismatch. Provenance lives in
 `data/run_metadata.json`.
 
 ## Performance notes

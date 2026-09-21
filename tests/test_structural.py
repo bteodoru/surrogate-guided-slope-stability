@@ -69,35 +69,47 @@ def test_prior_counts_accepts_both_spellings_and_refuses_ambiguity():
 
 
 def test_allocation_rows_use_the_stored_provenance(monkeypatch):
-    seed_counts = [2] * config.N_BINS
-    added = [4] * config.N_BINS
+    seed_counts = np.array([2] * config.N_BINS, dtype=int)
+    # Use the correct allocation computed by deficit_allocation
+    budget = 100
+    added = design.deficit_allocation(seed_counts, budget).tolist()
     achieved = list(added)
     achieved[0] -= 1                 # one point landed one bin higher than asked
     achieved[1] += 1
     monkeypatch.setattr(structural, "_sets_of",
-                        lambda r: {"C-log": [("k", {"seed_counts": seed_counts, "added": added})]})
+                        lambda r: {"C-log": [("k", {"seed_counts": seed_counts.tolist(), "added": added})]})
     monkeypatch.setattr(structural, "_achieved_counts",
                         lambda realization, label: np.array(achieved))
     monkeypatch.setattr(structural, "_achieved_outside",
                         lambda realization, label: np.array([3, 1]))
+    # Mock _budget_of to return the expected budget for allocation verification
+    monkeypatch.setattr(structural, "_budget_of", lambda r, l: budget)
+    # Mock _metadata to support the allocation verification
+    monkeypatch.setattr(structural, "_metadata",
+                        lambda: {"replications": {"k": {"n": budget}}, "datasets": {}})
 
     rows = structural.allocation_rows(1)["C-log"]
     assert rows["achieved_outside"] == {"< 0.5": 3, "> 6": 1}
-    assert rows["seed"] == seed_counts and rows["intended"] == added
+    assert rows["seed"] == seed_counts.tolist() and rows["intended"] == added
     assert rows["achieved"] == achieved
     assert rows["deviation"][0] == -1 and rows["deviation"][1] == 1
     assert rows["abs_deviation"] == 2
 
 
 def test_allocation_deviation_is_zero_when_the_screener_was_exact(monkeypatch):
-    added = [4] * config.N_BINS
+    seed_counts = np.array([0] * config.N_BINS, dtype=int)
+    budget = 100
+    added = design.deficit_allocation(seed_counts, budget).tolist()
     monkeypatch.setattr(structural, "_sets_of",
-                        lambda r: {"C-log": [("k", {"trained_counts": [0] * config.N_BINS,
+                        lambda r: {"C-log": [("k", {"trained_counts": seed_counts.tolist(),
                                                     "added": added})]})
     monkeypatch.setattr(structural, "_achieved_counts",
                         lambda realization, label: np.array(added))
     monkeypatch.setattr(structural, "_achieved_outside",
                         lambda realization, label: np.array([0, 0]))
+    monkeypatch.setattr(structural, "_budget_of", lambda r, l: budget)
+    monkeypatch.setattr(structural, "_metadata",
+                        lambda: {"replications": {"k": {"n": budget}}, "datasets": {}})
     assert structural.allocation_rows(1)["C-log"]["abs_deviation"] == 0
 
 
@@ -404,13 +416,18 @@ def test_r0_rows_change_no_confirmatory_output():
 
 def test_allocation_rows_report_the_points_that_left_the_range(monkeypatch):
     """Achieved inside plus achieved outside is the whole set."""
-    added = [20] * config.N_BINS
+    seed_counts = np.array([0] * config.N_BINS, dtype=int)
+    budget = 20 * config.N_BINS
+    added = design.deficit_allocation(seed_counts, budget).tolist()
     achieved = [16] * config.N_BINS
     monkeypatch.setattr(structural, "_sets_of",
-                        lambda r: {"C-log": [("k", {"trained_counts": [0] * config.N_BINS,
+                        lambda r: {"C-log": [("k", {"trained_counts": seed_counts.tolist(),
                                                     "added": added})]})
     monkeypatch.setattr(structural, "_achieved_counts", lambda realization, label: np.array(achieved))
     monkeypatch.setattr(structural, "_achieved_outside", lambda realization, label: np.array([45, 15]))
+    monkeypatch.setattr(structural, "_budget_of", lambda r, l: budget)
+    monkeypatch.setattr(structural, "_metadata",
+                        lambda: {"replications": {"k": {"n": budget}}, "datasets": {}})
     row = structural.allocation_rows(1)["C-log"]
     assert sum(row["achieved"]) + sum(row["achieved_outside"].values()) == sum(row["intended"])
 
@@ -463,3 +480,45 @@ def test_captions_state_the_budgets_and_the_interval_level():
     caption = out["ablation"]["caption"]
     assert "C0-log 300" in caption and "B 600" in caption
     assert "Amendment" not in caption and "Task" not in caption      # paper text, not process
+
+
+def test_allocation_rows_verifies_allocation_against_recomputation(monkeypatch):
+    """allocation_rows checks that allocation.added == deficit_allocation(prior, budget)."""
+    # This should pass: allocation is correct
+    rows = structural.allocation_rows(0)
+    assert "C-log" in rows
+
+    # Corrupt the allocation in metadata and verify it raises
+    original_metadata = structural._metadata()
+    corrupt_meta = json.loads(json.dumps(original_metadata))  # deep copy
+    corrupt_meta["datasets"]["guided-log"]["allocation"]["added"][0] = 999
+    monkeypatch.setattr(structural, "_metadata", lambda: corrupt_meta)
+    with pytest.raises(structural.StructuralError, match="allocation.added.*does not match"):
+        structural.allocation_rows(0)
+
+
+def test_batch_allocation_rows_verifies_allocation_against_recomputation(monkeypatch):
+    """batch_allocation_rows checks that each batch's allocation is correct."""
+    original_metadata = structural._metadata()
+    batch_key = [k for k in original_metadata["replications"].keys() if k.startswith("guided_seq_r1")]
+    if batch_key:
+        batch_key = batch_key[0]
+        # This should pass: allocation is correct
+        rows = structural.batch_allocation_rows(1)
+        assert len(rows) > 0
+
+        # Corrupt the allocation and verify it raises
+        corrupt_meta = json.loads(json.dumps(original_metadata))  # deep copy
+        corrupt_meta["replications"][batch_key]["allocation"]["added"][0] = 999
+        monkeypatch.setattr(structural, "_metadata", lambda: corrupt_meta)
+        with pytest.raises(structural.StructuralError, match="allocation.added.*does not match"):
+            structural.batch_allocation_rows(1)
+
+
+def test_build_includes_matrix_and_batches_captions():
+    """build() includes the matrix_caption and batches_caption keys."""
+    out = structural.build()
+    assert "matrix_caption" in out
+    assert "batches_caption" in out
+    assert "{arm}" in out["matrix_caption"]  # template placeholder
+    assert "oracle" in out["batches_caption"]  # should mention oracle limitation

@@ -165,6 +165,8 @@ def _struct_stub():
         "bins": {"edges": [0.5, 1.0, 6.0], "labels": labels},
         "min_test_n": 10, "confirmatory": [1, 2],
         "figure_caption": "caption text",
+        "matrix_caption": "matrix for {arm}",
+        "batches_caption": "batches caption text",
         "densities": [{"arm": a, "bin": b, "diff": 3.0, "ci": [1.0, 5.0]}
                       for a in ("C-log", "C-seq") for b in (0, 1)],
         "errors": errors,
@@ -324,11 +326,21 @@ def test_structural_freshness_refuses_a_missing_or_changed_provenance(root):
     path = config.replication_metrics_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("{}")
+    meta_path = config.metadata_path()
+    meta_path.parent.mkdir(parents=True, exist_ok=True)
+    meta_path.write_text('{}')
+    rep_hash = data.sha256_file(path)
+    meta_hash = data.sha256_file(meta_path)
+
     with pytest.raises(report.StaleStructuralError, match="no provenance"):
         report.check_structural_fresh({})
     with pytest.raises(report.StaleStructuralError, match="another"):
-        report.check_structural_fresh({"provenance": {"replications_sha256": "0" * 64}})
-    report.check_structural_fresh({"provenance": {"replications_sha256": data.sha256_file(path)}})
+        report.check_structural_fresh({"provenance": {"replications_sha256": "0" * 64,
+                                                        "run_metadata_sha256": meta_hash,
+                                                        "sets_sha256": {}}})
+    report.check_structural_fresh({"provenance": {"replications_sha256": rep_hash,
+                                                    "run_metadata_sha256": meta_hash,
+                                                    "sets_sha256": {}}})
 
 
 def test_booktabs_escapes_the_caption():
@@ -371,3 +383,76 @@ def test_run_writes_structural_outputs_when_present(root, monkeypatch):
     for name in ("allocation_c-log", "batches", "displacement"):
         text = (config.tables_dir() / f"structural__{name}.tex").read_text()
         assert text.rstrip().endswith(r"\end{table}"), name       # the note sits inside the float
+
+
+def test_check_structural_fresh_verifies_all_provenance_hashes(root, monkeypatch):
+    """check_structural_fresh verifies replications, metadata, and all design/final files."""
+    # Set up minimal valid paths and hashes
+    rep_path = config.replication_metrics_path()
+    rep_path.parent.mkdir(parents=True, exist_ok=True)
+    rep_path.write_text("{}")
+    
+    meta_path = config.metadata_path()
+    meta_path.parent.mkdir(parents=True, exist_ok=True)
+    meta_path.write_text('{"datasets": {}, "replications": {}}')
+    
+    rep_hash = data.sha256_file(rep_path)
+    meta_hash = data.sha256_file(meta_path)
+    
+    struct = {
+        "provenance": {
+            "replications_sha256": rep_hash,
+            "run_metadata_sha256": meta_hash,
+            "sets_sha256": {}
+        }
+    }
+    
+    # Should pass with no sets
+    report.check_structural_fresh(struct)
+    
+    # Should fail if replications_sha256 is missing
+    struct_bad = {"provenance": {"run_metadata_sha256": meta_hash, "sets_sha256": {}}}
+    with pytest.raises(report.StaleStructuralError, match="missing replications_sha256"):
+        report.check_structural_fresh(struct_bad)
+    
+    # Should fail if run_metadata_sha256 is missing
+    struct_bad2 = {"provenance": {"replications_sha256": rep_hash, "sets_sha256": {}}}
+    with pytest.raises(report.StaleStructuralError, match="missing run_metadata_sha256"):
+        report.check_structural_fresh(struct_bad2)
+    
+    # Should fail if run_metadata.json is missing
+    meta_path.unlink()
+    with pytest.raises(report.StaleStructuralError, match="missing.*structural"):
+        report.check_structural_fresh(struct)
+
+
+def test_check_structural_fresh_detects_modified_metadata(root):
+    """check_structural_fresh fails when run_metadata.json has been modified."""
+    rep_path = config.replication_metrics_path()
+    rep_path.parent.mkdir(parents=True, exist_ok=True)
+    rep_path.write_text("{}")
+    
+    meta_path = config.metadata_path()
+    meta_path.parent.mkdir(parents=True, exist_ok=True)
+    meta_path.write_text('{"datasets": {}}')
+    
+    rep_hash = data.sha256_file(rep_path)
+    original_meta_hash = data.sha256_file(meta_path)
+    
+    struct = {
+        "provenance": {
+            "replications_sha256": rep_hash,
+            "run_metadata_sha256": original_meta_hash,
+            "sets_sha256": {}
+        }
+    }
+    
+    # Should pass initially
+    report.check_structural_fresh(struct)
+    
+    # Modify the metadata file
+    meta_path.write_text('{"datasets": {}, "modified": true}')
+    
+    # Should fail now
+    with pytest.raises(report.StaleStructuralError, match="another.*metadata"):
+        report.check_structural_fresh(struct)
