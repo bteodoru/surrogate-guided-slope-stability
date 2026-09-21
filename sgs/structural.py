@@ -171,3 +171,65 @@ def batch_allocation_rows(realization: int) -> list[dict]:
                      "cumulative_intended": cum_intended.tolist(),
                      "cumulative_achieved": cum_achieved.tolist()})
     return rows
+
+
+def _design_of(realization: int, label: str) -> pd.DataFrame:
+    """The design rows, carrying FOS_pred and the screener's bin."""
+    return design.read_design(label) if realization == 0 else replicate.read_set_design(label)
+
+
+def _true_bin(fos: np.ndarray) -> np.ndarray:
+    """Bin of a true FOS: 0..N_BINS-1 inside, N_BINS below 0.5, N_BINS+1 above 6.
+
+    The convention is the generator's, not `evaluate`'s: `design.bin_counts` and
+    `design.guided_log_deficit` treat the bins as (lo, hi] with the first closed
+    and the last closed at 6, so FOS exactly 6 is the last in-range bin. It must
+    match, because this array is compared against the design's own `bin` column
+    and against `achieved`, which comes from `bin_counts`. Everything read out of
+    `replications.json` uses the other convention: both its `bins` and its
+    `train_counts` are built with `evaluate._zone_mask`, i.e. [lo, hi), so there
+    a value of exactly 6 falls in `FOS >= 6` and a value on an interior edge goes
+    to the bin on its right. The conventions differ only on an exact edge, which
+    a continuous solver output reaches with probability zero;
+    `test_true_bin_boundaries` pins this module's choice down.
+    """
+    edges = EDGES()
+    out = np.full(len(fos), config.N_BINS, dtype=int)
+    out[fos > edges[-1]] = config.N_BINS + 1
+    inside = (fos >= edges[0]) & (fos <= edges[-1])
+    out[inside] = np.maximum(np.searchsorted(edges, fos[inside], side="left") - 1, 0)
+    return out
+
+
+def displacement_rows(realization: int) -> dict[str, dict]:
+    """Where the screener's selected points actually landed.
+
+    Conditioned on selection: these points were chosen because they were
+    predicted inside the range and inside a deficit bin. The shift statistics
+    cover only the points that stayed inside [0.5, 6]; the rest are `outside`.
+    """
+    params = list(config.PARAMS)
+    out = {}
+    for arm, sets in _sets_of(realization).items():
+        if not sets:
+            continue
+        predicted, actual = [], []
+        for label, _ in sets:
+            d, f = _design_of(realization, label), _solved(realization, label)
+            if len(d) != len(f) or not np.allclose(d[params].to_numpy(dtype=float),
+                                                   f[params].to_numpy(dtype=float)):
+                raise StructuralError(f"{label}: design and final are not aligned row for row")
+            predicted.append(d["bin"].to_numpy(dtype=int))
+            actual.append(_true_bin(f["FOS"].to_numpy(dtype=float)))
+        predicted, actual = np.concatenate(predicted), np.concatenate(actual)
+        inside = actual < config.N_BINS
+        shift = np.abs(actual[inside] - predicted[inside])
+        matrix = np.zeros((config.N_BINS, config.N_BINS + 2), dtype=int)
+        np.add.at(matrix, (predicted, actual), 1)
+        out[arm] = {"n": int(len(predicted)),
+                    "stayed": float(np.mean(predicted == actual)),
+                    "mean_abs_shift": float(shift.mean()) if len(shift) else 0.0,
+                    "median_abs_shift": float(np.median(shift)) if len(shift) else 0.0,
+                    "outside": float(np.mean(~inside)),
+                    "matrix": matrix.tolist()}
+    return out

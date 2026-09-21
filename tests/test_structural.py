@@ -140,3 +140,54 @@ def test_selected_equals_intended_for_every_guided_set():
         frame = design.read_design(role)
         selected = np.bincount(frame["bin"].to_numpy(dtype=int), minlength=config.N_BINS)
         assert selected.tolist() == meta["datasets"][role]["allocation"]["added"], role
+
+
+def test_displacement_counts_shifts_and_refuses_misaligned_frames(monkeypatch):
+    edges = structural.EDGES()
+    mid = (edges[:-1] + edges[1:]) / 2
+    params = list(config.PARAMS)
+    design_frame = pd.DataFrame({p: np.arange(4, dtype=float) for p in params})
+    design_frame["bin"] = [0, 1, 2, 3]
+    design_frame["FOS_pred"] = mid[[0, 1, 2, 3]]
+    final_frame = design_frame[params].copy()
+    # stayed, moved up one, moved down two, landed above 6
+    final_frame["FOS"] = [mid[0], mid[2], mid[0], 7.0]
+
+    monkeypatch.setattr(structural, "_design_of", lambda realization, label: design_frame)
+    monkeypatch.setattr(structural, "_solved", lambda realization, label: final_frame)
+    monkeypatch.setattr(structural, "_sets_of", lambda r: {"C-log": [("k", {})], "C-seq": []})
+
+    row = structural.displacement_rows(1)["C-log"]
+    assert row["n"] == 4
+    assert row["stayed"] == 0.25
+    assert row["outside"] == 0.25
+    # the out-of-range point is excluded from the shift statistics
+    assert row["mean_abs_shift"] == pytest.approx((0 + 1 + 2) / 3)
+    assert np.array(row["matrix"]).shape == (config.N_BINS, config.N_BINS + 2)
+    assert np.array(row["matrix"]).sum() == 4
+
+    misaligned = final_frame.copy()
+    misaligned.loc[0, params[0]] += 1.0
+    monkeypatch.setattr(structural, "_solved", lambda realization, label: misaligned)
+    with pytest.raises(structural.StructuralError, match="not aligned"):
+        structural.displacement_rows(1)
+
+
+def test_true_bin_boundaries_follow_the_generator():
+    """The spec's boundary test. _true_bin must agree with design.bin_counts,
+    which is what produced both the design's bins and the achieved counts:
+    bins are (lo, hi], the first closed, the last closed at 6."""
+    edges = structural.EDGES()
+    lo, hi = config.SELECTION_RANGE
+    assert structural._true_bin(np.array([lo]))[0] == 0
+    assert structural._true_bin(np.array([hi]))[0] == config.N_BINS - 1     # exactly 6 is in range
+    assert structural._true_bin(np.array([lo - 1e-9]))[0] == config.N_BINS
+    assert structural._true_bin(np.array([hi + 1e-9]))[0] == config.N_BINS + 1
+    for b, edge in enumerate(edges[1:-1], start=1):
+        assert structural._true_bin(np.array([edge]))[0] == b - 1           # (lo, hi]
+    # and it agrees, bin for bin, with the counts the generator would produce
+    sample = np.array([lo, *edges[1:-1], hi])
+    counted = design.bin_counts(sample, edges)
+    from collections import Counter
+    tally = Counter(structural._true_bin(sample).tolist())
+    assert [tally.get(b, 0) for b in range(config.N_BINS)] == counted.tolist()
