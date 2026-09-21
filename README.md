@@ -1,11 +1,19 @@
 # Surrogate-guided sampling for slope-stability surrogates
 
 Research code for a study of how a fixed budget of physics-based slope-stability
-analyses should be allocated. A preliminary random forest, trained on a Latin
-hypercube seed, screens a large candidate pool; the remaining budget goes to
-candidates chosen for uniform coverage of the factor-of-safety (FOS) selection
-range [0.5, 6.0]. The claim is tested in a budget-fair comparison against
-continued Latin hypercube sampling.
+analyses should be allocated across the response space. A preliminary random
+forest (the screener), trained on a Latin hypercube seed, screens a large
+candidate pool. The remaining budget goes to candidates chosen to even out the
+factor-of-safety (FOS) distribution of the training set over the selection range
+[0.5, 6.0]. The paper calls this strategy *response-balanced sampling* and
+compares it, at the same budget, against continued Latin hypercube sampling.
+
+The finding: at a fixed budget, response-balanced sampling does not
+systematically improve accuracy over uniform sampling of the parameter space.
+Instead it relocates accuracy along the FOS axis, following the training density
+actually achieved. The relocation holds across five replicated designs (lower
+error in FOS 0.5–1, higher in 1–2). On the primary criterion, no guided arm
+shows an advantage.
 
 Data are generated with xslope 0.5.2 (Bishop's simplified method), homogeneous
 drained slopes without a water table.
@@ -67,8 +75,9 @@ Dataset: [Zenodo, concept DOI 10.5281/zenodo.20706202](https://doi.org/10.5281/z
 See `data/README.md` for the mapping between file names in the deposit and in
 the pipeline.
 
-The HYRCAN generator used in an earlier version of this study is preserved at
-the git tag `hyrcan-final`.
+The initial approach of this study (HYRCAN/Spencer generator, single Colab
+notebook) is preserved at the git tag `v0-hyrcan-colab`, and the HYRCAN
+generator's last state at `hyrcan-final`.
 
 Declared predictions and their observed outcomes: docs/predictions-and-outcomes.md.
 
