@@ -1,5 +1,6 @@
 import json
 
+import numpy as np
 import pandas as pd
 
 from sgs import config, evaluate, report
@@ -149,3 +150,183 @@ def test_replication_bin_figure_has_ablations_and_no_warning(root, recwarn):
     labels = {line.get_label() for line in fig.axes[0].lines}
     assert {"C0-log", "C0-seq"} <= labels
     assert not [w for w in recwarn if issubclass(w.category, RuntimeWarning)]
+
+
+# --- structural (Task 5) -----------------------------------------------------
+
+def _struct_stub():
+    labels = ["0.50-1.00", "1.00-6.00"]
+    errors = [{"family": f, "test": t, "arm": a, "bin": b, "diff": -0.01, "ci": [-0.02, 0.0],
+               "test_n": 20 if b == 0 else 3, "marked": b == 1}
+              for f in config.REP_FAMILIES for t in config.TEST_ROLES
+              for a in ("C-log", "C-seq") for b in (0, 1)]
+    return {
+        "bins": {"edges": [0.5, 1.0, 6.0], "labels": labels},
+        "min_test_n": 10, "confirmatory": [1, 2],
+        "figure_caption": "caption text",
+        "densities": [{"arm": a, "bin": b, "diff": 3.0, "ci": [1.0, 5.0]}
+                      for a in ("C-log", "C-seq") for b in (0, 1)],
+        "errors": errors,
+        "outside": [{"kind": "density", "arm": "C-log", "side": "below 0.5",
+                     "diff": 20.0, "ci": [10.0, 30.0]}],
+        "concordance": [],
+        "allocation": {r: {"C-log": {"seed": [2, 2], "intended": [4, 4], "achieved": [3, 5],
+                                     "deviation": [-1, 1], "abs_deviation": 2},
+                           "C-seq": {"seed": [1, 1], "intended": [3, 3], "achieved": [2, 4],
+                                    "deviation": [-1, 1], "abs_deviation": 2}}
+                       for r in ("0", "1", "2")},
+        "batches": {r: [{"batch": 1, "seed": [0, 0], "intended": [2, 2], "achieved": [1, 3],
+                         "cumulative_intended": [2, 2], "cumulative_achieved": [1, 3]}]
+                    for r in ("0", "1", "2")},
+        "displacement": {r: {"C-log": {"n": 4, "stayed": 0.5, "mean_abs_shift": 0.5,
+                                       "median_abs_shift": 0.0, "outside": 0.25,
+                                       "matrix": [[2, 0, 1, 1], [1, 0, 1, 0]]},
+                             "C-seq": {"n": 4, "stayed": 0.5, "mean_abs_shift": 0.5,
+                                      "median_abs_shift": 0.0, "outside": 0.25,
+                                      "matrix": [[1, 1, 0, 2], [0, 1, 1, 0]]}}
+                         for r in ("0", "1", "2")},
+    }
+
+
+def _ablation_stub():
+    """Shaped like structural.ablation(): two C0 arms, three reporting bins
+    (below range, one in range, above range), one welch and one paired row each."""
+    labels = ["below 0.5", "1.00-2.00", "at or above 6"]
+    ablations = {"C0-log": "C-log", "C0-seq": "C-seq"}
+    errors = []
+    for f in config.REP_FAMILIES:
+        for t in config.TEST_ROLES:
+            for c0, c in ablations.items():
+                for i, label in enumerate(labels):
+                    n = 20 if i != 1 else 3
+                    common = {"family": f, "test": t, "arm": c0, "reporting_bin": i, "label": label,
+                              "test_n": n, "marked": n < 10, "budget_differs": True}
+                    errors.append({**common, "first": c0, "second": "B", "interval": "welch",
+                                   "diff": -0.02, "ci": [-0.05, 0.01]})
+                    errors.append({**common, "first": c, "second": c0, "interval": "paired",
+                                   "diff": 0.03, "ci": [0.0, 0.06]})
+    fractions = [{"arm": c0, "first": c0, "second": "B", "interval": "welch",
+                  "budget_differs": True, "reporting_bin": i, "label": label,
+                  "first_mean": 0.2, "second_mean": 0.1, "diff": 0.1, "ci": [0.05, 0.15]}
+                 for c0 in ablations for i, label in enumerate(labels)]
+    return {
+        "procedure": "ablation procedure text",
+        "labels": labels,
+        "budgets": {"B": 600, "C-log": 600, "C-seq": 600, "C0-log": 300, "C0-seq": 300},
+        "errors": errors,
+        "fractions": fractions,
+        "shared_rows": {"C0-log": "C-log", "C0-seq": "C-seq", "note": "shared rows note text"},
+        "original_c0": "original c0 note text",
+    }
+
+
+def _struct_with_ablation():
+    struct = _struct_stub()
+    struct["ablation"] = _ablation_stub()
+    return struct
+
+
+def test_structural_figure_has_one_density_panel_above_four_error_panels():
+    fig = report.fig_structural(_struct_stub())
+    assert len(fig.axes) == 5
+    assert all(any(line.get_ydata()[0] == 0 for line in ax.lines) for ax in fig.axes)
+
+
+def test_structural_figure_uses_one_colour_per_arm_for_bars_and_markers():
+    """errorbar(fmt="none") and scatter do not advance the property cycle in step,
+    so an implicit colour gives the second arm's bars the first arm's colour and
+    turns its marked markers grey. Four collections, two colours, is the fix."""
+    assert report.STRUCTURAL_COLORS["C-log"] != report.STRUCTURAL_COLORS["C-seq"]
+    fig = report.fig_structural(_struct_stub())
+    error_panel = fig.axes[1]          # bin 0 solid, bin 1 marked, for both arms
+    colours = {tuple(round(float(v), 3) for v in coll.get_edgecolor()[0])
+               for coll in error_panel.collections if len(coll.get_edgecolor())}
+    assert len(colours) == 2, "solid and hollow markers of one arm must share its colour"
+
+
+def test_structural_matrix_figure_is_row_normalized():
+    fig = report.fig_structural_matrix(_struct_stub(), "C-log")
+    image = fig.axes[0].images[0]
+    shares = image.get_array()
+    row_totals = shares.sum(axis=1)
+    # the stub's two realizations (r1, r2) both have row totals > 0 for every row
+    assert np.allclose(row_totals, 1.0)
+
+
+def test_structural_allocation_frame_keeps_r0_apart_and_reports_a_spread():
+    frame = report.structural_allocation_frame(_struct_stub(), "C-log")
+    columns = [c.lower() for c in frame.columns]
+    assert "selected" not in columns and "intended" in columns
+    assert any("sd" in c for c in columns)
+    assert set(frame["set"]) == {"r1-r5", "r0 (exploratory)"}
+
+
+def test_structural_batch_frame_averages_over_the_confirmatory_realizations():
+    frame = report.structural_batch_frame(_struct_stub())
+    assert set(frame["set"]) == {"r1-r5", "r0 (exploratory)"}
+    assert "cum. intended" in frame.columns
+
+
+def test_structural_displacement_frame_keeps_r0_apart():
+    frame = report.structural_displacement_frame(_struct_stub())
+    assert set(frame["set"]) == {"r1-r5", "r0 (exploratory)"}
+    assert {"C-log", "C-seq"} <= set(frame["arm"])
+
+
+def test_structural_outside_frame_reads_kind_and_side():
+    frame = report.structural_outside_frame(_struct_stub())
+    assert set(frame["kind"]) == {"density"}
+    assert "below 0.5" in set(frame["side"])
+
+
+def test_structural_ablation_figure_has_a_row_per_c0_arm_and_a_column_per_cell():
+    fig = report.fig_structural_ablation(_struct_with_ablation())
+    expected = 2 * len(config.REP_FAMILIES) * len(config.TEST_ROLES)  # two C0 arms
+    assert len(fig.axes) == expected
+
+
+def test_structural_ablation_figure_uses_explicit_colours_by_comparison():
+    """A single arm's panel draws two comparisons (C0-B welch, C-C0 paired); an
+    implicit colour cycle would give them the same colour as a second arm's
+    panel elsewhere in the grid, erasing which comparison is which."""
+    assert report.STRUCTURAL_ABLATION_COLORS["welch"] != report.STRUCTURAL_ABLATION_COLORS["paired"]
+    fig = report.fig_structural_ablation(_struct_with_ablation())
+    panel = fig.axes[0]
+    colours = {tuple(round(float(v), 3) for v in coll.get_edgecolor()[0])
+               for coll in panel.collections if len(coll.get_edgecolor())}
+    assert len(colours) == 2
+
+
+def test_structural_ablation_fraction_frame_reports_fractions_not_counts():
+    frame = report.structural_ablation_fraction_frame(_struct_with_ablation())
+    columns = [c.lower() for c in frame.columns]
+    assert not any("count" in c for c in columns)
+    assert {"c0 fraction", "b fraction", "diff"} <= set(columns)
+    assert set(frame["arm"]) == {"C0-log", "C0-seq"}
+
+
+def test_run_writes_structural_outputs_when_present(root):
+    struct = _struct_with_ablation()
+    path = config.structural_metrics_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(struct))
+    report.run()
+    tables = {p.name for p in config.tables_dir().glob("*.tex")}
+    figures = {p.name for p in config.figures_dir().glob("*.pdf")}
+    assert {"structural__caption.tex", "structural__allocation_c-log.tex",
+            "structural__allocation_c-seq.tex", "structural__batches.tex",
+            "structural__displacement.tex", "structural__outside.tex",
+            "structural__ablation_caption.tex", "structural__ablation_fractions.tex",
+            "structural__original_c0.tex"} <= tables
+    assert {"structural__bins.pdf", "structural__matrix_c-log.pdf",
+            "structural__matrix_c-seq.pdf", "structural__ablation.pdf"} <= figures
+    note = (config.tables_dir() / "structural__allocation_c-log.tex").read_text()
+    assert struct["ablation"]["shared_rows"]["note"] in note
+    batches_note = (config.tables_dir() / "structural__batches.tex").read_text()
+    assert struct["ablation"]["shared_rows"]["note"] in batches_note
+    displacement_note = (config.tables_dir() / "structural__displacement.tex").read_text()
+    assert struct["ablation"]["shared_rows"]["note"] in displacement_note
+    original = (config.tables_dir() / "structural__original_c0.tex").read_text()
+    assert original.strip() == struct["ablation"]["original_c0"]
+    caption = (config.tables_dir() / "structural__ablation_caption.tex").read_text()
+    assert struct["ablation"]["procedure"] in caption and "300" in caption and "600" in caption

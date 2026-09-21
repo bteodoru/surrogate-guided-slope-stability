@@ -1,0 +1,17 @@
+\begin{table}[htbp]
+\centering
+\caption{The screener on the points it selected: share staying in the predicted bin, absolute displacement in bins, share landing outside [0.5, 6]. Conditioned on selection, so this is its accuracy where it was used, not over the pool. The displacement columns cover only points whose true FOS stayed inside the selection range; the rest are counted by 'outside'.}
+\label{tab:structural:displacement}
+\begin{tabular}{lrrrrrrrrrrr}
+\toprule
+arm & set & n & stayed & mean |Δbin| & median |Δbin| & outside & n sd & stayed sd & mean |Δbin| sd & median |Δbin| sd & outside sd \\
+\midrule
+C-log & r0 (exploratory) & 300.000 & 0.360 & 0.661 & 1.000 & 0.213 & -- & -- & -- & -- & -- \\
+C-log & r1-r5 & 300.000 & 0.351 & 0.680 & 1.000 & 0.222 & 0.000 & 0.026 & 0.038 & 0.000 & 0.021 \\
+C-seq & r0 (exploratory) & 300.000 & 0.433 & 0.520 & 0.000 & 0.187 & -- & -- & -- & -- & -- \\
+C-seq & r1-r5 & 300.000 & 0.427 & 0.543 & 0.400 & 0.191 & 0.000 & 0.029 & 0.060 & 0.548 & 0.013 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+C0-log and C0-seq train on the same guided points as C-log and C-seq in every realization, so their allocation, batch and displacement rows are those of C, shared rather than duplicated.

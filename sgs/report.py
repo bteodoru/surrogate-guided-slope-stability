@@ -303,6 +303,246 @@ def fig_replication_bins(rep: dict, test: str, family: str):
     return fig
 
 
+# --- structural (Task 5): the figure, the heatmaps and the tables -----------
+
+STRUCTURAL_CELLS = (("gbm", "test-natural"), ("gbm", "test-stratified"),
+                    ("rf", "test-natural"), ("rf", "test-stratified"))
+
+# Explicit, because errorbar(fmt="none") and scatter do not advance the property
+# cycle in step: in a two-arm loop the second arm's bars keep the first arm's colour.
+STRUCTURAL_COLORS = {"C-log": "tab:blue", "C-seq": "tab:orange"}
+
+
+def load_structural() -> dict:
+    return _read(config.structural_metrics_path())
+
+
+def _structural_errorbar(ax, rows, colour, *, x_key="bin", label=None):
+    x = [r[x_key] for r in rows]
+    y = [r["diff"] for r in rows]
+    lo = [r["diff"] - r["ci"][0] for r in rows]
+    hi = [r["ci"][1] - r["diff"] for r in rows]
+    ax.errorbar(x, y, yerr=[lo, hi], fmt="none", elinewidth=0.8, capsize=2, ecolor=colour)
+    solid = [(xi, yi) for xi, yi, r in zip(x, y, rows) if not r.get("marked", False)]
+    hollow = [(xi, yi) for xi, yi, r in zip(x, y, rows) if r.get("marked", False)]
+    if solid:
+        ax.scatter(*zip(*solid), s=14, color=colour, label=label, zorder=3)
+    if hollow:
+        # same colour, hollow face: a marked bin keeps its arm's identity
+        ax.scatter(*zip(*hollow), s=14, facecolors="none", edgecolors=colour, zorder=3)
+
+
+def fig_structural(struct: dict):
+    """One density panel above a 2x2 grid of error panels (family x test),
+    every arm keeping one colour for both its bars and its markers."""
+    labels = struct["bins"]["labels"]
+    arms = sorted({r["arm"] for r in struct["errors"]})
+    fig = plt.figure(figsize=(9.0, 7.5))
+    grid = fig.add_gridspec(3, 2, hspace=0.55, wspace=0.25)
+
+    top = fig.add_subplot(grid[0, :])
+    for arm in arms:
+        rows = [r for r in struct["densities"] if r["arm"] == arm]
+        _structural_errorbar(top, rows, STRUCTURAL_COLORS[arm], label=arm)
+    top.axhline(0.0, linewidth=0.8, color="black")
+    top.set_ylabel("Δ training points vs B")
+    top.set_xticks(range(len(labels)))
+    top.set_xticklabels(labels, rotation=60, ha="right", fontsize=6)
+    top.legend(fontsize=7, frameon=False)
+
+    for i, (family, test) in enumerate(STRUCTURAL_CELLS):
+        ax = fig.add_subplot(grid[1 + i // 2, i % 2])
+        for arm in arms:
+            rows = [r for r in struct["errors"]
+                    if r["family"] == family and r["test"] == test and r["arm"] == arm]
+            _structural_errorbar(ax, rows, STRUCTURAL_COLORS[arm], label=arm)
+        ax.axhline(0.0, linewidth=0.8, color="black")
+        ax.set_title(f"{family.upper()}, {test}", fontsize=8)
+        ax.set_ylabel("Δ log-RMSE vs B", fontsize=7)
+        ax.set_xticks(range(len(labels)))
+        ax.set_xticklabels(labels, rotation=60, ha="right", fontsize=5)
+        if i // 2 == 0:                       # once per test column
+            counts = {r["bin"]: r["test_n"] for r in struct["errors"]
+                      if r["family"] == family and r["test"] == test}
+            for b, n in sorted(counts.items()):
+                ax.annotate(str(n), (b, ax.get_ylim()[1]), fontsize=4, ha="center", va="bottom",
+                            color="dimgray", annotation_clip=False)
+    return fig
+
+
+def fig_structural_matrix(struct: dict, arm: str):
+    """Predicted bin against true bin, row-normalized, pooled over the
+    confirmatory realizations only.
+
+    This is where compensating errors live: two points swapping bins leave
+    achieved - intended untouched and show up here as off-diagonal mass.
+    """
+    labels = struct["bins"]["labels"]
+    confirmatory = [str(r) for r in struct["confirmatory"]]
+    stacked = np.array([struct["displacement"][r][arm]["matrix"] for r in confirmatory],
+                       dtype=float).sum(axis=0)
+    totals = stacked.sum(axis=1, keepdims=True)
+    shares = np.divide(stacked, totals, out=np.zeros_like(stacked), where=totals > 0)
+    fig, ax = plt.subplots(figsize=(7.0, 5.0))
+    image = ax.imshow(shares, aspect="auto", cmap="viridis", vmin=0.0, vmax=1.0)
+    ax.set_xlabel("true bin")
+    ax.set_ylabel("predicted bin")
+    ax.set_yticks(range(len(labels)))
+    ax.set_yticklabels(labels, fontsize=5)
+    ax.set_xticks(range(len(labels) + 2))
+    # > 6, not >= 6: this matrix is built with _true_bin, the generator's (lo, hi]
+    ax.set_xticklabels([*labels, "< 0.5", "> 6"], rotation=60, ha="right", fontsize=5)
+    ax.set_title(f"{arm}: where the selected points landed, r1-r5 pooled", fontsize=9)
+    fig.colorbar(image, ax=ax, label="share of the predicted bin")
+    fig.tight_layout()
+    return fig
+
+
+def structural_allocation_frame(struct: dict, arm: str) -> pd.DataFrame:
+    """Mean and sd over the confirmatory realizations, with r0 on its own rows."""
+    labels = struct["bins"]["labels"]
+    confirmatory = [str(r) for r in struct["confirmatory"]]
+    frames = []
+    for name, keys in (("r1-r5", confirmatory), ("r0 (exploratory)", ["0"])):
+        block = {"set": name, "bin": labels}
+        for column in ("seed", "intended", "achieved", "deviation"):
+            stacked = np.array([struct["allocation"][k][arm][column] for k in keys], dtype=float)
+            block[column] = stacked.mean(axis=0)
+            block[f"{column} sd"] = (stacked.std(axis=0, ddof=1) if len(keys) > 1
+                                     else np.full(len(labels), np.nan))
+        frame = pd.DataFrame(block)
+        # The set total goes on its own row. Broadcasting it down the bin column
+        # would read as a per-bin quantity, which it is not.
+        totals = np.array([struct["allocation"][k][arm]["abs_deviation"] for k in keys],
+                          dtype=float)
+        total_row = {column: np.nan for column in frame.columns}
+        total_row.update({"set": name, "bin": "Σ|deviation| (whole set)",
+                          "deviation": totals.mean(),
+                          "deviation sd": totals.std(ddof=1) if len(keys) > 1 else np.nan})
+        frames.append(pd.concat([frame, pd.DataFrame([total_row])], ignore_index=True))
+    return pd.concat(frames, ignore_index=True)
+
+
+def structural_batch_frame(struct: dict) -> pd.DataFrame:
+    """C-seq batch by batch and cumulatively, averaged over r1-r5, r0 apart."""
+    labels = struct["bins"]["labels"]
+    confirmatory = [str(r) for r in struct["confirmatory"]]
+    rows = []
+    for name, keys in (("r1-r5", confirmatory), ("r0 (exploratory)", ["0"])):
+        n_batches = len(struct["batches"][keys[0]])
+        for index in range(n_batches):
+            entries = [struct["batches"][k][index] for k in keys]
+            for b, label in enumerate(labels):
+                row = {"set": name, "batch": entries[0]["batch"], "bin": label}
+                for column, key in (("intended", "intended"), ("achieved", "achieved"),
+                                    ("cum. intended", "cumulative_intended"),
+                                    ("cum. achieved", "cumulative_achieved")):
+                    series = np.array([e[key][b] for e in entries], dtype=float)
+                    row[column] = float(series.mean())
+                    # the spread is the whole point of having five realizations
+                    row[f"{column} sd"] = (float(series.std(ddof=1)) if len(entries) > 1
+                                           else float("nan"))
+                rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def structural_displacement_frame(struct: dict) -> pd.DataFrame:
+    """Mean over the confirmatory realizations, with r0 kept as its own rows."""
+    confirmatory = {str(r) for r in struct["confirmatory"]}
+    rows = []
+    for realization, per_arm in struct["displacement"].items():
+        if realization != "0" and realization not in confirmatory:
+            continue
+        for arm, row in per_arm.items():
+            rows.append({"set": "r0 (exploratory)" if realization == "0" else "r1-r5",
+                         "arm": arm, "n": row["n"], "stayed": row["stayed"],
+                         "mean |Δbin|": row["mean_abs_shift"],
+                         "median |Δbin|": row["median_abs_shift"], "outside": row["outside"]})
+    frame = pd.DataFrame(rows)
+    grouped = frame.groupby(["arm", "set"], as_index=False)
+    means = grouped.mean(numeric_only=True)
+    spreads = grouped.std(numeric_only=True, ddof=1).drop(columns=["arm", "set"])
+    spreads.columns = [f"{column} sd" for column in spreads.columns]
+    return pd.concat([means, spreads], axis=1).sort_values(["arm", "set"])
+
+
+def structural_outside_frame(struct: dict) -> pd.DataFrame:
+    rows = [{"kind": r["kind"], "arm": r["arm"], "side": r["side"],
+             "family": r.get("family", "—"), "test": r.get("test", "—"),
+             "diff": r["diff"], "ci lo": r["ci"][0], "ci hi": r["ci"][1]}
+            for r in struct["outside"]]
+    return pd.DataFrame(rows).sort_values(["kind", "arm", "side"])
+
+
+# --- structural (Task 5 addendum): the C0 ablations --------------------------
+# Amendment 1, docs/predictions-and-outcomes.md. None of this enters the main
+# figure above or its concordance count; every row here joins arms trained on
+# different budgets, and both the panels and the tables say so.
+
+# Explicit by comparison, not by arm: a single panel already draws both
+# comparisons for one C0 arm, so a property cycle would conflate them.
+STRUCTURAL_ABLATION_COLORS = {"welch": "tab:red", "paired": "tab:purple"}
+
+
+def _ablation_budget_sentence(budgets: dict) -> str:
+    parts = ", ".join(f"{arm} ({n})" for arm, n in budgets.items())
+    return f"Budgets: {parts}. Every comparison above joins arms trained on different budgets."
+
+
+def fig_structural_ablation(struct: dict):
+    """One row per C0 arm, one column per family x test cell: the C0 - B
+    (Welch) and C - C0 (paired) differences per reporting bin, with the two
+    bins outside the selection range shaded apart from the fifteen inside it."""
+    ablation = struct["ablation"]
+    labels = ablation["labels"]
+    budgets = ablation["budgets"]
+    arms = sorted({r["arm"] for r in ablation["errors"]})
+    fig, axes = plt.subplots(len(arms), len(STRUCTURAL_CELLS),
+                             figsize=(11.0, 2.8 * len(arms)), squeeze=False)
+    for i, arm in enumerate(arms):
+        c_arm = next(r["first"] for r in ablation["errors"]
+                    if r["arm"] == arm and r["interval"] == "paired")
+        for j, (family, test) in enumerate(STRUCTURAL_CELLS):
+            ax = axes[i][j]
+            cell = [r for r in ablation["errors"]
+                    if r["arm"] == arm and r["family"] == family and r["test"] == test]
+            welch = sorted((r for r in cell if r["interval"] == "welch"),
+                           key=lambda r: r["reporting_bin"])
+            paired = sorted((r for r in cell if r["interval"] == "paired"),
+                            key=lambda r: r["reporting_bin"])
+            _structural_errorbar(ax, welch, STRUCTURAL_ABLATION_COLORS["welch"],
+                                 x_key="reporting_bin", label=f"{arm} ({budgets[arm]}) - B ({budgets['B']})")
+            _structural_errorbar(ax, paired, STRUCTURAL_ABLATION_COLORS["paired"],
+                                 x_key="reporting_bin",
+                                 label=f"{c_arm} ({budgets[c_arm]}) - {arm} ({budgets[arm]})")
+            ax.axhline(0.0, linewidth=0.8, color="black")
+            # the two bins outside the selection range, set apart visually
+            ax.axvspan(-0.5, 0.5, color="lightgrey", alpha=0.3, zorder=0)
+            ax.axvspan(len(labels) - 1.5, len(labels) - 0.5, color="lightgrey", alpha=0.3, zorder=0)
+            ax.set_xticks(range(len(labels)))
+            ax.set_xticklabels(labels, rotation=60, ha="right", fontsize=4)
+            if i == 0:
+                ax.set_title(f"{family.upper()}, {test}", fontsize=8)
+            if j == 0:
+                ax.set_ylabel(f"{arm} ({budgets[arm]}) vs {c_arm} ({budgets[c_arm]})/B ({budgets['B']})",
+                             fontsize=6)
+        axes[i][0].legend(fontsize=5, frameon=False)
+    fig.suptitle("C0 ablations: different budgets throughout (Δ log-RMSE)", fontsize=9)
+    fig.tight_layout()
+    return fig
+
+
+def structural_ablation_fraction_frame(struct: dict) -> pd.DataFrame:
+    """Per C0 arm and reporting bin: the mean C0 fraction, the mean B
+    fraction, and their difference. Fractions only, never raw counts, which
+    would carry the budget difference between C0 (300) and B (600)."""
+    rows = [{"arm": r["arm"], "bin": r["label"], "C0 fraction": r["first_mean"],
+             "B fraction": r["second_mean"], "diff": r["diff"],
+             "ci lo": r["ci"][0], "ci hi": r["ci"][1]}
+            for r in struct["ablation"]["fractions"]]
+    return pd.DataFrame(rows)
+
+
 def run() -> None:
     tables, figures = config.tables_dir(), config.figures_dir()
     _save_table(tables / "budget.tex", booktabs(
@@ -379,4 +619,60 @@ def run() -> None:
         _save_table(tables / "replications__interactions.tex", booktabs(
             replication_interaction_frame(rep), caption="Learner interaction: Welch interval on "
             "log(log-RMSE_rf) - log(log-RMSE_gbm) between arms.", label="tab:rep:interactions"))
+
+    if config.structural_metrics_path().exists():
+        struct = load_structural()
+        shared_note = struct["ablation"]["shared_rows"]["note"]
+        _save_figure(figures / "structural__bins.pdf", fig_structural(struct))
+        _save_table(tables / "structural__caption.tex", struct["figure_caption"] + "\n")
+        for arm in ("C-log", "C-seq"):
+            _save_figure(figures / f"structural__matrix_{arm.lower()}.pdf",
+                         fig_structural_matrix(struct, arm))
+            _save_table(tables / f"structural__allocation_{arm.lower()}.tex", booktabs(
+                structural_allocation_frame(struct, arm),
+                caption=f"Allocation fidelity for {arm}: mean and sd over the confirmatory "
+                        "realizations, r0 apart and exploratory. 'deviation' is achieved minus "
+                        "intended, the net distortion of the requested bin-count distribution "
+                        "and not the screener's prediction error. Selected equals intended by "
+                        "construction and is not shown.",
+                label=f"tab:structural:allocation:{arm.lower()}") + "\n" + shared_note + "\n")
+        _save_table(tables / "structural__batches.tex", booktabs(
+            structural_batch_frame(struct),
+            caption="C-seq batch by batch and cumulatively, averaged over the confirmatory "
+                    "realizations with r0 apart. Each batch reallocates against what the earlier "
+                    "batches actually returned; the cumulative columns show whether retraining "
+                    "corrects a deviation or moves it.",
+            label="tab:structural:batches") + "\n" + shared_note + "\n")
+        _save_table(tables / "structural__displacement.tex", booktabs(
+            structural_displacement_frame(struct),
+            caption="The screener on the points it selected: share staying in the predicted bin, "
+                    "absolute displacement in bins, share landing outside [0.5, 6]. Conditioned "
+                    "on selection, so this is its accuracy where it was used, not over the pool. "
+                    "The displacement columns cover only points whose true FOS stayed inside the "
+                    "selection range; the rest are counted by 'outside'.",
+            label="tab:structural:displacement") + "\n" + shared_note + "\n")
+        _save_table(tables / "structural__outside.tex", booktabs(
+            structural_outside_frame(struct),
+            caption="Outside the selection range, where nothing was allocated. 'density' rows are "
+                    "the spillover itself: training points that landed there although the gate is "
+                    "on a predicted FOS. 'error' rows are the test error in those bins. "
+                    "Differences against B with descriptive Welch intervals. Both sides are read "
+                    "from the replication metrics, so both use the half-open reporting zones and "
+                    "the outer bin is FOS >= 6.",
+            label="tab:structural:outside"))
+        # Task 5 addendum (Amendment 1): the C0 ablations. Supplementary; they
+        # never enter the main figure or the concordance count above.
+        _save_figure(figures / "structural__ablation.pdf", fig_structural_ablation(struct))
+        _save_table(tables / "structural__ablation_fractions.tex", booktabs(
+            structural_ablation_fraction_frame(struct),
+            caption="C0 training-distribution fractions n_bin / N_total against B (Welch), by "
+                    "reporting bin. Fractions only, never raw counts, because C0 trains on a "
+                    "different budget (300) than B (600).",
+            label="tab:structural:ablation:fractions"))
+        _save_table(tables / "structural__ablation_caption.tex",
+                    struct["ablation"]["procedure"] + "\n\n"
+                    + _ablation_budget_sentence(struct["ablation"]["budgets"]) + "\n")
+        _save_table(tables / "structural__original_c0.tex", struct["ablation"]["original_c0"] + "\n")
+    else:
+        print("[report] structural.json missing; run sgs structural")
     print(f"[report] wrote {tables} and {figures}")
