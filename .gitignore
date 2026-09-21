@@ -15,3 +15,6 @@ artifacts/
 # In-flight writes and the crash backup of the metadata file.
 **/.*.tmp
 data/run_metadata.json.bak
+
+# API keys and local secrets.
+.env
