@@ -191,3 +191,73 @@ def test_true_bin_boundaries_follow_the_generator():
     from collections import Counter
     tally = Counter(structural._true_bin(sample).tolist())
     assert [tally.get(b, 0) for b in range(config.N_BINS)] == counted.tolist()
+
+
+def _error_stub(diff_by_arm, *, thin_bin=None, realizations=(1, 2, 3, 4, 5)):
+    values = []
+    for family in config.REP_FAMILIES:
+        for test in config.TEST_ROLES:
+            for arm, err in diff_by_arm.items():
+                for r in realizations:
+                    bins = [{"n": 20, "log_rmse": err} for _ in range(config.N_BINS + 2)]
+                    if thin_bin is not None:
+                        bins[thin_bin + 1] = {"n": 3, "log_rmse": err}
+                    values.append({"family": family, "test": test, "arm": arm, "realization": r,
+                                   "train_counts": [0, *([1] * config.N_BINS), 0], "bins": bins})
+    return {"values": values}
+
+
+def test_error_rows_compare_each_arm_against_B_without_pairing():
+    stub = _error_stub({"B": 0.20, "C-log": 0.10, "C-seq": 0.15})
+    rows = [r for r in structural.error_rows(stub)
+            if r["arm"] == "C-log" and r["family"] == "rf" and r["test"] == config.TEST_ROLES[0]]
+    assert len(rows) == config.N_BINS
+    assert rows[0]["diff"] == pytest.approx(-0.10)
+    assert rows[0]["ci"] == [pytest.approx(-0.10), pytest.approx(-0.10)]   # zero variance
+    assert rows[0]["marked"] is False
+
+
+def test_error_rows_mark_thin_bins_without_dropping_them():
+    stub = _error_stub({"B": 0.2, "C-log": 0.1, "C-seq": 0.15}, thin_bin=0)
+    rows = [r for r in structural.error_rows(stub) if r["arm"] == "C-log"]
+    assert len({r["bin"] for r in rows}) == config.N_BINS      # none dropped
+    assert all(r["marked"] for r in rows if r["bin"] == 0)
+
+
+def test_error_rows_refuse_a_missing_arm():
+    """A whole arm must not be able to disappear in silence."""
+    rep = _error_stub({"B": 0.2, "C-log": 0.1})          # no C-seq at all
+    with pytest.raises(structural.StructuralError, match=r"\['C-seq'\] are missing"):
+        structural.error_rows(rep)
+
+
+def test_error_rows_refuse_a_missing_realization():
+    rep = _error_stub({"B": 0.2, "C-log": 0.1, "C-seq": 0.15}, realizations=(1, 2, 3, 4))
+    with pytest.raises(structural.StructuralError, match=r"\[5\] are missing"):
+        structural.error_rows(rep)
+
+
+def test_error_rows_refuse_a_test_count_that_differs_between_arms():
+    rep = _error_stub({"B": 0.2, "C-log": 0.1, "C-seq": 0.15})
+    rep["values"][0]["bins"][1] = {"n": 99, "log_rmse": 0.2}
+    with pytest.raises(structural.StructuralError, match="test count"):
+        structural.error_rows(rep)
+
+
+def test_concordance_separates_unmarked_bins_from_all_bins():
+    errors = [{"family": "rf", "test": "t", "arm": "C-log", "bin": b, "diff": d, "marked": m}
+              for b, (d, m) in enumerate([(-0.1, False), (+0.1, False), (+0.1, True), (0.0, False)])]
+    densities = [{"arm": "C-log", "bin": b, "diff": d}
+                 for b, d in enumerate([+5.0, -5.0, -5.0, +5.0])]
+    got = structural.concordance(errors, densities)[0]
+    assert (got["k"], got["n"], got["zero"]) == (2, 2, 1)       # unmarked only
+    assert (got["k_all"], got["n_all"]) == (3, 3)               # the marked bin agrees too
+    assert got["thin"] == 1
+
+
+def test_build_is_deterministic(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "structural_metrics_path", lambda: tmp_path / "structural.json")
+    structural.run()
+    first = (tmp_path / "structural.json").read_bytes()
+    structural.run()
+    assert (tmp_path / "structural.json").read_bytes() == first

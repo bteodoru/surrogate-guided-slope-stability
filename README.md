@@ -54,6 +54,13 @@ design, a results file or a fit no longer matches the current configuration or
 data; `--force` regenerates. All scientific parameters live in
 `sgs/config.py`; none are accepted on the command line.
 
+`sgs structural` is optional as well and is not part of `sgs all`: it reads
+`outputs/metrics/replications.json`, `data/run_metadata.json` and the stored
+designs, and writes `outputs/metrics/structural.json` in seconds. It touches no
+generation path and refits nothing. Its procedure is declared in
+`docs/predictions-and-outcomes.md`, and what it may and may not claim is in
+`CLAUDE.md`.
+
 ## Data
 
 Dataset: [Zenodo, concept DOI 10.5281/zenodo.20706202](https://doi.org/10.5281/zenodo.20706202).

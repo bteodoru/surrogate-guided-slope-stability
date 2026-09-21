@@ -129,3 +129,10 @@ def test_replicate_command_takes_only_execution_controls():
     from sgs import cli
     args = cli.build_parser().parse_args(["replicate", "--workers", "2", "--force"])
     assert args.workers == 2 and args.force and args.handler is cli._replicate
+
+
+def test_structural_command_is_registered_without_scientific_parameters():
+    parser = cli.build_parser()
+    args = parser.parse_args(["structural"])
+    assert args.handler.__name__ == "_structural"
+    assert not hasattr(args, "role") and not hasattr(args, "workers")

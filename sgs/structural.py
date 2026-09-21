@@ -233,3 +233,212 @@ def displacement_rows(realization: int) -> dict[str, dict]:
                     "outside": float(np.mean(~inside)),
                     "matrix": matrix.tolist()}
     return out
+
+
+ARMS_VS_B = ("C-log", "C-seq")
+# Both sides of these rows come from replications.json, whose bins and
+# train_counts are built with evaluate._zone_mask, i.e. [lo, hi). So the outer
+# bin is "at or above 6" for the density and for the error alike. The generator's
+# (lo, hi] convention governs the allocation and displacement rows instead.
+OUTSIDE_SIDES = {"below 0.5": 0, "at or above 6": config.N_BINS + 1}
+
+
+def _ordered(rows, family, test, arm) -> list[dict]:
+    """The rows of one cell and arm, validated, in realization order."""
+    chosen = [r for r in rows if r["family"] == family and r["test"] == test and r["arm"] == arm]
+    where = f"{family}/{test}/{arm}"
+    seen = [r["realization"] for r in chosen]
+    if len(seen) != len(set(seen)):
+        raise StructuralError(f"{where}: more than one row for a realization")
+    check_realizations(seen, where)
+    return sorted(chosen, key=lambda r: r["realization"])
+
+
+REQUIRED_ARMS = ("B", *ARMS_VS_B)
+
+
+def _require_arms(found, where: str) -> None:
+    """B and both guided arms must be present.
+
+    Deriving the arm list from whatever the artifact happens to contain would let
+    a whole arm vanish in silence: the analysis would simply not mention C-seq.
+    """
+    missing = [arm for arm in REQUIRED_ARMS if arm not in set(found)]
+    if missing:
+        raise StructuralError(f"{where}: arms {missing} are missing")
+
+
+def _check_by_arm(keyed, where: str) -> list[int]:
+    """Every required arm must carry every confirmatory realization.
+
+    Checking the union would pass when C-log is missing r5 but B and C-seq are
+    not, and the omission would surface later as a KeyError.
+    """
+    _require_arms({a for a, _ in keyed}, where)
+    for arm in REQUIRED_ARMS:
+        check_realizations({r for a, r in keyed if a == arm}, f"{where}/{arm}")
+    return sorted(range(1, config.REP_REALIZATIONS + 1))
+
+
+def _bin_series(ordered_rows, index: int, key: str) -> np.ndarray:
+    """One value per realization; `index` counts in-range bins, offset by the
+    below-range bin at position 0."""
+    return np.array([r["bins"][index + 1][key] for r in ordered_rows], dtype=float)
+
+
+def error_rows(rep: dict) -> list[dict]:
+    """Per (family, test, arm, in-range bin): the difference in mean log-RMSE
+    against B and a descriptive Welch interval over the five realizations."""
+    values, rows = _confirmatory(rep), []
+    _require_arms({r["arm"] for r in values}, "errors")
+    for family in config.REP_FAMILIES:
+        for test in config.TEST_ROLES:
+            for arm in ARMS_VS_B:
+                arm_rows = _ordered(values, family, test, arm)
+                base_rows = _ordered(values, family, test, "B")
+                for b in range(config.N_BINS):
+                    counts = set(_bin_series(arm_rows, b, "n").tolist()
+                                 + _bin_series(base_rows, b, "n").tolist())
+                    if len(counts) != 1:
+                        raise StructuralError(
+                            f"{test} bin {b}: test count differs between arms or "
+                            f"realizations ({sorted(counts)}); it depends only on the test set")
+                    test_n = int(counts.pop())
+                    interval = evaluate.welch_interval(_bin_series(arm_rows, b, "log_rmse"),
+                                                       _bin_series(base_rows, b, "log_rmse"),
+                                                       config.REP_CI)
+                    rows.append({"family": family, "test": test, "arm": arm, "bin": b,
+                                 "test_n": test_n,
+                                 "marked": test_n < config.STRUCTURAL_MIN_TEST_N, **interval})
+    return rows
+
+
+def density_diff_rows(rep: dict) -> list[dict]:
+    """Per (arm, in-range bin): the difference in mean training count against B,
+    with a descriptive Welch interval. Raw counts; no family, no test."""
+    density, rows = density_rows(rep), []
+    realizations = _check_by_arm(density, "density")
+    for arm in ARMS_VS_B:
+        for b in range(config.N_BINS):
+            a = np.array([density[(arm, r)][b] for r in realizations], dtype=float)
+            base = np.array([density[("B", r)][b] for r in realizations], dtype=float)
+            rows.append({"arm": arm, "bin": b, **evaluate.welch_interval(a, base, config.REP_CI)})
+    return rows
+
+
+def outside_rows(rep: dict) -> list[dict]:
+    """The two bins outside the selection range, on both sides of the question.
+
+    `kind="density"` is the spillover itself: how many training points landed
+    outside although nothing was allocated there. `kind="error"` is the test
+    error in those bins. A table that reported only the second would describe
+    tail error, not spillover.
+    """
+    values, rows = _confirmatory(rep), []
+    outside = outside_density_rows(rep)
+    realizations = _check_by_arm(outside, "outside density")
+    for arm in ARMS_VS_B:
+        for side, index in OUTSIDE_SIDES.items():
+            column = 0 if index == 0 else 1
+            a = np.array([outside[(arm, r)][column] for r in realizations], dtype=float)
+            base = np.array([outside[("B", r)][column] for r in realizations], dtype=float)
+            rows.append({"kind": "density", "arm": arm, "side": side,
+                         **evaluate.welch_interval(a, base, config.REP_CI)})
+            for family in config.REP_FAMILIES:
+                for test in config.TEST_ROLES:
+                    arm_rows = _ordered(values, family, test, arm)
+                    base_rows = _ordered(values, family, test, "B")
+                    ea = np.array([r["bins"][index]["log_rmse"] for r in arm_rows], dtype=float)
+                    eb = np.array([r["bins"][index]["log_rmse"] for r in base_rows], dtype=float)
+                    rows.append({"kind": "error", "family": family, "test": test, "arm": arm,
+                                 "side": side, **evaluate.welch_interval(ea, eb, config.REP_CI)})
+    return rows
+
+
+def concordance(error_rows_, density_diff_rows_) -> list[dict]:
+    """k of n bins where the two differences have opposite signs.
+
+    The criterion is (delta density) x (delta log-RMSE) < 0, in both directions.
+    The primary count covers the unmarked bins only, because no sentence may rest
+    on a thin bin; the `_all` fields repeat it over all 15 as a descriptive
+    sensitivity. Bins where either difference is exactly zero leave the
+    denominator. A count, with no test attached.
+    """
+    density = {(r["arm"], r["bin"]): r["diff"] for r in density_diff_rows_}
+    tally: dict[tuple[str, str, str], dict] = {}
+    for row in error_rows_:
+        cell = tally.setdefault((row["family"], row["test"], row["arm"]),
+                                {"k": 0, "n": 0, "zero": 0, "k_all": 0, "n_all": 0,
+                                 "zero_all": 0, "thin": 0})
+        e, d = row["diff"], density[(row["arm"], row["bin"])]
+        opposite = int(e * d < 0)
+        if e == 0.0 or d == 0.0:
+            cell["zero_all"] += 1
+        else:
+            cell["n_all"] += 1
+            cell["k_all"] += opposite
+        if row["marked"]:
+            cell["thin"] += 1
+            continue
+        if e == 0.0 or d == 0.0:
+            cell["zero"] += 1
+        else:
+            cell["n"] += 1
+            cell["k"] += opposite
+    return [{"family": f, "test": t, "arm": a, **cell} for (f, t, a), cell in tally.items()]
+
+
+FIGURE_CAPTION = (
+    "Per-bin training density and per-bin error, both as a difference against B, over the five "
+    "confirmatory realizations. Every interval, on the density panel and on the error panels "
+    "alike, visualizes variability between designs and constitutes no test; the fifteen intervals "
+    "are a diagnostic, not fifteen tests. The pattern is consistent with density-driven "
+    "relocation; it is not evidence that density caused it. The small numbers above the error "
+    "panels are the test points per bin. Hollow markers, on the error panels, are bins with "
+    "fewer than {min_n} of them; they are shown but carry no statement in the text. Both the "
+    "densities and the errors in this figure are read from the replication metrics and use the "
+    "half-open reporting zones; the allocation and displacement tables use the generator's "
+    "binning instead, which differs only on an exact bin edge.")
+
+PROCEDURE = (
+    "Descriptive. No new hypothesis test or inferential claim is introduced; Welch intervals are "
+    "reused solely to visualize between-design uncertainty at bin level. Confirmatory "
+    "realizations r1..r5; r0 is reported apart and never averaged into a confirmatory mean. "
+    "15 geometric bins inside the selection range; the two bins outside have no defined intended "
+    "density and appear in the supplementary rows, as spillover and tail behaviour, never as "
+    "truncation. Bins with fewer than STRUCTURAL_MIN_TEST_N test points are marked, never "
+    "dropped, and the concordance count is primarily over the unmarked bins. Concordance is the "
+    "count of bins with (delta density) x (delta log-RMSE) < 0; bins with either difference "
+    "exactly zero leave the denominator. achieved - intended is the net distortion of the "
+    "requested bin-count distribution, not the screener's prediction error; the displacement rows "
+    "describe the screener on the points it selected, conditioned on selection, and their shift "
+    "statistics cover only points whose true FOS stayed inside the selection range.")
+
+
+def build() -> dict:
+    rep = json.loads(config.replication_metrics_path().read_text())
+    errors = error_rows(rep)
+    densities = density_diff_rows(rep)
+    everything = (0, *range(1, config.REP_REALIZATIONS + 1))
+    return {
+        "procedure": PROCEDURE,
+        "figure_caption": FIGURE_CAPTION.format(min_n=config.STRUCTURAL_MIN_TEST_N),
+        "bins": {"edges": EDGES().tolist(), "labels": bin_labels()},
+        "min_test_n": config.STRUCTURAL_MIN_TEST_N,
+        "confirmatory": list(range(1, config.REP_REALIZATIONS + 1)),
+        "errors": errors,
+        "densities": densities,
+        "outside": outside_rows(rep),
+        "concordance": concordance(errors, densities),
+        "allocation": {str(r): allocation_rows(r) for r in everything},
+        "batches": {str(r): batch_allocation_rows(r) for r in everything},
+        "displacement": {str(r): displacement_rows(r) for r in everything},
+    }
+
+
+def run() -> None:
+    payload = build()
+    path = config.structural_metrics_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n")
+    print(f"[structural] wrote {path.name}")
