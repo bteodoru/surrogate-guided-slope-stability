@@ -92,6 +92,7 @@ def generate(role: str, *, workers: int = 1, force: bool = False) -> dict:
              "solver_fingerprint": fingerprint,
              "results_sha256": data.sha256_file(results_path),
              "final_sha256": data.sha256_file(final_path), "repair": repair,
+             "non_converged": data.non_converged(data.read_table(final_path)),
              "environment": data.environment()}
     unchanged = previous and {k: v for k, v in previous.items() if k != "updated"} == entry
     entry["updated"] = (previous["updated"] if unchanged

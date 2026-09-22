@@ -194,6 +194,7 @@ def generate_set(key: str, strategy: str, realization: int, batch: int, *, worke
         raise ReplicationError(f"{key}: {'; '.join(problems)}")
     entry = {**info, "n": n, "repair": repair, "environment": data.environment(),
              "solver_fingerprint": fingerprint,
+             "non_converged": data.non_converged(data.read_table(paths["final"])),
              **{f"{stage}_sha256": data.sha256_file(path) for stage, path in
                 (("design", paths["designs"]), ("results", paths["results"]), ("final", paths["final"]))},
              "updated": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")}

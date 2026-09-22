@@ -128,6 +128,22 @@ def test_a_modified_final_is_rederived_from_the_results(fake_solver):
     assert final.read_bytes() == original and len(fake_solver) == 300
 
 
+def test_generate_records_non_converged_rows(root, monkeypatch):
+    calls = []
+
+    def first_stops_early(combo):
+        row = fake_analyse(combo)
+        if not calls:
+            row["Search_Converged"] = False
+        calls.append(combo)
+        return row
+
+    monkeypatch.setattr(solver, "analyse", first_stops_early)
+    entry = cli.generate("seed")
+    assert entry["non_converged"] == [0]
+    assert data.frame_problems(data.read_table(config.final_path("seed")), 300) == []
+
+
 def test_learning_curve_fits_then_evaluates(monkeypatch):
     from sgs import evaluate, models
 

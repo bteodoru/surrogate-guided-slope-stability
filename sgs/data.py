@@ -68,6 +68,14 @@ def usable(frame: pd.DataFrame) -> pd.DataFrame:
     return frame.loc[(frame["excluded"] == "") & frame["FOS"].notna()]
 
 
+def non_converged(frame: pd.DataFrame) -> list[int]:
+    """Kept rows whose circular search stopped at SOLVER.search_max_iter before
+    meeting its tolerance. Reported, not rejected: the five in the data, solved
+    again to convergence, moved in the fourth decimal of FOS (2026-09-22)."""
+    kept = frame["excluded"] == ""
+    return [int(i) for i in np.flatnonzero(kept & ~is_true(frame["Search_Converged"]))]
+
+
 def normalize(frame: pd.DataFrame) -> np.ndarray:
     lo = np.array([config.DOMAIN[p][0] for p in config.PARAMS], dtype=float)
     hi = np.array([config.DOMAIN[p][1] for p in config.PARAMS], dtype=float)
