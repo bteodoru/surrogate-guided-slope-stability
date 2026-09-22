@@ -187,7 +187,7 @@ a new test set costs seconds.
 
 ## Publishing
 
-Dataset on Zenodo, concept DOI 10.5281/zenodo.20706202. Old files stay so DOIs
-resolve; corrected data goes out as a new version under the same concept DOI
-with a note on the old one and the name mapping in `data/README.md`. Where
+Zenodo concept DOI 10.5281/zenodo.20706202 holds the earlier HYRCAN data only.
+The xslope data are unpublished; whether they go out as a new version under
+that concept DOI or as a separate deposit is undecided. Where
 `artifacts/fits/` lives at publication is undecided.
