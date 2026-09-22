@@ -127,15 +127,20 @@ def initialize_model(H, angle, phi, c, gamma, ext_factor=None, depth_factor=None
 
 
 def surface_limits(best):
-    """Bounds of the clipped critical arc; xslope's ``Depth`` is an elevation."""
+    """Bounds of the clipped critical arc, and the full circle's lowest point.
+
+    ``Surface_Min_Y`` is the arc's lowest point, which the boundary check uses.
+    xslope's ``Depth`` is the elevation of the *circle's* nadir (``Yo - R``). It
+    lies on the arc only when the centre is above it: for a toe circle whose
+    centre sits left of the arc it is below the failure surface."""
     failure_surface = best.get("failure_surface")
     if failure_surface is None or failure_surface.is_empty:
         raise RuntimeError("xslope did not return the critical failure surface")
-    left, _, right, _ = map(float, failure_surface.bounds)
-    return left, right, float(best["Depth"])
+    left, bottom, right, _ = map(float, failure_surface.bounds)
+    return left, right, bottom, float(best["Depth"])
 
 
-def check_boundary(surface_left, surface_right, surface_depth, geometry, H):
+def check_boundary(surface_left, surface_right, surface_min_y, geometry, H):
     """Flag a critical surface that reaches an analysis-domain boundary."""
     domain_left = -geometry["depth"]
     domain_right = geometry["slope_length"] + geometry["extension"]
@@ -146,7 +151,7 @@ def check_boundary(surface_left, surface_right, surface_depth, geometry, H):
         flags.append("left_boundary")
     if surface_right >= domain_right - tol:
         flags.append("right_boundary")
-    if surface_depth <= domain_bottom + tol:
+    if surface_min_y <= domain_bottom + tol:
         flags.append("bottom_boundary")
     return bool(flags), flags
 
@@ -180,10 +185,10 @@ def search(angle, phi, c, gamma, H, ext_factor=None, depth_factor=None) -> dict:
 def calculate_fos(angle, phi, c, gamma, H, ext_factor=None, depth_factor=None) -> dict:
     """One xslope/Bishop circular search. ``fos`` is None on solver error."""
     started = time.perf_counter()
-    result = {"fos": None, "surface_left": None, "surface_right": None, "surface_depth": None,
-              "cx": None, "cy": None, "radius": None, "at_boundary": None, "boundary_flags": [],
-              "search_converged": False, "n_circles_tested": 0, "n_valid_surfaces": 0,
-              "n_unsolved": 0, "warnings": "", "error": "", "runtime_s": None}
+    result = {"fos": None, "surface_left": None, "surface_right": None, "surface_min_y": None,
+              "circle_nadir_y": None, "cx": None, "cy": None, "radius": None, "at_boundary": None,
+              "boundary_flags": [], "search_converged": False, "n_circles_tested": 0,
+              "n_valid_surfaces": 0, "n_unsolved": 0, "warnings": "", "error": "", "runtime_s": None}
     try:
         found = search(angle, phi, c, gamma, H, ext_factor, depth_factor)
         geometry, fs_cache, converged, circle_cache, unsolved = (
@@ -192,13 +197,13 @@ def calculate_fos(angle, phi, c, gamma, H, ext_factor=None, depth_factor=None) -
             raise RuntimeError("xslope circular search returned no valid surface")
         best = fs_cache[0]
         cy = float(best["Yo"])
-        surface_left, surface_right, surface_depth = surface_limits(best)
-        at_boundary, flags = check_boundary(surface_left, surface_right, surface_depth, geometry, H)
+        surface_left, surface_right, surface_min_y, circle_nadir_y = surface_limits(best)
+        at_boundary, flags = check_boundary(surface_left, surface_right, surface_min_y, geometry, H)
         solver_result = best.get("solver_result") or {}
         result.update(
             fos=float(best["FS"]), surface_left=surface_left, surface_right=surface_right,
-            surface_depth=surface_depth, cx=float(best["Xo"]), cy=cy,
-            radius=cy - float(best["Depth"]), at_boundary=at_boundary, boundary_flags=flags,
+            surface_min_y=surface_min_y, circle_nadir_y=circle_nadir_y, cx=float(best["Xo"]), cy=cy,
+            radius=cy - circle_nadir_y, at_boundary=at_boundary, boundary_flags=flags,
             search_converged=bool(converged), n_circles_tested=len(circle_cache),
             n_valid_surfaces=len(fs_cache), n_unsolved=int(unsolved.get("unsolved", 0)),
             warnings=" | ".join(map(str, solver_result.get("warnings", []))),
@@ -224,10 +229,11 @@ def analysis_row(combo, analysis: dict, ext_factor=None, depth_factor=None) -> d
         "FOS": r6(analysis["fos"]),
         "Surface_L": r6(analysis["surface_left"]),
         "Surface_R": r6(analysis["surface_right"]),
-        "Surface_Depth": r6(analysis["surface_depth"]),
+        "Surface_Min_Y": r6(analysis["surface_min_y"]),
         "Center_X": r6(analysis["cx"]),
         "Center_Y": r6(analysis["cy"]),
         "Radius": r6(analysis["radius"]),
+        "Circle_Nadir_Y": r6(analysis["circle_nadir_y"]),
         "At_Boundary": analysis["at_boundary"] if solved else "",
         "slope_length": round(slope_length, 6),
         "extension": round(extension, 6),

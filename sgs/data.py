@@ -22,8 +22,8 @@ from sgs import config
 RESULT_COLUMNS = [
     *config.PARAMS,
     "FOS",
-    "Surface_L", "Surface_R", "Surface_Depth",
-    "Center_X", "Center_Y", "Radius",
+    "Surface_L", "Surface_R", "Surface_Min_Y",
+    "Center_X", "Center_Y", "Radius", "Circle_Nadir_Y",
     "At_Boundary",
     "slope_length", "extension", "depth",
     "Search_Converged", "N_Circles_Tested", "N_Valid_Surfaces", "N_Unsolved",

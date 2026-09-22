@@ -24,8 +24,8 @@ def test_boundary_flags():
 
 
 def _analysis(fos=1.5, at_boundary=False):
-    return {"fos": fos, "surface_left": 0.1, "surface_right": 9.0, "surface_depth": -1.0,
-            "cx": 2.0, "cy": 8.0, "radius": 9.0, "at_boundary": at_boundary,
+    return {"fos": fos, "surface_left": 0.1, "surface_right": 9.0, "surface_min_y": 0.2,
+            "circle_nadir_y": -1.0, "cx": 2.0, "cy": 8.0, "radius": 9.0, "at_boundary": at_boundary,
             "boundary_flags": [], "search_converged": True, "n_circles_tested": 10,
             "n_valid_surfaces": 5, "n_unsolved": 0, "warnings": "", "error": "",
             "runtime_s": 1.23456}
@@ -36,9 +36,26 @@ def test_analysis_row_schema_for_solved_and_failed_cases():
     solved = solver.analysis_row(combo, _analysis())
     assert list(solved) == data.RESULT_COLUMNS
     assert solved["FOS"] == 1.5 and solved["Error"] == "" and solved["Runtime_s"] == 1.235
+    assert solved["Surface_Min_Y"] == 0.2 and solved["Circle_Nadir_Y"] == -1.0
     failed = solver.analysis_row(combo, {**_analysis(fos=None), "error": "RuntimeError: x"})
     assert failed["FOS"] == "" and failed["At_Boundary"] == "" and failed["Error"] == "RuntimeError: x"
     assert failed["slope_length"] == 10.0
+
+
+def test_surface_limits_take_the_arc_minimum_not_the_circle_nadir():
+    from shapely.geometry import LineString
+    # A toe circle: its centre lies left of the arc, so the full circle's
+    # lowest point is well below the lowest point of the failure surface.
+    best = {"failure_surface": LineString([(0.0, 0.1), (5.0, 3.0), (10.0, 8.0)]), "Depth": -12.0}
+    assert solver.surface_limits(best) == (0.0, 10.0, 0.1, -12.0)
+
+
+def test_a_circle_nadir_below_the_bottom_is_not_a_bottom_flag():
+    geometry = {"depth": 10.0, "slope_length": 10.0, "extension": 15.0}
+    from shapely.geometry import LineString
+    best = {"failure_surface": LineString([(0.0, 0.1), (5.0, 3.0), (10.0, 8.0)]), "Depth": -12.0}
+    left, right, surface_min_y, _ = solver.surface_limits(best)
+    assert solver.check_boundary(left, right, surface_min_y, geometry, 10.0) == (False, [])
 
 
 def _combos(n=7):
@@ -111,3 +128,4 @@ def test_one_real_analysis():
     assert row["Error"] == ""
     assert abs(row["FOS"] - 3.171339) < 1e-4
     assert row["At_Boundary"] is False
+    assert row["Surface_Min_Y"] >= row["Circle_Nadir_Y"]
