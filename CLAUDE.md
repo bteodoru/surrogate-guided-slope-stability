@@ -178,8 +178,12 @@ without loading their contents), refusing to render if they mismatch. Provenance
 ## Performance notes
 
 Estimators get `n_jobs=1`; the search gets `n_jobs=-1`. The reverse
-oversubscribes cores. The searches of `sgs fit` are test-independent, so
-evaluating on a new test set costs seconds.
+oversubscribes cores. `sgs.cli` also defaults `OMP_NUM_THREADS=1`: on top of
+the searches' workers, HistGradientBoosting's OpenMP threads drove the load
+average to 47–106 on 8 cores. On one GBM unit (arm B, log-rmse) it cut the fit
+from 16 to 13 min with bit-identical parameters, CV scores and predictions
+(2026-09-22). The searches of `sgs fit` are test-independent, so evaluating on
+a new test set costs seconds.
 
 ## Publishing
 

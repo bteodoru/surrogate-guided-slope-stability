@@ -16,6 +16,13 @@ role and controls execution.
 
 from __future__ import annotations
 
+import os
+
+# One OpenMP thread per process: the grid searches already use every core
+# (n_jobs=-1), and HistGradientBoosting's own threads on top of them
+# oversubscribed the machine. Measured identical results, see CLAUDE.md.
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+
 import argparse
 import datetime as _dt
 import platform

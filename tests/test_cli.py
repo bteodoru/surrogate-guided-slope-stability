@@ -136,3 +136,11 @@ def test_structural_command_is_registered_without_scientific_parameters():
     args = parser.parse_args(["structural"])
     assert args.handler.__name__ == "_structural"
     assert not hasattr(args, "role") and not hasattr(args, "workers")
+
+
+def test_cli_defaults_openmp_to_one_thread():
+    import subprocess, sys
+    code = ("import os; os.environ.pop('OMP_NUM_THREADS', None); import sgs.cli; "
+            "print(os.environ['OMP_NUM_THREADS'])")
+    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True)
+    assert out.stdout.strip() == "1"
