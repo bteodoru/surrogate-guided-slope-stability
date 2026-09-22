@@ -164,6 +164,15 @@ def test_subsample_semantics():
     assert len(large) == 13 and set(seed_df["row_id"]) <= set(large["row_id"])
 
 
+def test_subsample_takes_the_whole_pool_in_canonical_order():
+    # At the full pool the curve's last point must be the arm's own training
+    # frame, row for row: the RF bootstrap depends on row order.
+    seed_df = pd.DataFrame({"row_id": [f"s{i}" for i in range(10)]})
+    extra = pd.DataFrame({"row_id": [f"e{i}" for i in range(10)]})
+    full = models.subsample(seed_df, extra, 20, models.unit_rng(20, 0))
+    assert full["row_id"].tolist() == seed_df["row_id"].tolist() + extra["row_id"].tolist()
+
+
 def test_unit_rng_is_keyed_on_budget_and_repeat():
     draw = lambda b, r: models.unit_rng(b, r).integers(0, 10**9)
     assert draw(100, 0) == draw(100, 0)
