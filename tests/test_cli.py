@@ -88,6 +88,46 @@ def test_results_from_another_design_are_refused(fake_solver):
         cli.generate("seed")
 
 
+def test_generate_records_the_solver_fingerprint(fake_solver):
+    entry = cli.generate("seed")
+    assert entry["solver_fingerprint"] == config.solver_fingerprint()
+
+
+def test_results_under_other_solver_settings_are_refused(fake_solver, monkeypatch):
+    cli.generate("seed")
+    monkeypatch.setattr(config, "REPAIR_VARIANTS", ((2.0, None),))
+    with pytest.raises(cli.GenerateError, match="solver settings"):
+        cli.generate("seed")
+    cli.generate("seed", force=True)
+    assert len(fake_solver) == 600
+
+
+def test_an_entry_without_a_fingerprint_is_refused(fake_solver):
+    cli.generate("seed")
+    entry = data.read_metadata()["datasets"]["seed"]
+    del entry["solver_fingerprint"]
+    data.record("datasets", "seed", entry)
+    with pytest.raises(cli.GenerateError, match="solver settings"):
+        cli.generate("seed")
+
+
+def test_modified_results_are_refused(fake_solver):
+    cli.generate("seed")
+    with config.results_path("seed").open("a") as stream:
+        stream.write("\n")
+    with pytest.raises(cli.GenerateError, match="not the file"):
+        cli.generate("seed")
+
+
+def test_a_modified_final_is_rederived_from_the_results(fake_solver):
+    cli.generate("seed")
+    final = config.final_path("seed")
+    original = final.read_bytes()
+    final.write_bytes(original + b"\n")
+    cli.generate("seed")
+    assert final.read_bytes() == original and len(fake_solver) == 300
+
+
 def test_learning_curve_fits_then_evaluates(monkeypatch):
     from sgs import evaluate, models
 
