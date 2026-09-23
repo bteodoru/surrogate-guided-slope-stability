@@ -215,6 +215,15 @@ ROLES = {
 ROLE_ORDER = ("seed", "lhs-extension", "guided", "test-natural", "test-stratified", "guided-log",
               "guided-seq-1", "guided-seq-2", "guided-seq-3")
 
+# Role pairs that are alternatives: two designs of the same budget that are never
+# used in one training set. guided-log and guided-log-g draw from the SAME pool
+# and differ only in the screener, so shared points are expected; forcing one to
+# avoid the other would make the intervention "GBM screener, minus whatever the
+# RF already took". The overlap is reported instead (report.py).
+# Replications need no entry here: replicate.build_design assembles its own
+# references and never takes the other strategy's set as one.
+ALTERNATIVES = frozenset({frozenset({"guided-log", "guided-log-g"})})
+
 # The preliminary surrogate. Fixed hyper-parameters, not a tuned search: it
 # screens the candidate pools and is not one of the models under comparison.
 # One entry per family. The GBM values are those of LC_PARAMS["gbm"], copied

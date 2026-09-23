@@ -205,3 +205,22 @@ def test_load_final_prefixes_row_ids_and_adds_features(tmp_path):
     assert frame["row_id"].iloc[0] == "rep:x:0" and "gamma_H_c" in frame and len(frame) == 12
     with pytest.raises(FileNotFoundError, match="missing.csv"):
         data.load_final(tmp_path / "missing.csv", "rep:y")
+
+
+def test_validate_sets_skips_declared_alternatives(root, monkeypatch):
+    shrink_roles(monkeypatch, {"seed": 40, "guided-log": 40, "lhs-extension": 40})
+    frame = synthetic_final(40, 5)
+    write_final("seed", synthetic_final(40, 6))
+    write_final("guided-log", frame)
+    write_final("lhs-extension", frame)          # a deliberate duplicate of guided-log
+    monkeypatch.setattr(config, "ALTERNATIVES",
+                        frozenset({frozenset({"guided-log", "lhs-extension"})}))
+    data.validate_sets(("seed", "guided-log", "lhs-extension"))   # must not raise
+
+    monkeypatch.setattr(config, "ALTERNATIVES", frozenset())
+    with pytest.raises(data.DataError, match="not disjoint"):
+        data.validate_sets(("seed", "guided-log", "lhs-extension"))
+
+
+def test_alternatives_declares_the_two_guided_log_roles():
+    assert frozenset({"guided-log", "guided-log-g"}) in config.ALTERNATIVES

@@ -167,10 +167,13 @@ def set_problems(frame: pd.DataFrame, role: str) -> list[str]:
 
 
 def validate_sets(roles) -> None:
-    """Fail unless every set is clean and every pair is disjoint."""
+    """Fail unless every set is clean and every pair is disjoint. Pairs declared in
+    config.ALTERNATIVES are exempt: they are alternative designs, never used together."""
     frames = {role: _final_table(role) for role in roles}
     problems = [f"{role}: {p}" for role, frame in frames.items() for p in set_problems(frame, role)]
     for a, b in itertools.combinations(sorted(frames), 2):
+        if frozenset({a, b}) in config.ALTERNATIVES:
+            continue
         closest = float(cKDTree(normalize(frames[b])).query(normalize(frames[a]), k=1)[0].min())
         if closest <= config.MIN_DISTANCE:
             problems.append(f"{a}/{b}: not disjoint (closest cross pair {closest:.2e})")
