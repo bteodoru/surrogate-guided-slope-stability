@@ -1,6 +1,6 @@
 \begin{table}[htbp]
 \centering
-\caption{Log-RMSE on the decision range, test-natural, every realization; r0 = existing sets (exploratory). Common fixed hyper-parameters. C0-log and C0-seq are ablations without the seed and carry no budget: they train on 300 points against the 600 of B, C-log and C-seq.}
+\caption{Log-RMSE on the decision range, test-natural, every realization; r0 = existing sets (exploratory). Common fixed hyper-parameters. C0-log, C0-seq and C0-logG are ablations without the seed and carry no budget: they train on 300 points against the 600 of B, C-log, C-seq and C-logG.}
 \label{tab:rep:test-natural:values}
 \begin{tabular}{lrrrrrrrrr}
 \toprule
@@ -9,14 +9,18 @@ family & arm & r0 (exploratory) & r1 & r2 & r3 & r4 & r5 & mean & sd \\
 gbm & A & 0.076 & -- & -- & -- & -- & -- & -- & -- \\
 gbm & B & 0.050 & 0.050 & 0.052 & 0.050 & 0.051 & 0.043 & 0.049 & 0.003 \\
 gbm & C-log & 0.052 & 0.061 & 0.052 & 0.061 & 0.052 & 0.065 & 0.058 & 0.006 \\
+gbm & C-logG & 0.056 & 0.056 & 0.052 & 0.053 & 0.052 & 0.048 & 0.052 & 0.003 \\
 gbm & C-seq & 0.053 & 0.057 & 0.050 & 0.046 & 0.058 & 0.056 & 0.053 & 0.005 \\
 gbm & C0-log & 0.091 & 0.095 & 0.101 & 0.101 & 0.089 & 0.096 & 0.096 & 0.005 \\
+gbm & C0-logG & 0.116 & 0.103 & 0.104 & 0.113 & 0.105 & 0.093 & 0.104 & 0.007 \\
 gbm & C0-seq & 0.116 & 0.115 & 0.143 & 0.096 & 0.134 & 0.107 & 0.119 & 0.019 \\
 rf & A & 0.140 & -- & -- & -- & -- & -- & -- & -- \\
 rf & B & 0.098 & 0.104 & 0.109 & 0.114 & 0.104 & 0.090 & 0.104 & 0.009 \\
 rf & C-log & 0.119 & 0.100 & 0.096 & 0.094 & 0.089 & 0.097 & 0.095 & 0.004 \\
+rf & C-logG & 0.096 & 0.106 & 0.100 & 0.089 & 0.090 & 0.100 & 0.097 & 0.007 \\
 rf & C-seq & 0.095 & 0.129 & 0.103 & 0.088 & 0.103 & 0.106 & 0.106 & 0.015 \\
 rf & C0-log & 0.195 & 0.132 & 0.142 & 0.160 & 0.165 & 0.161 & 0.152 & 0.014 \\
+rf & C0-logG & 0.160 & 0.209 & 0.182 & 0.172 & 0.136 & 0.184 & 0.176 & 0.026 \\
 rf & C0-seq & 0.208 & 0.182 & 0.237 & 0.175 & 0.181 & 0.183 & 0.191 & 0.026 \\
 \bottomrule
 \end{tabular}

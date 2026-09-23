@@ -8,6 +8,8 @@ kind & arm & side & family & test & test n & thin & diff & ci lo & ci hi \\
 \midrule
 density & C-log & at or above 6 & -- & -- & -- & -- & -0.400 & -3.364 & 2.564 \\
 density & C-log & below 0.5 & -- & -- & -- & -- & 35.800 & 29.077 & 42.523 \\
+density & C-logG & at or above 6 & -- & -- & -- & -- & -15.800 & -20.143 & -11.457 \\
+density & C-logG & below 0.5 & -- & -- & -- & -- & 14.400 & 7.526 & 21.274 \\
 density & C-seq & at or above 6 & -- & -- & -- & -- & -0.600 & -5.427 & 4.227 \\
 density & C-seq & below 0.5 & -- & -- & -- & -- & 26.600 & 22.385 & 30.815 \\
 error & C-log & at or above 6 & rf & test-natural & 24 & no & -0.034 & -0.066 & -0.001 \\
@@ -18,6 +20,14 @@ error & C-log & below 0.5 & rf & test-natural & 10 & no & -0.056 & -0.145 & 0.03
 error & C-log & below 0.5 & rf & test-stratified & 3 & yes & -0.089 & -0.196 & 0.018 \\
 error & C-log & below 0.5 & gbm & test-natural & 10 & no & -0.023 & -0.065 & 0.018 \\
 error & C-log & below 0.5 & gbm & test-stratified & 3 & yes & -0.026 & -0.080 & 0.029 \\
+error & C-logG & at or above 6 & rf & test-natural & 24 & no & 0.027 & -0.004 & 0.057 \\
+error & C-logG & at or above 6 & rf & test-stratified & 23 & no & 0.041 & -0.001 & 0.084 \\
+error & C-logG & at or above 6 & gbm & test-natural & 24 & no & 0.030 & 0.018 & 0.041 \\
+error & C-logG & at or above 6 & gbm & test-stratified & 23 & no & 0.008 & -0.008 & 0.024 \\
+error & C-logG & below 0.5 & rf & test-natural & 10 & no & 0.044 & -0.045 & 0.133 \\
+error & C-logG & below 0.5 & rf & test-stratified & 3 & yes & -0.058 & -0.145 & 0.029 \\
+error & C-logG & below 0.5 & gbm & test-natural & 10 & no & 0.004 & -0.033 & 0.041 \\
+error & C-logG & below 0.5 & gbm & test-stratified & 3 & yes & -0.007 & -0.063 & 0.050 \\
 error & C-seq & at or above 6 & rf & test-natural & 24 & no & -0.023 & -0.054 & 0.008 \\
 error & C-seq & at or above 6 & rf & test-stratified & 23 & no & -0.049 & -0.094 & -0.003 \\
 error & C-seq & at or above 6 & gbm & test-natural & 24 & no & 0.035 & 0.022 & 0.048 \\
