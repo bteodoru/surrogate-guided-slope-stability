@@ -169,7 +169,7 @@ def test_sequential_arms_and_comparisons():
 def test_replication_declaration():
     assert config.REP_REALIZATIONS == 5 and config.REP_EXTENSION == 300
     assert config.REP_SEQ_BATCHES == (100, 100, 100) and sum(config.REP_SEQ_BATCHES) == config.REP_EXTENSION
-    assert config.REP_STRATEGIES == ("lhs", "guided-log", "guided-seq")
+    assert config.REP_STRATEGIES == ("lhs", "guided-log", "guided-seq", "guided-log-g")
     assert set(config.REP_FAMILIES) <= set(config.LC_FAMILIES)
     arms = {"A", "B", "C-log", "C0-log", "C-seq", "C0-seq"}
     for pairs in (config.REP_WELCH, config.REP_PAIRED, config.REP_INTERACTIONS):
