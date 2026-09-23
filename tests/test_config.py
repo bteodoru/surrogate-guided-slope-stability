@@ -183,6 +183,18 @@ def test_replication_fingerprint_follows_its_settings(monkeypatch):
     assert config.replication_fingerprint("rf") != before
 
 
+def test_replication_fingerprint_covers_the_stream_alias(monkeypatch):
+    before = config.replication_fingerprint("rf")
+    monkeypatch.setattr(config, "REP_SEED_STREAM", {})
+    assert config.replication_fingerprint("rf") != before
+
+
+def test_replication_fingerprint_covers_the_screener_registry(monkeypatch):
+    before = config.replication_fingerprint("rf")
+    monkeypatch.setitem(config.SCREENERS, "gbm", {**config.SCREENERS["gbm"], "max_iter": 4000})
+    assert config.replication_fingerprint("rf") != before
+
+
 def test_replication_paths_follow_root(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "ROOT", tmp_path)
     assert config.replication_path("final", "lhs_r1") == tmp_path / "data" / "replications" / "final" / "lhs_r1.csv"

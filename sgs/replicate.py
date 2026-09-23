@@ -219,7 +219,7 @@ def generate_all(*, workers: int, force: bool = False, fn=None) -> None:
 
 # --- fitting (fixed hyper-parameters) --------------------------------------------------------
 
-REP_ARMS = ("A", "B", "C-log", "C0-log", "C-seq", "C0-seq")
+REP_ARMS = ("A", "B", "C-log", "C0-log", "C-seq", "C0-seq", "C-logG", "C0-logG")
 SEQ_ROLES_R0 = tuple(f"guided-seq-{b}" for b in range(1, 4))
 
 
@@ -229,17 +229,20 @@ def arm_frames(realization: int) -> dict[str, pd.DataFrame]:
     seed = data.load_role("seed")
     if realization == 0:
         extension, guided = data.load_role("lhs-extension"), data.load_role("guided-log")
+        guided_g = data.load_role("guided-log-g")
         batches = [data.load_role(role) for role in SEQ_ROLES_R0]
         out = {"A": seed}
     else:
         keys = [key for key, _, _ in set_keys(realization)]
         extension, guided = load_set(keys[0]), load_set(keys[1])
-        batches = [load_set(key) for key in keys[2:]]
+        guided_g = load_set(keys[2])
+        batches = [load_set(key) for key in keys[3:]]
         out = {}
     sequential = pd.concat(batches, ignore_index=True)
     out.update({"B": pd.concat([seed, extension], ignore_index=True),
                 "C-log": pd.concat([seed, guided], ignore_index=True), "C0-log": guided,
-                "C-seq": pd.concat([seed, sequential], ignore_index=True), "C0-seq": sequential})
+                "C-seq": pd.concat([seed, sequential], ignore_index=True), "C0-seq": sequential,
+                "C-logG": pd.concat([seed, guided_g], ignore_index=True), "C0-logG": guided_g})
     return out
 
 

@@ -486,6 +486,8 @@ def replication_fingerprint(family: str) -> str:
         "fixed": ESTIMATOR_FIXED[family], "params": LC_PARAMS[family],
         "seeds": {k: SEEDS[k] for k in ("protocol_estimator", "replication_design")},
         "target": TARGET, "features": FEATURES,
+        "seed_stream": REP_SEED_STREAM, "screeners": SCREENERS,
+        "screener_family": REP_SCREENER_FAMILY,
     })
 
 

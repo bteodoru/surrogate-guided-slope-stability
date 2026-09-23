@@ -269,10 +269,11 @@ def small_fit(small_reps, monkeypatch):
     monkeypatch.setattr(config, "ESTIMATOR_FIXED", {"rf": {"n_estimators": 20}, "gbm": {"early_stopping": False}})
     monkeypatch.setitem(config.LC_PARAMS, "gbm", {**config.LC_PARAMS["gbm"], "max_iter": 20})
     # r0 roles: the existing main-pipeline sets, synthetic here
-    shrink_roles(monkeypatch, {"lhs-extension": 20, "guided-log": 20, "guided-seq-1": 10, "guided-seq-2": 10,
-                               "guided-seq-3": 10})
+    shrink_roles(monkeypatch, {"lhs-extension": 20, "guided-log": 20, "guided-log-g": 20, "guided-seq-1": 10,
+                               "guided-seq-2": 10, "guided-seq-3": 10})
     monkeypatch.setattr(config, "REP_SEQ_BATCHES", (10, 10, 10))
-    for i, role in enumerate(("lhs-extension", "guided-log", "guided-seq-1", "guided-seq-2", "guided-seq-3")):
+    for i, role in enumerate(("lhs-extension", "guided-log", "guided-log-g", "guided-seq-1", "guided-seq-2",
+                              "guided-seq-3")):
         write_final(role, synthetic_final(config.ROLES[role].n, 80 + i))
     replicate.generate_all(workers=1, fn=fake_analyse)
 
@@ -283,6 +284,16 @@ def test_arm_frames_compose_seed_and_added_points(small_fit):
     assert len(r1["B"]) == 300 + config.REP_EXTENSION and len(r1["C0-seq"]) == sum(config.REP_SEQ_BATCHES)
     assert r1["C-log"]["row_id"].str.startswith("rep:guided_log_r1").sum() == config.REP_EXTENSION
     assert len(r0["C-seq"]) == 300 + 30 and len(r0["A"]) == 300
+
+
+def test_arm_frames_carry_the_gbm_arms(monkeypatch, root):
+    # Eight arms at r0 (A included), seven at r1..r5.
+    monkeypatch.setattr(replicate, "load_set", lambda key: synthetic_final(10, hash(key) % 97))
+    monkeypatch.setattr(data, "load_role", lambda role: synthetic_final(10, 1))
+    assert set(replicate.arm_frames(1)) == {"B", "C-log", "C0-log", "C-seq", "C0-seq",
+                                            "C-logG", "C0-logG"}
+    assert set(replicate.arm_frames(0)) == {"A", "B", "C-log", "C0-log", "C-seq", "C0-seq",
+                                            "C-logG", "C0-logG"}
 
 
 def test_fit_all_is_cached_and_refuses_stale_state(small_fit, monkeypatch):
