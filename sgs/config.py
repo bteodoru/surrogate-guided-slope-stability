@@ -413,7 +413,15 @@ LC_PARAMS = {
 # same way as realization r0 and reported apart, as exploratory: they shaped
 # the variants and the predictions.
 REP_REALIZATIONS = 5
-REP_STRATEGIES = ("lhs", "guided-log", "guided-seq")
+REP_STRATEGIES = ("lhs", "guided-log", "guided-seq", "guided-log-g")
+# The replication seed names the realization's DRAW STREAM, not the strategy.
+# guided-log-g must see the same 200k pool as guided-log, or the screener and the
+# available candidates would change at once and the comparison would stop being an
+# intervention on the screener alone. Appending above leaves every existing index,
+# and therefore every existing replication seed, unchanged.
+REP_SEED_STREAM = {"guided-log-g": "guided-log"}
+# Which screener each strategy uses; absent means SCREENER["family"].
+REP_SCREENER_FAMILY = {"guided-log-g": "gbm"}
 REP_EXTENSION = 300
 REP_SEQ_BATCHES = (100, 100, 100)
 REP_FAMILIES = ("rf", "gbm")

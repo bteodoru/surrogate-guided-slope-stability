@@ -47,15 +47,21 @@ class ReplicationError(RuntimeError):
 # --- generation ------------------------------------------------------------------------------
 
 def rep_seed(strategy: str, realization: int, batch: int = 0) -> int:
+    stream = config.REP_SEED_STREAM.get(strategy, strategy)
     sequence = np.random.SeedSequence(config.SEEDS["replication_design"],
-                                      spawn_key=(config.REP_STRATEGIES.index(strategy), realization, batch))
+                                      spawn_key=(config.REP_STRATEGIES.index(stream), realization, batch))
     return int(sequence.generate_state(1)[0])
+
+
+def strategy_family(strategy: str) -> str:
+    return config.REP_SCREENER_FAMILY.get(strategy, config.SCREENER["family"])
 
 
 def set_keys(realization: int) -> list[tuple[str, str, int]]:
     """(key, strategy, batch) of one realization, in generation order."""
     r = realization
-    keys = [(f"lhs_r{r}", "lhs", 0), (f"guided_log_r{r}", "guided-log", 0)]
+    keys = [(f"lhs_r{r}", "lhs", 0), (f"guided_log_r{r}", "guided-log", 0),
+            (f"guided_log_g_r{r}", "guided-log-g", 0)]
     keys += [(f"guided_seq_r{r}_b{b}", "guided-seq", b) for b in range(1, len(config.REP_SEQ_BATCHES) + 1)]
     return keys
 
@@ -93,7 +99,7 @@ def build_design(key: str, strategy: str, realization: int, batch: int) -> tuple
         for k in earlier:
             references[k] = read_set_design(k)
         training = pd.concat([data.load_role("seed"), *(load_set(k) for k in earlier)], ignore_index=True)
-        model, diagnostics = design.fit_screener(training, config.SCREENER["family"])
+        model, diagnostics = design.fit_screener(training, strategy_family(strategy))
         edges = design.bin_edges_log(config.N_BINS, config.SELECTION_RANGE)
         have = design.bin_counts(training["FOS"].to_numpy(float), edges)
         allocation = design.deficit_allocation(have, n)

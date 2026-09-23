@@ -38,8 +38,40 @@ def test_rep_seed_is_derived_and_distinct():
                 replicate.rep_seed("guided-seq", 1, 1), replicate.rep_seed("guided-seq", 1, 2)}) == 5
 
 
+def test_the_gbm_strategy_shares_the_c_log_stream():
+    for r in range(1, config.REP_REALIZATIONS + 1):
+        assert replicate.rep_seed("guided-log-g", r) == replicate.rep_seed("guided-log", r)
+
+
+def test_existing_replication_seeds_are_untouched():
+    # Appending a strategy must not move the existing indices.
+    assert config.REP_STRATEGIES[:3] == ("lhs", "guided-log", "guided-seq")
+    assert replicate.rep_seed("lhs", 3) != replicate.rep_seed("guided-log", 3)
+
+
+def test_the_two_screeners_see_the_same_pool():
+    for r in (1, 3):
+        pools = [design.uniform_pool(np.random.default_rng(replicate.rep_seed(s, r)),
+                                     config.N_GUIDED_POOL)
+                 for s in ("guided-log", "guided-log-g")]
+        pd.testing.assert_frame_equal(pools[0], pools[1])   # row for row
+
+
+def test_set_keys_include_the_gbm_strategy():
+    keys = replicate.set_keys(2)
+    assert ("guided_log_g_r2", "guided-log-g", 0) in keys
+    assert ("guided_log_r2", "guided-log", 0) in keys
+
+
+def test_strategy_family():
+    assert replicate.strategy_family("guided-log") == "rf"
+    assert replicate.strategy_family("guided-log-g") == "gbm"
+    assert replicate.strategy_family("guided-seq") == "rf"
+
+
 def test_set_keys_order(small_reps):
     assert replicate.set_keys(1) == [("lhs_r1", "lhs", 0), ("guided_log_r1", "guided-log", 0),
+                                     ("guided_log_g_r1", "guided-log-g", 0),
                                      ("guided_seq_r1_b1", "guided-seq", 1),
                                      ("guided_seq_r1_b2", "guided-seq", 2)]
 
