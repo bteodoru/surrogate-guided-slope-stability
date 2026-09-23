@@ -475,6 +475,22 @@ REP_INTERACTIONS = (
 RELOCATION_MARGIN = 1.10
 RELOCATION_MIN_CELLS = 3
 
+# Predictions for the GBM-screener arm, declared 2026-09-23 BEFORE any C-logG
+# point was generated (spec 2026-09-23 §10). Every quantity is a paired difference
+# between the GBM and the RF design of the same realization, delta = GBM - RF.
+# Stage 1 (training data only, before any test evaluation):
+#   allocation closer: mean delta of sum |achieved - intended| <= -10 points, and
+#     delta < 0 in at least 4 of 5 realizations;
+#   secondary: mean delta of the share staying in the bin its prediction implies
+#     >= +10 pp, and mean delta of mean |displacement| <= -0.15 bins, each with the
+#     anticipated sign in at least 4 of 5 realizations;
+#   points realizing below 0.5 and above 6: reported separately and directionally,
+#     no threshold.
+# Stage 2 (test): the relocation gate and the readings of RELOCATION_MARGIN above.
+# Levels for C-logG against B on the decision range: 1 point improvement,
+# 2 interval entirely below 0 in one cell, 3 in all four learner x test cells.
+# Only level 3 reopens the seed study.
+
 
 # --- fingerprints -------------------------------------------------------------------
 
