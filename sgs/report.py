@@ -371,8 +371,9 @@ def check_structural_fresh(struct: dict) -> None:
         if not isinstance(hashes, dict) or hashes.get("realization") is None:
             raise StaleStructuralError(f"provenance of {label} carries no realization; "
                                        "rerun `sgs structural`")
-    # Per realization: one guided-log set and one set per C-seq batch, r0 included.
-    expected = 1 + len(config.REP_SEQ_BATCHES)
+    # Per realization: one set per guided strategy and one per C-seq batch, r0 included.
+    expected = sum(len(config.REP_SEQ_BATCHES) if s == "guided-seq" else 1
+                   for s in config.REP_STRATEGIES if s != "lhs")
     found = {r: sum(1 for h in sets.values() if h["realization"] == r)
              for r in range(config.REP_REALIZATIONS + 1)}
     unknown = sorted({h["realization"] for h in sets.values()} - set(found), key=str)

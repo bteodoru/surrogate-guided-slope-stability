@@ -401,10 +401,11 @@ def test_run_writes_structural_outputs_when_present(root, monkeypatch):
 
 
 def _set_labels():
-    """The full manifest: guided-log and every C-seq batch, for r0 and r1..rN."""
-    labels = {0: ["guided-log", *(f"guided-seq-{b}" for b in range(1, len(config.REP_SEQ_BATCHES) + 1))]}
+    """The full manifest: guided-log, guided-log-g and every C-seq batch, for r0 and r1..rN."""
+    labels = {0: ["guided-log", "guided-log-g",
+                  *(f"guided-seq-{b}" for b in range(1, len(config.REP_SEQ_BATCHES) + 1))]}
     for r in range(1, config.REP_REALIZATIONS + 1):
-        labels[r] = [f"guided_log_r{r}",
+        labels[r] = [f"guided_log_r{r}", f"guided_log_g_r{r}",
                      *(f"guided_seq_r{r}_b{b}" for b in range(1, len(config.REP_SEQ_BATCHES) + 1))]
     return labels
 

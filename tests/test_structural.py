@@ -9,23 +9,15 @@ from sgs import config, data, design, evaluate, replicate, structural
 
 @pytest.fixture
 def guided_log_g_stub(tmp_path, monkeypatch):
-    """Real guided-log-g data (the GBM-screener design) has not been generated
-    yet: the actual pipeline rerun for the GBM-screener arm is deferred past
-    this task (docs/superpowers/plans/2026-09-23-gbm-screener-arm.md, Task 10,
-    which the executor stops before). Stand in with guided-log's own committed
-    metadata, design, final and replication-metrics rows so the real-artifact
-    integration tests below exercise the new C-logG/C0-logG code paths end to
-    end without requiring the actual GBM run. Every C-logG/C0-logG number
-    these tests see is therefore numerically identical to C-log's/C0-log's and
-    carries no claim about the real screener; only the code path (a distinct
-    arm key, read through its own role/set names) is under test here.
-
-    TODO: once Task 10's pipeline rerun produces real guided-log-g data (real
-    entries in data/run_metadata.json and outputs/metrics/replications.json,
-    real design/final CSVs), remove this fixture and the tests that depend on
-    it, or point them at the real data instead — otherwise it keeps aliasing
-    C-logG to C-log's files and silently masking whatever the real GBM
-    screener actually does."""
+    """Alias C-logG to C-log: guided-log's own metadata, design, final and
+    replication-metrics rows stand in for guided-log-g's, replacing the real
+    ones, so the real-artifact integration tests below exercise the
+    C-logG/C0-logG code paths against an exact expected value (the swap test:
+    zero allocation gap, full overlap). Every C-logG/C0-logG number these tests
+    see is therefore C-log's/C0-log's and carries no claim about the real
+    screener; only the code path (a distinct arm key, read through its own
+    role/set names) is under test here. The real GBM-screener numbers are
+    checked by `sgs structural` itself on the real data."""
     meta = structural._metadata()
     synthetic = json.loads(json.dumps(meta))
     synthetic["datasets"]["guided-log-g"] = json.loads(json.dumps(meta["datasets"]["guided-log"]))
@@ -49,9 +41,11 @@ def guided_log_g_stub(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "replication_path", _replication_path)
 
     # build()/error_rows()/ablation_error_rows() also require C-logG/C0-logG
-    # rows in replications.json itself; clone them from C-log/C0-log.
+    # rows in replications.json itself; clone them from C-log/C0-log, replacing
+    # the real ones so the alias is the same in the rows as in the files.
     real_replication_metrics_path = config.replication_metrics_path
     rep = json.loads(real_replication_metrics_path().read_text())
+    rep["values"] = [row for row in rep["values"] if row["arm"] not in ("C-logG", "C0-logG")]
     clones = []
     for row in rep["values"]:
         if row["arm"] in ("C-log", "C0-log"):
