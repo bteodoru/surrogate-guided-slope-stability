@@ -50,3 +50,24 @@ def tiny_protocol(root, monkeypatch):
     shrink_roles(monkeypatch, {"seed": 60, "lhs-extension": 60, "guided": 60})
     for i, role in enumerate(("seed", "lhs-extension", "guided")):
         write_final(role, synthetic_final(60, 10 + i))
+
+
+@pytest.fixture
+def pool_roles(root, monkeypatch):
+    """Two sub-pools, five bins, a small cap and chunk, and synthetic seed and test sets."""
+    import pandas as pd
+
+    from tests.helpers import shrink_roles, synthetic_final, write_final
+
+    monkeypatch.setattr(config, "REP_REALIZATIONS", 2)
+    monkeypatch.setattr(config, "N_BINS", 5)
+    monkeypatch.setattr(config, "POOL_CAP", 400)
+    monkeypatch.setattr(config, "POOL_CHUNK", 40)
+    shrink_roles(monkeypatch, {"seed": 300, "test-natural": 60, "test-stratified": 60})
+    for i, role in enumerate(("seed", *config.TEST_ROLES)):
+        frame = synthetic_final(300 if role == "seed" else 60, 50 + i)
+        write_final(role, frame)
+        path = config.design_path(role)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        frame[list(config.PARAMS)].to_csv(path, index=False)
+    return root
