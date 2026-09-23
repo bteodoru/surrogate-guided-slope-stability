@@ -166,14 +166,37 @@ def test_sequential_arms_and_comparisons():
     assert new <= set(pairs) and all(pairs[p] == "two-sided" for p in new)
 
 
+def test_the_gbm_comparisons_are_all_two_sided():
+    entries = {(c.first, c.second): c for c in config.COMPARISONS}
+    for pair in (("C-logG", "B"), ("C-logG", "A"), ("C-logG", "C-log"),
+                 ("C-logG", "C0-logG"), ("C0-logG", "B")):
+        assert entries[pair].alternative == "two-sided"   # post hoc choice of screener
+        assert entries[pair].hypothesised is False
+
+
+def test_the_gbm_arm_intervals():
+    assert ("C-logG", "C-log") in config.REP_PAIRED       # shared pool and allocation
+    assert ("C-logG", "C0-logG") in config.REP_PAIRED     # shared points
+    assert ("C-logG", "B") in config.REP_WELCH
+    assert ("C0-logG", "B") in config.REP_WELCH
+
+
+def test_interaction_methods_are_declared():
+    methods = {(i.first, i.second): i.method for i in config.REP_INTERACTIONS}
+    assert methods[("C-log", "B")] == "welch"
+    assert methods[("C-logG", "B")] == "welch"
+    assert methods[("C-logG", "C-log")] == "paired"
+
+
 def test_replication_declaration():
     assert config.REP_REALIZATIONS == 5 and config.REP_EXTENSION == 300
     assert config.REP_SEQ_BATCHES == (100, 100, 100) and sum(config.REP_SEQ_BATCHES) == config.REP_EXTENSION
     assert config.REP_STRATEGIES == ("lhs", "guided-log", "guided-seq", "guided-log-g")
     assert set(config.REP_FAMILIES) <= set(config.LC_FAMILIES)
-    arms = {"A", "B", "C-log", "C0-log", "C-seq", "C0-seq"}
-    for pairs in (config.REP_WELCH, config.REP_PAIRED, config.REP_INTERACTIONS):
+    arms = {"A", "B", "C-log", "C0-log", "C-seq", "C0-seq", "C-logG", "C0-logG"}
+    for pairs in (config.REP_WELCH, config.REP_PAIRED):
         assert all(first in arms and second in arms for first, second in pairs)
+    assert all(i.first in arms and i.second in arms for i in config.REP_INTERACTIONS)
 
 
 def test_replication_fingerprint_follows_its_settings(monkeypatch):

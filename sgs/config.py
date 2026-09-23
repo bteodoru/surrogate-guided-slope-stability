@@ -378,6 +378,12 @@ COMPARISONS = (
     Comparison("C-seq", "C-log", alternative="two-sided", hypothesised=False),
     Comparison("C-seq", "C0-seq", alternative="two-sided", hypothesised=False),
     Comparison("C0-seq", "B", alternative="two-sided", hypothesised=False),
+    # C-logG: the GBM screener is a post hoc choice, so every entry is two-sided.
+    Comparison("C-logG", "B", alternative="two-sided", hypothesised=False),
+    Comparison("C-logG", "A", alternative="two-sided", hypothesised=False),
+    Comparison("C-logG", "C-log", alternative="two-sided", hypothesised=False),
+    Comparison("C-logG", "C0-logG", alternative="two-sided", hypothesised=False),
+    Comparison("C0-logG", "B", alternative="two-sided", hypothesised=False),
 )
 
 
@@ -433,12 +439,28 @@ REP_CI = 0.95
 STRUCTURAL_MIN_TEST_N = 10
 # Independent arms (no common factor pairs realization i of one arm with
 # realization i of the other): Welch interval.
-REP_WELCH = (("C-log", "B"), ("C-seq", "B"), ("C0-log", "B"), ("C0-seq", "B"), ("C-seq", "C-log"))
+REP_WELCH = (("C-log", "B"), ("C-seq", "B"), ("C0-log", "B"), ("C0-seq", "B"), ("C-seq", "C-log"),
+             ("C-logG", "B"), ("C0-logG", "B"))
 # Arms sharing points within a realization: paired interval.
-REP_PAIRED = (("C-log", "C0-log"), ("C-seq", "C0-seq"))
-# Learner interaction: per generated set, log(log-RMSE_rf) - log(log-RMSE_gbm)
-# (a natural pair); Welch between the two arms on that contrast.
-REP_INTERACTIONS = (("C-log", "B"), ("C-seq", "B"))
+REP_PAIRED = (("C-log", "C0-log"), ("C-seq", "C0-seq"), ("C-logG", "C-log"), ("C-logG", "C0-logG"))
+
+
+@dataclass(frozen=True)
+class Interaction:
+    first: str
+    second: str
+    method: str          # "welch" | "paired"
+
+
+# Learner interaction: per generated set, log(log-RMSE_rf) - log(log-RMSE_gbm).
+# C-logG and C-log share the realization, the seed, the pool and the intended
+# allocation, so their interaction is paired; Welch would discard that pairing.
+REP_INTERACTIONS = (
+    Interaction("C-log", "B", method="welch"),
+    Interaction("C-seq", "B", method="welch"),
+    Interaction("C-logG", "B", method="welch"),
+    Interaction("C-logG", "C-log", method="paired"),
+)
 # Predictions, declared with the above:
 #   decision range: for neither C-log nor C-seq is the Welch interval against B
 #   entirely below 0 in all four family x test cells;

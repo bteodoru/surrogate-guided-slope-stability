@@ -300,6 +300,24 @@ def test_prob_less_paired_counts_within_realization_pairs_and_halves_ties():
     assert evaluate.prob_less_paired([1.0], [1.0]) == pytest.approx(0.5)
 
 
+def test_paired_interaction_is_a_difference_in_differences(monkeypatch):
+    calls = []
+    real_welch = evaluate.welch_interval
+    monkeypatch.setattr(evaluate, "welch_interval",
+                        lambda a, b, level: calls.append("welch") or real_welch(a, b, level))
+    rf = {"X": [1.0, 2.0, 3.0, 4.0, 5.0], "Y": [1.0, 1.0, 1.0, 1.0, 1.0]}
+    gbm = {"X": [2.0, 2.0, 2.0, 2.0, 2.0], "Y": [1.0, 1.0, 1.0, 1.0, 1.0]}
+    rows = evaluate.interaction_rows(
+        series=lambda fam, test, arm, measure: (rf if fam == "rf" else gbm)[arm],
+        tests=("test-natural",), measures=("decision",),
+        interactions=(config.Interaction("X", "Y", method="paired"),), level=0.95)
+    expected = [np.log(a) - np.log(b) for a, b in zip(rf["X"], gbm["X"])]   # D_rf - D_gbm, Y cancels
+    assert rows[0]["method"] == "paired"
+    assert rows[0]["diff"] == pytest.approx(float(np.mean(expected)))
+    assert rows[0]["df"] == 4                     # n - 1 over the five realizations
+    assert calls == []                            # never falls back to Welch
+
+
 def _fake_units(tests, realizations=(0, 1, 2, 3), scale=None):
     """units shaped like replicate.load_units(): arm error grows with its scale."""
     scale = scale or {"A": 0.30, "B": 0.10, "C-log": 0.12, "C0-log": 0.25, "C-seq": 0.11, "C0-seq": 0.24}
@@ -321,7 +339,8 @@ def _fake_units(tests, realizations=(0, 1, 2, 3), scale=None):
 
 REP_KW = dict(zones=config.ZONE_EDGES, bins=(0.5, 1.0, 2.0, 6.0), selection_range=config.SELECTION_RANGE,
               decision_range=config.DECISION_RANGE, level=0.95, welch=(("C-seq", "B"), ("C-log", "B")),
-              paired=(("C-seq", "C0-seq"),), interactions=(("C-seq", "B"),))
+              paired=(("C-seq", "C0-seq"),),
+              interactions=(config.Interaction("C-seq", "B", method="welch"),))
 
 
 def test_replication_metrics_separate_r0_and_compare_confirmatory_realizations():

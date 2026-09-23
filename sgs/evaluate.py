@@ -462,6 +462,29 @@ REPLICATION_PROCEDURE = (
     "`sgs evaluate`, and the two components are never combined.")
 
 
+def interaction_rows(*, series, tests, measures, interactions, level: float) -> list[dict]:
+    """Learner-contrast rows. The paired method is a difference-in-differences inside
+    the realization; it is used where the two arms share a realization's pool."""
+    rows = []
+    for test in tests:
+        for measure in measures:
+            for spec in interactions:
+                deltas = {}
+                for arm in (spec.first, spec.second):
+                    rf, gbm = series("rf", test, arm, measure), series("gbm", test, arm, measure)
+                    deltas[arm] = None if rf is None or gbm is None else list(np.log(rf) - np.log(gbm))
+                if deltas[spec.first] is None or deltas[spec.second] is None:
+                    continue
+                interval = (paired_interval(deltas[spec.first], deltas[spec.second], level)
+                            if spec.method == "paired"
+                            else welch_interval(deltas[spec.first], deltas[spec.second], level))
+                rows.append({"test": test, "measure": measure, "first": spec.first,
+                             "second": spec.second, "method": spec.method, **interval,
+                             "first_values": [float(x) for x in deltas[spec.first]],
+                             "second_values": [float(x) for x in deltas[spec.second]]})
+    return rows
+
+
 def _measure_value(row: dict, measure: str):
     if measure in row["subsets"]:
         return row["subsets"][measure]["log_rmse"]
@@ -526,19 +549,8 @@ def replication_metrics(units: Mapping, tests: Mapping[str, data.TestSet], *, zo
                                                 "scale": scale, **interval, "p_first_less": p_less,
                                                 "first_values": a, "second_values": b})
     if {"rf", "gbm"} <= set(families):
-        for test in tests:
-            for measure in measures:
-                for first, second in interactions:
-                    deltas = {}
-                    for arm in (first, second):
-                        rf, gbm = series("rf", test, arm, measure), series("gbm", test, arm, measure)
-                        deltas[arm] = None if rf is None or gbm is None else list(np.log(rf) - np.log(gbm))
-                    if deltas[first] is None or deltas[second] is None:
-                        continue
-                    inter.append({"test": test, "measure": measure, "first": first, "second": second,
-                                  **welch_interval(deltas[first], deltas[second], level),
-                                  "first_values": [float(x) for x in deltas[first]],
-                                  "second_values": [float(x) for x in deltas[second]]})
+        inter = interaction_rows(series=series, tests=tests, measures=measures,
+                                 interactions=interactions, level=level)
     return {"procedure": REPLICATION_PROCEDURE, "realizations": realizations, "confirmatory": confirm,
             "values": values, "summaries": summaries, "comparisons": comparisons, "interactions": inter}
 
