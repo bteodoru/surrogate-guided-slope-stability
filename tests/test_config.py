@@ -204,4 +204,32 @@ def test_screener_registry_declares_both_families():
 
 
 def test_existing_roles_do_not_declare_a_family():
-    assert all(spec.screener_family is None for spec in config.ROLES.values())
+    # guided-log-g intentionally declares gbm as its screener_family; all others use the default.
+    assert all(spec.screener_family is None for name, spec in config.ROLES.items() if name != "guided-log-g")
+
+
+def test_guided_log_g_reuses_the_c_log_stream_and_adds_no_seed():
+    spec = config.ROLES["guided-log-g"]
+    assert spec.seeds == ("guided_log_stream",)        # the same pool as C-log
+    assert spec.screener_family == "gbm" and spec.screener is True
+    assert spec.n == 300 and spec.design == "guided-log-deficit"
+    assert spec.stem == "surrogate_guided_log_g_300"
+    assert config.ROLE_ORDER[-1] == "guided-log-g"
+
+
+def test_guided_log_g_is_disjoint_from_everything_except_c_log():
+    spec = config.ROLES["guided-log-g"]
+    earlier = [r for r in config.ROLE_ORDER if r != "guided-log-g"]
+    assert set(spec.disjoint_from) == set(earlier) - {"guided-log"}
+
+
+def test_the_gbm_screener_arms():
+    assert config.ARMS["C-logG"].roles == ("seed", "guided-log-g")
+    assert config.ARMS["C-logG"].budget == 600 and config.ARMS["C-logG"].ablation is False
+    assert config.ARMS["C0-logG"].roles == ("guided-log-g",)
+    assert config.ARMS["C0-logG"].budget is None and config.ARMS["C0-logG"].ablation is True
+
+
+def test_the_gbm_arm_is_not_in_the_learning_curve():
+    # Neither C-log nor C-logG is; the curve compares lhs-extension and guided.
+    assert set(config.LC_STRATEGIES.values()) == {"lhs-extension", "guided"}

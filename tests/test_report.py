@@ -25,8 +25,8 @@ def test_booktabs_structure_and_escaping():
 
 def test_budget_table_excludes_the_ablation():
     frame = report.budget_frame()
-    assert frame["arm"].tolist() == ["A", "B", "C", "C-log", "C-seq"]
-    assert frame["solver budget"].tolist() == [300, 600, 600, 600, 600]
+    assert frame["arm"].tolist() == ["A", "B", "C", "C-log", "C-seq", "C-logG"]
+    assert frame["solver budget"].tolist() == [300, 600, 600, 600, 600, 600]
 
 
 def test_comparison_frame_formats_tiny_pvalues():

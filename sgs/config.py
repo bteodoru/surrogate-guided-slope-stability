@@ -209,11 +209,22 @@ ROLES = {
                             disjoint_from=("seed", "lhs-extension", "guided", "test-natural",
                                            "test-stratified", "guided-log", "guided-seq-1",
                                            "guided-seq-2")),
+    # C-logG (declared 2026-09-23): guided-log with a GBM screener in place of the
+    # RF one. It reuses guided_log_stream, so the 200k candidate pool and the
+    # intended allocation are exactly C-log's; only the screener differs, and with
+    # it the candidates available to the within-bin draw. guided-log is absent from
+    # disjoint_from on purpose: the two are alternatives (config.ALTERNATIVES).
+    "guided-log-g": SetRole(n=300, design="guided-log-deficit", seeds=("guided_log_stream",),
+                            stem="surrogate_guided_log_g_300", screener=True,
+                            screener_family="gbm",
+                            disjoint_from=("seed", "lhs-extension", "guided", "test-natural",
+                                           "test-stratified", "guided-seq-1", "guided-seq-2",
+                                           "guided-seq-3")),
 }
 
 # Generation order: each role follows the roles it depends on.
 ROLE_ORDER = ("seed", "lhs-extension", "guided", "test-natural", "test-stratified", "guided-log",
-              "guided-seq-1", "guided-seq-2", "guided-seq-3")
+              "guided-seq-1", "guided-seq-2", "guided-seq-3", "guided-log-g")
 
 # Role pairs that are alternatives: two designs of the same budget that are never
 # used in one training set. guided-log and guided-log-g draw from the SAME pool
@@ -296,6 +307,8 @@ ARMS = {
     "C0-log": Arm(roles=("guided-log",), budget=None, ablation=True),
     "C-seq": Arm(roles=("seed", "guided-seq-1", "guided-seq-2", "guided-seq-3"), budget=600, ablation=False),
     "C0-seq": Arm(roles=("guided-seq-1", "guided-seq-2", "guided-seq-3"), budget=None, ablation=True),
+    "C-logG": Arm(roles=("seed", "guided-log-g"), budget=600, ablation=False),
+    "C0-logG": Arm(roles=("guided-log-g",), budget=None, ablation=True),
 }
 
 
