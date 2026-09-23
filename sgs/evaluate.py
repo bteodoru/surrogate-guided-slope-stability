@@ -491,6 +491,59 @@ def _measure_value(row: dict, measure: str):
     return next(z["log_rmse"] for z in row["zones"] if z["zone"] == measure)
 
 
+def relocation_reading(cells: dict) -> dict:
+    """Classify the screener swap's effect on relocation (spec §10.2).
+
+    Relocation is declared present only where the arm gains below 1 and loses in
+    1-2 against B; R alone would also call a uniform loss a relocation. The labels
+    apply only after that gate; everything else is mixed/inconclusive.
+    """
+    margin = float(np.log(config.RELOCATION_MARGIN))
+    need = config.RELOCATION_MIN_CELLS
+    per_cell = {}
+    for cell, values in cells.items():
+        L = float(np.median(values["L_g"]))
+        H = float(np.median(values["H_g"]))
+        per_cell[cell] = {"L": L, "H": H, "R": H - L, "dR": float(np.median(values["dR"]))}
+    gate = sum(1 for v in per_cell.values() if v["L"] < 0 < v["H"])
+    if gate >= need:
+        if sum(1 for v in per_cell.values() if v["dR"] >= margin) >= need:
+            reading = "larger"
+        elif sum(1 for v in per_cell.values() if abs(v["dR"]) < margin) >= need:
+            reading = "similar"
+        else:
+            reading = "mixed/inconclusive"
+    elif sum(1 for v in per_cell.values() if v["R"] <= -margin) >= need:
+        reading = "reverses"
+    elif sum(1 for v in per_cell.values() if abs(v["R"]) < margin) >= need:
+        reading = "vanishes"
+    else:
+        reading = "mixed/inconclusive"
+    return {"reading": reading, "gate_cells": gate, "margin": margin,
+            "min_cells": need, "cells": {f"{f}/{t}": v for (f, t), v in per_cell.items()}}
+
+
+def _relocation_cells(*, series, families, tests, zones, arm, base="B") -> dict:
+    """Per-(family, test) log-ratio series of `arm` against `base` in the two decision-range
+    zones, keyed as relocation_reading expects. A cell is omitted where either arm's series
+    is unavailable (fewer than 2 confirmatory realizations, or a missing arm/test/family)."""
+    bounds = _zone_bounds(zones)
+    low = next(label for label, lo, hi in bounds if lo == 0.5 and hi == 1.0)
+    high = next(label for label, lo, hi in bounds if lo == 1.0 and hi == 2.0)
+    out = {}
+    for family in families:
+        for test in tests:
+            low_arm, low_base = series(family, test, arm, low), series(family, test, base, low)
+            high_arm, high_base = series(family, test, arm, high), series(family, test, base, high)
+            if None in (low_arm, low_base, high_arm, high_base):
+                continue
+            l_g = [float(a) - float(b) for a, b in zip(np.log(low_arm), np.log(low_base))]
+            h_g = [float(a) - float(b) for a, b in zip(np.log(high_arm), np.log(high_base))]
+            d_r = [h - l for h, l in zip(h_g, l_g)]
+            out[(family, test)] = {"L_g": l_g, "H_g": h_g, "dR": d_r}
+    return out
+
+
 def replication_metrics(units: Mapping, tests: Mapping[str, data.TestSet], *, zones, bins, selection_range,
                         decision_range, level, welch, paired, interactions) -> dict:
     values = []
@@ -551,8 +604,12 @@ def replication_metrics(units: Mapping, tests: Mapping[str, data.TestSet], *, zo
     if {"rf", "gbm"} <= set(families):
         inter = interaction_rows(series=series, tests=tests, measures=measures,
                                  interactions=interactions, level=level)
+    relocation = {arm: relocation_reading(_relocation_cells(series=series, families=families, tests=tests,
+                                                             zones=zones, arm=arm))
+                 for arm in ("C-logG", "C-log")}
     return {"procedure": REPLICATION_PROCEDURE, "realizations": realizations, "confirmatory": confirm,
-            "values": values, "summaries": summaries, "comparisons": comparisons, "interactions": inter}
+            "values": values, "summaries": summaries, "comparisons": comparisons, "interactions": inter,
+            "relocation": relocation}
 
 
 def run_replications() -> None:

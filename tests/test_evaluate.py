@@ -318,6 +318,55 @@ def test_paired_interaction_is_a_difference_in_differences(monkeypatch):
     assert calls == []                            # never falls back to Welch
 
 
+# --- relocation reading -----------------------------------------------------------------
+
+LN11 = float(np.log(1.10))
+
+
+def cells(L, H, dR, n=4):
+    """n identical cells; each value repeated over five realizations."""
+    return {("rf", f"t{i}"): {"L_g": [L] * 5, "H_g": [H] * 5, "dR": [dR] * 5} for i in range(n)}
+
+
+def test_gate_requires_a_gain_below_one_and_a_loss_above():
+    # R > 0 but both zones worse than B: a uniform loss, never relocation.
+    out = evaluate.relocation_reading(cells(L=0.05, H=0.30, dR=2 * LN11))
+    assert out["reading"] == "mixed/inconclusive"
+    assert out["gate_cells"] == 0
+
+
+def test_larger_needs_the_gate_and_the_margin():
+    out = evaluate.relocation_reading(cells(L=-0.20, H=0.20, dR=LN11))
+    assert out["reading"] == "larger"
+
+
+def test_similar_inside_the_margin():
+    out = evaluate.relocation_reading(cells(L=-0.20, H=0.20, dR=0.9 * LN11))
+    assert out["reading"] == "similar"
+
+
+def test_the_margin_boundary_is_inclusive_for_larger():
+    at = evaluate.relocation_reading(cells(L=-0.2, H=0.2, dR=LN11))
+    just_below = evaluate.relocation_reading(cells(L=-0.2, H=0.2, dR=LN11 - 1e-12))
+    assert at["reading"] == "larger" and just_below["reading"] == "similar"
+
+
+def test_vanishes_when_the_gate_fails_and_the_level_is_small():
+    out = evaluate.relocation_reading(cells(L=0.01, H=0.01, dR=0.0))   # R = 0
+    assert out["reading"] == "vanishes"
+
+
+def test_reverses_when_the_level_is_negative():
+    out = evaluate.relocation_reading(cells(L=0.20, H=-0.20, dR=0.0))  # R = -0.40
+    assert out["reading"] == "reverses"
+
+
+def test_three_of_four_cells_is_enough():
+    good = cells(L=-0.2, H=0.2, dR=LN11, n=3)
+    good[("gbm", "t9")] = {"L_g": [0.1] * 5, "H_g": [-0.1] * 5, "dR": [0.0] * 5}
+    assert evaluate.relocation_reading(good)["reading"] == "larger"
+
+
 def _fake_units(tests, realizations=(0, 1, 2, 3), scale=None):
     """units shaped like replicate.load_units(): arm error grows with its scale."""
     scale = scale or {"A": 0.30, "B": 0.10, "C-log": 0.12, "C0-log": 0.25, "C-seq": 0.11, "C0-seq": 0.24}

@@ -469,6 +469,12 @@ REP_INTERACTIONS = (
 #   C-seq vs C-log: under GBM the interval contains 0 on both tests; under RF
 #   the mean difference is negative on both tests.
 
+# Relocation readings (spec 2026-09-23 §10.2), declared before any C-logG point
+# was generated. A 10% margin on the log scale, read on the median over the five
+# realizations, in at least 3 of the 4 learner x test cells.
+RELOCATION_MARGIN = 1.10
+RELOCATION_MIN_CELLS = 3
+
 
 # --- fingerprints -------------------------------------------------------------------
 
