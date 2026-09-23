@@ -59,8 +59,8 @@ def test_the_two_screeners_see_the_same_pool():
 
 def test_set_keys_include_the_gbm_strategy():
     keys = replicate.set_keys(2)
-    assert ("guided_log_g_r2", "guided-log-g", 0) in keys
-    assert ("guided_log_r2", "guided-log", 0) in keys
+    assert keys[2] == ("guided_log_g_r2", "guided-log-g", 0)
+    assert keys[1] == ("guided_log_r2", "guided-log", 0)
 
 
 def test_strategy_family():
