@@ -134,6 +134,108 @@
       "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
       "updated": "2026-09-22T14:46:18+00:00"
     },
+    "guided-log-g": {
+      "allocation": {
+        "added": [
+          38,
+          35,
+          31,
+          28,
+          22,
+          18,
+          1,
+          12,
+          16,
+          9,
+          11,
+          12,
+          18,
+          17,
+          32
+        ],
+        "edges": [
+          0.5,
+          0.5900861491455028,
+          0.6964033268267372,
+          0.8218759147586129,
+          0.9699551872306948,
+          1.1447142425533319,
+          1.3509600385206135,
+          1.594365613560178,
+          1.8816261304714648,
+          2.22064303492292,
+          2.6207413942088964,
+          3.092926394429888,
+          3.650186051359235,
+          4.307848461422399,
+          5.084003419406245,
+          6.0
+        ],
+        "seed_counts": [
+          1,
+          4,
+          7,
+          10,
+          16,
+          20,
+          37,
+          26,
+          22,
+          29,
+          27,
+          26,
+          20,
+          21,
+          6
+        ]
+      },
+      "design_sha256": "325765380e4a5c906b35f7fd3970716a9e2d9f48f0446c4f8196c85b15e1993c",
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "c91d1773c23da02363b3a7eb67af60de4247be18af73ec92f2f2b7f4f0c2a9ed",
+      "n": 300,
+      "non_converged": [],
+      "repair": {
+        "n_boundary": 3,
+        "n_repaired": 3,
+        "n_rows": 300,
+        "n_solver_error": 0,
+        "n_unresolved": 0
+      },
+      "results_sha256": "64c4bb30f0bf114cadeb4cfefd2dccd9c9adf6fde2d70092816e16d44a986191",
+      "screener": {
+        "family": "gbm",
+        "fit_seed": 42,
+        "n_train": 300,
+        "oof_rmse": 0.5616078588596438,
+        "oof_rmse_selection_range": 0.2063083827779886,
+        "oof_spearman": 0.992060800675563,
+        "params": {
+          "early_stopping": false,
+          "learning_rate": 0.06,
+          "max_iter": 8000,
+          "max_leaf_nodes": 3,
+          "min_samples_leaf": 3
+        },
+        "trained_on": "seed",
+        "trained_on_sha256": "5799af8b9031efc44b2ac03006dcd090f23f912372989521c771361e39c3110b"
+      },
+      "seeds": {
+        "guided_log_stream": 20260923
+      },
+      "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
+      "updated": "2026-09-23T12:49:32+00:00"
+    },
     "guided-seq-1": {
       "allocation": {
         "added": [
