@@ -1,3 +1,6 @@
+import hashlib
+from pathlib import Path
+
 import matplotlib
 
 matplotlib.use("Agg")
@@ -5,6 +8,26 @@ matplotlib.use("Agg")
 import pytest
 
 from sgs import config
+
+REAL_DATA = Path(config.ROOT) / "data"        # captured at import, before any monkeypatch
+
+
+def _real_data_snapshot() -> dict:
+    if not REAL_DATA.exists():
+        return {}
+    return {str(p.relative_to(REAL_DATA)): (p.stat().st_mode & 0o777, hashlib.sha256(p.read_bytes()).hexdigest())
+            for p in sorted(REAL_DATA.rglob("*")) if p.is_file() and p.name != ".DS_Store"}
+
+
+@pytest.fixture(scope="session", autouse=True)
+def real_data_untouched():
+    """xslope results are not in git and cost hours to reproduce: the suite must leave
+    every file under the real data/ exactly as it found it, contents and permissions."""
+    before = _real_data_snapshot()
+    yield
+    after = _real_data_snapshot()
+    changed = sorted(k for k in before.keys() | after.keys() if before.get(k) != after.get(k))
+    assert not changed, f"the test suite changed the real data/: {changed[:10]}"
 
 
 @pytest.fixture
