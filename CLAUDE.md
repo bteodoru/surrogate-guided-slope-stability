@@ -178,12 +178,16 @@ without loading their contents), refusing to render if they mismatch. Provenance
 ## Performance notes
 
 Estimators get `n_jobs=1`; the search gets `n_jobs=-1`. The reverse
-oversubscribes cores. The searches of `sgs fit` are test-independent, so
-evaluating on a new test set costs seconds.
+oversubscribes cores. `sgs.cli` also defaults `OMP_NUM_THREADS=1`: on top of
+the searches' workers, HistGradientBoosting's OpenMP threads drove the load
+average to 47–106 on 8 cores. On one GBM unit (arm B, log-rmse) it cut the fit
+from 16 to 13 min with bit-identical parameters, CV scores and predictions
+(2026-09-22). The searches of `sgs fit` are test-independent, so evaluating on
+a new test set costs seconds.
 
 ## Publishing
 
-Dataset on Zenodo, concept DOI 10.5281/zenodo.20706202. Old files stay so DOIs
-resolve; corrected data goes out as a new version under the same concept DOI
-with a note on the old one and the name mapping in `data/README.md`. Where
+Zenodo concept DOI 10.5281/zenodo.20706202 holds the earlier HYRCAN data only.
+The xslope data are unpublished; whether they go out as a new version under
+that concept DOI or as a separate deposit is undecided. Where
 `artifacts/fits/` lives at publication is undecided.

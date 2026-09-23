@@ -22,8 +22,8 @@ from sgs import config
 RESULT_COLUMNS = [
     *config.PARAMS,
     "FOS",
-    "Surface_L", "Surface_R", "Surface_Depth",
-    "Center_X", "Center_Y", "Radius",
+    "Surface_L", "Surface_R", "Surface_Min_Y",
+    "Center_X", "Center_Y", "Radius", "Circle_Nadir_Y",
     "At_Boundary",
     "slope_length", "extension", "depth",
     "Search_Converged", "N_Circles_Tested", "N_Valid_Surfaces", "N_Unsolved",
@@ -66,6 +66,14 @@ def is_true(series: pd.Series) -> pd.Series:
 
 def usable(frame: pd.DataFrame) -> pd.DataFrame:
     return frame.loc[(frame["excluded"] == "") & frame["FOS"].notna()]
+
+
+def non_converged(frame: pd.DataFrame) -> list[int]:
+    """Kept rows whose circular search stopped at SOLVER.search_max_iter before
+    meeting its tolerance. Reported, not rejected: the five in the data, solved
+    again to convergence, moved in the fourth decimal of FOS (2026-09-22)."""
+    kept = frame["excluded"] == ""
+    return [int(i) for i in np.flatnonzero(kept & ~is_true(frame["Search_Converged"]))]
 
 
 def normalize(frame: pd.DataFrame) -> np.ndarray:

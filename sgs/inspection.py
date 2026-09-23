@@ -43,8 +43,8 @@ def inspect_row(role: str, row: int, stage: str = "final") -> dict:
     if not found["fs_cache"]:
         raise RuntimeError("xslope circular search returned no valid surface")
     best = found["fs_cache"][0]
-    left, right, depth = solver.surface_limits(best)
-    at_boundary, flags = solver.check_boundary(left, right, depth, found["geometry"],
+    left, right, surface_min_y, _ = solver.surface_limits(best)
+    at_boundary, flags = solver.check_boundary(left, right, surface_min_y, found["geometry"],
                                                float(stored["H"]))
 
     paths = {view: config.inspect_path(role, stage, row, view) for view in ("search", "solution")}

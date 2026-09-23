@@ -71,9 +71,9 @@ generation path and refits nothing. Its procedure is declared in
 
 ## Data
 
-Dataset: [Zenodo, concept DOI 10.5281/zenodo.20706202](https://doi.org/10.5281/zenodo.20706202).
-See `data/README.md` for the mapping between file names in the deposit and in
-the pipeline.
+The xslope data sets are not yet published; `data/README.md` describes the
+files. The earlier HYRCAN data are on Zenodo, concept DOI
+[10.5281/zenodo.20706202](https://doi.org/10.5281/zenodo.20706202).
 
 The initial approach of this study (HYRCAN/Spencer generator, single Colab
 notebook) is preserved at the git tag `v0-hyrcan-colab`, and the HYRCAN

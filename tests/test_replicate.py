@@ -74,6 +74,18 @@ def test_generate_set_reuses_and_refuses(small_reps, monkeypatch):
         replicate.generate_set("lhs_r1", "lhs", 1, 0, workers=1, fn=fake_analyse)
 
 
+def test_generate_set_records_non_converged_rows(small_reps):
+    def last_stops_early(combo, _seen=[]):
+        row = fake_analyse(combo)
+        _seen.append(combo)
+        if len(_seen) == config.REP_EXTENSION:
+            row["Search_Converged"] = False
+        return row
+
+    entry = replicate.generate_set("lhs_r1", "lhs", 1, 0, workers=1, fn=last_stops_early)
+    assert entry["non_converged"] == [config.REP_EXTENSION - 1]
+
+
 # --- resuming an interrupted generation ------------------------------------------------------
 
 def _generate_one(key="lhs_r1", strategy="lhs", batch=0, realization=1, **kw):

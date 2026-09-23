@@ -16,6 +16,13 @@ role and controls execution.
 
 from __future__ import annotations
 
+import os
+
+# One OpenMP thread per process: the grid searches already use every core
+# (n_jobs=-1), and HistGradientBoosting's own threads on top of them
+# oversubscribed the machine. Measured identical results, see CLAUDE.md.
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+
 import argparse
 import datetime as _dt
 import platform
@@ -45,6 +52,7 @@ def generate(role: str, *, workers: int = 1, force: bool = False) -> dict:
         design_path.parent.mkdir(parents=True, exist_ok=True)
         design_path.write_text(text)
     design_sha = data.sha256_file(design_path)
+    fingerprint = config.solver_fingerprint()
 
     previous = data.read_metadata().get("datasets", {}).get(role, {})
     solved = False
@@ -55,13 +63,21 @@ def generate(role: str, *, workers: int = 1, force: bool = False) -> dict:
         if previous.get("design_sha256") != design_sha:
             raise GenerateError(f"{results_path.name} was solved from a different design; "
                                 f"rerun with --force to solve {role!r} again")
+        if previous.get("solver_fingerprint") != fingerprint:
+            raise GenerateError(f"{results_path.name} was solved under other solver settings, or "
+                                f"before they were recorded; rerun with --force to solve {role!r} again")
+        if previous.get("results_sha256") != data.sha256_file(results_path):
+            raise GenerateError(f"{results_path.name} is not the file that was recorded; "
+                                f"rerun with --force to solve {role!r} again")
         print(f"[{role}] results up to date")
     else:
         rows = solver.run_set(frame[list(config.PARAMS)].to_numpy(float), workers=workers, label=role)
         solver.write_rows(results_path, rows, data.RESULT_COLUMNS)
         solved = True
 
-    if solved or force or not final_path.exists():
+    final_stale = (not final_path.exists()
+                   or previous.get("final_sha256") != data.sha256_file(final_path))
+    if solved or force or final_stale:
         rows, columns = solver.read_rows(results_path)
         if columns != data.RESULT_COLUMNS:
             raise GenerateError(f"{results_path.name} does not match the result schema")
@@ -73,8 +89,10 @@ def generate(role: str, *, workers: int = 1, force: bool = False) -> dict:
         print(f"[{role}] final up to date")
 
     entry = {"n": spec.n, **info, "design_sha256": design_sha,
+             "solver_fingerprint": fingerprint,
              "results_sha256": data.sha256_file(results_path),
              "final_sha256": data.sha256_file(final_path), "repair": repair,
+             "non_converged": data.non_converged(data.read_table(final_path)),
              "environment": data.environment()}
     unchanged = previous and {k: v for k, v in previous.items() if k != "updated"} == entry
     entry["updated"] = (previous["updated"] if unchanged

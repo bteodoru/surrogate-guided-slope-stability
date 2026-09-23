@@ -88,6 +88,62 @@ def test_results_from_another_design_are_refused(fake_solver):
         cli.generate("seed")
 
 
+def test_generate_records_the_solver_fingerprint(fake_solver):
+    entry = cli.generate("seed")
+    assert entry["solver_fingerprint"] == config.solver_fingerprint()
+
+
+def test_results_under_other_solver_settings_are_refused(fake_solver, monkeypatch):
+    cli.generate("seed")
+    monkeypatch.setattr(config, "REPAIR_VARIANTS", ((2.0, None),))
+    with pytest.raises(cli.GenerateError, match="solver settings"):
+        cli.generate("seed")
+    cli.generate("seed", force=True)
+    assert len(fake_solver) == 600
+
+
+def test_an_entry_without_a_fingerprint_is_refused(fake_solver):
+    cli.generate("seed")
+    entry = data.read_metadata()["datasets"]["seed"]
+    del entry["solver_fingerprint"]
+    data.record("datasets", "seed", entry)
+    with pytest.raises(cli.GenerateError, match="solver settings"):
+        cli.generate("seed")
+
+
+def test_modified_results_are_refused(fake_solver):
+    cli.generate("seed")
+    with config.results_path("seed").open("a") as stream:
+        stream.write("\n")
+    with pytest.raises(cli.GenerateError, match="not the file"):
+        cli.generate("seed")
+
+
+def test_a_modified_final_is_rederived_from_the_results(fake_solver):
+    cli.generate("seed")
+    final = config.final_path("seed")
+    original = final.read_bytes()
+    final.write_bytes(original + b"\n")
+    cli.generate("seed")
+    assert final.read_bytes() == original and len(fake_solver) == 300
+
+
+def test_generate_records_non_converged_rows(root, monkeypatch):
+    calls = []
+
+    def first_stops_early(combo):
+        row = fake_analyse(combo)
+        if not calls:
+            row["Search_Converged"] = False
+        calls.append(combo)
+        return row
+
+    monkeypatch.setattr(solver, "analyse", first_stops_early)
+    entry = cli.generate("seed")
+    assert entry["non_converged"] == [0]
+    assert data.frame_problems(data.read_table(config.final_path("seed")), 300) == []
+
+
 def test_learning_curve_fits_then_evaluates(monkeypatch):
     from sgs import evaluate, models
 
@@ -136,3 +192,11 @@ def test_structural_command_is_registered_without_scientific_parameters():
     args = parser.parse_args(["structural"])
     assert args.handler.__name__ == "_structural"
     assert not hasattr(args, "role") and not hasattr(args, "workers")
+
+
+def test_cli_defaults_openmp_to_one_thread():
+    import subprocess, sys
+    code = ("import os; os.environ.pop('OMP_NUM_THREADS', None); import sgs.cli; "
+            "print(os.environ['OMP_NUM_THREADS'])")
+    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True)
+    assert out.stdout.strip() == "1"

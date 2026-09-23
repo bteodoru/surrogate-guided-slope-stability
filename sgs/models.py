@@ -205,6 +205,10 @@ def subsample(seed_df, extra_df, budget: int, rng):
         return seed_df.iloc[rng.choice(n_seed, budget, replace=False)]
     if budget == n_seed:
         return seed_df
+    if budget == n_seed + len(extra_df):
+        # The whole pool, in canonical order: the same frame the arm's own
+        # fit trains on (load_arm concatenates its roles in order).
+        return pd.concat([seed_df, extra_df], ignore_index=True)
     take = extra_df.iloc[rng.choice(len(extra_df), budget - n_seed, replace=False)]
     return pd.concat([seed_df, take], ignore_index=True)
 

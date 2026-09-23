@@ -12,26 +12,34 @@ versions.
 | `results/`  | raw xslope/Bishop output, never modified by repair   |
 | `final/`    | boundary rows repaired; consumed by the analysis     |
 
-## File names and the Zenodo deposit
-
-The first Zenodo versions (concept DOI 10.5281/zenodo.20706202) used the old
-names below. Two of them are misleading: `results_uniform_bishop.csv` holds
-the *guided* set, and `results_test_bishop.csv` holds the *natural* test.
-
-| old name (Zenodo ≤ previous version) | new name                   | role                        |
-|--------------------------------------|----------------------------|-----------------------------|
-| `initial_lhs_300_bishop.csv`         | `seed_lhs_300.csv`         | seed, arm A                 |
-| `results_lhs_bishop.csv`             | `lhs_continued_300.csv`    | LHS extension, arm B        |
-| `results_uniform_bishop.csv`         | `surrogate_guided_300.csv` | guided selection, C and C₀  |
-| `results_test_bishop.csv`            | `test_natural_300.csv`     | natural-300 test            |
-| `results_test_150_bishop.csv`        | `test_stratified_150.csv`  | target-stratified-150 test  |
-
-Sets added after the last Zenodo version have no old name:
+## Files
 
 | file | role |
 |---|---|
+| `seed_lhs_300.csv` | seed, arm A |
+| `lhs_continued_300.csv` | LHS extension, arm B |
+| `surrogate_guided_300.csv` | guided selection, arms C and C₀ |
 | `surrogate_guided_log_300.csv` | guided-log selection, arms C-log and C₀-log |
 | `surrogate_guided_seq1_100.csv`, `surrogate_guided_seq2_100.csv`, `surrogate_guided_seq3_100.csv` | sequential guided-log batches, arms C-seq and C₀-seq |
+| `test_natural_300.csv` | natural-300 test |
+| `test_stratified_150.csv` | target-stratified-150 test |
+
+## Surface geometry columns
+
+`Surface_L` and `Surface_R` bound the clipped critical arc. `Surface_Min_Y` is
+its lowest point, and the domain-bottom check uses it. `Center_X`,
+`Center_Y` and `Radius` define the full circle. `Circle_Nadir_Y` is that circle's lowest
+point (`Center_Y − Radius`, xslope's `Depth`). It lies on the arc only when the centre is
+above it; for a toe circle it is below the failure surface. Before the final
+rerun this column was named `Surface_Depth` and fed the bottom check. That was
+conservative and never produced a false flag.
+
+## Non-converged searches
+
+Rows whose circular search stopped at the iteration limit
+(`Search_Converged = False`) are kept. Each set's entry in `run_metadata.json`
+lists them under `non_converged`. The five present before the final rerun,
+solved again to convergence, moved in the fourth decimal of FOS.
 
 Rows with a non-empty `excluded` column (`solver_error`, `unresolved`) are kept
 in `final/` for transparency and dropped at load time.
