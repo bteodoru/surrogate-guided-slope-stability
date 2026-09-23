@@ -193,3 +193,15 @@ def test_replication_paths_follow_root(tmp_path, monkeypatch):
 def test_structural_constants():
     assert config.STRUCTURAL_MIN_TEST_N == 10
     assert config.structural_metrics_path().name == "structural.json"
+
+
+def test_screener_registry_declares_both_families():
+    assert set(config.SCREENERS) == {"rf", "gbm"}
+    assert config.SCREENER["family"] == "rf"          # the study's primary configuration
+    assert config.SCREENERS["gbm"]["early_stopping"] is False
+    # copied from LC_PARAMS, never imported: the two must be free to diverge
+    assert config.SCREENERS["gbm"]["max_iter"] == config.LC_PARAMS["gbm"]["max_iter"]
+
+
+def test_existing_roles_do_not_declare_a_family():
+    assert all(spec.screener_family is None for spec in config.ROLES.values())

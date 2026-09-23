@@ -22,7 +22,7 @@ def small_reps(root, monkeypatch):
     monkeypatch.setattr(config, "REP_SEQ_BATCHES", (10, 10))
     monkeypatch.setattr(config, "N_GUIDED_POOL", 6000)
     monkeypatch.setattr(config, "N_BINS", 5)
-    monkeypatch.setitem(config.SCREENER, "n_estimators", 20)
+    monkeypatch.setitem(config.SCREENERS["rf"], "n_estimators", 20)
     monkeypatch.setitem(config.SCREENER, "cv_folds", 3)
     shrink_roles(monkeypatch, {"seed": 300, "test-natural": 60, "test-stratified": 60})
     for i, role in enumerate(("seed", *config.TEST_ROLES)):

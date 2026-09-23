@@ -162,6 +162,9 @@ class SetRole:
     # Solved roles behind the screener and the water-filling deficit; empty
     # means SCREENER["trained_on"]. A sequential batch lists every earlier set.
     trained_on: tuple[str, ...] = ()
+    # None means SCREENER["family"]; a role states one only where it departs
+    # from the study's primary configuration.
+    screener_family: str | None = None
 
 
 # A test set uses random selection within each predicted-FOS bin, not greedy
@@ -214,7 +217,20 @@ ROLE_ORDER = ("seed", "lhs-extension", "guided", "test-natural", "test-stratifie
 
 # The preliminary surrogate. Fixed hyper-parameters, not a tuned search: it
 # screens the candidate pools and is not one of the models under comparison.
-SCREENER = {"trained_on": "seed", "n_estimators": 500, "cv_folds": 5}
+# One entry per family. The GBM values are those of LC_PARAMS["gbm"], copied
+# explicitly and not imported: they come from a different decision (CV on the
+# seed for the *learner*), and a link through code would let a later learner
+# change move the screener silently. early_stopping=False is a guard with no
+# numerical effect at n=300 (sklearn enables "auto" only above 10 000 samples);
+# it keeps this registry independent of ESTIMATOR_FIXED.
+# The GBM screener is a post hoc choice, made 2026-09-23 after the diagnostic in
+# docs/superpowers/notes/2026-09-23-diagnostics/RESULTS.md.
+SCREENERS = {
+    "rf": {"n_estimators": 500},
+    "gbm": {"learning_rate": 0.06, "max_iter": 8000,
+            "max_leaf_nodes": 3, "min_samples_leaf": 3, "early_stopping": False},
+}
+SCREENER = {"trained_on": "seed", "cv_folds": 5, "family": "rf"}
 
 
 def screener_roles(role: str) -> tuple[str, ...]:

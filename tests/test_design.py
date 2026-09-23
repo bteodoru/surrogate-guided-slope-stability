@@ -71,23 +71,50 @@ def test_build_lhs_roles(root):
 
 @pytest.fixture
 def small_screener(monkeypatch):
-    monkeypatch.setitem(config.SCREENER, "n_estimators", 20)
+    monkeypatch.setitem(config.SCREENERS["rf"], "n_estimators", 20)
     monkeypatch.setitem(config.SCREENER, "cv_folds", 3)
 
 
 def test_screener_uses_named_seeds(small_screener):
-    model = design.screener_model(oob=True)
+    model = design.screener_model("rf", oob=True)
     assert model.random_state == config.SEEDS["screener_fit"] and model.oob_score
 
 
 def test_fit_screener_is_deterministic_and_reports_diagnostics(small_screener):
     frame = data.add_features(synthetic_final(80, 5))
-    a, diagnostics = design.fit_screener(frame)
-    b, _ = design.fit_screener(frame)
+    a, diagnostics = design.fit_screener(frame, "rf")
+    b, _ = design.fit_screener(frame, "rf")
     X = data.add_features(synthetic_final(10, 9))[list(config.FEATURES)]
     np.testing.assert_array_equal(a.predict(X), b.predict(X))
     assert diagnostics["n_train"] == 80 and 0 < diagnostics["oob_r2_log"] <= 1
     assert {"oof_rmse", "oof_rmse_selection_range", "oof_spearman"} <= set(diagnostics)
+
+
+def test_screener_model_dispatches_on_family():
+    rf = design.screener_model("rf", oob=True)
+    gbm = design.screener_model("gbm", oob=False)
+    assert type(rf).__name__ == "RandomForestRegressor"
+    assert rf.n_estimators == 500 and rf.n_jobs == 1 and rf.oob_score is True
+    assert rf.random_state == config.SEEDS["screener_fit"]
+    params = gbm.get_params()
+    assert type(gbm).__name__ == "HistGradientBoostingRegressor"
+    assert params["early_stopping"] is False
+    assert params["max_iter"] == 8000 and params["max_leaf_nodes"] == 3
+    assert params["learning_rate"] == 0.06 and params["min_samples_leaf"] == 3
+    assert params["random_state"] == config.SEEDS["screener_fit"]
+
+
+def test_fit_screener_diagnostics_are_family_aware(monkeypatch):
+    monkeypatch.setitem(config.SCREENERS, "gbm",
+                        {**config.SCREENERS["gbm"], "max_iter": 20})
+    frame = data.add_features(synthetic_final(60, 3))
+    common = {"n_train", "oof_rmse", "oof_rmse_selection_range", "oof_spearman"}
+    _, rf_diag = design.fit_screener(frame, "rf")
+    _, gbm_diag = design.fit_screener(frame, "gbm")
+    assert common <= set(rf_diag) and common <= set(gbm_diag)
+    assert "oob_r2_log" in rf_diag        # RF only: GBM has no out-of-bag score
+    assert "oob_r2_log" not in gbm_diag
+    assert rf_diag["n_train"] == 60 and gbm_diag["n_train"] == 60
 
 
 # --- guided max-min ---------------------------------------------------------------------

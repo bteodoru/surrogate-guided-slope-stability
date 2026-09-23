@@ -93,7 +93,7 @@ def build_design(key: str, strategy: str, realization: int, batch: int) -> tuple
         for k in earlier:
             references[k] = read_set_design(k)
         training = pd.concat([data.load_role("seed"), *(load_set(k) for k in earlier)], ignore_index=True)
-        model, diagnostics = design.fit_screener(training)
+        model, diagnostics = design.fit_screener(training, config.SCREENER["family"])
         edges = design.bin_edges_log(config.N_BINS, config.SELECTION_RANGE)
         have = design.bin_counts(training["FOS"].to_numpy(float), edges)
         allocation = design.deficit_allocation(have, n)

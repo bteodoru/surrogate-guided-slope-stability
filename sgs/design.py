@@ -23,7 +23,7 @@ import numpy as np
 import pandas as pd
 from scipy.spatial import cKDTree
 from scipy.stats import qmc, spearmanr
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import HistGradientBoostingRegressor, RandomForestRegressor
 from sklearn.model_selection import KFold, cross_val_predict
 
 from sgs import config, data
@@ -78,29 +78,38 @@ def assert_disjoint(frame: pd.DataFrame, references: Mapping[str, pd.DataFrame],
 
 # --- screener -----------------------------------------------------------------------
 
-def screener_model(*, oob: bool) -> RandomForestRegressor:
-    # n_jobs=1: parallel prediction sums tree outputs in thread-completion order, which changes FOS_pred in the last bit and with it the design hash.
-    return RandomForestRegressor(n_estimators=config.SCREENER["n_estimators"], oob_score=oob,
-                                 random_state=config.SEEDS["screener_fit"], n_jobs=1)
+def screener_model(family: str, *, oob: bool):
+    """The fixed screener of a family. n_jobs=1 for the RF: parallel prediction sums
+    tree outputs in thread-completion order, which changes FOS_pred in the last bit
+    and with it the design hash."""
+    params = config.SCREENERS[family]
+    seed = config.SEEDS["screener_fit"]
+    if family == "rf":
+        return RandomForestRegressor(**params, oob_score=oob, random_state=seed, n_jobs=1)
+    if family == "gbm":
+        return HistGradientBoostingRegressor(**params, random_state=seed)
+    raise DesignError(f"unknown screener family {family!r}")
 
 
-def fit_screener(frame: pd.DataFrame):
+def fit_screener(frame: pd.DataFrame, family: str):
     """Fit on log(FOS) of ``frame`` (features included); return model and diagnostics."""
     X = frame[list(config.FEATURES)]
     fos = frame["FOS"].to_numpy(float)
     y = np.log(fos)
-    model = screener_model(oob=True).fit(X, y)
+    model = screener_model(family, oob=True).fit(X, y)
     cv = KFold(config.SCREENER["cv_folds"], shuffle=True, random_state=config.SEEDS["screener_cv"])
-    oof = np.exp(cross_val_predict(screener_model(oob=False), X, y, cv=cv))
+    oof = np.exp(cross_val_predict(screener_model(family, oob=False), X, y, cv=cv))
     lo, hi = config.SELECTION_RANGE
     inside = (fos >= lo) & (fos <= hi)
     diagnostics = {
         "n_train": int(len(frame)),
-        "oob_r2_log": float(model.oob_score_),
         "oof_rmse": float(np.sqrt(np.mean((oof - fos) ** 2))),
         "oof_rmse_selection_range": float(np.sqrt(np.mean((oof[inside] - fos[inside]) ** 2))),
         "oof_spearman": float(spearmanr(oof, fos).statistic),
     }
+    if family == "rf":
+        # Out-of-bag has no gradient-boosting equivalent; it is reported where it exists.
+        diagnostics["oob_r2_log"] = float(model.oob_score_)
     return model, diagnostics
 
 
@@ -297,7 +306,8 @@ def build(role: str) -> tuple[pd.DataFrame, dict]:
     else:
         trained = config.screener_roles(role)
         training = pd.concat([data.load_role(r) for r in trained], ignore_index=True)
-        model, diagnostics = fit_screener(training)
+        family = spec.screener_family or config.SCREENER["family"]
+        model, diagnostics = fit_screener(training, family)
         info["screener"] = {**diagnostics, **_training_record(trained)}
         if spec.design == "guided-maxmin":
             frame = guided_maxmin(model, rng=np.random.default_rng(seeds[0]),
