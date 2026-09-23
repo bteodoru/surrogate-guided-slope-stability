@@ -234,6 +234,29 @@ def deficit_allocation(have, budget: int) -> np.ndarray:
     return total - have
 
 
+def select_in_bins(values, edges: np.ndarray, allocation, rng) -> tuple[np.ndarray, np.ndarray]:
+    """Row indices drawn at random inside each bin, and the bin of each.
+
+    ``allocation[b]`` rows go to bin ``b``; bins are (lo, hi], the first closed.
+    One generator, bins from the lowest FOS, bins with no allocation skipped,
+    one draw without replacement per bin: guided-log's within-bin rule, shared
+    by C-oracle (bins on solved FOS) and C-logP (bins on predicted FOS)."""
+    values = np.asarray(values, dtype=float)
+    allocation = np.asarray(allocation, dtype=int)
+    chosen, bins = [], []
+    for b, (a, z) in enumerate(zip(edges[:-1], edges[1:])):
+        if allocation[b] == 0:
+            continue
+        lower = values >= a if b == 0 else values > a
+        candidates = np.flatnonzero(lower & (values <= z))
+        if len(candidates) < allocation[b]:
+            raise DesignError(f"bin {b} ({a:.3f}, {z:.3f}]: {len(candidates)} < {allocation[b]}")
+        kept = candidates[rng.choice(len(candidates), allocation[b], replace=False)]
+        chosen.extend(kept.tolist())
+        bins.extend([b] * len(kept))
+    return np.asarray(chosen, dtype=int), np.asarray(bins, dtype=int)
+
+
 def guided_log_deficit(model, *, rng, allocation, n_pool, selection_range) -> pd.DataFrame:
     """The seed-aware guided selection on log(FOS) bins.
 
@@ -260,15 +283,7 @@ def guided_log_deficit(model, *, rng, allocation, n_pool, selection_range) -> pd
                          for b in thin)
         raise DesignError(f"bins with fewer than the points to select: {rows}")
 
-    chosen, bins = [], []
-    for b, (a, z) in enumerate(zip(edges[:-1], edges[1:])):
-        if allocation[b] == 0:
-            continue
-        lower = pred >= a if b == 0 else pred > a
-        candidates = np.flatnonzero(lower & (pred <= z))
-        kept = candidates[rng.choice(len(candidates), allocation[b], replace=False)]
-        chosen.extend(kept.tolist())
-        bins.extend([b] * len(kept))
+    chosen, bins = select_in_bins(pred, edges, allocation, rng)
     out = pool.loc[chosen, params + ["FOS_pred"]].reset_index(drop=True)
     out["bin"] = bins
     return out

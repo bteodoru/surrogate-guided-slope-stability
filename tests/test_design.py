@@ -390,3 +390,49 @@ def test_an_explicit_trained_on_of_just_the_seed_still_writes_trained_counts(sma
     _, info = design.build("batch-y")
     assert set(info["allocation"]) == {"edges", "trained_counts", "added"}
     assert info["screener"]["trained_on"] == "seed"
+
+
+# --- select_in_bins -----------------------------------------------------------------------
+
+def _old_inline_selection(pred, edges, allocation, rng):
+    """The loop guided_log_deficit ran before select_in_bins existed, verbatim."""
+    chosen, bins = [], []
+    for b, (a, z) in enumerate(zip(edges[:-1], edges[1:])):
+        if allocation[b] == 0:
+            continue
+        lower = pred >= a if b == 0 else pred > a
+        candidates = np.flatnonzero(lower & (pred <= z))
+        kept = candidates[rng.choice(len(candidates), allocation[b], replace=False)]
+        chosen.extend(kept.tolist())
+        bins.extend([b] * len(kept))
+    return chosen, bins
+
+
+def test_select_in_bins_reproduces_the_old_loop_draw_for_draw():
+    values = np.exp(np.random.default_rng(1).uniform(np.log(0.3), np.log(9.0), 5000))
+    edges = design.bin_edges_log(15, config.SELECTION_RANGE)
+    allocation = np.array([38, 35, 31, 28, 22, 18, 1, 12, 16, 9, 11, 12, 18, 17, 32])
+    old_idx, old_bins = _old_inline_selection(values, edges, allocation, np.random.default_rng(5))
+    idx, bins = design.select_in_bins(values, edges, allocation, np.random.default_rng(5))
+    assert idx.tolist() == old_idx and bins.tolist() == old_bins
+
+
+def test_select_in_bins_respects_the_allocation_and_the_bins():
+    values = np.array([0.5, 0.55, 0.6, 1.0, 1.5, 2.0, 5.9, 6.0, 7.0, 0.4])
+    edges = np.array([0.5, 1.0, 2.0, 6.0])
+    idx, bins = design.select_in_bins(values, edges, [2, 1, 1], np.random.default_rng(0))
+    assert np.bincount(bins, minlength=3).tolist() == [2, 1, 1]
+    for i, b in zip(idx, bins):
+        lo, hi = edges[b], edges[b + 1]
+        assert (lo <= values[i] <= hi) if b == 0 else (lo < values[i] <= hi)
+    assert 8 not in idx and 9 not in idx          # outside the range: never drawn
+
+
+def test_select_in_bins_is_deterministic_and_refuses_a_thin_bin():
+    values = np.linspace(0.5, 6.0, 200)
+    edges = design.bin_edges_log(5, config.SELECTION_RANGE)
+    a = design.select_in_bins(values, edges, [3, 3, 0, 3, 3], np.random.default_rng(9))
+    b = design.select_in_bins(values, edges, [3, 3, 0, 3, 3], np.random.default_rng(9))
+    assert a[0].tolist() == b[0].tolist()
+    with pytest.raises(design.DesignError, match="bin 0"):
+        design.select_in_bins(values, edges, [10_000, 0, 0, 0, 0], np.random.default_rng(9))
