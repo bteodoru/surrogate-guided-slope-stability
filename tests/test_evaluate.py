@@ -419,6 +419,54 @@ def test_replication_metrics_separate_r0_and_compare_confirmatory_realizations()
     json.dumps(out)   # serializable
 
 
+def _zoned_units(tests, noise, realizations=(0, 1, 2, 3, 4, 5)):
+    """units whose log error per arm is noise[arm][zone] * sin(...): zone log-RMSE ratios
+    between arms are then exact and identical in every realization and cell."""
+    units = {}
+    for family in ("rf", "gbm"):
+        for r in realizations:
+            arms = {}
+            for arm, (low, high) in noise.items():
+                preds = {}
+                for n, t in tests.items():
+                    s = np.where(t.y < 1.0, low, high) * (1 + 0.1 * r)
+                    preds[n] = t.y * np.exp(s * np.sin(np.arange(len(t.y)) + r))
+                arms[arm] = {"n_train": 10, "train_ids": np.array([f"x:{i}" for i in range(10)]),
+                             "train_fos": np.linspace(0.4, 7.0, 10), "predictions": preds}
+            units[(family, r)] = {"test_ids": {n: t.ids for n, t in tests.items()}, "arms": arms}
+    return units
+
+
+def _relocation(noise):
+    tests = {"test-natural": stub_test(400, 3), "test-stratified": stub_test(400, 4, name="test-stratified")}
+    return evaluate.replication_metrics(_zoned_units(tests, noise), tests, **REP_KW)["relocation"]
+
+
+def test_relocation_dR_is_the_paired_difference_against_c_log():
+    # C-logG relocates strongly against B (L = ln 0.5, H = ln 2, R = ln 4), and C-log
+    # relocates exactly as much: dR = R(C-logG) - R(C-log) = 0, so "similar", never
+    # "larger". Reading C-logG's own R as dR (the old wiring) called this "larger".
+    out = _relocation({"B": (0.10, 0.10), "C-logG": (0.05, 0.20), "C-log": (0.05, 0.20)})
+    assert out["arm"] == "C-logG" and out["reference"] == "C-log" and out["base"] == "B"
+    assert out["gate_cells"] == 4 and len(out["cells"]) == 4
+    for cell in out["cells"].values():
+        assert cell["L"] == pytest.approx(np.log(0.5))
+        assert cell["H"] == pytest.approx(np.log(2.0))
+        assert cell["R"] == pytest.approx(np.log(4.0))
+        assert cell["dR"] == pytest.approx(0.0, abs=1e-12)
+    assert out["reading"] == "similar"
+
+
+def test_relocation_dR_cancels_b_and_detects_a_larger_relocation():
+    # R(C-logG) = ln 4, R(C-log) = ln(0.15/0.075) = ln 2: dR = ln 2 >= ln 1.10.
+    noise = {"C-logG": (0.05, 0.20), "C-log": (0.075, 0.15)}
+    for b in ((0.10, 0.10), (0.30, 0.12)):          # dR must not depend on B
+        out = _relocation({"B": b, **noise})
+        for cell in out["cells"].values():
+            assert cell["dR"] == pytest.approx(np.log(2.0))
+    assert _relocation({"B": (0.10, 0.10), **noise})["reading"] == "larger"
+
+
 def test_replication_metrics_refuse_misaligned_predictions():
     tests = {"test-natural": stub_test(80, 3)}
     units = _fake_units(tests, realizations=(0, 1))

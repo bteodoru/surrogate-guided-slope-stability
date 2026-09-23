@@ -523,23 +523,38 @@ def relocation_reading(cells: dict) -> dict:
             "min_cells": need, "cells": {f"{f}/{t}": v for (f, t), v in per_cell.items()}}
 
 
-def _relocation_cells(*, series, families, tests, zones, arm, base="B") -> dict:
-    """Per-(family, test) log-ratio series of `arm` against `base` in the two decision-range
-    zones, keyed as relocation_reading expects. A cell is omitted where either arm's series
-    is unavailable (fewer than 2 confirmatory realizations, or a missing arm/test/family)."""
+def _relocation_cells(*, series, families, tests, zones, arm="C-logG", reference="C-log",
+                      base="B") -> dict:
+    """Per-(family, test) series keyed as relocation_reading expects (spec §10.2).
+
+    L_g, H_g are `arm`'s own log-ratios against `base` in [0.5, 1) and [1, 2), per
+    realization: they feed the gate and the level R. dR is the paired, per-realization
+    difference R(arm) - R(reference), each R taken against the same `base`; `base`
+    cancels in it exactly. `series` must return every confirmatory realization, in the
+    same order, for the pairing to hold. A cell is omitted where any of the six series
+    is unavailable."""
     bounds = _zone_bounds(zones)
     low = next(label for label, lo, hi in bounds if lo == 0.5 and hi == 1.0)
     high = next(label for label, lo, hi in bounds if lo == 1.0 and hi == 2.0)
+
+    def log_ratio(family, test, x, zone):
+        a, b = series(family, test, x, zone), series(family, test, base, zone)
+        if a is None or b is None:
+            return None
+        if len(a) != len(b):
+            raise MisalignedPair(f"relocation {family}/{test}: {x} and {base} differ in realizations")
+        return [float(u) - float(v) for u, v in zip(np.log(a), np.log(b))]
+
     out = {}
     for family in families:
         for test in tests:
-            low_arm, low_base = series(family, test, arm, low), series(family, test, base, low)
-            high_arm, high_base = series(family, test, arm, high), series(family, test, base, high)
-            if None in (low_arm, low_base, high_arm, high_base):
+            l_g, h_g = log_ratio(family, test, arm, low), log_ratio(family, test, arm, high)
+            l_c, h_c = log_ratio(family, test, reference, low), log_ratio(family, test, reference, high)
+            if None in (l_g, h_g, l_c, h_c):
                 continue
-            l_g = [float(a) - float(b) for a, b in zip(np.log(low_arm), np.log(low_base))]
-            h_g = [float(a) - float(b) for a, b in zip(np.log(high_arm), np.log(high_base))]
-            d_r = [h - l for h, l in zip(h_g, l_g)]
+            if len(l_g) != len(l_c):
+                raise MisalignedPair(f"relocation {family}/{test}: {arm} and {reference} differ in realizations")
+            d_r = [(hg - lg) - (hc - lc) for hg, lg, hc, lc in zip(h_g, l_g, h_c, l_c)]
             out[(family, test)] = {"L_g": l_g, "H_g": h_g, "dR": d_r}
     return out
 
@@ -604,9 +619,14 @@ def replication_metrics(units: Mapping, tests: Mapping[str, data.TestSet], *, zo
     if {"rf", "gbm"} <= set(families):
         inter = interaction_rows(series=series, tests=tests, measures=measures,
                                  interactions=interactions, level=level)
-    relocation = {arm: relocation_reading(_relocation_cells(series=series, families=families, tests=tests,
-                                                             zones=zones, arm=arm))
-                 for arm in ("C-logG", "C-log")}
+    def complete_series(family, test, arm, measure):
+        # dR pairs realizations by position: take an arm only when it has every one.
+        out = series(family, test, arm, measure)
+        return out if out is not None and len(out) == len(confirm) else None
+
+    relocation = {"arm": "C-logG", "reference": "C-log", "base": "B",
+                  **relocation_reading(_relocation_cells(series=complete_series, families=families,
+                                                         tests=tests, zones=zones))}
     return {"procedure": REPLICATION_PROCEDURE, "realizations": realizations, "confirmatory": confirm,
             "values": values, "summaries": summaries, "comparisons": comparisons, "interactions": inter,
             "relocation": relocation}

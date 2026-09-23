@@ -233,6 +233,45 @@ def test_reuse_re_records_stale_screener_provenance(small_reps, monkeypatch):
     assert recorded["final_sha256"] == b2["final_sha256"]
 
 
+def test_reuse_backfills_missing_screener_provenance_keys(small_reps, monkeypatch):
+    entry = _generate_one("guided_log_r1", "guided-log", 0)
+    new_keys = {k: entry["screener"][k] for k in ("family", "params", "fit_seed")}
+    meta = data.read_metadata()                # an entry recorded before those keys existed
+    old = meta["replications"]["guided_log_r1"]
+    for k in new_keys:
+        del old["screener"][k]
+    old["updated"] = "2000-01-01T00:00:00+00:00"
+    _write_metadata(meta)
+    calls = _count_solves(monkeypatch)
+    again = _generate_one("guided_log_r1", "guided-log", 0)
+    assert calls == []                                               # no re-solve
+    assert again["screener"]["trained_on_sha256"] == entry["screener"]["trained_on_sha256"]
+    recorded = data.read_metadata()["replications"]["guided_log_r1"]
+    for k, v in new_keys.items():
+        assert again["screener"][k] == v and recorded["screener"][k] == v
+    assert recorded["final_sha256"] == entry["final_sha256"]
+    assert recorded["updated"] != "2000-01-01T00:00:00+00:00"
+
+
+def test_reuse_writes_nothing_when_provenance_is_complete(small_reps, monkeypatch, capsys):
+    _generate_one("guided_log_r1", "guided-log", 0)
+    before = config.metadata_path().read_text()
+    capsys.readouterr()
+    monkeypatch.setattr(replicate.data, "record", lambda *a, **k: pytest.fail("re-recorded"))
+    _generate_one("guided_log_r1", "guided-log", 0)
+    assert config.metadata_path().read_text() == before
+    assert "[guided_log_r1] up to date\n" in capsys.readouterr().out
+
+
+def test_reuse_backfill_compares_key_sets_generically(monkeypatch):
+    previous = {"screener": {"trained_on_sha256": {"seed": "x"}, "family": "rf"}, "n": 3}
+    info = {"screener": {"trained_on_sha256": {"seed": "x"}, "family": "rf", "future_key": 7}}
+    calls = []
+    monkeypatch.setattr(replicate.data, "record", lambda *a: calls.append(a))
+    out = replicate._reuse("k", previous, info)
+    assert out["screener"]["future_key"] == 7 and out["n"] == 3 and len(calls) == 1
+
+
 def test_build_design_reports_a_missing_earlier_batch_design(small_reps):
     with pytest.raises(FileNotFoundError, match="sgs replicate"):
         replicate.build_design("guided_seq_r1_b2", "guided-seq", 1, 2)

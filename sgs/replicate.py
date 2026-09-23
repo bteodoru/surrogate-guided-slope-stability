@@ -155,12 +155,22 @@ def _incomplete(paths: dict, previous: dict, n: int) -> str | None:
 def _reuse(key: str, previous: dict, info: dict) -> dict:
     """A complete, matching set. When the files its screener learned from were
     solved again (same design, same FOS, other runtimes), only its provenance is
-    stale: re-record it, and keep the data."""
-    stored = previous.get("screener", {}).get("trained_on_sha256")
-    fresh = info.get("screener", {}).get("trained_on_sha256")
+    stale: re-record it, and keep the data. When its screener provenance lacks keys
+    the current code records (an entry written before they existed), backfill them
+    the same way, without solving anything."""
+    old_screener, new_screener = previous.get("screener", {}), info.get("screener", {})
+    stored = old_screener.get("trained_on_sha256")
+    fresh = new_screener.get("trained_on_sha256")
     if fresh is None or stored == fresh:
-        print(f"[{key}] up to date")
-        return previous
+        missing = sorted(set(new_screener) - set(old_screener)) if fresh is not None else []
+        if not missing:
+            print(f"[{key}] up to date")
+            return previous
+        entry = {**previous, "screener": {**old_screener, **{k: new_screener[k] for k in missing}},
+                 "updated": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")}
+        data.record("replications", key, entry)
+        print(f"[{key}] up to date; screener provenance backfilled ({', '.join(missing)})")
+        return entry
     entry = {**previous, **info,
              "updated": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")}
     data.record("replications", key, entry)
