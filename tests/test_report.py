@@ -491,6 +491,43 @@ def test_structural_freshness_refuses_an_incomplete_manifest(root, damage, messa
         report.check_structural_fresh(struct)
 
 
+def _with_pool_sets(struct):
+    """Add C-oracle and C-logP sets for r1..rN only, as an artifact built after Task 13 has."""
+    sets = struct["provenance"]["sets_sha256"]
+    for r in range(1, config.REP_REALIZATIONS + 1):
+        for label in (f"guided_oracle_r{r}", f"guided_log_p_r{r}"):
+            paths = {"design": config.replication_path("designs", label),
+                     "final": config.replication_path("final", label)}
+            for kind, path in paths.items():
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(f"{label} {kind}\n")
+            sets[label] = {"realization": r, **{k: data.sha256_file(v) for k, v in paths.items()}}
+    struct["oracle"] = {"shared_rows": []}
+    return struct
+
+
+def test_manifest_count_before_the_pool_arms_exist(root):
+    # An artifact without the oracle block (every artifact before Task 13) is
+    # complete with the guided sets alone, even though REP_STRATEGIES lists the pool.
+    _, struct = _fresh_inputs(root)
+    report.check_structural_fresh(struct)
+
+
+def test_manifest_count_with_the_pool_arms_has_no_r0(root):
+    _, struct = _fresh_inputs(root)
+    report.check_structural_fresh(_with_pool_sets(struct))          # r0 has 5, r1..rN have 7
+    struct["provenance"]["sets_sha256"].pop("guided_log_p_r2")
+    with pytest.raises(report.StaleStructuralError, match="incomplete"):
+        report.check_structural_fresh(struct)
+
+
+def test_manifest_with_an_oracle_block_but_no_pool_sets_is_incomplete(root):
+    _, struct = _fresh_inputs(root)
+    struct["oracle"] = {"shared_rows": []}
+    with pytest.raises(report.StaleStructuralError, match="incomplete"):
+        report.check_structural_fresh(struct)
+
+
 def test_structural_freshness_refuses_a_missing_manifest_field(root):
     _, struct = _fresh_inputs(root)
     del struct["provenance"]["sets_sha256"]

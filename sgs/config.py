@@ -148,6 +148,9 @@ SEEDS = {
     # Replications (declared 2026-09-19 before any replication was solved):
     # entropy of a SeedSequence keyed on (strategy index, realization, batch).
     "replication_design": 20260929,
+    # Declared 2026-09-23 with the oracle spec, before any pool chunk was solved:
+    # the uniform reference pool from which C-oracle and C-logP select.
+    "pool_design": 20260930,
 }
 
 
@@ -419,7 +422,7 @@ LC_PARAMS = {
 # same way as realization r0 and reported apart, as exploratory: they shaped
 # the variants and the predictions.
 REP_REALIZATIONS = 5
-REP_STRATEGIES = ("lhs", "guided-log", "guided-seq", "guided-log-g")
+REP_STRATEGIES = ("lhs", "guided-log", "guided-seq", "guided-log-g", "guided-oracle", "guided-log-p")
 # The replication seed names the realization's DRAW STREAM, not the strategy.
 # guided-log-g must see the same 200k pool as guided-log, or the screener and the
 # available candidates would change at once and the comparison would stop being an
@@ -428,6 +431,10 @@ REP_STRATEGIES = ("lhs", "guided-log", "guided-seq", "guided-log-g")
 REP_SEED_STREAM = {"guided-log-g": "guided-log"}
 # Which screener each strategy uses; absent means SCREENER["family"].
 REP_SCREENER_FAMILY = {"guided-log-g": "gbm"}
+# The two strategies drawn from the solved reference pool (spec 2026-09-23 oracle,
+# §5), and the column their bins read: solved FOS for the oracle, the seed-trained
+# RF screener's prediction for C-logP. Nothing else differs between them.
+REP_POOL_STRATEGIES = {"guided-oracle": "FOS", "guided-log-p": "FOS_pred"}
 REP_EXTENSION = 300
 REP_SEQ_BATCHES = (100, 100, 100)
 REP_FAMILIES = ("rf", "gbm")
@@ -440,9 +447,13 @@ STRUCTURAL_MIN_TEST_N = 10
 # Independent arms (no common factor pairs realization i of one arm with
 # realization i of the other): Welch interval.
 REP_WELCH = (("C-log", "B"), ("C-seq", "B"), ("C0-log", "B"), ("C0-seq", "B"), ("C-seq", "C-log"),
-             ("C-logG", "B"), ("C0-logG", "B"))
+             ("C-logG", "B"), ("C0-logG", "B"),
+             ("C-oracle", "B"), ("C-logP", "B"), ("C0-oracle", "B"), ("C0-logP", "B"),
+             # sanity check on pool size (~6k candidates against 200k), spec §9.1
+             ("C-logP", "C-log"))
 # Arms sharing points within a realization: paired interval.
-REP_PAIRED = (("C-log", "C0-log"), ("C-seq", "C0-seq"), ("C-logG", "C-log"), ("C-logG", "C0-logG"))
+REP_PAIRED = (("C-log", "C0-log"), ("C-seq", "C0-seq"), ("C-logG", "C-log"), ("C-logG", "C0-logG"),
+              ("C-oracle", "C-logP"), ("C-oracle", "C0-oracle"), ("C-logP", "C0-logP"))
 
 
 @dataclass(frozen=True)
@@ -460,6 +471,7 @@ REP_INTERACTIONS = (
     Interaction("C-seq", "B", method="welch"),
     Interaction("C-logG", "B", method="welch"),
     Interaction("C-logG", "C-log", method="paired"),
+    Interaction("C-oracle", "C-logP", method="paired"),
 )
 # Predictions, declared with the above:
 #   decision range: for neither C-log nor C-seq is the Welch interval against B
@@ -490,6 +502,57 @@ RELOCATION_MIN_CELLS = 3
 # Levels for C-logG against B on the decision range: 1 point improvement,
 # 2 interval entirely below 0 in one cell, 3 in all four learner x test cells.
 # Only level 3 reopens the seed study.
+
+# --- the reference pool and the oracle (spec 2026-09-23-oracle-reference-pool-design.md)
+# Declared 2026-09-23, BEFORE any pool chunk was solved. Frozen from the declaration
+# commit on: no later commit edits this block. This is a summary; the full declared
+# text (stopping rule, predictions, readings, wording) is docs/oracle-declaration.md,
+# committed verbatim from the spec in the declaration commit (tag oracle-declared).
+POOL_CAP = 50_000
+POOL_CHUNK = 1_000          # a multiple of REP_REALIZATIONS: each chunk adds 200 rows per sub-pool
+# One sub-pool per confirmatory realization; row i after the disjointness filter
+# belongs to sub-pool i % REP_REALIZATIONS + 1, independently of FOS.
+# Stopping rule: after each chunk, over eligible rows (final present, not excluded),
+#   solved_count[r, b] >= a[b] and predicted_count[r, b] >= a[b]
+# for every sub-pool r and bin b; a = C-log's allocation (the seed water-filled to
+# REP_EXTENSION), bins (lo, hi] with the first closed. Solving stops for good at the
+# first chunk that meets it; at POOL_CAP it is an error, never a relaxation.
+ORACLE_DENSITY_RATIO = 1.10
+# Predictions and readings (spec §9), r1..r5 only; cell = learner x test; medians over
+# realizations; m = ln RELOCATION_MARGIN; ">= 3/4" = RELOCATION_MIN_CELLS of 4 cells;
+# paired interval = evaluate.paired_interval (t, n - 1 df).
+# Stage 1 (training data only, before any fit):
+#   C-oracle: sum |achieved - intended| = 0, 0 points < 0.5 and > 6, 100% in its bin
+#     (construction check, asserted);
+#   C-logP - C-log sum |achieved - intended|: Welch 95% interval contains 0 and
+#     |mean| <= 15 points (sanity check on pool size);
+#   rho_Z = median_r n_Z(C-oracle) / n_Z(C-logP), seed + selection, Z in L = [0.5, 1),
+#     H = [1, 2): expected rho_L ~ 1.27, rho_H ~ 1.06; the stage-1 values bind.
+# Stage 2 (test):
+#   L(X), H(X) = ln(E_X / E_B) on the zone; R = H - L; dR_O = R(C-oracle) - R(C-logP);
+#   dZ_O = ln(E_oracle,Z / E_logP,Z).
+#   Gate (each arm separately): median L < 0 and median H > 0 in >= 3/4.
+#   Density: rho_Z >= ORACLE_DENSITY_RATIO predicts dZ_O < 0; rho_Z <= 1/ratio predicts
+#     dZ_O > 0; direction met = sign in >= 3/4; magnitude met = also |median| >= m in >= 3/4.
+#   With the expected rho, density-following predicts dR_O > 0.
+#   Readings, first match in order. Step P reports C-logP's gate first.
+#     A (oracle gate passes): A1 median dR_O >= m; A2 <= -m; A3 paired dR_O interval
+#       inside (-m, m); A4 |median| < m and not A3; A5 mixed. Attribution (A1, A2) only
+#       if the paired dR_O interval excludes 0 in >= 3/4, ON THE SIDE OF THE READING:
+#       entirely above 0 for A1, entirely below 0 for A2.
+#     B (oracle gate fails): B1 C-logP's gate fails too; B2 the interval of R(C-oracle)
+#       inside (-m, m) ("vanishes"); B3 median R(C-oracle) <= -m ("reverses"); B4
+#       |median R(C-oracle)| < m and not B2 ("not detected"); B5 mixed. Attribution
+#       (B2, B3) under the same interval rule, the dR_O interval entirely below 0
+#       (C-oracle relocates less than C-logP, which relocates: step P passed).
+#     C (decision range, Welch against B): level 1 mean < 0 in one cell, 2 interval
+#       below 0 in one cell, 3 in all four. C1 C-oracle at level 3 AND the paired
+#       C-oracle - C-logP interval below 0 in all four AND C-logP below level 3;
+#       C2 C-oracle at level 3 otherwise; C3 below level 3.
+#   Background prediction: C-oracle does not reach level 3.
+#   Expected power (spec §9.5): A3 and B2 practically unreachable at n = 5; the
+#   realistic outcomes are A4, A5 and B4, and "no difference detected" is the
+#   expected reading of a null or small effect.
 
 
 # --- fingerprints -------------------------------------------------------------------
@@ -532,6 +595,8 @@ def replication_fingerprint(family: str) -> str:
         "target": TARGET, "features": FEATURES,
         "seed_stream": REP_SEED_STREAM, "screeners": SCREENERS,
         "screener_family": REP_SCREENER_FAMILY,
+        "pool": {"cap": POOL_CAP, "chunk": POOL_CHUNK, "seed": SEEDS["pool_design"],
+                 "strategies": REP_POOL_STRATEGIES},
     })
 
 
@@ -576,6 +641,11 @@ def learning_curve_metrics_path() -> Path:
 def replication_path(stage: str, key: str) -> Path:
     """stage: designs | results | final."""
     return ROOT / "data" / "replications" / stage / f"{key}.csv"
+
+
+def pool_path(stage: str, chunk: int) -> Path:
+    """stage: designs | results | final; chunk is 1-based."""
+    return ROOT / "data" / "pool" / stage / f"pool_c{chunk:03d}.csv"
 
 
 def replication_fit_path(family: str, realization: str) -> Path:

@@ -24,7 +24,8 @@ def test_every_role_seed_is_declared():
 def test_every_declared_seed_has_a_user():
     used = {s for role in config.ROLES.values() for s in role.seeds}
     used |= {"screener_fit", "screener_cv", "protocol_cv_split", "protocol_estimator",
-             "bootstrap_resampling", "learning_curve_subsampling", "replication_design"}
+             "bootstrap_resampling", "learning_curve_subsampling", "replication_design",
+             "pool_design"}
     assert used == set(config.SEEDS)
 
 
@@ -191,9 +192,11 @@ def test_interaction_methods_are_declared():
 def test_replication_declaration():
     assert config.REP_REALIZATIONS == 5 and config.REP_EXTENSION == 300
     assert config.REP_SEQ_BATCHES == (100, 100, 100) and sum(config.REP_SEQ_BATCHES) == config.REP_EXTENSION
-    assert config.REP_STRATEGIES == ("lhs", "guided-log", "guided-seq", "guided-log-g")
+    assert config.REP_STRATEGIES == ("lhs", "guided-log", "guided-seq", "guided-log-g",
+                                     "guided-oracle", "guided-log-p")
     assert set(config.REP_FAMILIES) <= set(config.LC_FAMILIES)
-    arms = {"A", "B", "C-log", "C0-log", "C-seq", "C0-seq", "C-logG", "C0-logG"}
+    arms = {"A", "B", "C-log", "C0-log", "C-seq", "C0-seq", "C-logG", "C0-logG",
+            "C-oracle", "C0-oracle", "C-logP", "C0-logP"}
     for pairs in (config.REP_WELCH, config.REP_PAIRED):
         assert all(first in arms and second in arms for first, second in pairs)
     assert all(i.first in arms and i.second in arms for i in config.REP_INTERACTIONS)
@@ -268,3 +271,35 @@ def test_the_gbm_screener_arms():
 def test_the_gbm_arm_is_not_in_the_learning_curve():
     # Neither C-log nor C-logG is; the curve compares lhs-extension and guided.
     assert set(config.LC_STRATEGIES.values()) == {"lhs-extension", "guided"}
+
+
+def test_pool_configuration():
+    assert config.SEEDS["pool_design"] == 20260930
+    assert config.POOL_CAP == 50_000 and config.POOL_CHUNK == 1_000
+    assert config.POOL_CHUNK % config.REP_REALIZATIONS == 0
+    assert config.REP_POOL_STRATEGIES == {"guided-oracle": "FOS", "guided-log-p": "FOS_pred"}
+    assert config.ORACLE_DENSITY_RATIO == 1.10
+
+
+def test_pool_strategies_are_appended_last():
+    assert config.REP_STRATEGIES == ("lhs", "guided-log", "guided-seq", "guided-log-g",
+                                     "guided-oracle", "guided-log-p")
+
+
+def test_pool_path(root):
+    assert config.pool_path("final", 7) == root / "data" / "pool" / "final" / "pool_c007.csv"
+
+
+def test_oracle_intervals_are_declared():
+    for pair in (("C-oracle", "B"), ("C-logP", "B"), ("C0-oracle", "B"), ("C0-logP", "B"),
+                 ("C-logP", "C-log")):
+        assert pair in config.REP_WELCH
+    for pair in (("C-oracle", "C-logP"), ("C-oracle", "C0-oracle"), ("C-logP", "C0-logP")):
+        assert pair in config.REP_PAIRED and pair not in config.REP_WELCH
+    assert config.Interaction("C-oracle", "C-logP", method="paired") in config.REP_INTERACTIONS
+
+
+def test_replication_fingerprint_covers_the_pool(monkeypatch):
+    before = config.replication_fingerprint("rf")
+    monkeypatch.setattr(config, "POOL_CHUNK", 500)
+    assert config.replication_fingerprint("rf") != before

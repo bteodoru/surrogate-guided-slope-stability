@@ -372,16 +372,24 @@ def check_structural_fresh(struct: dict) -> None:
             raise StaleStructuralError(f"provenance of {label} carries no realization; "
                                        "rerun `sgs structural`")
     # Per realization: one set per guided strategy and one per C-seq batch, r0 included.
-    expected = sum(len(config.REP_SEQ_BATCHES) if s == "guided-seq" else 1
-                   for s in config.REP_STRATEGIES if s != "lhs")
+    # The pool-backed strategies have no r0, and are expected only in an artifact
+    # built after their sets exist: structural.build() writes the "oracle" block
+    # exactly when it reads them, so the artifact itself says which manifest it carries.
+    with_pool = "oracle" in struct
+
+    def expected(r: int) -> int:
+        return sum(len(config.REP_SEQ_BATCHES) if s == "guided-seq" else 1
+                   for s in config.REP_STRATEGIES
+                   if s != "lhs" and (s not in config.REP_POOL_STRATEGIES or (with_pool and r >= 1)))
+
     found = {r: sum(1 for h in sets.values() if h["realization"] == r)
              for r in range(config.REP_REALIZATIONS + 1)}
     unknown = sorted({h["realization"] for h in sets.values()} - set(found), key=str)
-    short = {r: n for r, n in found.items() if n != expected}
+    short = {r: n for r, n in found.items() if n != expected(r)}
     if unknown or short:
         raise StaleStructuralError(
-            f"structural.json set manifest is incomplete: expected {expected} sets for each "
-            f"realization 0..{config.REP_REALIZATIONS}, found {short or 'the right counts'}"
+            f"structural.json set manifest is incomplete: expected "
+            f"{ {r: expected(r) for r in found} } sets per realization, found {short or 'the right counts'}"
             f"{f' and unknown realizations {unknown}' if unknown else ''}; rerun `sgs structural`")
     for label, hashes in sets.items():
         realization = hashes["realization"]
