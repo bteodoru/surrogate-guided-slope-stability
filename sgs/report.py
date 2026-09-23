@@ -851,7 +851,7 @@ def run() -> None:
             structural_shared_candidates_frame(struct),
             caption="Shared candidates (same pool, different screener): how many of guided-log-g's "
                     "points guided-log also drew, per realization, by normalized distance. Both "
-                    "screeners choose from the same candidate pool (guided_log_stream) against the "
+                    "screeners choose, in each realization, from the same candidate pool against the "
                     "same intended allocation; only the screener differs.",
             label="tab:structural:shared_candidates"))
         # Task 5 addendum (Amendment 1): the C0 ablations. Supplementary; they

@@ -237,7 +237,8 @@ def allocation_gap_paired(realizations=range(1, config.REP_REALIZATIONS + 1)) ->
 def shared_candidate_rows(realizations=(0, *range(1, config.REP_REALIZATIONS + 1))) -> list[dict]:
     """Per realization: how many of guided-log-g's points guided-log also drew.
 
-    Both screeners choose from the same pool (guided_log_stream) against the same
+    Both screeners choose from the same pool (guided_log_stream at r0; guided-log's
+    replication draw stream, via config.REP_SEED_STREAM, at r1..) against the same
     intended allocation; only the screener differs, so overlap is expected but not
     guaranteed. A shared point is one within config.MIN_DISTANCE of a guided-log
     point in the normalized parameter space, the same criterion data.validate_sets

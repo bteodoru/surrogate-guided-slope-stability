@@ -73,12 +73,16 @@ the allocation and displacement rows bin as the generator does, `(lo, hi]`.
 Separating the allocation rule from the screener's error needs the oracle, not
 this.
 
-Arms (A, B, C, C₀, C-log, C₀-log, C-seq, C₀-seq) and set roles (seed,
-lhs-extension, guided, test-natural, test-stratified, guided-log,
-guided-seq-1..3) are declared in `config.ARMS` and `config.ROLES`. Every C₀
+Arms (A, B, C, C₀, C-log, C₀-log, C-seq, C₀-seq, C-logG, C₀-logG) and set roles
+(seed, lhs-extension, guided, test-natural, test-stratified, guided-log,
+guided-seq-1..3, guided-log-g) are declared in `config.ARMS` and `config.ROLES`. Every C₀
 variant is an ablation, not a budget arm (`budget=None, ablation=True`). A
 screener role learns from the solved roles in `SetRole.trained_on` (default:
 the seed); the sequential batches list the seed and every earlier batch.
+C-logG is C-log with a GBM screener (`SetRole.screener_family`,
+`config.REP_SCREENER_FAMILY`) on the same candidate pool (`guided_log_stream`;
+`config.REP_SEED_STREAM` in the replications): a screener sensitivity, one GBM
+chosen post hoc, never evidence that the screener controls the departure.
 
 The two test sets are two deployment scenarios, not two tests of the same
 thing. Both are disjoint from every other set by normalized distance;
@@ -86,7 +90,7 @@ thing. Both are disjoint from every other set by normalized distance;
 
 ## Non-negotiable disciplines
 
-1. **Every C₀ variant (C₀, C₀-log, C₀-seq) appears in every analysis**,
+1. **Every C₀ variant (C₀, C₀-log, C₀-seq, C₀-logG) appears in every analysis**,
    including robustness checks. Omitting it is selective reporting.
 2. **No threshold misclassification analysis anywhere** — no false-stable
    counts, no FOS = 1.0 crossing metrics, no classification metrics. This is a
@@ -166,7 +170,9 @@ interaction interval, never from comparing two arms' intervals.
 
 ## Pipeline
 
-`sgs generate | fit | evaluate | report` (see `README.md`). `data/results/` is
+`sgs generate | fit | evaluate | report` (see `README.md`). Run them from the
+repository root with `PYTHONPATH=.`: macOS keeps re-applying the `hidden` flag
+under `.venv`, and Python 3.14 skips the hidden editable-install `.pth`. `data/results/` is
 raw solver output; `repair` writes `data/final/`. Fit files store a fingerprint
 of their protocol configuration and training data and fail loudly when either
 changed. `evaluate` is pure and reads fits and a test set passed as arguments.
