@@ -624,7 +624,8 @@ ABLATION_PROCEDURE = (
     "trained on different budgets and is labelled so; it is not a like-for-like comparison. The "
     "training distribution is compared as fractions n_bin / N_total, never raw counts. Thin bins are "
     "marked, never dropped. The intervals visualize between-design variability and constitute no "
-    "test; an interval containing 0 is inconclusive, not a tie. r0 does not enter.")
+    "test; an interval containing 0 is inconclusive, not a tie. r0 does not enter. C0-logG "
+    "(2026-09-23) follows the same procedure, extended to the GBM-screener arm.")
 
 SHARED_ROWS_NOTE = (
     "C0-log, C0-seq and C0-logG train on the same guided points as C-log, C-seq and C-logG in every "

@@ -18,7 +18,14 @@ def guided_log_g_stub(tmp_path, monkeypatch):
     end without requiring the actual GBM run. Every C-logG/C0-logG number
     these tests see is therefore numerically identical to C-log's/C0-log's and
     carries no claim about the real screener; only the code path (a distinct
-    arm key, read through its own role/set names) is under test here."""
+    arm key, read through its own role/set names) is under test here.
+
+    TODO: once Task 10's pipeline rerun produces real guided-log-g data (real
+    entries in data/run_metadata.json and outputs/metrics/replications.json,
+    real design/final CSVs), remove this fixture and the tests that depend on
+    it, or point them at the real data instead — otherwise it keeps aliasing
+    C-logG to C-log's files and silently masking whatever the real GBM
+    screener actually does."""
     meta = structural._metadata()
     synthetic = json.loads(json.dumps(meta))
     synthetic["datasets"]["guided-log-g"] = json.loads(json.dumps(meta["datasets"]["guided-log"]))
@@ -581,6 +588,53 @@ def test_allocation_gap_is_paired_per_realization(monkeypatch):
     out = structural.allocation_gap_paired((1, 2))
     assert [row["delta"] for row in out] == [-15, -20]   # GBM - RF, negative is closer
     assert [row["realization"] for row in out] == [1, 2]
+
+
+def test_screener_swap_matches_when_c_logg_is_aliased_to_c_log(guided_log_g_stub):
+    """Under the stub, C-logG's design/final/metadata are literally C-log's, so
+    both quantities have an exact, non-trivial expected value: zero allocation
+    gap (C-logG and C-log see the same achieved/intended counts) and full
+    overlap (every guided-log-g point is, byte for byte, a guided-log point) in
+    every realization. A wiring mistake (wrong arm, wrong label, wrong file)
+    would show up as a nonzero delta or a shared count below n."""
+    out = structural.build()
+    swap = out["screener_swap"]
+    assert len(swap["allocation_gap_paired"]) == config.REP_REALIZATIONS   # r1..r5
+    for row in swap["allocation_gap_paired"]:
+        assert row["delta"] == 0
+    assert len(swap["shared_candidates"]) == config.REP_REALIZATIONS + 1   # r0..r5
+    for row in swap["shared_candidates"]:
+        assert row["shared"] == row["n"]
+
+
+def test_shared_candidate_rows_counts_partial_overlap(monkeypatch):
+    """A synthetic pair of sets sharing exactly 2 of 3 points: the count must
+    come out strictly between 0 and n, proving the function measures overlap
+    rather than returning a constant (0, n, or "matches the stub" trivially)."""
+    params = list(config.PARAMS)
+
+    def _frame(rows):
+        return pd.DataFrame([dict(zip(params, values)) for values in rows])
+
+    shared_a = (30.0, 20.0, 30.0, 18.0, 10.0)
+    shared_b = (40.0, 25.0, 40.0, 19.0, 12.0)
+    only_log = (15.0, 10.0, 10.0, 15.0, 3.0)
+    only_logg = (60.0, 35.0, 70.0, 21.0, 24.0)
+    log_frame = _frame([shared_a, shared_b, only_log])
+    logg_frame = _frame([shared_a, shared_b, only_logg])
+
+    monkeypatch.setattr(structural, "_sets_of",
+                        lambda r: {"C-log": [("log_label", {})], "C-logG": [("logg_label", {})]})
+    monkeypatch.setattr(structural, "_solved",
+                        lambda r, label: log_frame if label == "log_label" else logg_frame)
+
+    rows = structural.shared_candidate_rows((1,))
+    assert rows == [{"realization": 1, "n": 3, "shared": 2}]
+
+
+def test_shared_candidate_rows_skips_a_realization_missing_either_arm(monkeypatch):
+    monkeypatch.setattr(structural, "_sets_of", lambda r: {"C-log": [("k", {})]})   # no C-logG
+    assert structural.shared_candidate_rows((1,)) == []
 
 
 def test_build_includes_matrix_and_batches_captions(guided_log_g_stub):
