@@ -296,6 +296,24 @@ def test_arm_frames_carry_the_gbm_arms(monkeypatch, root):
                                             "C-logG", "C0-logG"}
 
 
+def test_data_hashes_covers_the_gbm_screener_role_at_r0(small_fit):
+    hashes = replicate.data_hashes(0)
+    assert config.final_path("guided-log-g").name in hashes
+
+
+def test_fit_all_validates_the_gbm_screener_role_disjointness(small_fit, monkeypatch):
+    captured = {}
+    original_validate_sets = data.validate_sets
+
+    def spy(roles):
+        captured["roles"] = tuple(roles)
+        return original_validate_sets(roles)
+
+    monkeypatch.setattr(data, "validate_sets", spy)
+    replicate.fit_all()
+    assert "guided-log-g" in captured["roles"]
+
+
 def test_fit_all_is_cached_and_refuses_stale_state(small_fit, monkeypatch):
     replicate.fit_all()
     units = replicate.load_units()

@@ -221,6 +221,10 @@ def generate_all(*, workers: int, force: bool = False, fn=None) -> None:
 
 REP_ARMS = ("A", "B", "C-log", "C0-log", "C-seq", "C0-seq", "C-logG", "C0-logG")
 SEQ_ROLES_R0 = tuple(f"guided-seq-{b}" for b in range(1, 4))
+# The non-seed, non-test r0 roles arm_frames draws on: the LHS extension, both
+# guided-log screeners' designs, and the sequential batches. Named once so
+# data_hashes and fit_all's disjointness check cannot drift from arm_frames.
+R0_GUIDED_ROLES = ("lhs-extension", "guided-log", "guided-log-g", *SEQ_ROLES_R0)
 
 
 def arm_frames(realization: int) -> dict[str, pd.DataFrame]:
@@ -249,7 +253,7 @@ def arm_frames(realization: int) -> dict[str, pd.DataFrame]:
 def data_hashes(realization: int) -> dict:
     paths = [config.final_path(role) for role in ("seed", *config.TEST_ROLES)]
     if realization == 0:
-        paths += [config.final_path(role) for role in ("lhs-extension", "guided-log", *SEQ_ROLES_R0)]
+        paths += [config.final_path(role) for role in R0_GUIDED_ROLES]
     else:
         paths += [config.replication_path("final", key) for key, _, _ in set_keys(realization)]
     return {path.name: data.sha256_file(path) for path in paths}
@@ -271,7 +275,7 @@ def fit_realization(family: str, realization: int, tests) -> dict:
 
 
 def fit_all(*, force: bool = False) -> None:
-    data.validate_sets(("seed", *config.TEST_ROLES, "lhs-extension", "guided-log", *SEQ_ROLES_R0))
+    data.validate_sets(("seed", *config.TEST_ROLES, *R0_GUIDED_ROLES))
     tests = {role: data.load_test(role) for role in config.TEST_ROLES}
     for family in config.REP_FAMILIES:
         for r in range(0, config.REP_REALIZATIONS + 1):
