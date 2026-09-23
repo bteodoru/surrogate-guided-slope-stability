@@ -308,7 +308,10 @@ def build(role: str) -> tuple[pd.DataFrame, dict]:
         training = pd.concat([data.load_role(r) for r in trained], ignore_index=True)
         family = spec.screener_family or config.SCREENER["family"]
         model, diagnostics = fit_screener(training, family)
-        info["screener"] = {**diagnostics, **_training_record(trained)}
+        info["screener"] = {**diagnostics, "family": family,
+                            "params": dict(config.SCREENERS[family]),
+                            "fit_seed": config.SEEDS["screener_fit"],
+                            **_training_record(trained)}
         if spec.design == "guided-maxmin":
             frame = guided_maxmin(model, rng=np.random.default_rng(seeds[0]),
                                   n_pool=config.N_GUIDED_POOL, n_bins=config.N_BINS,

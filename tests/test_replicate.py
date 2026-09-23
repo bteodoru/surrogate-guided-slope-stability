@@ -76,6 +76,18 @@ def test_set_keys_order(small_reps):
                                      ("guided_seq_r1_b2", "guided-seq", 2)]
 
 
+def test_build_design_records_the_screener_family_and_parameters(small_reps, monkeypatch):
+    # max_iter is shrunk for speed, not to the brief's 20: at 20 this GBM screener
+    # under-predicts the low-FOS tail on this seed/platform and guided_log_deficit
+    # raises DesignError before the assertions run; 300 is fast and reliable here
+    # (see the matching note in tests/test_design.py).
+    monkeypatch.setitem(config.SCREENERS, "gbm", {**config.SCREENERS["gbm"], "max_iter": 300})
+    _, info = replicate.build_design("guided_log_g_r1", "guided-log-g", 1, 0)
+    assert info["screener"]["family"] == "gbm"
+    assert info["screener"]["params"] == config.SCREENERS["gbm"]
+    assert info["screener"]["fit_seed"] == config.SEEDS["screener_fit"]
+
+
 def test_generate_all_builds_every_set_in_order(small_reps):
     replicate.generate_all(workers=1, fn=fake_analyse)
     meta = data.read_metadata()["replications"]

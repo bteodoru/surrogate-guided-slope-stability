@@ -300,6 +300,29 @@ def test_screener_roles_are_deterministic_and_record_the_screener(small_designs)
     assert len(stratified) == 15 and set(stratified.columns) == {*config.PARAMS, "FOS_pred", "bin"}
 
 
+def test_build_records_the_screener_family_and_parameters(root, monkeypatch):
+    from tests.helpers import shrink_roles, synthetic_final, write_final
+    # max_iter is shrunk for speed, not to the brief's 20: at 20 (and up to ~100)
+    # this GBM screener under-predicts the low-FOS tail on this seed/platform
+    # (0 pool candidates below 0.822 even at n_pool=20000) and guided_log_deficit
+    # raises DesignError before the assertions run; 300 is fast and reliable here.
+    monkeypatch.setitem(config.SCREENERS, "gbm", {**config.SCREENERS["gbm"], "max_iter": 300})
+    shrink_roles(monkeypatch, {"seed": 40, "guided-log-g": 5})
+    monkeypatch.setattr(config, "N_GUIDED_POOL", 500)
+    write_final("seed", synthetic_final(40, 7))
+    # design.build reads each disjoint_from role with design.read_design, which reads
+    # config.design_path(role). There is no design writer in sgs/design.py: write the
+    # CSVs directly, as the reference designs only have to exist and be far away.
+    for i, role in enumerate(config.ROLES["guided-log-g"].disjoint_from):
+        path = config.design_path(role)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        synthetic_final(5, 100 + i)[list(config.PARAMS)].to_csv(path, index=False)
+    _, info = design.build("guided-log-g")
+    assert info["screener"]["family"] == "gbm"
+    assert info["screener"]["params"] == config.SCREENERS["gbm"]
+    assert info["screener"]["fit_seed"] == config.SEEDS["screener_fit"]
+
+
 def test_guided_log_role_fills_the_seed_deficit(small_designs, monkeypatch):
     shrink_roles(monkeypatch, {"guided-log": 20})
     for role in ("guided", "lhs-extension", "test-natural", "test-stratified"):
