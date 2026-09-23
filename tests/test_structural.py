@@ -7,6 +7,57 @@ import pytest
 from sgs import config, data, design, evaluate, replicate, structural
 
 
+@pytest.fixture
+def guided_log_g_stub(tmp_path, monkeypatch):
+    """Real guided-log-g data (the GBM-screener design) has not been generated
+    yet: the actual pipeline rerun for the GBM-screener arm is deferred past
+    this task (docs/superpowers/plans/2026-09-23-gbm-screener-arm.md, Task 10,
+    which the executor stops before). Stand in with guided-log's own committed
+    metadata, design, final and replication-metrics rows so the real-artifact
+    integration tests below exercise the new C-logG/C0-logG code paths end to
+    end without requiring the actual GBM run. Every C-logG/C0-logG number
+    these tests see is therefore numerically identical to C-log's/C0-log's and
+    carries no claim about the real screener; only the code path (a distinct
+    arm key, read through its own role/set names) is under test here."""
+    meta = structural._metadata()
+    synthetic = json.loads(json.dumps(meta))
+    synthetic["datasets"]["guided-log-g"] = json.loads(json.dumps(meta["datasets"]["guided-log"]))
+    for r in range(1, config.REP_REALIZATIONS + 1):
+        synthetic["replications"][f"guided_log_g_r{r}"] = json.loads(
+            json.dumps(meta["replications"][f"guided_log_r{r}"]))
+    monkeypatch.setattr(structural, "_metadata", lambda: synthetic)
+
+    real_design_path, real_final_path, real_replication_path = (
+        config.design_path, config.final_path, config.replication_path)
+    monkeypatch.setattr(config, "design_path",
+                        lambda role: real_design_path("guided-log" if role == "guided-log-g" else role))
+    monkeypatch.setattr(config, "final_path",
+                        lambda role: real_final_path("guided-log" if role == "guided-log-g" else role))
+
+    def _replication_path(stage, key):
+        if key.startswith("guided_log_g_r"):
+            key = key.replace("guided_log_g_r", "guided_log_r")
+        return real_replication_path(stage, key)
+
+    monkeypatch.setattr(config, "replication_path", _replication_path)
+
+    # build()/error_rows()/ablation_error_rows() also require C-logG/C0-logG
+    # rows in replications.json itself; clone them from C-log/C0-log.
+    real_replication_metrics_path = config.replication_metrics_path
+    rep = json.loads(real_replication_metrics_path().read_text())
+    clones = []
+    for row in rep["values"]:
+        if row["arm"] in ("C-log", "C0-log"):
+            clone = json.loads(json.dumps(row))
+            clone["arm"] = "C-logG" if row["arm"] == "C-log" else "C0-logG"
+            clones.append(clone)
+    rep["values"] = rep["values"] + clones
+    rep_path = tmp_path / "replications_with_logg.json"
+    rep_path.write_text(json.dumps(rep))
+    monkeypatch.setattr(config, "replication_metrics_path", lambda: rep_path)
+    return synthetic
+
+
 def test_edges_are_the_declared_fifteen_bins():
     edges = structural.EDGES()
     assert len(edges) == config.N_BINS + 1
@@ -113,16 +164,17 @@ def test_allocation_deviation_is_zero_when_the_screener_was_exact(monkeypatch):
     assert structural.allocation_rows(1)["C-log"]["abs_deviation"] == 0
 
 
-def test_sets_of_reads_r0_from_the_main_pipeline_roles():
+def test_sets_of_reads_r0_from_the_main_pipeline_roles(guided_log_g_stub):
     sets = structural._sets_of(0)
     assert [label for label, _ in sets["C-log"]] == ["guided-log"]
+    assert [label for label, _ in sets["C-logG"]] == ["guided-log-g"]
     assert [label for label, _ in sets["C-seq"]] == ["guided-seq-1", "guided-seq-2", "guided-seq-3"]
 
 
-def test_allocation_rows_work_for_r0_including_the_seed_counts_spelling():
+def test_allocation_rows_work_for_r0_including_the_seed_counts_spelling(guided_log_g_stub):
     """C-log at r0 stores its prior counts as seed_counts; a literal key raises."""
     rows = structural.allocation_rows(0)
-    assert set(rows) == {"C-log", "C-seq"}
+    assert set(rows) == {"C-log", "C-logG", "C-seq"}
     assert len(rows["C-log"]["intended"]) == config.N_BINS
     # The budget is not a named constant; it is the metadata entry's own n.
     meta = json.loads(config.metadata_path().read_text())
@@ -225,7 +277,7 @@ def _error_stub(diff_by_arm, *, thin_bin=None, realizations=(1, 2, 3, 4, 5)):
 
 
 def test_error_rows_compare_each_arm_against_B_without_pairing():
-    stub = _error_stub({"B": 0.20, "C-log": 0.10, "C-seq": 0.15})
+    stub = _error_stub({"B": 0.20, "C-log": 0.10, "C-seq": 0.15, "C-logG": 0.12})
     rows = [r for r in structural.error_rows(stub)
             if r["arm"] == "C-log" and r["family"] == "rf" and r["test"] == config.TEST_ROLES[0]]
     assert len(rows) == config.N_BINS
@@ -235,7 +287,7 @@ def test_error_rows_compare_each_arm_against_B_without_pairing():
 
 
 def test_error_rows_mark_thin_bins_without_dropping_them():
-    stub = _error_stub({"B": 0.2, "C-log": 0.1, "C-seq": 0.15}, thin_bin=0)
+    stub = _error_stub({"B": 0.2, "C-log": 0.1, "C-seq": 0.15, "C-logG": 0.12}, thin_bin=0)
     rows = [r for r in structural.error_rows(stub) if r["arm"] == "C-log"]
     assert len({r["bin"] for r in rows}) == config.N_BINS      # none dropped
     assert all(r["marked"] for r in rows if r["bin"] == 0)
@@ -243,19 +295,19 @@ def test_error_rows_mark_thin_bins_without_dropping_them():
 
 def test_error_rows_refuse_a_missing_arm():
     """A whole arm must not be able to disappear in silence."""
-    rep = _error_stub({"B": 0.2, "C-log": 0.1})          # no C-seq at all
+    rep = _error_stub({"B": 0.2, "C-log": 0.1, "C-logG": 0.12})          # no C-seq at all
     with pytest.raises(structural.StructuralError, match=r"\['C-seq'\] are missing"):
         structural.error_rows(rep)
 
 
 def test_error_rows_refuse_a_missing_realization():
-    rep = _error_stub({"B": 0.2, "C-log": 0.1, "C-seq": 0.15}, realizations=(1, 2, 3, 4))
+    rep = _error_stub({"B": 0.2, "C-log": 0.1, "C-seq": 0.15, "C-logG": 0.12}, realizations=(1, 2, 3, 4))
     with pytest.raises(structural.StructuralError, match=r"\[5\] are missing"):
         structural.error_rows(rep)
 
 
 def test_error_rows_refuse_a_test_count_that_differs_between_arms():
-    rep = _error_stub({"B": 0.2, "C-log": 0.1, "C-seq": 0.15})
+    rep = _error_stub({"B": 0.2, "C-log": 0.1, "C-seq": 0.15, "C-logG": 0.12})
     rep["values"][0]["bins"][1] = {"n": 99, "log_rmse": 0.2}
     with pytest.raises(structural.StructuralError, match="test count"):
         structural.error_rows(rep)
@@ -272,7 +324,7 @@ def test_concordance_separates_unmarked_bins_from_all_bins():
     assert got["thin"] == 1
 
 
-def test_build_is_deterministic(tmp_path, monkeypatch):
+def test_build_is_deterministic(tmp_path, monkeypatch, guided_log_g_stub):
     monkeypatch.setattr(config, "structural_metrics_path", lambda: tmp_path / "structural.json")
     structural.run()
     first = (tmp_path / "structural.json").read_bytes()
@@ -285,8 +337,9 @@ def test_build_is_deterministic(tmp_path, monkeypatch):
 def _ablation_stub(*, drop_arm=None, shuffle=False):
     """Errors vary by realization, so a Welch and a paired interval differ;
     C0 trains on half of B's budget with the same shape."""
-    budgets = {"B": 2, "C-log": 2, "C-seq": 2, "C0-log": 1, "C0-seq": 1}
-    level = {"B": 0.20, "C-log": 0.15, "C-seq": 0.16, "C0-log": 0.30, "C0-seq": 0.35}
+    budgets = {"B": 2, "C-log": 2, "C-seq": 2, "C-logG": 2, "C0-log": 1, "C0-seq": 1, "C0-logG": 1}
+    level = {"B": 0.20, "C-log": 0.15, "C-seq": 0.16, "C-logG": 0.17,
+             "C0-log": 0.30, "C0-seq": 0.35, "C0-logG": 0.32}
     values = []
     for family in config.REP_FAMILIES:
         for test in config.TEST_ROLES:
@@ -306,9 +359,9 @@ def _ablation_stub(*, drop_arm=None, shuffle=False):
 
 def test_ablation_covers_both_c0_variants_on_all_reporting_bins():
     rows = structural.ablation_error_rows(_ablation_stub())
-    assert {r["arm"] for r in rows} == {"C0-log", "C0-seq"}
+    assert {r["arm"] for r in rows} == {"C0-log", "C0-seq", "C0-logG"}
     per = len(config.REP_FAMILIES) * len(config.TEST_ROLES) * (config.N_BINS + 2) * 2
-    for arm in ("C0-log", "C0-seq"):
+    for arm in ("C0-log", "C0-seq", "C0-logG"):
         assert len([r for r in rows if r["arm"] == arm]) == per
     assert all(r["budget_differs"] for r in rows)
 
@@ -336,7 +389,7 @@ def test_ablation_pairs_by_realization_whatever_the_row_order():
     assert ordered == shuffled
 
 
-@pytest.mark.parametrize("arm", ["C0-log", "C0-seq"])
+@pytest.mark.parametrize("arm", ["C0-log", "C0-seq", "C0-logG"])
 def test_ablation_refuses_a_missing_c0_variant(arm):
     with pytest.raises(structural.StructuralError, match=rf"\['{arm}'\] are missing"):
         structural.ablation_error_rows(_ablation_stub(drop_arm=arm))
@@ -353,10 +406,10 @@ def test_ablation_refuses_an_undeclared_interval_type(monkeypatch):
 def test_ablation_fractions_remove_the_budget():
     """Same shape, half the budget: raw counts differ, fractions do not."""
     rows = structural.ablation_fraction_rows(_ablation_stub())
-    assert {r["arm"] for r in rows} == {"C0-log", "C0-seq"}
+    assert {r["arm"] for r in rows} == {"C0-log", "C0-seq", "C0-logG"}
     assert all(r["interval"] == "welch" and r["second"] == "B" for r in rows)
     assert all(r["diff"] == pytest.approx(0.0) for r in rows)
-    for arm in ("C0-log", "C0-seq"):
+    for arm in ("C0-log", "C0-seq", "C0-logG"):
         assert sum(r["first_mean"] for r in rows if r["arm"] == arm) == pytest.approx(1.0)
 
 
@@ -374,16 +427,17 @@ def test_c0_stays_out_of_the_main_figure_and_the_concordance():
         assert {r["arm"] for r in rows} == set(structural.ARMS_VS_B)
 
 
-def test_built_artifact_carries_both_c0_variants_and_the_shared_rows(tmp_path, monkeypatch):
+def test_built_artifact_carries_both_c0_variants_and_the_shared_rows(tmp_path, monkeypatch, guided_log_g_stub):
     monkeypatch.setattr(config, "structural_metrics_path", lambda: tmp_path / "structural.json")
     structural.run()
     out = json.loads((tmp_path / "structural.json").read_text())
     section = out["ablation"]
-    assert {r["arm"] for r in section["errors"]} == {"C0-log", "C0-seq"}
-    assert {r["arm"] for r in section["fractions"]} == {"C0-log", "C0-seq"}
+    assert {r["arm"] for r in section["errors"]} == {"C0-log", "C0-seq", "C0-logG"}
+    assert {r["arm"] for r in section["fractions"]} == {"C0-log", "C0-seq", "C0-logG"}
     assert {r["interval"] for r in section["errors"] if r["second"] == "B"} == {"welch"}
     assert {r["interval"] for r in section["errors"] if r["second"] != "B"} == {"paired"}
     assert section["shared_rows"]["C0-log"] == "C-log" and section["shared_rows"]["C0-seq"] == "C-seq"
+    assert section["shared_rows"]["C0-logG"] == "C-logG"
     assert "only as r0" in section["original_c0"]
     assert {r["arm"] for r in out["concordance"]} == set(structural.ARMS_VS_B)
 
@@ -466,17 +520,18 @@ def test_check_edges_accepts_the_module_bins_and_refuses_others():
         structural.check_edges(_with_edges(_ablation_stub(), shifted))
 
 
-def test_build_records_the_provenance_of_its_inputs():
+def test_build_records_the_provenance_of_its_inputs(guided_log_g_stub):
     out = structural.build()
     assert out["provenance"]["replications_sha256"] == data.sha256_file(config.replication_metrics_path())
     assert out["provenance"]["run_metadata_sha256"] == data.sha256_file(config.metadata_path())
     assert "guided-log" in out["provenance"]["sets_sha256"]
     assert out["provenance"]["sets_sha256"]["guided-log"]["realization"] == 0
     assert out["provenance"]["sets_sha256"]["guided_log_r1"]["realization"] == 1
-    assert len(out["provenance"]["sets_sha256"]) == 4 * (config.REP_REALIZATIONS + 1)
+    # 5 labels per realization now: guided-log, guided-log-g and the 3 C-seq batches.
+    assert len(out["provenance"]["sets_sha256"]) == 5 * (config.REP_REALIZATIONS + 1)
 
 
-def test_captions_state_the_budgets_and_the_interval_level():
+def test_captions_state_the_budgets_and_the_interval_level(guided_log_g_stub):
     out = structural.build()
     assert "95% Welch" in out["figure_caption"] and "raw counts" in out["figure_caption"]
     caption = out["ablation"]["caption"]
@@ -484,7 +539,7 @@ def test_captions_state_the_budgets_and_the_interval_level():
     assert "Amendment" not in caption and "Task" not in caption      # paper text, not process
 
 
-def test_allocation_rows_verifies_allocation_against_recomputation(monkeypatch):
+def test_allocation_rows_verifies_allocation_against_recomputation(monkeypatch, guided_log_g_stub):
     """allocation_rows checks that allocation.added == deficit_allocation(prior, budget)."""
     # This should pass: allocation is correct
     rows = structural.allocation_rows(0)
@@ -499,7 +554,7 @@ def test_allocation_rows_verifies_allocation_against_recomputation(monkeypatch):
         structural.allocation_rows(0)
 
 
-def test_batch_allocation_rows_verifies_allocation_against_recomputation(monkeypatch):
+def test_batch_allocation_rows_verifies_allocation_against_recomputation(monkeypatch, guided_log_g_stub):
     """batch_allocation_rows checks that each batch's allocation is correct."""
     original_metadata = structural._metadata()
     keys = [key for key, _ in structural._sets_of(1)["C-seq"]]
@@ -513,7 +568,22 @@ def test_batch_allocation_rows_verifies_allocation_against_recomputation(monkeyp
             structural.batch_allocation_rows(1)
 
 
-def test_build_includes_matrix_and_batches_captions():
+def test_structural_knows_the_new_ablation():
+    assert structural.ABLATIONS["C0-logG"] == "C-logG"
+    structural._declared_intervals()          # must not raise
+
+
+def test_allocation_gap_is_paired_per_realization(monkeypatch):
+    # structural.allocation_rows(r) returns arm -> {..., "abs_deviation": int}.
+    rows = {1: {"C-logG": {"abs_deviation": 40}, "C-log": {"abs_deviation": 55}},
+            2: {"C-logG": {"abs_deviation": 30}, "C-log": {"abs_deviation": 50}}}
+    monkeypatch.setattr(structural, "allocation_rows", lambda r: rows[r])
+    out = structural.allocation_gap_paired((1, 2))
+    assert [row["delta"] for row in out] == [-15, -20]   # GBM - RF, negative is closer
+    assert [row["realization"] for row in out] == [1, 2]
+
+
+def test_build_includes_matrix_and_batches_captions(guided_log_g_stub):
     """build() includes the matrix_caption and batches_caption keys."""
     out = structural.build()
     assert "matrix_caption" in out

@@ -13,6 +13,7 @@ import json
 
 import numpy as np
 import pandas as pd
+from scipy.spatial import cKDTree
 
 from sgs import config, data, design, evaluate, replicate
 
@@ -137,11 +138,13 @@ def _sets_of(realization: int) -> dict[str, list[tuple[str, dict]]]:
     """
     meta = _metadata()
     if realization == 0:
-        roles = {"C-log": ["guided-log"], "C-seq": list(replicate.SEQ_ROLES_R0)}
+        roles = {"C-log": ["guided-log"], "C-logG": ["guided-log-g"],
+                 "C-seq": list(replicate.SEQ_ROLES_R0)}
         return {arm: [(role, meta["datasets"][role]["allocation"]) for role in names]
                 for arm, names in roles.items()}
     keys = replicate.set_keys(realization)
     grouped = {"C-log": [k for k, s, _ in keys if s == "guided-log"],
+               "C-logG": [k for k, s, _ in keys if s == "guided-log-g"],
                "C-seq": [k for k, s, _ in keys if s == "guided-seq"]}
     return {arm: [(key, meta["replications"][key]["allocation"]) for key in names]
             for arm, names in grouped.items()}
@@ -213,6 +216,44 @@ def allocation_rows(realization: int) -> dict[str, dict]:
                     "achieved": achieved.tolist(), "deviation": deviation.tolist(),
                     "abs_deviation": int(np.abs(deviation).sum()),
                     "achieved_outside": dict(zip(ALLOCATION_OUTSIDE, outside.tolist()))}
+    return out
+
+
+def allocation_gap_paired(realizations=range(1, config.REP_REALIZATIONS + 1)) -> list[dict]:
+    """Stage 1 of the screener swap: the paired per-realization difference of
+    sum |achieved - intended| between C-logG and C-log, GBM minus RF, over the 15
+    in-range bins. Descriptive net distortion of the requested distribution, never
+    prediction error, and never phrased as the screener causing it."""
+    out = []
+    for r in realizations:
+        rows = allocation_rows(r)
+        if "C-logG" not in rows or "C-log" not in rows:
+            continue
+        gbm, rf = rows["C-logG"]["abs_deviation"], rows["C-log"]["abs_deviation"]
+        out.append({"realization": r, "gbm": gbm, "rf": rf, "delta": gbm - rf})
+    return out
+
+
+def shared_candidate_rows(realizations=(0, *range(1, config.REP_REALIZATIONS + 1))) -> list[dict]:
+    """Per realization: how many of guided-log-g's points guided-log also drew.
+
+    Both screeners choose from the same pool (guided_log_stream) against the same
+    intended allocation; only the screener differs, so overlap is expected but not
+    guaranteed. A shared point is one within config.MIN_DISTANCE of a guided-log
+    point in the normalized parameter space, the same criterion data.validate_sets
+    uses for disjointness; realizations missing either set are skipped."""
+    out = []
+    for r in realizations:
+        sets = _sets_of(r)
+        log_labels = [label for label, _ in sets.get("C-log", [])]
+        logg_labels = [label for label, _ in sets.get("C-logG", [])]
+        if not log_labels or not logg_labels:
+            continue
+        log_frame = pd.concat([_solved(r, label) for label in log_labels], ignore_index=True)
+        logg_frame = pd.concat([_solved(r, label) for label in logg_labels], ignore_index=True)
+        distances = cKDTree(data.normalize(log_frame)).query(data.normalize(logg_frame), k=1)[0]
+        shared = int((distances <= config.MIN_DISTANCE).sum())
+        out.append({"realization": r, "n": int(len(logg_frame)), "shared": shared})
     return out
 
 
@@ -298,7 +339,7 @@ def displacement_rows(realization: int) -> dict[str, dict]:
     return out
 
 
-ARMS_VS_B = ("C-log", "C-seq")
+ARMS_VS_B = ("C-log", "C-seq", "C-logG")
 # Both sides of these rows come from replications.json, whose bins and
 # train_counts are built with evaluate._zone_mask, i.e. [lo, hi). So the outer
 # bin is "at or above 6" for the density and for the error alike. The generator's
@@ -464,7 +505,7 @@ def concordance(error_rows_, density_diff_rows_) -> list[dict]:
 # declaration. None of it enters the main figure or the concordance count.
 
 # C0 arm -> the C arm whose guided points it trains on, in the same realization.
-ABLATIONS = {"C0-log": "C-log", "C0-seq": "C-seq"}
+ABLATIONS = {"C0-log": "C-log", "C0-seq": "C-seq", "C0-logG": "C-logG"}
 ABLATION_ARMS = ("B", *ARMS_VS_B, *ABLATIONS)
 
 
@@ -586,8 +627,9 @@ ABLATION_PROCEDURE = (
     "test; an interval containing 0 is inconclusive, not a tie. r0 does not enter.")
 
 SHARED_ROWS_NOTE = (
-    "C0-log and C0-seq train on the same guided points as C-log and C-seq in every realization, so "
-    "their allocation, batch and displacement rows are those of C, shared rather than duplicated.")
+    "C0-log, C0-seq and C0-logG train on the same guided points as C-log, C-seq and C-logG in every "
+    "realization, so their allocation, batch and displacement rows are those of C, shared rather "
+    "than duplicated.")
 
 ORIGINAL_C0_NOTE = (
     "The original C0 (arm C0, role guided) exists only as r0 in the main pipeline. It was never "
@@ -596,8 +638,8 @@ ORIGINAL_C0_NOTE = (
 
 
 ABLATION_CAPTION = (
-    "Supplementary ablation. C0-log and C0-seq train on the guided points alone, without the "
-    "seed. Training-set sizes: {budgets}. Red: C0 minus B, 95% Welch interval. Purple: C minus "
+    "Supplementary ablation. C0-log, C0-seq and C0-logG train on the guided points alone, without "
+    "the seed. Training-set sizes: {budgets}. Red: C0 minus B, 95% Welch interval. Purple: C minus "
     "the corresponding C0, 95% paired interval over the realizations, because within a "
     "realization C0 trains on exactly the guided points that C adds to the seed. The two "
     "differences are oriented oppositely; in both, a negative value means that the first-named "
@@ -627,7 +669,8 @@ def ablation(rep: dict) -> dict:
 
 
 FIGURE_CAPTION = (
-    "Per-bin training density (raw counts; B, C-log and C-seq all train on {budget} points) and "
+    "Per-bin training density (raw counts; B, C-log, C-seq and C-logG all train on {budget} "
+    "points) and "
     "per-bin log-RMSE, each as the difference between an arm's mean over the five confirmatory "
     "realizations and B's, with 95% Welch intervals. A negative error difference means a smaller "
     "log-RMSE than B. Every interval, on the density panel and on the error panels alike, "
@@ -645,8 +688,8 @@ ORACLE_SENTENCE = ("None of this says what a perfect implementation would do; th
                    "oracle's question.")
 
 MATRIX_CAPTION = (
-    "Predicted bin (rows) against true bin (columns) for the points the screener selected, C-log "
-    "and C-seq, pooled over the confirmatory realizations r1-r5; r0 is excluded. Each row is "
+    "Predicted bin (rows) against true bin (columns) for the points the screener selected, C-log, "
+    "C-seq and C-logG, pooled over the confirmatory realizations r1-r5; r0 is excluded. Each row is "
     "normalized by the number of points selected into that predicted bin, given beside its label; "
     "a predicted bin into which nothing was selected is shown grey. Bins follow the generator, "
     "(lo, hi], so the outer columns are FOS < 0.5 and FOS > 6. The matrices describe the screener "
@@ -717,6 +760,8 @@ def build() -> dict:
         "outside": outside_rows(rep),
         "concordance": concordance(errors, densities),
         "allocation": {str(r): allocation_rows(r) for r in everything},
+        "screener_swap": {"allocation_gap_paired": allocation_gap_paired(),
+                          "shared_candidates": shared_candidate_rows()},
         "batches": {str(r): batch_allocation_rows(r) for r in everything},
         "displacement": {str(r): displacement_rows(r) for r in everything},
         "ablation": ablation(rep),

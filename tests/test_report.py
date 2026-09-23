@@ -160,7 +160,7 @@ def _struct_stub():
     errors = [{"family": f, "test": t, "arm": a, "bin": b, "diff": -0.01, "ci": [-0.02, 0.0],
                "test_n": 20 if b == 0 else 3, "marked": b == 1}
               for f in config.REP_FAMILIES for t in config.TEST_ROLES
-              for a in ("C-log", "C-seq") for b in (0, 1)]
+              for a in ("C-log", "C-seq", "C-logG") for b in (0, 1)]
     return {
         "bins": {"edges": [0.5, 1.0, 6.0], "labels": labels},
         "min_test_n": 10, "confirmatory": [1, 2],
@@ -168,7 +168,7 @@ def _struct_stub():
         "matrix_caption": "matrix for {arm}",
         "batches_caption": "batches caption text",
         "densities": [{"arm": a, "bin": b, "diff": 3.0, "ci": [1.0, 5.0]}
-                      for a in ("C-log", "C-seq") for b in (0, 1)],
+                      for a in ("C-log", "C-seq", "C-logG") for b in (0, 1)],
         "errors": errors,
         "outside": [{"kind": "density", "arm": "C-log", "side": "below 0.5",
                      "diff": 20.0, "ci": [10.0, 30.0]}],
@@ -178,7 +178,7 @@ def _struct_stub():
                                  "achieved": [3 + k, 5 - k], "deviation": [-1 + k, 1 - k],
                                  "abs_deviation": 2 * abs(1 - k),
                                  "achieved_outside": {"< 0.5": k, "> 6": 0}}
-                           for arm in ("C-log", "C-seq")}
+                           for arm in ("C-log", "C-seq", "C-logG")}
                        for r, k in (("0", 90), ("1", 0), ("2", 1))},
         "batches": {r: [{"batch": j, "seed": [0, 0], "intended": [2, 2], "achieved": [1 + k, 3],
                          "cumulative_intended": [2 * j, 2 * j], "cumulative_achieved": [j + j * k, 3 * j],
@@ -190,8 +190,18 @@ def _struct_stub():
                                        "matrix": [[2, 0, 1, 1], [1, 0, 1, 0]]},
                              "C-seq": {"n": 4, "stayed": 0.5, "mean_abs_shift": 0.5,
                                       "median_abs_shift": 0.0, "outside": 0.25,
-                                      "matrix": [[1, 1, 0, 2], [0, 1, 1, 0]]}}
+                                      "matrix": [[1, 1, 0, 2], [0, 1, 1, 0]]},
+                             "C-logG": {"n": 4, "stayed": 0.5, "mean_abs_shift": 0.5,
+                                       "median_abs_shift": 0.0, "outside": 0.25,
+                                       "matrix": [[2, 0, 1, 1], [1, 0, 1, 0]]}}
                          for r in ("0", "1", "2")},
+        "screener_swap": {
+            "allocation_gap_paired": [{"realization": 1, "gbm": 40, "rf": 55, "delta": -15},
+                                      {"realization": 2, "gbm": 30, "rf": 50, "delta": -20}],
+            "shared_candidates": [{"realization": 0, "n": 300, "shared": 300},
+                                  {"realization": 1, "n": 300, "shared": 210},
+                                  {"realization": 2, "n": 300, "shared": 198}],
+        },
     }
 
 
@@ -242,13 +252,14 @@ def test_structural_figure_has_one_density_panel_above_four_error_panels():
 def test_structural_figure_uses_one_colour_per_arm_for_bars_and_markers():
     """errorbar(fmt="none") and scatter do not advance the property cycle in step,
     so an implicit colour gives the second arm's bars the first arm's colour and
-    turns its marked markers grey. Four collections, two colours, is the fix."""
-    assert report.STRUCTURAL_COLORS["C-log"] != report.STRUCTURAL_COLORS["C-seq"]
+    turns its marked markers grey. Six collections, three colours (one per arm), is
+    the fix."""
+    assert len({report.STRUCTURAL_COLORS[a] for a in ("C-log", "C-seq", "C-logG")}) == 3
     fig = report.fig_structural(_struct_stub())
-    error_panel = fig.axes[1]          # bin 0 solid, bin 1 marked, for both arms
+    error_panel = fig.axes[1]          # bin 0 solid, bin 1 marked, for every arm
     colours = {tuple(round(float(v), 3) for v in coll.get_edgecolor()[0])
                for coll in error_panel.collections if len(coll.get_edgecolor())}
-    assert len(colours) == 2, "solid and hollow markers of one arm must share its colour"
+    assert len(colours) == 3, "solid and hollow markers of one arm must share its colour"
 
 
 def test_structural_matrix_figure_is_row_normalized():
@@ -332,6 +343,19 @@ def test_structural_ablation_fraction_frame_reports_fractions_not_counts():
     assert set(frame["arm"]) == {"C0-log", "C0-seq"}
 
 
+def test_interaction_frame_declares_the_method():
+    # REPLICATION_MEASURES has no bare "decision" entry; "decision-range" is the
+    # actual member, so that is what the row must carry to survive the filter.
+    assert "decision-range" in report.REPLICATION_MEASURES
+    rep = {"interactions": [
+        {"test": "test-natural", "measure": "decision-range", "first": "C-logG", "second": "C-log",
+         "method": "paired", "diff": -0.1, "ci": [-0.2, 0.0], "df": 4},
+    ]}
+    frame = report.replication_interaction_frame(rep)
+    assert "method" in frame.columns and frame.loc[0, "method"] == "paired"
+    assert frame.loc[0, "contrast"] == "C-logG vs C-log"
+
+
 def test_booktabs_escapes_the_caption():
     text = report.booktabs(pd.DataFrame({"a": [1]}), caption="n_bin / N_total, 95% & more",
                            label="tab:x")
@@ -355,6 +379,7 @@ def test_run_writes_structural_outputs_when_present(root, monkeypatch):
             "structural__batches_r0.tex",
             "structural__allocation_c-seq.tex", "structural__batches.tex",
             "structural__displacement.tex", "structural__outside.tex",
+            "structural__shared_candidates.tex",
             "structural__ablation_caption.tex", "structural__ablation_fractions.tex",
             "structural__original_c0.tex"} <= tables
     assert {"structural__bins.pdf", "structural__matrix_c-log.pdf",

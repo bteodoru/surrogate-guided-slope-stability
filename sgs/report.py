@@ -266,15 +266,15 @@ def replication_comparison_frame(rep: dict, test: str) -> pd.DataFrame:
 
 def replication_interaction_frame(rep: dict) -> pd.DataFrame:
     return pd.DataFrame([{"test": i["test"], "measure": i["measure"],
-                          "contrast": f"{i['first']} vs {i['second']}", "diff": i["diff"],
-                          "CI low": i["ci"][0], "CI high": i["ci"][1], "df": i["df"]}
+                          "contrast": f"{i['first']} vs {i['second']}", "method": i["method"],
+                          "diff": i["diff"], "CI low": i["ci"][0], "CI high": i["ci"][1], "df": i["df"]}
                          for i in rep["interactions"] if i["measure"] in REPLICATION_MEASURES])
 
 
 def fig_replication_bins(rep: dict, test: str, family: str):
     """Diagnostic: log-RMSE per design bin (confirmatory mean, min-max across
     realizations), test points per bin and the mean training count per bin."""
-    arms = ("B", "C-log", "C-seq", "C0-log", "C0-seq")
+    arms = ("B", "C-log", "C-seq", "C-logG", "C0-log", "C0-seq", "C0-logG")
     rows = [v for v in rep["values"] if v["test"] == test and v["family"] == family
             and v["realization"] in rep["confirmatory"]]
     labels = [b["zone"] for b in rows[0]["bins"]]
@@ -312,7 +312,7 @@ STRUCTURAL_CELLS = (("gbm", "test-natural"), ("gbm", "test-stratified"),
 
 # Explicit, because errorbar(fmt="none") and scatter do not advance the property
 # cycle in step: in a two-arm loop the second arm's bars keep the first arm's colour.
-STRUCTURAL_COLORS = {"C-log": "tab:blue", "C-seq": "tab:orange"}
+STRUCTURAL_COLORS = {"C-log": "tab:blue", "C-seq": "tab:orange", "C-logG": "tab:green"}
 
 # Arms drawn in one panel are dodged by this much, in bin units, so their bars
 # and markers do not occlude each other.
@@ -614,6 +614,15 @@ def structural_outside_frame(struct: dict) -> pd.DataFrame:
     return pd.DataFrame(rows).sort_values(["kind", "arm", "side"])
 
 
+def structural_shared_candidates_frame(struct: dict) -> pd.DataFrame:
+    """Per realization: how many of guided-log-g's points guided-log also drew,
+    from the same candidate pool but a different screener (structural.MIN_DISTANCE)."""
+    rows = [{"realization": "r0 (exploratory)" if r["realization"] == 0 else f"r{r['realization']}",
+             "n": r["n"], "shared candidates (same pool, different screener)": r["shared"]}
+            for r in struct["screener_swap"]["shared_candidates"]]
+    return pd.DataFrame(rows)
+
+
 def structural_concordance_frame(struct: dict) -> pd.DataFrame:
     rows = [{"family": r["family"], "test": r["test"], "arm": r["arm"],
              "k / n (unmarked)": f"{r['k']} / {r['n']}", "zero (unmarked)": r["zero"],
@@ -696,7 +705,8 @@ def _structural_text(text: str) -> str:
 def run() -> None:
     tables, figures = config.tables_dir(), config.figures_dir()
     _save_table(tables / "budget.tex", booktabs(
-        budget_frame(), caption="Budget-fair arms. C0 is an ablation and carries no budget.",
+        budget_frame(), caption="Budget-fair arms. C0 is an ablation and carries no budget. "
+        "G: GBM screener; the learner is named separately.",
         label="tab:budget"))
 
     for scoring in config.ACTIVE_SCORINGS:
@@ -754,21 +764,23 @@ def run() -> None:
             _save_table(tables / f"replications__{test}__values.tex", booktabs(
                 replication_value_frame(rep, test, "decision-range"),
                 caption=f"Log-RMSE on the decision range, {test}, every realization; r0 = existing sets "
-                        "(exploratory). Common fixed hyper-parameters. C0-log and C0-seq are ablations "
-                        "without the seed and carry no budget: they train on 300 points against the 600 "
-                        "of B, C-log and C-seq.", label=f"tab:rep:{test}:values"))
+                        "(exploratory). Common fixed hyper-parameters. C0-log, C0-seq and C0-logG are "
+                        "ablations without the seed and carry no budget: they train on 300 points against "
+                        "the 600 of B, C-log, C-seq and C-logG.", label=f"tab:rep:{test}:values"))
             _save_table(tables / f"replications__{test}__comparisons.tex", booktabs(
                 replication_comparison_frame(rep, test),
                 caption=f"Replicated comparisons on {test}: Welch (independent arms) or paired intervals, "
-                        "log-RMSE and relative scale; P(first<second) is descriptive. C0-log and C0-seq "
-                        "are ablations without the seed and carry no budget: they train on 300 points "
-                        "against the 600 of B, C-log and C-seq.",
+                        "log-RMSE and relative scale; P(first<second) is descriptive. C0-log, C0-seq and "
+                        "C0-logG are ablations without the seed and carry no budget: they train on 300 "
+                        "points against the 600 of B, C-log, C-seq and C-logG.",
                 label=f"tab:rep:{test}:comparisons"))
             for family in config.REP_FAMILIES:
                 _save_figure(figures / f"replications__{test}__{family}.pdf", fig_replication_bins(rep, test, family))
         _save_table(tables / "replications__interactions.tex", booktabs(
-            replication_interaction_frame(rep), caption="Learner interaction: Welch interval on "
-            "log(log-RMSE_rf) - log(log-RMSE_gbm) between arms.", label="tab:rep:interactions"))
+            replication_interaction_frame(rep), caption="Learner interaction on "
+            "log(log-RMSE_rf) − log(log-RMSE_gbm) between arms; Welch, or paired where the two "
+            "arms share a realization's candidate pool and intended allocation.",
+            label="tab:rep:interactions"))
 
     if config.structural_metrics_path().exists():
         struct = load_structural()
@@ -788,7 +800,7 @@ def run() -> None:
                     "sensitivity. Bins where either difference is exactly zero leave the "
                     "denominator. A count, with no test attached.",
             label="tab:structural:concordance", small=True))
-        for arm in ("C-log", "C-seq"):
+        for arm in ("C-log", "C-seq", "C-logG"):
             _save_figure(figures / f"structural__matrix_{arm.lower()}.pdf",
                          fig_structural_matrix(struct, arm))
             _save_table(tables / f"structural__allocation_{arm.lower()}.tex", booktabs(
@@ -834,6 +846,13 @@ def run() -> None:
                     "sides are read from the replication metrics, so both use the half-open "
                     "reporting zones and the outer bin is FOS >= 6.",
             label="tab:structural:outside"))
+        _save_table(tables / "structural__shared_candidates.tex", booktabs(
+            structural_shared_candidates_frame(struct),
+            caption="Shared candidates (same pool, different screener): how many of guided-log-g's "
+                    "points guided-log also drew, per realization, by normalized distance. Both "
+                    "screeners choose from the same candidate pool (guided_log_stream) against the "
+                    "same intended allocation; only the screener differs.",
+            label="tab:structural:shared_candidates"))
         # Task 5 addendum (Amendment 1): the C0 ablations. Supplementary; they
         # never enter the main figure or the concordance count above.
         budgets = ablation["budgets"]
