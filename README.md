@@ -80,9 +80,11 @@ generation path and refits nothing. Its procedure is declared in
 
 ## Data
 
-The xslope data sets are not yet published; `data/README.md` describes the
-files. The earlier HYRCAN data are on Zenodo, concept DOI
-[10.5281/zenodo.20706202](https://doi.org/10.5281/zenodo.20706202).
+The xslope data sets are not yet published; they will go to a new Zenodo
+deposit of their own when the paper is submitted. `data/README.md` describes
+the files. The earlier HYRCAN data are on Zenodo, concept DOI
+[10.5281/zenodo.20706202](https://doi.org/10.5281/zenodo.20706202), which holds
+nothing from the xslope runs.
 
 The initial approach of this study (HYRCAN/Spencer generator, single Colab
 notebook) is preserved at the git tag `v0-hyrcan-colab`, and the HYRCAN

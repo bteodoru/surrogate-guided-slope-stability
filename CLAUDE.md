@@ -193,7 +193,9 @@ a new test set costs seconds.
 
 ## Publishing
 
-Zenodo concept DOI 10.5281/zenodo.20706202 holds the earlier HYRCAN data only.
-The xslope data are unpublished; whether they go out as a new version under
-that concept DOI or as a separate deposit is undecided. Where
-`artifacts/fits/` lives at publication is undecided.
+Zenodo concept DOI 10.5281/zenodo.20706202 holds the earlier HYRCAN data only;
+it carries a note and stays as it is. The xslope data are unpublished; they go
+to a **new, separate Zenodo deposit** with its own DOI, published at submission
+of the paper and cited in it (decided 2026-09-24). Never describe them as
+published before that deposit exists. Where `artifacts/fits/` lives at
+publication is undecided.
