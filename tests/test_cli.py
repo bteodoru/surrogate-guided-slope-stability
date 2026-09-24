@@ -234,3 +234,15 @@ def test_pool_dispatches_to_run_or_status(monkeypatch, capsys):
     cli.main(["pool", "--status"])
     assert calls == [("run", {"chunks": 3, "workers": 2})]
     assert "STATUS" in capsys.readouterr().out
+
+
+def test_pool_workers_above_two_warn_but_run(monkeypatch, capsys):
+    # Execution control, not science: the standing preference W <= 2 is a warning.
+    from sgs import pool
+    calls = []
+    monkeypatch.setattr(pool, "run", lambda **kw: calls.append(kw))
+    cli.main(["pool", "--workers", "4"])
+    assert calls == [{"chunks": 1, "workers": 4}]
+    assert "--workers 4" in capsys.readouterr().err
+    cli.main(["pool", "--workers", "2"])
+    assert "--workers" not in capsys.readouterr().err

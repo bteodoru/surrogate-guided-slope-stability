@@ -143,6 +143,10 @@ def _pool(args):
     if args.status:
         print(pool.format_status(pool.status()))
         return
+    if args.workers > 2:
+        # execution control only: warned, never refused
+        print(f"warning: --workers {args.workers}; the standing preference for xslope is at most 2",
+              file=sys.stderr)
     pool.run(chunks=args.chunks, workers=args.workers)
 
 
