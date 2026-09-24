@@ -108,6 +108,32 @@ def test_a_torn_final_is_rebuilt_from_intact_results_without_the_solver(pool_rol
     assert kept.read_text() == "angle,phi\n1,"
 
 
+def test_a_missing_design_is_rewritten_without_the_solver(pool_roles, monkeypatch, capsys):
+    # The recorded results hash already proves the results are the chunk's.
+    frame, _ = pool.full_design()
+    pool.solve_chunk(frame, 1, workers=1, fn=fake_analyse)
+    results_before = config.pool_path("results", 1).read_bytes()
+    config.pool_path("designs", 1).unlink()
+    _no_solver(monkeypatch)
+    pool.solve_chunk(frame, 1, workers=1, fn=fake_analyse)
+    assert "the solved results are intact" in capsys.readouterr().out
+    assert config.pool_path("results", 1).read_bytes() == results_before
+    assert config.pool_path("designs", 1).read_text() == pool.chunk_design(frame, 1).to_csv(index=False)
+    assert data.stored_set_problem(pool.chunk_paths(1), data.read_metadata()["pool"]["c001"], 40) is None
+    assert not os.access(config.pool_path("designs", 1), os.W_OK)
+
+
+def test_a_damaged_design_is_quarantined_and_rewritten_without_the_solver(pool_roles, monkeypatch):
+    frame, _ = pool.full_design()
+    pool.solve_chunk(frame, 1, workers=1, fn=fake_analyse)
+    tamper(config.pool_path("designs", 1), "damaged design")
+    _no_solver(monkeypatch)
+    pool.solve_chunk(frame, 1, workers=1, fn=fake_analyse)
+    assert config.pool_path("designs", 1).read_text() == pool.chunk_design(frame, 1).to_csv(index=False)
+    assert any(p.read_text() == "damaged design" for p in _quarantined("pool_c001.csv"))   # moved, never deleted
+    assert data.stored_set_problem(pool.chunk_paths(1), data.read_metadata()["pool"]["c001"], 40) is None
+
+
 def test_results_without_metadata_are_salvaged_without_the_solver(pool_roles, monkeypatch, capsys):
     # Killed after the results were written and before the chunk was recorded:
     # 48 min of solving are on disk, complete (write_rows is atomic). Keep them.

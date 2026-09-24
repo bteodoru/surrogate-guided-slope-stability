@@ -96,17 +96,19 @@ def chunk_problem(frame: pd.DataFrame, k: int, previous: dict) -> str | None:
 def _intact_results(paths: dict, chunk: pd.DataFrame, previous: dict) -> list[dict] | None:
     """The chunk's solved results, when they can be kept without solving again.
 
-    Kept when the results file is the one recorded for the chunk. With no record, it is
-    kept when it matches the design row for row: write_rows is atomic, so a results file
-    on disk is whole, and one without a record is a run killed after solving and before
-    recording, which leaves 48 min of analyses to keep. Anything else returns None."""
+    Kept when the results file is the one recorded for the chunk: the recorded hash
+    proves it, whatever became of the design file, which is rewritten from the chunk.
+    With no record, it is kept when the design file is the chunk's and the results
+    match it row for row: write_rows is atomic, so a results file on disk is whole, and
+    one without a record is a run killed after solving and before recording, which
+    leaves 48 min of analyses to keep. Anything else returns None."""
     path = paths["results"]
-    if not path.exists() or not paths["designs"].exists():
-        return None
-    if paths["designs"].read_text() != chunk.to_csv(index=False):
+    if not path.exists():
         return None
     if previous:
         return solver.read_rows(path)[0] if previous.get("results_sha256") == data.sha256_file(path) else None
+    if not paths["designs"].exists() or paths["designs"].read_text() != chunk.to_csv(index=False):
+        return None
     rows, columns = solver.read_rows(path)
     if columns != data.RESULT_COLUMNS or len(rows) != len(chunk):
         return None
@@ -122,7 +124,7 @@ def solve_chunk(frame: pd.DataFrame, k: int, *, workers: int, fn=None) -> dict:
 
     Solver output is protected (spec §4.2, and the plan's protection rules):
     - intact results are never solved again: a damaged or missing final is rebuilt
-      from them by repair alone;
+      from them by repair alone, and a damaged or missing design from the chunk;
     - results are solved again only when they are missing, damaged or do not match
       the design; the old files are quarantined, never deleted, and only once the new
       rows exist, so an interrupted solve leaves the old files where they were;
@@ -135,17 +137,17 @@ def solve_chunk(frame: pd.DataFrame, k: int, *, workers: int, fn=None) -> dict:
         print(f"[pool {key}] up to date")
         return previous
     chunk = chunk_design(frame, k)
+    text = chunk.to_csv(index=False)
     rows = _intact_results(paths, chunk, previous)
     if rows is not None:
         print(f"[pool {key}] {reason}; the solved results are intact, rebuilding the final from them "
               "(no new solve)", flush=True)
-    else:
-        if any(path.exists() for path in paths.values()):
-            print(f"[pool {key}] incomplete ({reason}); solving it again", flush=True)
-        text = chunk.to_csv(index=False)
-        if not paths["designs"].exists() or paths["designs"].read_text() != text:
-            data.quarantine(paths["designs"])
-            data.write_text_atomic(paths["designs"], text)
+    elif any(path.exists() for path in paths.values()):
+        print(f"[pool {key}] incomplete ({reason}); solving it again", flush=True)
+    if not paths["designs"].exists() or paths["designs"].read_text() != text:
+        data.quarantine(paths["designs"])              # a damaged design is kept, never deleted
+        data.write_text_atomic(paths["designs"], text)
+    if rows is None:
         solved = solver.run_set(chunk[list(config.PARAMS)].to_numpy(float), workers=workers,
                                 label=f"pool {key}", fn=fn)
         data.quarantine(paths["results"])              # only now: the new rows exist
