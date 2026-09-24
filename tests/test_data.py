@@ -224,3 +224,61 @@ def test_validate_sets_skips_declared_alternatives(root, monkeypatch):
 
 def test_alternatives_declares_the_two_guided_log_roles():
     assert frozenset({"guided-log", "guided-log-g"}) in config.ALTERNATIVES
+
+
+# --- shared stored-set helpers and protection of solver output --------------------------------
+
+def test_stored_set_problem_names_the_first_defect(root, tmp_path):
+    from tests.helpers import synthetic_final
+    paths = {s: tmp_path / f"{s}.csv" for s in ("designs", "results", "final")}
+    assert data.stored_set_problem(paths, {}, 5) == "it has no metadata entry"
+    frame = synthetic_final(5, 1)
+    for p in paths.values():
+        frame.to_csv(p, index=False)
+    previous = {f"{r}_sha256": data.sha256_file(paths[s])
+                for s, r in (("designs", "design"), ("results", "results"), ("final", "final"))}
+    assert data.stored_set_problem(paths, previous, 5) is None
+    paths["final"].write_text("torn")
+    assert data.stored_set_problem(paths, previous, 5) == "the final file is not the one that was recorded"
+    paths["results"].unlink()
+    assert data.stored_set_problem(paths, previous, 5) == "the results file is missing"
+
+
+def test_write_text_atomic_and_text_sha256(tmp_path):
+    path = tmp_path / "a" / "b.csv"
+    data.write_text_atomic(path, "x,y\n1,2\n")
+    assert path.read_text() == "x,y\n1,2\n"
+    assert data.text_sha256("x,y\n1,2\n") == data.sha256_file(path)
+
+
+def test_quarantine_moves_and_never_deletes(root):
+    path = config.ROOT / "data" / "pool" / "results" / "pool_c001.csv"
+    path.parent.mkdir(parents=True)
+    path.write_text("solved\n")
+    data.protect(path)
+    moved = data.quarantine(path)
+    assert not path.exists() and moved.read_text() == "solved\n"
+    assert moved.is_relative_to(config.ROOT / "data" / "quarantine")
+    assert moved.relative_to(config.ROOT / "data" / "quarantine").parts[1:] == ("pool", "results", "pool_c001.csv")
+    assert data.quarantine(path) is None                          # nothing there: nothing to do
+
+
+def test_quarantine_never_overwrites_an_earlier_quarantined_file(root, monkeypatch):
+    monkeypatch.setattr(data, "_quarantine_stamp", lambda: "20260924T000000Z")
+    path = config.ROOT / "data" / "final" / "x.csv"
+    path.parent.mkdir(parents=True)
+    moved = []
+    for text in ("first\n", "second\n"):
+        path.write_text(text)
+        moved.append(data.quarantine(path))
+    assert moved[0] != moved[1] and [m.read_text() for m in moved] == ["first\n", "second\n"]
+
+
+def test_protect_makes_a_file_read_only_and_replace_still_works(tmp_path):
+    path = tmp_path / "a.csv"
+    path.write_text("x\n")
+    data.protect(path)
+    with pytest.raises(PermissionError):
+        path.write_text("y\n")
+    data.write_text_atomic(path, "z\n")        # a deliberate, atomic replacement is still possible
+    assert path.read_text() == "z\n"

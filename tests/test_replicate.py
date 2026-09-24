@@ -188,6 +188,14 @@ def test_generate_set_resolves_after_each_partial_state(small_reps, monkeypatch,
         assert named in reason and paths[named].name not in reason
 
 
+def test_generate_set_quarantines_what_it_replaces(small_reps):
+    _generate_one()
+    config.replication_path("final", "lhs_r1").write_text("torn")
+    _generate_one()
+    kept = sorted((config.ROOT / "data" / "quarantine").rglob("lhs_r1.csv"))
+    assert any(p.read_text() == "torn" for p in kept)
+
+
 def test_generate_set_overwrites_a_torn_design_when_nothing_was_solved(small_reps, monkeypatch):
     path = config.replication_path("designs", "lhs_r1")
     path.parent.mkdir(parents=True, exist_ok=True)

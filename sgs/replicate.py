@@ -29,8 +29,6 @@ data and has only its provenance re-recorded.
 from __future__ import annotations
 
 import datetime as _dt
-import hashlib
-import os
 
 import joblib
 
@@ -124,34 +122,6 @@ def build_design(key: str, strategy: str, realization: int, batch: int) -> tuple
     return frame, info
 
 
-def _text_sha256(text: str) -> str:
-    return hashlib.sha256(text.encode()).hexdigest()
-
-
-def _write_design(path, text: str) -> None:
-    """Write the design atomically, so a kill cannot leave it torn."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_name(f".{path.name}.tmp")
-    tmp.write_text(text)
-    os.replace(tmp, path)
-
-
-def _incomplete(paths: dict, previous: dict, n: int) -> str | None:
-    """Why the stored set cannot be reused as it stands, or None when it can.
-    Its metadata entry is already known to record the design the configuration
-    produces now, so a file that differs from it is a damaged one."""
-    if not previous:
-        return "it has no metadata entry"
-    for stage, recorded in (("designs", "design"), ("results", "results"), ("final", "final")):
-        path = paths[stage]
-        if not path.exists():
-            return f"the {stage} file is missing"
-        if previous.get(f"{recorded}_sha256") != data.sha256_file(path):
-            return f"the {stage} file is not the one that was recorded"
-    problems = data.frame_problems(data.read_table(paths["final"]), n)
-    return "; ".join(problems) if problems else None
-
-
 def _reuse(key: str, previous: dict, info: dict) -> dict:
     """A complete, matching set. When the files its screener learned from were
     solved again (same design, same FOS, other runtimes), only its provenance is
@@ -190,24 +160,26 @@ def generate_set(key: str, strategy: str, realization: int, batch: int, *, worke
     fingerprint = config.solver_fingerprint()
     previous = data.read_metadata().get("replications", {}).get(key, {})
     if not force:
-        if previous and previous.get("design_sha256") != _text_sha256(text):
+        if previous and previous.get("design_sha256") != data.text_sha256(text):
             raise ReplicationError(f"{key}: the stored set was solved from another design than the "
                                    "one the configuration produces now; rerun with --force")
         if previous and previous.get("solver_fingerprint") != fingerprint:
             raise ReplicationError(f"{key}: the stored set was solved under other solver settings; "
                                    "rerun with --force")
-        reason = _incomplete(paths, previous, n)
+        reason = data.stored_set_problem(paths, previous, n)
         if reason is None:
             return _reuse(key, previous, info)
         if any(path.exists() for path in paths.values()):
             print(f"[{key}] incomplete ({reason}); solving it again", flush=True)
     for path in paths.values():
         path.parent.mkdir(parents=True, exist_ok=True)
-    _write_design(paths["designs"], text)
+    data.write_text_atomic(paths["designs"], text)
     rows = solver.run_set(frame[list(config.PARAMS)].to_numpy(float), workers=workers, label=key, fn=fn)
+    data.quarantine(paths["results"])
     solver.write_rows(paths["results"], rows, data.RESULT_COLUMNS)
     rows, _ = solver.read_rows(paths["results"])
     repair = solver.repair_rows(rows)
+    data.quarantine(paths["final"])
     solver.write_rows(paths["final"], rows, data.FINAL_COLUMNS)
     problems = data.frame_problems(data.read_table(paths["final"]), n)
     if problems:

@@ -72,6 +72,7 @@ def generate(role: str, *, workers: int = 1, force: bool = False) -> dict:
         print(f"[{role}] results up to date")
     else:
         rows = solver.run_set(frame[list(config.PARAMS)].to_numpy(float), workers=workers, label=role)
+        data.quarantine(results_path)
         solver.write_rows(results_path, rows, data.RESULT_COLUMNS)
         solved = True
 
@@ -82,6 +83,7 @@ def generate(role: str, *, workers: int = 1, force: bool = False) -> dict:
         if columns != data.RESULT_COLUMNS:
             raise GenerateError(f"{results_path.name} does not match the result schema")
         repair = solver.repair_rows(rows)
+        data.quarantine(final_path)
         solver.write_rows(final_path, rows, data.FINAL_COLUMNS)
         print(f"[{role}] repair: {repair}")
     else:

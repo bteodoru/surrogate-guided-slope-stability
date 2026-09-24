@@ -50,6 +50,17 @@ def shrink_roles(monkeypatch, sizes):
     monkeypatch.setattr(config, "ROLES", roles)
 
 
+def tamper(path, text):
+    """Damage a (protected) solved file on purpose: tests only."""
+    path.chmod(0o644)
+    path.write_text(text)
+
+
+def tamper_frame(path, frame):
+    path.chmod(0o644)
+    frame.to_csv(path, index=False)
+
+
 def fake_analyse(combo):
     """Stands in for solver.analyse: a solved, boundary-free row. Module level
     so that a spawned worker can import it."""

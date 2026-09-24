@@ -3,6 +3,7 @@ the final sets, and the run metadata file."""
 
 from __future__ import annotations
 
+import datetime
 import hashlib
 import itertools
 import json
@@ -292,3 +293,67 @@ def record(section: str, key: str, entry: dict) -> None:
     _back_up(path)
     _write_durably(path, payload.encode())
     _fsync_dir(path.parent)
+
+
+def text_sha256(text: str) -> str:
+    return hashlib.sha256(text.encode()).hexdigest()
+
+
+def write_text_atomic(path, text: str) -> None:
+    """Write through a temporary file, so a kill cannot leave it torn."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(f".{path.name}.tmp")
+    tmp.write_text(text)
+    os.replace(tmp, path)
+
+
+def stored_set_problem(paths: dict, previous: dict, n: int) -> str | None:
+    """Why a stored set (designs, results, final) cannot be reused as it stands,
+    or None when it can. Its metadata entry is already known to record the design
+    the configuration produces now, so a file that differs from it is damaged."""
+    if not previous:
+        return "it has no metadata entry"
+    for stage, recorded in (("designs", "design"), ("results", "results"), ("final", "final")):
+        path = paths[stage]
+        if not path.exists():
+            return f"the {stage} file is missing"
+        if previous.get(f"{recorded}_sha256") != sha256_file(path):
+            return f"the {stage} file is not the one that was recorded"
+    problems = frame_problems(read_table(paths["final"]), n)
+    return "; ".join(problems) if problems else None
+
+
+# --- protection of solver output -----------------------------------------------------------
+# xslope results are not in git (data/**/*.csv is ignored) and cost hours to reproduce.
+# No code path deletes one or writes over one in place: a file about to be replaced is
+# moved to data/quarantine first, and a recorded file is read-only.
+
+def _quarantine_stamp() -> str:
+    return datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+
+
+def quarantine(path) -> Path | None:
+    """Move an existing file under data/quarantine/<stamp>/, keeping its path below
+    data/. Never deletes, never overwrites an earlier quarantined copy. Returns the
+    new location, or None when there was nothing to move."""
+    path = Path(path)
+    if not path.exists():
+        return None
+    base = config.ROOT / "data"
+    relative = path.relative_to(base) if path.is_relative_to(base) else Path(path.name)
+    stamp = _quarantine_stamp()
+    target = base / "quarantine" / stamp / relative
+    n = 1
+    while target.exists():
+        target = base / "quarantine" / f"{stamp}-{n}" / relative
+        n += 1
+    target.parent.mkdir(parents=True, exist_ok=True)
+    os.replace(path, target)
+    print(f"[data] kept {path.name} in {target.parent.relative_to(base)}")
+    return target
+
+
+def protect(path) -> None:
+    """Make a recorded solver file read-only, so nothing edits it in place by accident."""
+    Path(path).chmod(0o444)

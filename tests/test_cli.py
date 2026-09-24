@@ -128,6 +128,14 @@ def test_a_modified_final_is_rederived_from_the_results(fake_solver):
     assert final.read_bytes() == original and len(fake_solver) == 300
 
 
+def test_generate_quarantines_a_replaced_final(fake_solver):
+    cli.generate("seed")
+    config.final_path("seed").write_text("torn")
+    cli.generate("seed")
+    kept = sorted((config.ROOT / "data" / "quarantine").rglob(config.final_path("seed").name))
+    assert [p.read_text() for p in kept] == ["torn"]
+
+
 def test_generate_records_non_converged_rows(root, monkeypatch):
     calls = []
 
