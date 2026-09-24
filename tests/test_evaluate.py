@@ -533,6 +533,17 @@ def test_B1_wins_whenever_c_logp_does_not_relocate():
     assert reversing["row"] == "B1" and not reversing["step_p"]["logp_gate"]
 
 
+def test_B1_does_not_fire_on_fewer_than_the_minimum_cells():
+    # Same per-cell values that make test_B1_wins... read B1 with all four cells present;
+    # with only two of the four (family, test) cells available, "not logp_gate" is true
+    # merely because there isn't enough data, not because the gate was tested and failed.
+    # B2/B3/B4 are also count-gated and so can't fire either: this must fall through to B5.
+    sparse = evaluate.oracle_reading(
+        dict(zip(CELLS4[:2], [_cell(0.2, 0.0, L_p=0.1, H_p=0.1)] * 2)),
+        {"L": 1.0, "H": 1.0}, 0.95)
+    assert sparse["row"] == "B5" and not sparse["attribution"]
+
+
 def test_B2_needs_the_interval_of_R_oracle():
     assert _read([_cell(0.1, 0.11, **RELOC_P)] * 4)["row"] == "B2"
     wide = _read([_cell(0.1, [0.4, -0.2, 0.12, -0.15, 0.38], **RELOC_P)] * 4)

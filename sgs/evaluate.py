@@ -648,7 +648,7 @@ def oracle_reading(cells: dict, rho: dict, level: float) -> dict:
             row = "A4"
         else:
             row = "A5"
-    elif not logp_gate:
+    elif len(per) >= need and not logp_gate:
         row = "B1"
     elif count(lambda c: inside(c["R_o_interval"])) >= need:
         row = "B2"
