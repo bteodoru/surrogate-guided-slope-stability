@@ -350,3 +350,20 @@ def test_status_before_any_chunk(controlled):
     st = pool.status()
     assert st["solved_chunks"] == 0 and st["table"] is None and not st["met"]
     assert "0 of 10" in pool.format_status(st)
+
+
+def test_run_prints_the_rule_state_after_each_chunk(controlled, monkeypatch, capsys):
+    monkeypatch.setattr(pool, "allocation", lambda: np.array([0, 0, 10 ** 6, 0, 0]))
+    pool.run(chunks=2, workers=1, fn=fake_analyse)
+    out = capsys.readouterr().out
+    assert "chunks solved: 1 of 10" in out and "chunks solved: 2 of 10" in out
+    assert out.count("stopping rule not met") == 2      # once per chunk, not repeated at the end
+
+
+def test_status_after_the_stop_names_a_chunk_that_no_longer_matches(controlled):
+    stop = pool.run(chunks=10, workers=1, fn=fake_analyse)
+    tamper(config.pool_path("final", 1), "torn")
+    text = pool.format_status(pool.status())
+    assert f"met at chunk {stop['k']}" in text
+    assert "c001 no longer matches its record" in text and "backup" in text
+    assert "nothing more to solve" not in text

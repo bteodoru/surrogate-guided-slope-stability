@@ -305,7 +305,12 @@ def format_status(st: dict) -> str:
             lines.append(f"  sub-pool r{r}: bin 0 solved {s[0]}/{a[0]} predicted {p[0]}/{a[0]}; "
                          f"bin 1 solved {s[1]}/{a[1]} predicted {p[1]}/{a[1]}; "
                          + ("complete" if not short else "short: " + "; ".join(short)))
-    if st["stop"]:
+    if st["stop"] and st["solved_chunks"] < st["stop"]["k"]:
+        # nothing is solved after the stop, so the backup is the only way back (rule 5)
+        lines.append(f"[pool] the stopping rule was met at chunk {st['stop']['k']}; "
+                     f"{chunk_key(st['solved_chunks'] + 1)} no longer matches its record: "
+                     "restore it from the backup")
+    elif st["stop"]:
         lines.append(f"[pool] the stopping rule was met at chunk {st['stop']['k']}; nothing more to solve")
     else:
         lines.append("[pool] stopping rule " + ("met" if st["met"] else "not met"))
@@ -325,6 +330,10 @@ def run(*, chunks: int, workers: int, fn=None) -> dict | None:
     k, done = solved_prefix(frame), 0
     while True:
         table = rule_table(eligible(frame, k, model), alloc) if k else None
+        if done:                                       # the rule's state after each chunk
+            print(format_status({"solved_chunks": k, "n_chunks": n_chunks(frame), "n_filtered": n_filtered,
+                                 "table": table, "met": rule_met(table), "platforms": _platforms(k),
+                                 "stop": None}), flush=True)
         if table is not None and rule_met(table):
             recorded = data.read_metadata()["pool"]
             stop = {"k": k, "table": table, "n_filtered": n_filtered,
@@ -336,8 +345,6 @@ def run(*, chunks: int, workers: int, fn=None) -> dict | None:
             print(f"[pool] the stopping rule is met at chunk {k}; solving stops for good")
             return stop
         if done == chunks:
-            print(format_status({"solved_chunks": k, "n_chunks": n_chunks(frame), "n_filtered": n_filtered,
-                                 "table": table, "met": False, "platforms": _platforms(k), "stop": None}))
             return None
         if k == n_chunks(frame):
             raise PoolError(f"the cap of {config.POOL_CAP} rows ({k} chunks) is reached and the stopping "
