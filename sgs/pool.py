@@ -170,3 +170,174 @@ def solve_chunk(frame: pd.DataFrame, k: int, *, workers: int, fn=None) -> dict:
         data.protect(path)
     print(f"[pool {key}] repair: {repair}")
     return entry
+
+
+# --- the allocation and the screener, as C-log's ------------------------------------------
+
+def _edges() -> np.ndarray:
+    return design.bin_edges_log(config.N_BINS, config.SELECTION_RANGE)
+
+
+def seed_counts() -> np.ndarray:
+    """The seed's solved FOS per selection bin, as the generator bins it."""
+    return design.bin_counts(data.load_role("seed")["FOS"].to_numpy(float), _edges())
+
+
+def allocation() -> np.ndarray:
+    """C-log's allocation: the seed water-filled to REP_EXTENSION points."""
+    return design.deficit_allocation(seed_counts(), config.REP_EXTENSION)
+
+
+def screener():
+    """The screener C-log r1..r5 used: the primary family, trained on the seed alone."""
+    return design.fit_screener(data.load_role("seed"), config.SCREENER["family"])
+
+
+# --- eligibility and the rule --------------------------------------------------------------
+
+def solved_prefix(frame: pd.DataFrame) -> int:
+    """How many chunks, from the first, are complete."""
+    recorded = data.read_metadata().get("pool", {})
+    k = 0
+    while k < n_chunks(frame) and chunk_problem(frame, k + 1, recorded.get(chunk_key(k + 1), {})) is None:
+        k += 1
+    return k
+
+
+def eligible(frame: pd.DataFrame, k_max: int, model) -> pd.DataFrame:
+    """Eligible rows of chunks 1..k_max (final present, not excluded), with their
+    pool identity and the screener's FOS_pred. Both arms and the rule see only these."""
+    parts = []
+    for k in range(1, k_max + 1):
+        chunk = chunk_design(frame, k)
+        final = data.read_table(config.pool_path("final", k))
+        if len(final) != len(chunk) or not np.allclose(final[list(config.PARAMS)].to_numpy(float),
+                                                       chunk[list(config.PARAMS)].to_numpy(float)):
+            raise PoolError(f"{chunk_key(k)}: the final is not aligned with the design row for row")
+        final = final.assign(pool_row=chunk["pool_row"].to_numpy(), subpool=chunk["subpool"].to_numpy(),
+                             chunk=k, chunk_row=np.arange(len(final)))
+        parts.append(data.usable(final))
+    rows = pd.concat(parts, ignore_index=True)
+    rows["FOS"] = rows["FOS"].astype(float)
+    rows["FOS_pred"] = design.predict_fos(model, rows)
+    return rows
+
+
+def rule_table(rows: pd.DataFrame, alloc) -> dict:
+    """Solved and predicted counts per sub-pool and selection bin, (lo, hi] bins."""
+    edges = _edges()
+    solved, predicted = [], []
+    for r in range(1, config.REP_REALIZATIONS + 1):
+        sub = rows[rows["subpool"] == r]
+        solved.append(design.bin_counts(sub["FOS"].to_numpy(float), edges).tolist())
+        predicted.append(design.bin_counts(sub["FOS_pred"].to_numpy(float), edges).tolist())
+    return {"allocation": np.asarray(alloc, dtype=int).tolist(), "solved": solved, "predicted": predicted}
+
+
+def rule_met(table: dict) -> bool:
+    a = np.asarray(table["allocation"], dtype=int)
+    return bool((np.asarray(table["solved"]) >= a).all() and (np.asarray(table["predicted"]) >= a).all())
+
+
+def stop_record() -> dict | None:
+    return data.read_metadata().get("pool", {}).get("stop")
+
+
+def verified_stop(frame: pd.DataFrame) -> dict:
+    """The stop record, once the pool on disk is still the pool the stop describes.
+
+    Chunks 1..k must be complete under their own metadata, and each final must be the
+    one the stop recorded: a chunk re-solved or edited after the stop would otherwise
+    change both selections without a trace. The screener that bins C-logP, and that
+    counted the rule's predicted side, is platform-dependent, so the platform must be
+    the one that evaluated the rule."""
+    stop = stop_record()
+    if stop is None:
+        raise PoolError("the reference pool has not met its stopping rule; run `sgs pool` until it has")
+    recorded = data.read_metadata().get("pool", {})
+    for j in range(1, stop["k"] + 1):
+        key = chunk_key(j)
+        problem = chunk_problem(frame, j, recorded.get(key, {}))
+        if problem is not None:
+            raise PoolError(f"{key}: {problem}; the pool changed after the stop")
+        if data.sha256_file(config.pool_path("final", j)) != stop["chunks_sha256"][key]:
+            raise PoolError(f"{key}: the final is not the one the stop recorded")
+    if stop["platform"] != _platform():
+        raise PoolError(f"the stop was evaluated on {stop['platform']['system']}/{stop['platform']['machine']} "
+                        f"and this is {_platform()['system']}/{_platform()['machine']}; the screener is "
+                        "platform-dependent, so the pool-backed sets are generated only on the stop's platform")
+    return stop
+
+
+def _platforms(k: int) -> list[str]:
+    recorded = data.read_metadata().get("pool", {})
+    return sorted({f"{e['platform']['system']}/{e['platform']['machine']}"
+                   for j in range(1, k + 1) if (e := recorded.get(chunk_key(j)))})
+
+
+# --- status and the run loop ---------------------------------------------------------------
+
+def status() -> dict:
+    frame, n_filtered = full_design()
+    k = solved_prefix(frame)
+    table = None
+    if k:
+        model, _ = screener()
+        table = rule_table(eligible(frame, k, model), allocation())
+    return {"solved_chunks": k, "n_chunks": n_chunks(frame), "n_filtered": n_filtered,
+            "table": table, "met": bool(table and rule_met(table)), "platforms": _platforms(k),
+            "stop": stop_record()}
+
+
+def format_status(st: dict) -> str:
+    lines = [f"[pool] chunks solved: {st['solved_chunks']} of {st['n_chunks']} "
+             f"({config.POOL_CHUNK} analyses each; {st['n_filtered']} design rows filtered)",
+             f"[pool] platforms: {', '.join(st['platforms']) or 'none yet'}"]
+    table = st["table"]
+    if table is not None:
+        a = np.asarray(table["allocation"])
+        for r, (s, p) in enumerate(zip(table["solved"], table["predicted"]), start=1):
+            s, p = np.asarray(s), np.asarray(p)
+            short = [f"bin {b}: solved {s[b]}/{a[b]}, predicted {p[b]}/{a[b]}"
+                     for b in range(len(a)) if s[b] < a[b] or p[b] < a[b]]
+            lines.append(f"  sub-pool r{r}: bin 0 solved {s[0]}/{a[0]} predicted {p[0]}/{a[0]}; "
+                         f"bin 1 solved {s[1]}/{a[1]} predicted {p[1]}/{a[1]}; "
+                         + ("complete" if not short else "short: " + "; ".join(short)))
+    if st["stop"]:
+        lines.append(f"[pool] the stopping rule was met at chunk {st['stop']['k']}; nothing more to solve")
+    else:
+        lines.append("[pool] stopping rule " + ("met" if st["met"] else "not met"))
+    return "\n".join(lines)
+
+
+def run(*, chunks: int, workers: int, fn=None) -> dict | None:
+    """Solve up to `chunks` more chunks, checking the rule after each; record the stop
+    at the first chunk that meets it. Returns the stop record, or None if not met yet."""
+    stop = stop_record()
+    if stop:
+        print(f"[pool] the stopping rule was met at chunk {stop['k']}; nothing to solve")
+        return stop
+    frame, n_filtered = full_design()
+    model, _ = screener()
+    alloc = allocation()
+    k, done = solved_prefix(frame), 0
+    while True:
+        table = rule_table(eligible(frame, k, model), alloc) if k else None
+        if table is not None and rule_met(table):
+            recorded = data.read_metadata()["pool"]
+            stop = {"k": k, "table": table, "n_filtered": n_filtered,
+                    "chunks_sha256": {chunk_key(j): recorded[chunk_key(j)]["final_sha256"]
+                                      for j in range(1, k + 1)},
+                    "platforms": _platforms(k), "platform": _platform(), "updated": _now()}
+            data.record("pool", "stop", stop)
+            print(f"[pool] the stopping rule is met at chunk {k}; solving stops for good")
+            return stop
+        if done == chunks:
+            print(format_status({"solved_chunks": k, "n_chunks": n_chunks(frame), "n_filtered": n_filtered,
+                                 "table": table, "met": False, "platforms": _platforms(k), "stop": None}))
+            return None
+        if k == n_chunks(frame):
+            raise PoolError(f"the cap of {config.POOL_CAP} rows ({k} chunks) is reached and the stopping "
+                            "rule is not met; it is not relaxed, a new decision is needed")
+        solve_chunk(frame, k + 1, workers=workers, fn=fn)
+        k, done = k + 1, done + 1

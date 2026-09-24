@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 from sgs import config, data, design, pool
-from tests.helpers import fake_analyse, tamper, tamper_frame
+from tests.helpers import FormulaModel, fake_analyse, tamper, tamper_frame
 
 
 def _raw():
@@ -163,3 +163,164 @@ def test_an_interrupted_solve_records_nothing(pool_roles):
     with pytest.raises(KeyboardInterrupt):
         pool.solve_chunk(frame, 1, workers=1, fn=_broken)
     assert "c001" not in data.read_metadata().get("pool", {})
+
+
+# --- eligibility, the stopping rule, status and the run loop ------------------------------------
+
+@pytest.fixture
+def controlled(pool_roles, monkeypatch):
+    """A fixed allocation, and the formula as the screener."""
+    monkeypatch.setattr(pool, "allocation", lambda: np.array([0, 0, 4, 4, 0]))
+    monkeypatch.setattr(pool, "seed_counts", lambda: np.array([9, 9, 5, 5, 9]))
+    monkeypatch.setattr(pool, "screener", lambda: (FormulaModel(), {"n_train": 300}))
+    return pool_roles
+
+
+def _table(solved, predicted, a):
+    return {"allocation": a, "solved": solved, "predicted": predicted}
+
+
+def test_rule_is_met_exactly_at_equality():
+    a = [1, 0, 2]
+    assert pool.rule_met(_table([[1, 0, 2], [3, 1, 2]], [[1, 0, 2], [1, 0, 5]], a))
+
+
+@pytest.mark.parametrize("side", ["solved", "predicted"])
+def test_rule_is_unmet_when_one_subpool_misses_one_bin(side):
+    a = [1, 0, 2]
+    ok = [[1, 0, 2], [1, 0, 2]]
+    short = [[1, 0, 2], [1, 0, 1]]
+    table = _table(short if side == "solved" else ok, short if side == "predicted" else ok, a)
+    assert not pool.rule_met(table)
+
+
+def test_eligible_drops_excluded_rows_and_rule_ignores_them(controlled):
+    frame, _ = pool.full_design()
+    pool.solve_chunk(frame, 1, workers=1, fn=fake_analyse)
+    path = config.pool_path("final", 1)
+    final = data.read_table(path)
+    final.loc[[0, 1], "excluded"] = "unresolved"
+    tamper_frame(path, final)
+    rows = pool.eligible(frame, 1, FormulaModel())
+    assert len(rows) == 38 and not {0, 1} & set(rows["pool_row"])
+    assert set(rows.columns) >= {"pool_row", "subpool", "chunk", "chunk_row", "FOS", "FOS_pred"}
+    table = pool.rule_table(rows, np.array([0, 0, 4, 4, 0]))
+    assert int(np.asarray(table["solved"]).sum()) <= 38
+
+
+def test_eligible_refuses_a_misaligned_final(controlled):
+    frame, _ = pool.full_design()
+    pool.solve_chunk(frame, 1, workers=1, fn=fake_analyse)
+    path = config.pool_path("final", 1)
+    final = data.read_table(path)
+    final.loc[0, "angle"] = final.loc[0, "angle"] + 1.0
+    tamper_frame(path, final)
+    with pytest.raises(pool.PoolError, match="aligned"):
+        pool.eligible(frame, 1, FormulaModel())
+
+
+def test_run_stops_at_the_first_chunk_that_meets_the_rule(controlled):
+    stop = pool.run(chunks=10, workers=1, fn=fake_analyse)
+    frame, _ = pool.full_design()
+    assert stop is not None and stop == pool.stop_record()
+    k = stop["k"]
+    tables = [pool.rule_table(pool.eligible(frame, j, FormulaModel()), pool.allocation())
+              for j in range(1, k + 1)]
+    assert pool.rule_met(tables[-1]) and not any(pool.rule_met(t) for t in tables[:-1])
+    assert pool.solved_prefix(frame) == k
+    assert not config.pool_path("final", k + 1).exists()
+    assert set(stop["chunks_sha256"]) == {pool.chunk_key(j) for j in range(1, k + 1)}
+
+
+def test_run_respects_the_chunk_budget(controlled, monkeypatch):
+    monkeypatch.setattr(pool, "allocation", lambda: np.array([0, 0, 10 ** 6, 0, 0]))
+    assert pool.run(chunks=2, workers=1, fn=fake_analyse) is None
+    frame, _ = pool.full_design()
+    assert pool.solved_prefix(frame) == 2 and pool.stop_record() is None
+
+
+def test_run_raises_at_the_cap_without_relaxing(controlled, monkeypatch):
+    monkeypatch.setattr(pool, "allocation", lambda: np.array([0, 0, 10 ** 6, 0, 0]))
+    with pytest.raises(pool.PoolError, match="cap"):
+        pool.run(chunks=50, workers=1, fn=fake_analyse)
+    assert pool.stop_record() is None
+
+
+def test_run_after_the_stop_solves_nothing(controlled, monkeypatch, capsys):
+    stop = pool.run(chunks=10, workers=1, fn=fake_analyse)
+    monkeypatch.setattr(pool.solver, "run_set", lambda *a, **k: pytest.fail("solved after the stop"))
+    assert pool.run(chunks=10, workers=1, fn=fake_analyse) == stop
+    assert f"met at chunk {stop['k']}" in capsys.readouterr().out
+
+
+def test_run_resolves_a_torn_chunk_before_counting_it(controlled, monkeypatch):
+    monkeypatch.setattr(pool, "allocation", lambda: np.array([0, 0, 10 ** 6, 0, 0]))
+    pool.run(chunks=2, workers=1, fn=fake_analyse)
+    tamper(config.pool_path("final", 2), "torn")
+    frame, _ = pool.full_design()
+    assert pool.solved_prefix(frame) == 1
+    pool.run(chunks=1, workers=1, fn=fake_analyse)
+    assert pool.solved_prefix(frame) == 2
+
+
+def test_status_lists_the_platforms_of_the_solved_chunks(controlled, monkeypatch):
+    monkeypatch.setattr(pool, "allocation", lambda: np.array([0, 0, 10 ** 6, 0, 0]))
+    pool.run(chunks=1, workers=1, fn=fake_analyse)
+    monkeypatch.setattr(pool, "_platform", lambda: {"system": "Linux", "machine": "x86_64"})
+    pool.run(chunks=1, workers=1, fn=fake_analyse)
+    st = pool.status()
+    assert st["solved_chunks"] == 2 and len(st["platforms"]) == 2
+    text = pool.format_status(st)
+    assert "Linux/x86_64" in text and "not met" in text
+
+
+def test_verified_stop_refuses_before_the_stop(controlled):
+    frame, _ = pool.full_design()
+    with pytest.raises(pool.PoolError, match="sgs pool"):
+        pool.verified_stop(frame)
+
+
+def test_verified_stop_accepts_an_untouched_pool(controlled):
+    stop = pool.run(chunks=10, workers=1, fn=fake_analyse)
+    frame, _ = pool.full_design()
+    assert pool.verified_stop(frame) == stop
+    assert stop["platform"] == pool._platform()
+
+
+def test_verified_stop_refuses_a_chunk_changed_after_the_stop(controlled):
+    stop = pool.run(chunks=10, workers=1, fn=fake_analyse)
+    frame, _ = pool.full_design()
+    path = config.pool_path("final", stop["k"])
+    final = data.read_table(path)
+    final.loc[0, "FOS"] = final.loc[0, "FOS"] * 1.5
+    tamper_frame(path, final)
+    with pytest.raises(pool.PoolError, match="changed after the stop"):
+        pool.verified_stop(frame)
+
+
+def test_verified_stop_refuses_a_chunk_rerecorded_after_the_stop(controlled):
+    # The chunk's own metadata agrees with a new final, but the stop recorded another one.
+    stop = pool.run(chunks=10, workers=1, fn=fake_analyse)
+    frame, _ = pool.full_design()
+    key = pool.chunk_key(1)
+    path = config.pool_path("final", 1)
+    final = data.read_table(path)
+    final.loc[0, "FOS"] = final.loc[0, "FOS"] * 1.5
+    tamper_frame(path, final)
+    data.record("pool", key, {**data.read_metadata()["pool"][key], "final_sha256": data.sha256_file(path)})
+    with pytest.raises(pool.PoolError, match="not the one the stop recorded"):
+        pool.verified_stop(frame)
+
+
+def test_verified_stop_refuses_another_platform(controlled, monkeypatch):
+    pool.run(chunks=10, workers=1, fn=fake_analyse)
+    frame, _ = pool.full_design()
+    monkeypatch.setattr(pool, "_platform", lambda: {"system": "Linux", "machine": "x86_64"})
+    with pytest.raises(pool.PoolError, match="platform"):
+        pool.verified_stop(frame)
+
+
+def test_status_before_any_chunk(controlled):
+    st = pool.status()
+    assert st["solved_chunks"] == 0 and st["table"] is None and not st["met"]
+    assert "0 of 10" in pool.format_status(st)
