@@ -330,7 +330,8 @@ def run(*, chunks: int, workers: int, fn=None) -> dict | None:
             stop = {"k": k, "table": table, "n_filtered": n_filtered,
                     "chunks_sha256": {chunk_key(j): recorded[chunk_key(j)]["final_sha256"]
                                       for j in range(1, k + 1)},
-                    "platforms": _platforms(k), "platform": _platform(), "updated": _now()}
+                    "platforms": _platforms(k), "platform": _platform(),
+                    "environment": data.environment(), "updated": _now()}
             data.record("pool", "stop", stop)
             print(f"[pool] the stopping rule is met at chunk {k}; solving stops for good")
             return stop

@@ -148,10 +148,15 @@ def _pool_design(key: str, strategy: str, realization: int, info: dict,
         raise ReplicationError(f"{key}: {error}") from error
     model, diagnostics = pool.screener()
     rows = pool.eligible(frame, stop["k"], model)
+    added = pool.allocation()
+    # The platform is only a proxy: the rule's own counts, recomputed with the screener
+    # and allocation of this run, must be the ones the stop recorded (spec §5).
+    if pool.rule_table(rows, added) != stop["table"]:
+        raise ReplicationError(f"{key}: the screener, the seed or the allocation differs from the one "
+                               "that evaluated the stop; the pool-backed sets are not generated")
     rows = rows[rows["subpool"] == realization].reset_index(drop=True)
     column = config.REP_POOL_STRATEGIES[strategy]
     edges = design.bin_edges_log(config.N_BINS, config.SELECTION_RANGE)
-    added = pool.allocation()
     index, bins = design.select_in_bins(rows[column].to_numpy(float), edges, added,
                                         np.random.default_rng(info["seed"]))
     chosen = rows.iloc[index].reset_index(drop=True)

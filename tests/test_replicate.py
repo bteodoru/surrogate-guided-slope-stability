@@ -117,6 +117,36 @@ def test_pool_sets_refuse_another_platform(pool_ready, monkeypatch):
         replicate.generate_set("guided_log_p_r1", "guided-log-p", 1, 0, workers=1)
 
 
+class _ShiftedModel(FormulaModel):
+    """Another screener: the formula's FOS, 30% higher."""
+
+    def predict(self, X):
+        return super().predict(X) + np.log(1.3)
+
+
+@pytest.mark.parametrize("key, strategy", [("guided_oracle_r1", "guided-oracle"),
+                                           ("guided_log_p_r1", "guided-log-p")])
+def test_pool_sets_refuse_a_screener_other_than_the_stops(pool_ready, monkeypatch, key, strategy):
+    # The stop's table counted the rule with one screener and one allocation;
+    # C-logP must be binned by that same screener (spec §5), and both arms share it.
+    monkeypatch.setattr(pool, "screener", lambda: (_ShiftedModel(), {"n_train": 300}))
+    with pytest.raises(replicate.ReplicationError, match="evaluated the stop"):
+        replicate.generate_set(key, strategy, 1, 0, workers=1)
+    for stage in ("designs", "results", "final"):
+        assert not config.replication_path(stage, key).exists()
+
+
+def test_pool_sets_refuse_an_allocation_other_than_the_stops(pool_ready, monkeypatch):
+    monkeypatch.setattr(pool, "allocation", lambda: np.array([0, 0, 11, 9, 0]))
+    with pytest.raises(replicate.ReplicationError, match="evaluated the stop"):
+        replicate.generate_set("guided_log_p_r1", "guided-log-p", 1, 0, workers=1)
+    assert not config.replication_path("designs", "guided_log_p_r1").exists()
+
+
+def test_the_stop_records_its_environment(pool_ready):
+    assert pool.stop_record()["environment"] == data.environment()
+
+
 def test_pool_sets_bin_on_their_own_column(pool_ready, monkeypatch):
     monkeypatch.setattr(replicate.solver, "run_set", lambda *a, **k: pytest.fail("the solver was called"))
     for key, strategy in (("guided_oracle_r1", "guided-oracle"), ("guided_log_p_r1", "guided-log-p")):
