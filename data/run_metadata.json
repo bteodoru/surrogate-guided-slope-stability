@@ -1746,6 +1746,148 @@
       "results_sha256": "1a138aa6d78c463b4620a1aea91c7401ba418431416558001959481fc17a8aa4",
       "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
       "updated": "2026-09-24T09:44:43+00:00"
+    },
+    "c002": {
+      "chunk": 2,
+      "design_sha256": "e0ef10e5079ad1ec100533277a9cbaad221218de66b3ee4728b1fa2e2339b5dc",
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "e8ade6217d8de713c12a84de677770bdfbd3749ff74444a7f7cea6c7f811276d",
+      "n": 1000,
+      "n_excluded": 0,
+      "non_converged": [],
+      "platform": {
+        "machine": "arm64",
+        "system": "Darwin"
+      },
+      "repair": {
+        "n_boundary": 11,
+        "n_repaired": 11,
+        "n_rows": 1000,
+        "n_solver_error": 0,
+        "n_unresolved": 0
+      },
+      "results_sha256": "27b64c257d4b8ede40bc30a01c4b0981189ec2a6f243d0a10fd5060d413f9108",
+      "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
+      "updated": "2026-09-24T11:26:42+00:00"
+    },
+    "c003": {
+      "chunk": 3,
+      "design_sha256": "d36b236a924e43c676574e080bfe4ca307e4374dba1c2b63be8c08d1e0ad1c08",
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "8079561fd59af738e274458b9a5392179a6b271f2d90994fdaf30676807d32c2",
+      "n": 1000,
+      "n_excluded": 0,
+      "non_converged": [
+        376
+      ],
+      "platform": {
+        "machine": "arm64",
+        "system": "Darwin"
+      },
+      "repair": {
+        "n_boundary": 9,
+        "n_repaired": 9,
+        "n_rows": 1000,
+        "n_solver_error": 0,
+        "n_unresolved": 0
+      },
+      "results_sha256": "c2277afd32e5b8090b7dc0762042e1b41aaff629a1ab9396a549f24798643ba5",
+      "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
+      "updated": "2026-09-24T12:11:42+00:00"
+    },
+    "c004": {
+      "chunk": 4,
+      "design_sha256": "dd4cbd78aefbfbecae8c4873afbf34eb4ed49536e484c350b9fcb6159a93930f",
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "7b4a10b63e27bd49005131f86944541482243fb37366779abd03efe861f95f9e",
+      "n": 1000,
+      "n_excluded": 0,
+      "non_converged": [
+        266
+      ],
+      "platform": {
+        "machine": "arm64",
+        "system": "Darwin"
+      },
+      "repair": {
+        "n_boundary": 9,
+        "n_repaired": 9,
+        "n_rows": 1000,
+        "n_solver_error": 0,
+        "n_unresolved": 0
+      },
+      "results_sha256": "09f648db8b785e1ba3340bb3eb04f814d18350f2d84e6b26ff0d88b71267e09a",
+      "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
+      "updated": "2026-09-24T12:56:25+00:00"
+    },
+    "c005": {
+      "chunk": 5,
+      "design_sha256": "0b3a44fd6adf1d2b66ea7024165ffea988923d6ca188c59107d247d8cf7c48e9",
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "d23b0a836fbefba7f029d76008a0817b01dee25bb41e185280327470936727c3",
+      "n": 1000,
+      "n_excluded": 0,
+      "non_converged": [
+        910
+      ],
+      "platform": {
+        "machine": "arm64",
+        "system": "Darwin"
+      },
+      "repair": {
+        "n_boundary": 9,
+        "n_repaired": 9,
+        "n_rows": 1000,
+        "n_solver_error": 0,
+        "n_unresolved": 0
+      },
+      "results_sha256": "69eadbeed73cebb085edbfd1c30423000978d39beb4c488832d11061b856d419",
+      "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
+      "updated": "2026-09-24T13:40:40+00:00"
     }
   },
   "replications": {
