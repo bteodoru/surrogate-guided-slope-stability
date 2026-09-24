@@ -459,7 +459,11 @@ REPLICATION_PROCEDURE = (
     "not a tie. These intervals cover variability between designs only. Because both test sets are held "
     "fixed, test-sampling error is a component common to every realization: it does not widen the spread "
     "between them and does not average out over them. It is covered separately by the paired bootstrap of "
-    "`sgs evaluate`, and the two components are never combined.")
+    "`sgs evaluate`, and the two components are never combined. "
+    "The oracle block (C-oracle against C-logP, confirmatory realizations only, no r0) follows the "
+    "readings declared in docs/oracle-declaration.md before the pool was solved; 'attributable to the "
+    "screener's error, in this design' is used only where the paired dR_O interval excludes 0, on the "
+    "side of the reading, in at least three of four cells.")
 
 
 def interaction_rows(*, series, tests, measures, interactions, level: float) -> list[dict]:
@@ -559,6 +563,149 @@ def _relocation_cells(*, series, families, tests, zones, arm="C-logG", reference
     return out
 
 
+# --- the oracle (spec 2026-09-23 oracle-reference-pool §9) -------------------------------------
+
+def oracle_level(intervals: list[dict], n_cells: int) -> int:
+    """Level against B on the decision range: 3 every one of n_cells entirely below 0;
+    2 one cell entirely below 0; 1 one cell with a negative mean; 0 otherwise."""
+    if len(intervals) == n_cells and all(iv["ci"][1] < 0 for iv in intervals):
+        return 3
+    if any(iv["ci"][1] < 0 for iv in intervals):
+        return 2
+    if any(iv["diff"] < 0 for iv in intervals):
+        return 1
+    return 0
+
+
+def oracle_density(rho_z: float, medians: list[float]) -> dict:
+    """The density prediction for one zone, at the direction and magnitude levels."""
+    margin, need, ratio = float(np.log(config.RELOCATION_MARGIN)), config.RELOCATION_MIN_CELLS, \
+        config.ORACLE_DENSITY_RATIO
+    if rho_z >= ratio:
+        sign, predicted = -1.0, "negative"
+    elif rho_z <= 1 / ratio:
+        sign, predicted = 1.0, "positive"
+    else:
+        return {"rho": rho_z, "predicted": None, "direction_met": None, "magnitude_met": None,
+                "medians": medians}
+    direction = sum(1 for x in medians if np.sign(x) == sign) >= need
+    magnitude = direction and sum(1 for x in medians if np.sign(x) == sign and abs(x) >= margin) >= need
+    return {"rho": rho_z, "predicted": predicted, "direction_met": bool(direction),
+            "magnitude_met": bool(magnitude), "medians": medians}
+
+
+def oracle_rho(values: list[dict], confirm: list[int], zones) -> dict:
+    """rho_Z = median over realizations of n_Z(C-oracle) / n_Z(C-logP), from the training
+    sets (seed + selection) in the evaluation zones [lo, hi): L = [0.5, 1), H = [1, 2)."""
+    bounds = _zone_bounds(zones)
+    index = {z: next(i for i, (_, lo, hi) in enumerate(bounds) if (lo, hi) == edge)
+             for z, edge in (("L", (0.5, 1.0)), ("H", (1.0, 2.0)))}
+    counts = {(v["arm"], v["realization"]): v["train_zone_counts"] for v in values}
+    per = {z: [counts[("C-oracle", r)][i] / counts[("C-logP", r)][i] for r in confirm]
+           for z, i in index.items()}
+    return {"L": float(np.median(per["L"])), "H": float(np.median(per["H"])), "per_realization": per}
+
+
+def oracle_reading(cells: dict, rho: dict, level: float) -> dict:
+    """Step P, groups A/B and C, and the density predictions (spec §9.2-9.3). First
+    matching row, in order, within each group. Attribution needs the paired dR_O
+    interval to exclude 0 in >= 3/4 cells, on the side of the reading (above 0 for A1,
+    below 0 for A2, B2 and B3); equivalence needs it inside (-m, m)."""
+    m, need = float(np.log(config.RELOCATION_MARGIN)), config.RELOCATION_MIN_CELLS
+    n_cells = len(config.REP_FAMILIES) * len(config.TEST_ROLES)
+    zeros = lambda xs: [0.0] * len(xs)
+    per = {}
+    for cell, v in cells.items():
+        R_o = [h - l for h, l in zip(v["H_o"], v["L_o"])]
+        R_p = [h - l for h, l in zip(v["H_p"], v["L_p"])]
+        dR = [a - b for a, b in zip(R_o, R_p)]
+        dL = list(np.log(v["E_oL"]) - np.log(v["E_pL"]))
+        dH = list(np.log(v["E_oH"]) - np.log(v["E_pH"]))
+        per[cell] = {"L_o": float(np.median(v["L_o"])), "H_o": float(np.median(v["H_o"])),
+                     "L_p": float(np.median(v["L_p"])), "H_p": float(np.median(v["H_p"])),
+                     "R_o": float(np.median(R_o)), "dR": float(np.median(dR)),
+                     "dL": float(np.median(dL)), "dH": float(np.median(dH)),
+                     "dR_interval": paired_interval(R_o, R_p, level),
+                     "R_o_interval": paired_interval(R_o, zeros(R_o), level),
+                     "dL_interval": paired_interval(dL, zeros(dL), level),
+                     "dH_interval": paired_interval(dH, zeros(dH), level),
+                     "dec_o_vs_b": welch_interval(v["dec_o"], v["dec_b"], level),
+                     "dec_p_vs_b": welch_interval(v["dec_p"], v["dec_b"], level),
+                     "dec_o_vs_p": paired_interval(v["dec_o"], v["dec_p"], level),
+                     "values": {"R_o": R_o, "R_p": R_p, "dR": dR, "dL": dL, "dH": dH}}
+    count = lambda pred: sum(1 for c in per.values() if pred(c))
+    inside = lambda iv: -m < iv["ci"][0] and iv["ci"][1] < m
+    logp_gate = count(lambda c: c["L_p"] < 0 < c["H_p"]) >= need
+    oracle_gate = count(lambda c: c["L_o"] < 0 < c["H_o"]) >= need
+    if oracle_gate:
+        if count(lambda c: c["dR"] >= m) >= need:
+            row = "A1"
+        elif count(lambda c: c["dR"] <= -m) >= need:
+            row = "A2"
+        elif count(lambda c: inside(c["dR_interval"])) >= need:
+            row = "A3"
+        elif count(lambda c: abs(c["dR"]) < m) >= need:
+            row = "A4"
+        else:
+            row = "A5"
+    elif not logp_gate:
+        row = "B1"
+    elif count(lambda c: inside(c["R_o_interval"])) >= need:
+        row = "B2"
+    elif count(lambda c: c["R_o"] <= -m) >= need:
+        row = "B3"
+    elif count(lambda c: abs(c["R_o"]) < m) >= need:
+        row = "B4"
+    else:
+        row = "B5"
+    # Attribution needs the interval to exclude 0 on the side of the reading, not
+    # merely somewhere: an A1 "larger" cannot be attributed from intervals below 0.
+    # B2/B3 fire only after step P passed (B1 comes first), so C-logP relocates and
+    # the attributable direction is C-oracle relocating less: dR_O < 0.
+    side = {"A1": 1, "A2": -1, "B2": -1, "B3": -1}.get(row)
+    excludes_on_side = lambda iv: iv["ci"][0] > 0 if side > 0 else iv["ci"][1] < 0
+    attribution = side is not None and count(lambda c: excludes_on_side(c["dR_interval"])) >= need
+    level_o = oracle_level([c["dec_o_vs_b"] for c in per.values()], n_cells)
+    level_p = oracle_level([c["dec_p_vs_b"] for c in per.values()], n_cells)
+    if (level_o == 3 and len(per) == n_cells and level_p < 3
+            and all(c["dec_o_vs_p"]["ci"][1] < 0 for c in per.values())):
+        c_row = "C1"
+    elif level_o == 3:
+        c_row = "C2"
+    else:
+        c_row = "C3"
+    density = {z: oracle_density(rho[z], [c[f"d{z}"] for c in per.values()]) for z in ("L", "H")}
+    return {"step_p": {"logp_gate": logp_gate,
+                       "medians": {f"{f}/{t}": [c["L_p"], c["H_p"]] for (f, t), c in per.items()}},
+            "oracle_gate": oracle_gate, "row": row, "attribution": bool(attribution), "c_row": c_row,
+            "levels": {"C-oracle": level_o, "C-logP": level_p}, "density": density,
+            "margin": m, "min_cells": need, "cells": {f"{f}/{t}": c for (f, t), c in per.items()}}
+
+
+def _oracle_cells(*, series, families, tests, zones, base="B") -> dict:
+    """Per (family, test): the lists oracle_reading takes, over the confirmatory
+    realizations in order. A cell is omitted where any series is unavailable."""
+    bounds = _zone_bounds(zones)
+    low = next(label for label, lo, hi in bounds if lo == 0.5 and hi == 1.0)
+    high = next(label for label, lo, hi in bounds if lo == 1.0 and hi == 2.0)
+    out = {}
+    for family in families:
+        for test in tests:
+            got = {(arm, z): series(family, test, arm, z)
+                   for arm in ("C-oracle", "C-logP", base) for z in (low, high, "decision-range")}
+            if any(v is None for v in got.values()):
+                continue
+            ratio = lambda arm, z: [float(a - b) for a, b in zip(np.log(got[(arm, z)]), np.log(got[(base, z)]))]
+            out[(family, test)] = {
+                "L_o": ratio("C-oracle", low), "H_o": ratio("C-oracle", high),
+                "L_p": ratio("C-logP", low), "H_p": ratio("C-logP", high),
+                "E_oL": got[("C-oracle", low)], "E_oH": got[("C-oracle", high)],
+                "E_pL": got[("C-logP", low)], "E_pH": got[("C-logP", high)],
+                "dec_o": got[("C-oracle", "decision-range")], "dec_p": got[("C-logP", "decision-range")],
+                "dec_b": got[(base, "decision-range")]}
+    return out
+
+
 def replication_metrics(units: Mapping, tests: Mapping[str, data.TestSet], *, zones, bins, selection_range,
                         decision_range, level, welch, paired, interactions) -> dict:
     values = []
@@ -575,6 +722,7 @@ def replication_metrics(units: Mapping, tests: Mapping[str, data.TestSet], *, zo
                     "zones": zone_metrics(test.y, p, zones),
                     "bins": zone_metrics(test.y, p, bins),
                     "train_counts": [int(_zone_mask(train, lo, hi).sum()) for _, lo, hi in _zone_bounds(bins)],
+                    "train_zone_counts": [int(_zone_mask(train, lo, hi).sum()) for _, lo, hi in _zone_bounds(zones)],
                 })
     realizations = sorted({v["realization"] for v in values})
     confirm = [r for r in realizations if r >= 1]
@@ -627,9 +775,15 @@ def replication_metrics(units: Mapping, tests: Mapping[str, data.TestSet], *, zo
     relocation = {"arm": "C-logG", "reference": "C-log", "base": "B",
                   **relocation_reading(_relocation_cells(series=complete_series, families=families,
                                                          tests=tests, zones=zones))}
+    oracle = None
+    if {"C-oracle", "C-logP"} <= {v["arm"] for v in values}:
+        rho = oracle_rho(values, confirm, zones)
+        oracle = {"arm": "C-oracle", "reference": "C-logP", "base": "B", "rho": rho,
+                  **oracle_reading(_oracle_cells(series=complete_series, families=families, tests=tests,
+                                                 zones=zones), rho, level)}
     return {"procedure": REPLICATION_PROCEDURE, "realizations": realizations, "confirmatory": confirm,
             "values": values, "summaries": summaries, "comparisons": comparisons, "interactions": inter,
-            "relocation": relocation}
+            "relocation": relocation, "oracle": oracle}
 
 
 def run_replications() -> None:

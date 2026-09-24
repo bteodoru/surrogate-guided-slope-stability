@@ -473,3 +473,151 @@ def test_replication_metrics_refuse_misaligned_predictions():
     units[("rf", 1)]["test_ids"]["test-natural"] = units[("rf", 1)]["test_ids"]["test-natural"][::-1]
     with pytest.raises(evaluate.MisalignedPair):
         evaluate.replication_metrics(units, tests, **REP_KW)
+
+
+# --- the oracle reading ------------------------------------------------------------------
+
+M = float(np.log(1.10))
+CELLS4 = [("rf", "test-natural"), ("rf", "test-stratified"), ("gbm", "test-natural"), ("gbm", "test-stratified")]
+
+
+def _cell(L_o, H_o, L_p, H_p, *, dec_o=(0.10,) * 5, dec_p=(0.10,) * 5, dec_b=(0.10,) * 5,
+          dL=(0.0,) * 5, dH=(0.0,) * 5):
+    """Lists over five realizations; scalars are broadcast. E_* are chosen so that
+    ln(E_o/E_p) equals dL and dH exactly."""
+    five = lambda x: [float(v) for v in (x if np.ndim(x) else [x] * 5)]
+    E_p = [0.2] * 5
+    return {"L_o": five(L_o), "H_o": five(H_o), "L_p": five(L_p), "H_p": five(H_p),
+            "E_oL": [e * np.exp(d) for e, d in zip(E_p, five(dL))], "E_pL": E_p,
+            "E_oH": [e * np.exp(d) for e, d in zip(E_p, five(dH))], "E_pH": E_p,
+            "dec_o": five(dec_o), "dec_p": five(dec_p), "dec_b": five(dec_b)}
+
+
+def _read(cells, rho=None):
+    return evaluate.oracle_reading(dict(zip(CELLS4, cells)), rho or {"L": 1.0, "H": 1.0}, 0.95)
+
+
+RELOC_P = dict(L_p=-0.1, H_p=0.1)                  # C-logP relocates: R_p = 0.2
+
+
+def test_A1_with_and_without_attribution():
+    tight = _read([_cell(-0.3, 0.2, **RELOC_P)] * 4)              # dR = 0.3, constant
+    assert tight["row"] == "A1" and tight["attribution"] and tight["step_p"]["logp_gate"]
+    wide = [_cell(-0.3, [0.2, 1.4, -0.9, 0.25, 0.2], **RELOC_P)] * 4   # median dR 0.3, interval spans 0
+    out = _read(wide)
+    assert out["row"] == "A1" and not out["attribution"]
+
+
+def test_A2_is_the_opposite_direction():
+    assert _read([_cell(-0.05, 0.02, L_p=-0.2, H_p=0.2)] * 4)["row"] == "A2"   # dR = 0.07 - 0.4
+
+
+def test_A3_needs_the_interval_and_A4_takes_a_wide_one():
+    assert _read([_cell(-0.1, 0.11, **RELOC_P)] * 4)["row"] == "A3"            # dR = 0.01, zero spread
+    noisy = [_cell(-0.1, [0.4, -0.2, 0.12, -0.15, 0.38], **RELOC_P)] * 4       # median dR 0.02
+    out = _read(noisy)
+    assert out["row"] == "A4" and not out["attribution"]
+
+
+def test_A5_is_the_c_logg_pattern():
+    # gate passes in every cell; dR medians +0.12, -0.51, +0.14, -0.01
+    # R_p = 0.6 and R_o = 0.6 + d, so dR = d; H_o = 0.55 + d stays > 0 even at d = -0.51
+    cells = [_cell(-0.05, 0.55 + d, L_p=-0.3, H_p=0.3) for d in (0.12, -0.51, 0.14, -0.01)]
+    out = _read(cells)
+    assert out["oracle_gate"] and out["row"] == "A5"
+    assert [round(c["dR"], 2) for c in out["cells"].values()] == [0.12, -0.51, 0.14, -0.01]
+
+
+def test_B1_wins_whenever_c_logp_does_not_relocate():
+    reversing = _read([_cell(0.2, 0.0, L_p=0.1, H_p=0.1)] * 4)                   # R_o = -0.2
+    assert reversing["row"] == "B1" and not reversing["step_p"]["logp_gate"]
+
+
+def test_B2_needs_the_interval_of_R_oracle():
+    assert _read([_cell(0.1, 0.11, **RELOC_P)] * 4)["row"] == "B2"
+    wide = _read([_cell(0.1, [0.4, -0.2, 0.12, -0.15, 0.38], **RELOC_P)] * 4)
+    assert wide["row"] == "B4"
+
+
+def test_attribution_needs_the_interval_on_the_side_of_the_reading():
+    # B2 with C-oracle relocating MORE than C-logP: R_o = 0.05, R_p = 0.01, dR = +0.04 in
+    # every realization, so the interval excludes 0, but above it. Not attributable.
+    wrong_side = _read([_cell(0.0, 0.05, L_p=-0.005, H_p=0.005)] * 4)
+    assert wrong_side["row"] == "B2" and not wrong_side["attribution"]
+    # The same B2 with C-logP relocating: dR = 0.05 - 0.2 < 0 throughout. Attributable.
+    right_side = _read([_cell(0.0, 0.05, **RELOC_P)] * 4)
+    assert right_side["row"] == "B2" and right_side["attribution"]
+    # A3, A4, A5, B1, B4, B5 never carry an attribution, whatever the intervals.
+    assert not _read([_cell(-0.1, 0.11, **RELOC_P)] * 4)["attribution"]      # A3, dR = 0.01 exactly
+
+
+def test_B3_reverses_and_B5_is_a_uniform_loss():
+    assert _read([_cell(0.2, 0.0, **RELOC_P)] * 4)["row"] == "B3"
+    assert _read([_cell(0.1, 0.5, **RELOC_P)] * 4)["row"] == "B5"                # R_o = 0.4 > 0: mixed
+
+
+def test_group_c_is_ordered_and_c1_needs_all_three():
+    win = dict(dec_o=[0.05] * 5, dec_b=[0.10] * 5)
+    c1 = _read([_cell(-0.3, 0.2, **RELOC_P, dec_p=[0.10] * 5, **win)] * 4)
+    assert c1["levels"] == {"C-oracle": 3, "C-logP": 0} and c1["c_row"] == "C1"
+    c2 = _read([_cell(-0.3, 0.2, **RELOC_P, dec_p=[0.05] * 5, **win)] * 4)   # C-logP also level 3
+    assert c2["c_row"] == "C2"
+    c3 = _read([_cell(-0.3, 0.2, **RELOC_P)] * 4)
+    assert c3["c_row"] == "C3" and c3["levels"]["C-oracle"] == 0
+
+
+def test_levels():
+    iv = lambda d, lo, hi: {"diff": d, "ci": [lo, hi]}
+    assert evaluate.oracle_level([iv(-1, -2, -0.5)] * 4, 4) == 3
+    assert evaluate.oracle_level([iv(-1, -2, -0.5)] + [iv(-1, -2, 1)] * 3, 4) == 2
+    assert evaluate.oracle_level([iv(-1, -2, 1)] + [iv(1, -2, 3)] * 3, 4) == 1
+    assert evaluate.oracle_level([iv(1, -2, 3)] * 4, 4) == 0
+    assert evaluate.oracle_level([iv(-1, -2, -0.5)] * 3, 4) == 2        # an incomplete set never reaches 3
+
+
+def test_density_boundaries_and_levels():
+    at = evaluate.oracle_density(1.10, [-0.2, -0.15, -0.12, 0.01])
+    assert at["predicted"] == "negative" and at["direction_met"] and at["magnitude_met"]
+    below = evaluate.oracle_density(1 / 1.10, [0.05, 0.03, 0.02, -0.01])
+    assert below["predicted"] == "positive" and below["direction_met"] and not below["magnitude_met"]
+    inside = evaluate.oracle_density(1.05, [-0.3] * 4)
+    assert inside["predicted"] is None and inside["direction_met"] is None
+
+
+def test_oracle_block_in_replication_metrics():
+    tests = {"test-natural": stub_test(400, 3), "test-stratified": stub_test(400, 4, name="test-stratified")}
+    noise = {"B": (0.10, 0.10), "C-oracle": (0.05, 0.20), "C-logP": (0.075, 0.15),
+             "C0-oracle": (0.2, 0.2), "C0-logP": (0.2, 0.2)}
+    units = _zoned_units(tests, noise)
+    for unit in units.values():   # L = [0.5, 1): 4 against 3; H = [1, 2): 2 against 2
+        unit["arms"]["C-oracle"]["train_fos"] = np.array([0.6, 0.7, 0.8, 1.5, 3.0, 0.4, 7.0, 0.9, 1.2, 2.0])
+        unit["arms"]["C-logP"]["train_fos"] = np.array([0.6, 0.7, 0.8, 1.5, 3.0, 0.4, 7.0, 2.5, 1.2, 2.0])
+    out = evaluate.replication_metrics(units, tests, **REP_KW)
+    oracle = out["oracle"]
+    assert oracle is not None and oracle["row"] == "A1"          # dR = ln 4 - ln 2 = ln 2
+    assert oracle["rho"]["L"] == pytest.approx(4 / 3)            # 4 points in [0.5, 1) against 3
+    assert oracle["rho"]["H"] == pytest.approx(1.0)
+    assert oracle["density"]["L"]["predicted"] == "negative" and oracle["density"]["H"]["predicted"] is None
+    v = out["values"][0]
+    assert len(v["train_zone_counts"]) == len(evaluate.zones(config.ZONE_EDGES))
+    json.dumps(out)
+
+
+def test_oracle_block_is_absent_without_the_arms():
+    tests = {"test-natural": stub_test(80, 3), "test-stratified": stub_test(50, 4, name="test-stratified")}
+    assert evaluate.replication_metrics(_fake_units(tests), tests, **REP_KW)["oracle"] is None
+
+
+def test_oracle_decision_contrast_never_uses_welch(monkeypatch):
+    sentinel = [7.0, 7.1, 7.2, 7.3, 7.4]
+    real = evaluate.welch_interval
+
+    def guard(a, b, level):
+        # C-logP against B is Welch by design (first argument); only C-oracle against
+        # C-logP, where C-logP is the second argument, must never reach it.
+        assert list(b) != sentinel, "C-oracle vs C-logP went through Welch"
+        return real(a, b, level)
+
+    monkeypatch.setattr(evaluate, "welch_interval", guard)
+    out = _read([_cell(-0.3, 0.2, **RELOC_P, dec_p=sentinel)] * 4)
+    assert out["cells"]["rf/test-natural"]["dec_o_vs_p"]["df"] == 4
