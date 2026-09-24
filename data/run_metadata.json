@@ -1709,6 +1709,45 @@
       "updated": "2026-09-22T15:05:20+00:00"
     }
   },
+  "pool": {
+    "c001": {
+      "chunk": 1,
+      "design_sha256": "2178c3c48d410afddb304c0935faf64b9e124fae64f1dfa36ae194941d4b4654",
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "06a929fbf8535fdf522eedc37ef1659f4f476e0f434c565a34a2fa332339df88",
+      "n": 1000,
+      "n_excluded": 0,
+      "non_converged": [
+        131,
+        937
+      ],
+      "platform": {
+        "machine": "arm64",
+        "system": "Darwin"
+      },
+      "repair": {
+        "n_boundary": 10,
+        "n_repaired": 10,
+        "n_rows": 1000,
+        "n_solver_error": 0,
+        "n_unresolved": 0
+      },
+      "results_sha256": "1a138aa6d78c463b4620a1aea91c7401ba418431416558001959481fc17a8aa4",
+      "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
+      "updated": "2026-09-24T09:44:43+00:00"
+    }
+  },
   "replications": {
     "guided_log_g_r1": {
       "allocation": {
