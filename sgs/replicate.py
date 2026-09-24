@@ -61,7 +61,17 @@ def set_keys(realization: int) -> list[tuple[str, str, int]]:
     keys = [(f"lhs_r{r}", "lhs", 0), (f"guided_log_r{r}", "guided-log", 0),
             (f"guided_log_g_r{r}", "guided-log-g", 0)]
     keys += [(f"guided_seq_r{r}_b{b}", "guided-seq", b) for b in range(1, len(config.REP_SEQ_BATCHES) + 1)]
+    keys += [(f"guided_oracle_r{r}", "guided-oracle", 0), (f"guided_log_p_r{r}", "guided-log-p", 0)]
     return keys
+
+
+def keys_by_strategy(realization: int) -> dict[str, list[str]]:
+    """Set keys of one realization grouped by strategy, in generation order. Arms are
+    composed from this, never from positions in set_keys."""
+    out: dict[str, list[str]] = {}
+    for key, strategy, _ in set_keys(realization):
+        out.setdefault(strategy, []).append(key)
+    return out
 
 
 def load_set(key: str) -> pd.DataFrame:
@@ -88,6 +98,8 @@ def build_design(key: str, strategy: str, realization: int, batch: int) -> tuple
     n = expected_n(strategy, batch)
     info = {"strategy": strategy, "realization": realization, "batch": batch, "seed": seed}
     references = {role: design.read_design(role) for role in ("seed", *config.TEST_ROLES)}
+    if strategy in config.REP_POOL_STRATEGIES:
+        return _pool_design(key, strategy, realization, info, references)
     if strategy == "lhs":
         unit, frame = design.lhs(n, seed)
         if not design.lhs_strata_complete(unit):
@@ -122,6 +134,46 @@ def build_design(key: str, strategy: str, realization: int, batch: int) -> tuple
     return frame, info
 
 
+def _pool_design(key: str, strategy: str, realization: int, info: dict,
+                 references: dict) -> tuple[pd.DataFrame, dict]:
+    """C-oracle or C-logP of one realization: C-log's allocation and within-bin draw,
+    on the eligible rows of sub-pool `realization`, binned on the strategy's column
+    (spec 2026-09-23 oracle, §5). No solver: the rows are already solved."""
+    from sgs import pool
+    frame, _ = pool.full_design()
+    try:
+        # the stop, the chunk files it recorded, and the platform, all checked here
+        stop = pool.verified_stop(frame)
+    except pool.PoolError as error:
+        raise ReplicationError(f"{key}: {error}") from error
+    model, diagnostics = pool.screener()
+    rows = pool.eligible(frame, stop["k"], model)
+    rows = rows[rows["subpool"] == realization].reset_index(drop=True)
+    column = config.REP_POOL_STRATEGIES[strategy]
+    edges = design.bin_edges_log(config.N_BINS, config.SELECTION_RANGE)
+    added = pool.allocation()
+    index, bins = design.select_in_bins(rows[column].to_numpy(float), edges, added,
+                                        np.random.default_rng(info["seed"]))
+    chosen = rows.iloc[index].reset_index(drop=True)
+    out = chosen[[*config.PARAMS, "FOS_pred"]].copy()
+    out["bin"] = bins
+    out["pool_chunk"] = chosen["chunk"].to_numpy()
+    out["pool_chunk_row"] = chosen["chunk_row"].to_numpy()
+    out["pool_row"] = chosen["pool_row"].to_numpy()
+    family = config.SCREENER["family"]
+    info["screener"] = {**diagnostics, "family": family, "params": dict(config.SCREENERS[family]),
+                        "fit_seed": config.SEEDS["screener_fit"], "trained_on": ["seed"],
+                        "trained_on_sha256": {"seed": data.sha256_file(config.final_path("seed"))}}
+    info["allocation"] = {"edges": edges.tolist(), "trained_counts": pool.seed_counts().tolist(),
+                          "added": added.tolist()}
+    info["pool"] = {"stop_k": stop["k"], "subpool": realization, "column": column,
+                    "chunks_sha256": stop["chunks_sha256"], "platform": stop["platform"]}
+    if len(out) != expected_n(strategy, 0):
+        raise design.DesignError(f"{key}: {len(out)} points, expected {expected_n(strategy, 0)}")
+    design.assert_disjoint(out, references, config.MIN_DISTANCE)   # the pool filter already ensures it
+    return out, info
+
+
 def _reuse(key: str, previous: dict, info: dict) -> dict:
     """A complete, matching set. When the files its screener learned from were
     solved again (same design, same FOS, other runtimes), only its provenance is
@@ -153,6 +205,8 @@ def generate_set(key: str, strategy: str, realization: int, batch: int, *, worke
     """Design, solve and repair one replicated set; reuse it when it is complete
     and matches the configuration, and solve it again when an interrupted run
     left it half-written (see the resume contract at the top of the module)."""
+    if strategy in config.REP_POOL_STRATEGIES:
+        return _copy_from_pool(key, strategy, realization, batch, force=force)
     frame, info = build_design(key, strategy, realization, batch)
     paths = {stage: config.replication_path(stage, key) for stage in ("designs", "results", "final")}
     text = frame.to_csv(index=False)
@@ -195,6 +249,66 @@ def generate_set(key: str, strategy: str, realization: int, batch: int, *, worke
     return entry
 
 
+def _copy_from_pool(key: str, strategy: str, realization: int, batch: int, *, force: bool = False) -> dict:
+    """Write a pool-backed set: its design, and the results and final rows copied from
+    the pool's chunk files, row for row as the solver wrote them.
+
+    The resume contract of the module holds here too. A damaged or missing set, or one
+    with no metadata entry, is simply copied again: that is cheap. A set whose record
+    says it came from another design or another pool state is a configuration mismatch.
+    It is refused, never rewritten silently, because fits and stage 1 may already rest on it."""
+    frame, info = build_design(key, strategy, realization, batch)
+    paths = {stage: config.replication_path(stage, key) for stage in ("designs", "results", "final")}
+    text = frame.to_csv(index=False)
+    n = expected_n(strategy, batch)
+    previous = data.read_metadata().get("replications", {}).get(key, {})
+    if previous and not force:
+        if previous.get("design_sha256") != data.text_sha256(text) or previous.get("pool") != info["pool"]:
+            raise ReplicationError(f"{key}: the stored set was copied from another design or another state "
+                                   "of the reference pool than the configuration produces now; rerun "
+                                   "with --force only after deciding that it must change")
+        reason = data.stored_set_problem(paths, previous, n)
+        if reason is None:
+            print(f"[{key}] up to date")
+            return previous
+        print(f"[{key}] incomplete ({reason}); copying it again", flush=True)
+    for path in paths.values():
+        data.quarantine(path)                 # the pool is the source; old copies are kept aside
+    data.write_text_atomic(paths["designs"], text)
+    results, finals = [], []
+    for k in sorted(set(frame["pool_chunk"])):
+        result_rows, result_columns = solver.read_rows(config.pool_path("results", k))
+        final_rows, final_columns = solver.read_rows(config.pool_path("final", k))
+        if result_columns != data.RESULT_COLUMNS or final_columns != data.FINAL_COLUMNS:
+            raise ReplicationError(f"{key}: pool chunk {k} does not match the result or final schema")
+        for position in frame.index[frame["pool_chunk"] == k]:
+            chunk_row = int(frame.at[position, "pool_chunk_row"])
+            results.append((position, result_rows[chunk_row]))
+            finals.append((position, final_rows[chunk_row]))
+    # The rows are written as read (strings), so the copy is byte-faithful to the pool.
+    solver.write_rows(paths["results"], [row for _, row in sorted(results, key=lambda x: x[0])],
+                      data.RESULT_COLUMNS)
+    solver.write_rows(paths["final"], [row for _, row in sorted(finals, key=lambda x: x[0])],
+                      data.FINAL_COLUMNS)
+    final = data.read_table(paths["final"])
+    problems = data.frame_problems(final, n)
+    if problems:
+        raise ReplicationError(f"{key}: {'; '.join(problems)}")
+    entry = {**info, "n": n, "source": "pool",
+             "repair": {"n_rows": n, "n_repaired": int((final["repair_variant"] != "").sum()),
+                        "source": "pool"},
+             "environment": data.environment(), "solver_fingerprint": config.solver_fingerprint(),
+             "non_converged": data.non_converged(final),
+             **{f"{name}_sha256": data.sha256_file(paths[stage]) for stage, name in
+                (("designs", "design"), ("results", "results"), ("final", "final"))},
+             "updated": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")}
+    data.record("replications", key, entry)
+    for path in paths.values():
+        data.protect(path)
+    print(f"[{key}] copied {n} rows from the reference pool (no solver)")
+    return entry
+
+
 def generate_all(*, workers: int, force: bool = False, fn=None) -> None:
     """Every set of every new realization, realization by realization, so an
     interrupted run leaves whole realizations behind."""
@@ -205,7 +319,10 @@ def generate_all(*, workers: int, force: bool = False, fn=None) -> None:
 
 # --- fitting (fixed hyper-parameters) --------------------------------------------------------
 
-REP_ARMS = ("A", "B", "C-log", "C0-log", "C-seq", "C0-seq", "C-logG", "C0-logG")
+REP_ARMS = ("A", "B", "C-log", "C0-log", "C-seq", "C0-seq", "C-logG", "C0-logG",
+            "C-oracle", "C0-oracle", "C-logP", "C0-logP")
+# Arms of the pool-backed strategies: confirmatory realizations only, no r0.
+POOL_ARMS = ("C-oracle", "C0-oracle", "C-logP", "C0-logP")
 SEQ_ROLES_R0 = tuple(f"guided-seq-{b}" for b in range(1, 4))
 # The non-seed, non-test r0 roles arm_frames draws on: the LHS extension, both
 # guided-log screeners' designs, and the sequential batches. Named once so
@@ -223,11 +340,13 @@ def arm_frames(realization: int) -> dict[str, pd.DataFrame]:
         batches = [data.load_role(role) for role in SEQ_ROLES_R0]
         out = {"A": seed}
     else:
-        keys = [key for key, _, _ in set_keys(realization)]
-        extension, guided = load_set(keys[0]), load_set(keys[1])
-        guided_g = load_set(keys[2])
-        batches = [load_set(key) for key in keys[3:]]
-        out = {}
+        by = keys_by_strategy(realization)
+        extension, guided = load_set(by["lhs"][0]), load_set(by["guided-log"][0])
+        guided_g = load_set(by["guided-log-g"][0])
+        batches = [load_set(key) for key in by["guided-seq"]]
+        oracle, logp = load_set(by["guided-oracle"][0]), load_set(by["guided-log-p"][0])
+        out = {"C-oracle": pd.concat([seed, oracle], ignore_index=True), "C0-oracle": oracle,
+               "C-logP": pd.concat([seed, logp], ignore_index=True), "C0-logP": logp}
     sequential = pd.concat(batches, ignore_index=True)
     out.update({"B": pd.concat([seed, extension], ignore_index=True),
                 "C-log": pd.concat([seed, guided], ignore_index=True), "C0-log": guided,

@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sgs import config, data, design, replicate
-from tests.helpers import fake_analyse, shrink_roles, synthetic_final, write_final
+from sgs import config, data, design, pool, replicate, solver
+from tests.helpers import FormulaModel, fake_analyse, shrink_roles, synthetic_final, tamper, tamper_frame, write_final
 
 
 def _write_design(role, frame):
@@ -29,6 +29,17 @@ def small_reps(root, monkeypatch):
         frame = synthetic_final(300 if role == "seed" else 60, 50 + i)
         write_final(role, frame)
         _write_design(role, frame)
+
+
+@pytest.fixture
+def pool_ready(small_reps, monkeypatch):
+    """small_reps plus a solved, stopped reference pool (fake solver, formula screener)."""
+    monkeypatch.setattr(config, "POOL_CAP", 1200)
+    monkeypatch.setattr(config, "POOL_CHUNK", 40)
+    monkeypatch.setattr(pool, "allocation", lambda: np.array([0, 0, 10, 10, 0]))   # sums to REP_EXTENSION
+    monkeypatch.setattr(pool, "seed_counts", lambda: np.array([9, 9, 5, 5, 9]))
+    monkeypatch.setattr(pool, "screener", lambda: (FormulaModel(), {"n_train": 300}))
+    assert pool.run(chunks=30, workers=1, fn=fake_analyse) is not None
 
 
 def test_rep_seed_is_derived_and_distinct():
@@ -73,7 +84,123 @@ def test_set_keys_order(small_reps):
     assert replicate.set_keys(1) == [("lhs_r1", "lhs", 0), ("guided_log_r1", "guided-log", 0),
                                      ("guided_log_g_r1", "guided-log-g", 0),
                                      ("guided_seq_r1_b1", "guided-seq", 1),
-                                     ("guided_seq_r1_b2", "guided-seq", 2)]
+                                     ("guided_seq_r1_b2", "guided-seq", 2),
+                                     ("guided_oracle_r1", "guided-oracle", 0),
+                                     ("guided_log_p_r1", "guided-log-p", 0)]
+
+
+def test_existing_and_pool_replication_seeds_are_distinct():
+    for r in range(1, config.REP_REALIZATIONS + 1):
+        seeds = {s: replicate.rep_seed(s, r) for s in ("lhs", "guided-log", "guided-oracle", "guided-log-p")}
+        assert len(set(seeds.values())) == 4
+
+
+def test_pool_strategies_refuse_before_the_stop(small_reps):
+    with pytest.raises(replicate.ReplicationError, match="sgs pool"):
+        replicate.generate_set("guided_oracle_r1", "guided-oracle", 1, 0, workers=1)
+    assert not config.replication_path("designs", "guided_oracle_r1").exists()
+
+
+def test_pool_sets_refuse_a_pool_changed_after_the_stop(pool_ready):
+    path = config.pool_path("final", 1)
+    final = data.read_table(path)
+    final.loc[0, "FOS"] = final.loc[0, "FOS"] * 1.5
+    tamper_frame(path, final)
+    with pytest.raises(replicate.ReplicationError, match="changed after the stop"):
+        replicate.generate_set("guided_oracle_r1", "guided-oracle", 1, 0, workers=1)
+    assert not config.replication_path("designs", "guided_oracle_r1").exists()
+
+
+def test_pool_sets_refuse_another_platform(pool_ready, monkeypatch):
+    monkeypatch.setattr(pool, "_platform", lambda: {"system": "Linux", "machine": "x86_64"})
+    with pytest.raises(replicate.ReplicationError, match="platform"):
+        replicate.generate_set("guided_log_p_r1", "guided-log-p", 1, 0, workers=1)
+
+
+def test_pool_sets_bin_on_their_own_column(pool_ready, monkeypatch):
+    monkeypatch.setattr(replicate.solver, "run_set", lambda *a, **k: pytest.fail("the solver was called"))
+    for key, strategy in (("guided_oracle_r1", "guided-oracle"), ("guided_log_p_r1", "guided-log-p")):
+        replicate.generate_set(key, strategy, 1, 0, workers=1)
+    edges = design.bin_edges_log(config.N_BINS, config.SELECTION_RANGE)
+    o = replicate.read_set_design("guided_oracle_r1")
+    p = replicate.read_set_design("guided_log_p_r1")
+    fo = replicate.load_set("guided_oracle_r1")
+    assert np.bincount(o["bin"], minlength=5).tolist() == [0, 0, 10, 10, 0]
+    assert design.bin_counts(fo["FOS"], edges).tolist() == [0, 0, 10, 10, 0]      # exact, by construction
+    assert design.bin_counts(p["FOS_pred"], edges).tolist() == [0, 0, 10, 10, 0]   # on the prediction
+    # the two columns disagree in this fixture (c/H against the formula), so the
+    # sets differ: C-logP's true FOS does not reproduce the allocation
+    fp = replicate.load_set("guided_log_p_r1")
+    assert design.bin_counts(fp["FOS"], edges).tolist() != [0, 0, 10, 10, 0]
+
+
+def test_pool_sets_are_copied_rows_of_their_own_subpool(pool_ready):
+    replicate.generate_all(workers=1, fn=fake_analyse)
+    frame, _ = pool.full_design()
+    for r in (1, 2):
+        d = replicate.read_set_design(f"guided_oracle_r{r}")
+        assert set(frame.loc[d["pool_row"], "subpool"]) == {r}
+        f = replicate.load_set(f"guided_oracle_r{r}")
+        np.testing.assert_allclose(f[list(config.PARAMS)].to_numpy(float), d[list(config.PARAMS)].to_numpy(float))
+    rows = [set(replicate.read_set_design(f"guided_oracle_r{r}")["pool_row"]) for r in (1, 2)]
+    assert not rows[0] & rows[1]
+    entry = data.read_metadata()["replications"]["guided_log_p_r1"]
+    assert entry["pool"]["column"] == "FOS_pred" and entry["pool"]["subpool"] == 1
+    assert entry["pool"]["chunks_sha256"] == pool.stop_record()["chunks_sha256"]
+    assert entry["pool"]["platform"] == pool.stop_record()["platform"]
+    assert entry["allocation"]["added"] == [0, 0, 10, 10, 0]
+    assert entry["allocation"]["trained_counts"] == [9, 9, 5, 5, 9]
+
+
+def test_pool_sets_are_reused_and_rewritten_only_when_stale(pool_ready, capsys):
+    replicate.generate_set("guided_oracle_r1", "guided-oracle", 1, 0, workers=1)
+    replicate.generate_set("guided_oracle_r1", "guided-oracle", 1, 0, workers=1)
+    assert "[guided_oracle_r1] up to date" in capsys.readouterr().out
+    tamper(config.replication_path("final", "guided_oracle_r1"), "torn")
+    replicate.generate_set("guided_oracle_r1", "guided-oracle", 1, 0, workers=1)
+    assert "[guided_oracle_r1] incomplete" in capsys.readouterr().out
+    assert len(replicate.load_set("guided_oracle_r1")) == config.REP_EXTENSION
+
+
+def test_pool_sets_refuse_a_record_from_another_pool_state(pool_ready):
+    # A set recorded from another state of the pool is a configuration mismatch:
+    # refused, never rewritten silently (fits and stage 1 may rest on it).
+    replicate.generate_set("guided_log_p_r1", "guided-log-p", 1, 0, workers=1)
+    entry = data.read_metadata()["replications"]["guided_log_p_r1"]
+    data.record("replications", "guided_log_p_r1", {**entry, "pool": {**entry["pool"], "stop_k": 999}})
+    before = config.replication_path("final", "guided_log_p_r1").read_bytes()
+    with pytest.raises(replicate.ReplicationError, match="another state"):
+        replicate.generate_set("guided_log_p_r1", "guided-log-p", 1, 0, workers=1)
+    assert config.replication_path("final", "guided_log_p_r1").read_bytes() == before
+    replicate.generate_set("guided_log_p_r1", "guided-log-p", 1, 0, workers=1, force=True)
+    assert data.read_metadata()["replications"]["guided_log_p_r1"]["pool"]["stop_k"] != 999
+
+
+def test_pool_sets_copy_the_pool_rows_byte_for_byte(pool_ready):
+    replicate.generate_set("guided_oracle_r1", "guided-oracle", 1, 0, workers=1)
+    d = replicate.read_set_design("guided_oracle_r1")
+    for stage in ("results", "final"):
+        copied, _ = solver.read_rows(config.replication_path(stage, "guided_oracle_r1"))
+        for i, (k, row) in enumerate(zip(d["pool_chunk"], d["pool_chunk_row"])):
+            source, _ = solver.read_rows(config.pool_path(stage, int(k)))
+            assert copied[i] == source[int(row)], (stage, i)
+
+
+def test_arm_frames_select_by_strategy_not_position(monkeypatch, root):
+    sizes = {}
+
+    def load(key):
+        sizes[key] = 7 if "oracle" in key or "log_p" in key else 10
+        return synthetic_final(sizes[key], hash(key) % 97)
+
+    monkeypatch.setattr(replicate, "load_set", load)
+    monkeypatch.setattr(data, "load_role", lambda role: synthetic_final(10, 1))
+    r1 = replicate.arm_frames(1)
+    assert set(r1) == {"B", "C-log", "C0-log", "C-seq", "C0-seq", "C-logG", "C0-logG",
+                       "C-oracle", "C0-oracle", "C-logP", "C0-logP"}
+    assert len(r1["C0-seq"]) == 10 * len(config.REP_SEQ_BATCHES)    # no pool set joined C-seq
+    assert len(r1["C0-oracle"]) == 7 and len(r1["C-logP"]) == 17
+    assert not {"C-oracle", "C-logP", "C0-oracle", "C0-logP"} & set(replicate.arm_frames(0))
 
 
 def test_build_design_records_the_screener_family_and_parameters(small_reps, monkeypatch):
@@ -88,7 +215,7 @@ def test_build_design_records_the_screener_family_and_parameters(small_reps, mon
     assert info["screener"]["fit_seed"] == config.SEEDS["screener_fit"]
 
 
-def test_generate_all_builds_every_set_in_order(small_reps):
+def test_generate_all_builds_every_set_in_order(pool_ready):
     replicate.generate_all(workers=1, fn=fake_analyse)
     meta = data.read_metadata()["replications"]
     for r in (1, 2):
@@ -107,7 +234,7 @@ def test_generate_all_builds_every_set_in_order(small_reps):
         assert design.nearest_distance(replicate.load_set(key), tests).min() > config.MIN_DISTANCE
 
 
-def test_generate_set_reuses_and_refuses(small_reps, monkeypatch):
+def test_generate_set_reuses_and_refuses(pool_ready, monkeypatch):
     replicate.generate_all(workers=1, fn=fake_analyse)
     calls = []
     monkeypatch.setattr(replicate.solver, "run_set", lambda *a, **k: calls.append(1))
@@ -324,7 +451,7 @@ def test_screener_records_the_training_hashes(small_reps):
 
 
 @pytest.fixture
-def small_fit(small_reps, monkeypatch):
+def small_fit(pool_ready, monkeypatch):
     monkeypatch.setattr(config, "ESTIMATOR_FIXED", {"rf": {"n_estimators": 20}, "gbm": {"early_stopping": False}})
     monkeypatch.setitem(config.LC_PARAMS, "gbm", {**config.LC_PARAMS["gbm"], "max_iter": 20})
     # r0 roles: the existing main-pipeline sets, synthetic here
@@ -339,18 +466,20 @@ def small_fit(small_reps, monkeypatch):
 
 def test_arm_frames_compose_seed_and_added_points(small_fit):
     r0, r1 = replicate.arm_frames(0), replicate.arm_frames(1)
-    assert set(r0) == set(replicate.REP_ARMS) and set(r1) == set(replicate.REP_ARMS) - {"A"}
+    assert set(r0) == set(replicate.REP_ARMS) - set(replicate.POOL_ARMS)
+    assert set(r1) == set(replicate.REP_ARMS) - {"A"}
     assert len(r1["B"]) == 300 + config.REP_EXTENSION and len(r1["C0-seq"]) == sum(config.REP_SEQ_BATCHES)
     assert r1["C-log"]["row_id"].str.startswith("rep:guided_log_r1").sum() == config.REP_EXTENSION
     assert len(r0["C-seq"]) == 300 + 30 and len(r0["A"]) == 300
 
 
 def test_arm_frames_carry_the_gbm_arms(monkeypatch, root):
-    # Eight arms at r0 (A included), seven at r1..r5.
+    # Eight arms at r0 (A included, no pool arms), eleven at r1..r5.
     monkeypatch.setattr(replicate, "load_set", lambda key: synthetic_final(10, hash(key) % 97))
     monkeypatch.setattr(data, "load_role", lambda role: synthetic_final(10, 1))
     assert set(replicate.arm_frames(1)) == {"B", "C-log", "C0-log", "C-seq", "C0-seq",
-                                            "C-logG", "C0-logG"}
+                                            "C-logG", "C0-logG", "C-oracle", "C0-oracle",
+                                            "C-logP", "C0-logP"}
     assert set(replicate.arm_frames(0)) == {"A", "B", "C-log", "C0-log", "C-seq", "C0-seq",
                                             "C-logG", "C0-logG"}
 
