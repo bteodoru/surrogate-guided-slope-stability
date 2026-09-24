@@ -24,6 +24,14 @@ versions.
 | `test_natural_300.csv` | natural-300 test |
 | `test_stratified_150.csv` | target-stratified-150 test |
 
+## Pool and pool-backed replication files
+
+- `data/pool/{designs,results,final}/pool_cNNN.csv`: the reference pool, uniform i.i.d. over the
+  domain (seed `pool_design`), solved in chunks of 1 000 by `sgs pool` until the stopping rule in
+  `config.py` was met. Chunks after the stop are never solved.
+- `data/replications/*/guided_oracle_rN.csv`, `guided_log_p_rN.csv`: C-oracle and C-logP, rows
+  copied from sub-pool N of the reference pool (no solver).
+
 ## Surface geometry columns
 
 `Surface_L` and `Surface_R` bound the clipped critical arc. `Surface_Min_Y` is
