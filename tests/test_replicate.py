@@ -60,6 +60,21 @@ def test_existing_replication_seeds_are_untouched():
     assert replicate.rep_seed("lhs", 3) != replicate.rep_seed("guided-log", 3)
 
 
+@pytest.mark.parametrize("strategy, realization, batch, expected", [
+    ("lhs", 1, 0, 2469795591),
+    ("lhs", 5, 0, 4091135151),
+    ("guided-log", 1, 0, 2228703551),
+    ("guided-log", 3, 0, 1433097590),
+    ("guided-seq", 2, 1, 2818726377),
+    ("guided-seq", 4, 3, 2518026370),
+    ("guided-log-g", 2, 0, 2587379386),
+])
+def test_existing_rep_seeds_are_pinned(strategy, realization, batch, expected):
+    # Golden values from the code at d9999a4, which generated the stored r1..r5 sets:
+    # a change to REP_STRATEGIES' order or to the derivation would silently move them.
+    assert replicate.rep_seed(strategy, realization, batch) == expected
+
+
 def test_the_two_screeners_see_the_same_pool():
     for r in (1, 3):
         pools = [design.uniform_pool(np.random.default_rng(replicate.rep_seed(s, r)),
