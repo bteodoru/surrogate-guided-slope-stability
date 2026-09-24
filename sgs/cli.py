@@ -6,6 +6,7 @@
   sgs report          booktabs tables and figures
   sgs learning-curve  optional; RF and GBM with fixed hyper-parameters
   sgs replicate       optional; replicated designs, fixed-HP fits, interval metrics
+  sgs pool            optional; the reference pool, solved in chunks until its declared rule is met
   sgs structural      optional; descriptive density-and-error artifacts from the replications
   sgs all             generate, fit, evaluate, report
   sgs inspect         rerun one stored row and draw it with xslope's plots
@@ -137,6 +138,14 @@ def _replicate(args):
     evaluate.run_replications()
 
 
+def _pool(args):
+    from sgs import pool
+    if args.status:
+        print(pool.format_status(pool.status()))
+        return
+    pool.run(chunks=args.chunks, workers=args.workers)
+
+
 def _structural(args):
     from sgs import structural
     structural.run()
@@ -193,6 +202,14 @@ def build_parser() -> argparse.ArgumentParser:
                        "configuration mismatch")
     command("structural", _structural, "optional: descriptive density-and-error artifacts "
             "from the replications; reads committed data only")
+    p = sub.add_parser("pool", help="optional: solve the reference pool in chunks, until the declared "
+                                    "stopping rule is met (then it solves nothing more)")
+    p.add_argument("--chunks", type=int, default=1,
+                   help=f"solve at most this many more chunks of {config.POOL_CHUNK} analyses")
+    p.add_argument("--workers", type=int, default=1, help="solver processes")
+    p.add_argument("--status", action="store_true",
+                   help="read-only: counts per sub-pool and bin, platforms, and the rule's state")
+    p.set_defaults(handler=_pool)
     p = sub.add_parser("inspect", help="rerun one stored row and draw it with xslope's plots")
     p.add_argument("--role", choices=tuple(config.ROLES), required=True)
     p.add_argument("--row", type=int, required=True, help="1-based row, in design order")
@@ -208,6 +225,8 @@ def main(argv=None) -> None:
     args = parser.parse_args(argv)
     if getattr(args, "workers", 1) < 1:
         parser.error("--workers must be at least 1")
+    if getattr(args, "chunks", 1) < 1:
+        parser.error("--chunks must be at least 1")
     if platform.python_version() != REFERENCE_PYTHON:
         print(f"warning: running on Python {platform.python_version()}; "
               f"the reference environment is {REFERENCE_PYTHON}", file=sys.stderr)

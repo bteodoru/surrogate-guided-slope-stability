@@ -208,3 +208,29 @@ def test_cli_defaults_openmp_to_one_thread():
             "print(os.environ['OMP_NUM_THREADS'])")
     out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True)
     assert out.stdout.strip() == "1"
+
+
+def test_pool_command_parses_and_has_no_scientific_flag():
+    parser = cli.build_parser()
+    for argv in (["pool"], ["pool", "--chunks", "4", "--workers", "2"], ["pool", "--status"]):
+        assert callable(parser.parse_args(argv).handler)
+    for bad in (["pool", "--cap", "10"], ["pool", "--seed", "1"]):
+        with pytest.raises(SystemExit):
+            parser.parse_args(bad)
+
+
+def test_pool_chunks_must_be_positive():
+    with pytest.raises(SystemExit):
+        cli.main(["pool", "--chunks", "0"])
+
+
+def test_pool_dispatches_to_run_or_status(monkeypatch, capsys):
+    from sgs import pool
+    calls = []
+    monkeypatch.setattr(pool, "run", lambda **kw: calls.append(("run", kw)))
+    monkeypatch.setattr(pool, "status", lambda: {"x": 1})
+    monkeypatch.setattr(pool, "format_status", lambda st: "STATUS")
+    cli.main(["pool", "--chunks", "3", "--workers", "2"])
+    cli.main(["pool", "--status"])
+    assert calls == [("run", {"chunks": 3, "workers": 2})]
+    assert "STATUS" in capsys.readouterr().out
