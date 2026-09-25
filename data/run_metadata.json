@@ -3267,6 +3267,686 @@
       "strategy": "guided-log-g",
       "updated": "2026-09-23T14:00:03+00:00"
     },
+    "guided_log_p_r1": {
+      "allocation": {
+        "added": [
+          38,
+          35,
+          31,
+          28,
+          22,
+          18,
+          1,
+          12,
+          16,
+          9,
+          11,
+          12,
+          18,
+          17,
+          32
+        ],
+        "edges": [
+          0.5,
+          0.5900861491455028,
+          0.6964033268267372,
+          0.8218759147586129,
+          0.9699551872306948,
+          1.1447142425533319,
+          1.3509600385206135,
+          1.594365613560178,
+          1.8816261304714648,
+          2.22064303492292,
+          2.6207413942088964,
+          3.092926394429888,
+          3.650186051359235,
+          4.307848461422399,
+          5.084003419406245,
+          6.0
+        ],
+        "trained_counts": [
+          1,
+          4,
+          7,
+          10,
+          16,
+          20,
+          37,
+          26,
+          22,
+          29,
+          27,
+          26,
+          20,
+          21,
+          6
+        ]
+      },
+      "batch": 0,
+      "design_sha256": "90d569effe91fa2a6807cd652ada0064bad90fc0ca66774c5bea606c05c008a9",
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "8282660d315c2fca7f40cba5ffd8e85ce4ce605f2c5734d1031e436e94df2617",
+      "n": 300,
+      "non_converged": [],
+      "pool": {
+        "chunks_sha256": {
+          "c001": "06a929fbf8535fdf522eedc37ef1659f4f476e0f434c565a34a2fa332339df88",
+          "c002": "e8ade6217d8de713c12a84de677770bdfbd3749ff74444a7f7cea6c7f811276d",
+          "c003": "8079561fd59af738e274458b9a5392179a6b271f2d90994fdaf30676807d32c2",
+          "c004": "7b4a10b63e27bd49005131f86944541482243fb37366779abd03efe861f95f9e",
+          "c005": "d23b0a836fbefba7f029d76008a0817b01dee25bb41e185280327470936727c3",
+          "c006": "26ab23d86c8e21e584fc0a537af606519422341d854e91d9688d98d5d9160726",
+          "c007": "a274c447c9bfccb4f34ea628c4ba343ceb4885ba2841d529031dd58d01dc3419",
+          "c008": "2c6a116e91dccfc094ef4cd5c3a05af23251cdbc5ae177bc0817434299fbf35a",
+          "c009": "f4eb4e7923cdf9f4d8253c2bbef3005f0f1250c26cbe9a0cb366da1c1997bc93",
+          "c010": "51fc9e56a9a63c30e9587f062c8253485c672a30aee4b452893a4b9f4207675b",
+          "c011": "1e590071c78c1875e251cb5d8d1d6450b4283c41d343000347ec04b413aa6040",
+          "c012": "50bb9c7a6587fb00f709da4eb6be8b254d26238422de441cf21cccf0a3344c75",
+          "c013": "632ea5ac71d22f8dd319046044bf88f1e906ca90af64c93de2f457efb260a318",
+          "c014": "0250556ba8ff407fea4d744f6f118b1c7ba7997eebcbca09daf43be03154ea67",
+          "c015": "8c00d01f8e196f66e7829228c1c94dca51d23eedb319a6d6ca1deecc9083fbbf",
+          "c016": "8307156a71139bd84959abc6bb67edbf68a0953647e09263658484ec258b3bd2",
+          "c017": "5065a0d2b255285dc26b65f8f71bb65b04df8dc84139b8de811abd0de24631ff",
+          "c018": "5397f331356006b6c5f07f9a206b25aebad65af8d150a959f6dc0ecda2af33af",
+          "c019": "836d9fbe376bb1e3b51c1b44db68b8e36f7b4e3415035f356ab021ffbfc438cf",
+          "c020": "a36e8ecb46ab25d674b931b53094c53234ce6fdd1c7429ea4990b3d694a3d365",
+          "c021": "b6f5eb3c9b9e471058e3e207d9eeb5fbfc2f29e6479ed575bc71d30cb1795813",
+          "c022": "0394ad6ca54a5e5c415ff913f474beca255ea4a5adbe45f7c165b607aa7a4aeb"
+        },
+        "column": "FOS_pred",
+        "platform": {
+          "machine": "arm64",
+          "system": "Darwin"
+        },
+        "stop_k": 22,
+        "subpool": 1
+      },
+      "realization": 1,
+      "repair": {
+        "n_repaired": 1,
+        "n_rows": 300,
+        "source": "pool"
+      },
+      "results_sha256": "961742299700e91e6f9c11a32a24ab7e1c96d3116416731ffbc88b12ce1a7ac1",
+      "screener": {
+        "family": "rf",
+        "fit_seed": 42,
+        "n_train": 300,
+        "oob_r2_log": 0.956549202277174,
+        "oof_rmse": 0.79665558209963,
+        "oof_rmse_selection_range": 0.3851779423052841,
+        "oof_spearman": 0.9729485883176479,
+        "params": {
+          "n_estimators": 500
+        },
+        "trained_on": [
+          "seed"
+        ],
+        "trained_on_sha256": {
+          "seed": "5799af8b9031efc44b2ac03006dcd090f23f912372989521c771361e39c3110b"
+        }
+      },
+      "seed": 3468394151,
+      "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
+      "source": "pool",
+      "strategy": "guided-log-p",
+      "updated": "2026-09-25T14:39:32+00:00"
+    },
+    "guided_log_p_r2": {
+      "allocation": {
+        "added": [
+          38,
+          35,
+          31,
+          28,
+          22,
+          18,
+          1,
+          12,
+          16,
+          9,
+          11,
+          12,
+          18,
+          17,
+          32
+        ],
+        "edges": [
+          0.5,
+          0.5900861491455028,
+          0.6964033268267372,
+          0.8218759147586129,
+          0.9699551872306948,
+          1.1447142425533319,
+          1.3509600385206135,
+          1.594365613560178,
+          1.8816261304714648,
+          2.22064303492292,
+          2.6207413942088964,
+          3.092926394429888,
+          3.650186051359235,
+          4.307848461422399,
+          5.084003419406245,
+          6.0
+        ],
+        "trained_counts": [
+          1,
+          4,
+          7,
+          10,
+          16,
+          20,
+          37,
+          26,
+          22,
+          29,
+          27,
+          26,
+          20,
+          21,
+          6
+        ]
+      },
+      "batch": 0,
+      "design_sha256": "1de0de98902a55aa188ac0a9816b9ffdc1ca2c296f5a369545ad82df0df30a47",
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "f62b2e5e5a89d8757ba437029ae2268598af8ea20b3adcaf6f8de6267fb08c89",
+      "n": 300,
+      "non_converged": [],
+      "pool": {
+        "chunks_sha256": {
+          "c001": "06a929fbf8535fdf522eedc37ef1659f4f476e0f434c565a34a2fa332339df88",
+          "c002": "e8ade6217d8de713c12a84de677770bdfbd3749ff74444a7f7cea6c7f811276d",
+          "c003": "8079561fd59af738e274458b9a5392179a6b271f2d90994fdaf30676807d32c2",
+          "c004": "7b4a10b63e27bd49005131f86944541482243fb37366779abd03efe861f95f9e",
+          "c005": "d23b0a836fbefba7f029d76008a0817b01dee25bb41e185280327470936727c3",
+          "c006": "26ab23d86c8e21e584fc0a537af606519422341d854e91d9688d98d5d9160726",
+          "c007": "a274c447c9bfccb4f34ea628c4ba343ceb4885ba2841d529031dd58d01dc3419",
+          "c008": "2c6a116e91dccfc094ef4cd5c3a05af23251cdbc5ae177bc0817434299fbf35a",
+          "c009": "f4eb4e7923cdf9f4d8253c2bbef3005f0f1250c26cbe9a0cb366da1c1997bc93",
+          "c010": "51fc9e56a9a63c30e9587f062c8253485c672a30aee4b452893a4b9f4207675b",
+          "c011": "1e590071c78c1875e251cb5d8d1d6450b4283c41d343000347ec04b413aa6040",
+          "c012": "50bb9c7a6587fb00f709da4eb6be8b254d26238422de441cf21cccf0a3344c75",
+          "c013": "632ea5ac71d22f8dd319046044bf88f1e906ca90af64c93de2f457efb260a318",
+          "c014": "0250556ba8ff407fea4d744f6f118b1c7ba7997eebcbca09daf43be03154ea67",
+          "c015": "8c00d01f8e196f66e7829228c1c94dca51d23eedb319a6d6ca1deecc9083fbbf",
+          "c016": "8307156a71139bd84959abc6bb67edbf68a0953647e09263658484ec258b3bd2",
+          "c017": "5065a0d2b255285dc26b65f8f71bb65b04df8dc84139b8de811abd0de24631ff",
+          "c018": "5397f331356006b6c5f07f9a206b25aebad65af8d150a959f6dc0ecda2af33af",
+          "c019": "836d9fbe376bb1e3b51c1b44db68b8e36f7b4e3415035f356ab021ffbfc438cf",
+          "c020": "a36e8ecb46ab25d674b931b53094c53234ce6fdd1c7429ea4990b3d694a3d365",
+          "c021": "b6f5eb3c9b9e471058e3e207d9eeb5fbfc2f29e6479ed575bc71d30cb1795813",
+          "c022": "0394ad6ca54a5e5c415ff913f474beca255ea4a5adbe45f7c165b607aa7a4aeb"
+        },
+        "column": "FOS_pred",
+        "platform": {
+          "machine": "arm64",
+          "system": "Darwin"
+        },
+        "stop_k": 22,
+        "subpool": 2
+      },
+      "realization": 2,
+      "repair": {
+        "n_repaired": 0,
+        "n_rows": 300,
+        "source": "pool"
+      },
+      "results_sha256": "1d54d168ca3861dd9713e70db32f52c070d027fef44a9ec601e2faac385e559f",
+      "screener": {
+        "family": "rf",
+        "fit_seed": 42,
+        "n_train": 300,
+        "oob_r2_log": 0.956549202277174,
+        "oof_rmse": 0.79665558209963,
+        "oof_rmse_selection_range": 0.3851779423052841,
+        "oof_spearman": 0.9729485883176479,
+        "params": {
+          "n_estimators": 500
+        },
+        "trained_on": [
+          "seed"
+        ],
+        "trained_on_sha256": {
+          "seed": "5799af8b9031efc44b2ac03006dcd090f23f912372989521c771361e39c3110b"
+        }
+      },
+      "seed": 112060328,
+      "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
+      "source": "pool",
+      "strategy": "guided-log-p",
+      "updated": "2026-09-25T14:40:38+00:00"
+    },
+    "guided_log_p_r3": {
+      "allocation": {
+        "added": [
+          38,
+          35,
+          31,
+          28,
+          22,
+          18,
+          1,
+          12,
+          16,
+          9,
+          11,
+          12,
+          18,
+          17,
+          32
+        ],
+        "edges": [
+          0.5,
+          0.5900861491455028,
+          0.6964033268267372,
+          0.8218759147586129,
+          0.9699551872306948,
+          1.1447142425533319,
+          1.3509600385206135,
+          1.594365613560178,
+          1.8816261304714648,
+          2.22064303492292,
+          2.6207413942088964,
+          3.092926394429888,
+          3.650186051359235,
+          4.307848461422399,
+          5.084003419406245,
+          6.0
+        ],
+        "trained_counts": [
+          1,
+          4,
+          7,
+          10,
+          16,
+          20,
+          37,
+          26,
+          22,
+          29,
+          27,
+          26,
+          20,
+          21,
+          6
+        ]
+      },
+      "batch": 0,
+      "design_sha256": "6e5fa1b0c7887ece43ee338bfc00ed4838ae5f07a2509858198d86cdfe1d2d69",
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "7e8f5bca3aa12d11ddd1eb0a7ee39d2ce1d600d2fb762b049bd1f4b687de9c58",
+      "n": 300,
+      "non_converged": [],
+      "pool": {
+        "chunks_sha256": {
+          "c001": "06a929fbf8535fdf522eedc37ef1659f4f476e0f434c565a34a2fa332339df88",
+          "c002": "e8ade6217d8de713c12a84de677770bdfbd3749ff74444a7f7cea6c7f811276d",
+          "c003": "8079561fd59af738e274458b9a5392179a6b271f2d90994fdaf30676807d32c2",
+          "c004": "7b4a10b63e27bd49005131f86944541482243fb37366779abd03efe861f95f9e",
+          "c005": "d23b0a836fbefba7f029d76008a0817b01dee25bb41e185280327470936727c3",
+          "c006": "26ab23d86c8e21e584fc0a537af606519422341d854e91d9688d98d5d9160726",
+          "c007": "a274c447c9bfccb4f34ea628c4ba343ceb4885ba2841d529031dd58d01dc3419",
+          "c008": "2c6a116e91dccfc094ef4cd5c3a05af23251cdbc5ae177bc0817434299fbf35a",
+          "c009": "f4eb4e7923cdf9f4d8253c2bbef3005f0f1250c26cbe9a0cb366da1c1997bc93",
+          "c010": "51fc9e56a9a63c30e9587f062c8253485c672a30aee4b452893a4b9f4207675b",
+          "c011": "1e590071c78c1875e251cb5d8d1d6450b4283c41d343000347ec04b413aa6040",
+          "c012": "50bb9c7a6587fb00f709da4eb6be8b254d26238422de441cf21cccf0a3344c75",
+          "c013": "632ea5ac71d22f8dd319046044bf88f1e906ca90af64c93de2f457efb260a318",
+          "c014": "0250556ba8ff407fea4d744f6f118b1c7ba7997eebcbca09daf43be03154ea67",
+          "c015": "8c00d01f8e196f66e7829228c1c94dca51d23eedb319a6d6ca1deecc9083fbbf",
+          "c016": "8307156a71139bd84959abc6bb67edbf68a0953647e09263658484ec258b3bd2",
+          "c017": "5065a0d2b255285dc26b65f8f71bb65b04df8dc84139b8de811abd0de24631ff",
+          "c018": "5397f331356006b6c5f07f9a206b25aebad65af8d150a959f6dc0ecda2af33af",
+          "c019": "836d9fbe376bb1e3b51c1b44db68b8e36f7b4e3415035f356ab021ffbfc438cf",
+          "c020": "a36e8ecb46ab25d674b931b53094c53234ce6fdd1c7429ea4990b3d694a3d365",
+          "c021": "b6f5eb3c9b9e471058e3e207d9eeb5fbfc2f29e6479ed575bc71d30cb1795813",
+          "c022": "0394ad6ca54a5e5c415ff913f474beca255ea4a5adbe45f7c165b607aa7a4aeb"
+        },
+        "column": "FOS_pred",
+        "platform": {
+          "machine": "arm64",
+          "system": "Darwin"
+        },
+        "stop_k": 22,
+        "subpool": 3
+      },
+      "realization": 3,
+      "repair": {
+        "n_repaired": 1,
+        "n_rows": 300,
+        "source": "pool"
+      },
+      "results_sha256": "b1cf74ab012da7050886ca8526f8e2e2293f8c535649505af05c750a2ded6775",
+      "screener": {
+        "family": "rf",
+        "fit_seed": 42,
+        "n_train": 300,
+        "oob_r2_log": 0.956549202277174,
+        "oof_rmse": 0.79665558209963,
+        "oof_rmse_selection_range": 0.3851779423052841,
+        "oof_spearman": 0.9729485883176479,
+        "params": {
+          "n_estimators": 500
+        },
+        "trained_on": [
+          "seed"
+        ],
+        "trained_on_sha256": {
+          "seed": "5799af8b9031efc44b2ac03006dcd090f23f912372989521c771361e39c3110b"
+        }
+      },
+      "seed": 3961866381,
+      "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
+      "source": "pool",
+      "strategy": "guided-log-p",
+      "updated": "2026-09-25T14:41:47+00:00"
+    },
+    "guided_log_p_r4": {
+      "allocation": {
+        "added": [
+          38,
+          35,
+          31,
+          28,
+          22,
+          18,
+          1,
+          12,
+          16,
+          9,
+          11,
+          12,
+          18,
+          17,
+          32
+        ],
+        "edges": [
+          0.5,
+          0.5900861491455028,
+          0.6964033268267372,
+          0.8218759147586129,
+          0.9699551872306948,
+          1.1447142425533319,
+          1.3509600385206135,
+          1.594365613560178,
+          1.8816261304714648,
+          2.22064303492292,
+          2.6207413942088964,
+          3.092926394429888,
+          3.650186051359235,
+          4.307848461422399,
+          5.084003419406245,
+          6.0
+        ],
+        "trained_counts": [
+          1,
+          4,
+          7,
+          10,
+          16,
+          20,
+          37,
+          26,
+          22,
+          29,
+          27,
+          26,
+          20,
+          21,
+          6
+        ]
+      },
+      "batch": 0,
+      "design_sha256": "3b6b3eb14b74eb3336a5f28fd78e9cfc68b3c109865aa8157ed5b40b654b20b2",
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "168dc125bf72a431a7ba070f4c04b87443c78d9b484ba9ef289ab44472cade5c",
+      "n": 300,
+      "non_converged": [],
+      "pool": {
+        "chunks_sha256": {
+          "c001": "06a929fbf8535fdf522eedc37ef1659f4f476e0f434c565a34a2fa332339df88",
+          "c002": "e8ade6217d8de713c12a84de677770bdfbd3749ff74444a7f7cea6c7f811276d",
+          "c003": "8079561fd59af738e274458b9a5392179a6b271f2d90994fdaf30676807d32c2",
+          "c004": "7b4a10b63e27bd49005131f86944541482243fb37366779abd03efe861f95f9e",
+          "c005": "d23b0a836fbefba7f029d76008a0817b01dee25bb41e185280327470936727c3",
+          "c006": "26ab23d86c8e21e584fc0a537af606519422341d854e91d9688d98d5d9160726",
+          "c007": "a274c447c9bfccb4f34ea628c4ba343ceb4885ba2841d529031dd58d01dc3419",
+          "c008": "2c6a116e91dccfc094ef4cd5c3a05af23251cdbc5ae177bc0817434299fbf35a",
+          "c009": "f4eb4e7923cdf9f4d8253c2bbef3005f0f1250c26cbe9a0cb366da1c1997bc93",
+          "c010": "51fc9e56a9a63c30e9587f062c8253485c672a30aee4b452893a4b9f4207675b",
+          "c011": "1e590071c78c1875e251cb5d8d1d6450b4283c41d343000347ec04b413aa6040",
+          "c012": "50bb9c7a6587fb00f709da4eb6be8b254d26238422de441cf21cccf0a3344c75",
+          "c013": "632ea5ac71d22f8dd319046044bf88f1e906ca90af64c93de2f457efb260a318",
+          "c014": "0250556ba8ff407fea4d744f6f118b1c7ba7997eebcbca09daf43be03154ea67",
+          "c015": "8c00d01f8e196f66e7829228c1c94dca51d23eedb319a6d6ca1deecc9083fbbf",
+          "c016": "8307156a71139bd84959abc6bb67edbf68a0953647e09263658484ec258b3bd2",
+          "c017": "5065a0d2b255285dc26b65f8f71bb65b04df8dc84139b8de811abd0de24631ff",
+          "c018": "5397f331356006b6c5f07f9a206b25aebad65af8d150a959f6dc0ecda2af33af",
+          "c019": "836d9fbe376bb1e3b51c1b44db68b8e36f7b4e3415035f356ab021ffbfc438cf",
+          "c020": "a36e8ecb46ab25d674b931b53094c53234ce6fdd1c7429ea4990b3d694a3d365",
+          "c021": "b6f5eb3c9b9e471058e3e207d9eeb5fbfc2f29e6479ed575bc71d30cb1795813",
+          "c022": "0394ad6ca54a5e5c415ff913f474beca255ea4a5adbe45f7c165b607aa7a4aeb"
+        },
+        "column": "FOS_pred",
+        "platform": {
+          "machine": "arm64",
+          "system": "Darwin"
+        },
+        "stop_k": 22,
+        "subpool": 4
+      },
+      "realization": 4,
+      "repair": {
+        "n_repaired": 1,
+        "n_rows": 300,
+        "source": "pool"
+      },
+      "results_sha256": "b78b8f325200345bc8a9b6075d0ffe43376963873360094786c086da9eb30b19",
+      "screener": {
+        "family": "rf",
+        "fit_seed": 42,
+        "n_train": 300,
+        "oob_r2_log": 0.956549202277174,
+        "oof_rmse": 0.79665558209963,
+        "oof_rmse_selection_range": 0.3851779423052841,
+        "oof_spearman": 0.9729485883176479,
+        "params": {
+          "n_estimators": 500
+        },
+        "trained_on": [
+          "seed"
+        ],
+        "trained_on_sha256": {
+          "seed": "5799af8b9031efc44b2ac03006dcd090f23f912372989521c771361e39c3110b"
+        }
+      },
+      "seed": 2521616968,
+      "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
+      "source": "pool",
+      "strategy": "guided-log-p",
+      "updated": "2026-09-25T14:42:52+00:00"
+    },
+    "guided_log_p_r5": {
+      "allocation": {
+        "added": [
+          38,
+          35,
+          31,
+          28,
+          22,
+          18,
+          1,
+          12,
+          16,
+          9,
+          11,
+          12,
+          18,
+          17,
+          32
+        ],
+        "edges": [
+          0.5,
+          0.5900861491455028,
+          0.6964033268267372,
+          0.8218759147586129,
+          0.9699551872306948,
+          1.1447142425533319,
+          1.3509600385206135,
+          1.594365613560178,
+          1.8816261304714648,
+          2.22064303492292,
+          2.6207413942088964,
+          3.092926394429888,
+          3.650186051359235,
+          4.307848461422399,
+          5.084003419406245,
+          6.0
+        ],
+        "trained_counts": [
+          1,
+          4,
+          7,
+          10,
+          16,
+          20,
+          37,
+          26,
+          22,
+          29,
+          27,
+          26,
+          20,
+          21,
+          6
+        ]
+      },
+      "batch": 0,
+      "design_sha256": "c0fb31aa17cc92c855358864fe41f92e2123f34856f8928800b9c272625eecf5",
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "952e14f48f97efad994ad5427a36b9b251367932cc971bae5865185eaf00b2b4",
+      "n": 300,
+      "non_converged": [],
+      "pool": {
+        "chunks_sha256": {
+          "c001": "06a929fbf8535fdf522eedc37ef1659f4f476e0f434c565a34a2fa332339df88",
+          "c002": "e8ade6217d8de713c12a84de677770bdfbd3749ff74444a7f7cea6c7f811276d",
+          "c003": "8079561fd59af738e274458b9a5392179a6b271f2d90994fdaf30676807d32c2",
+          "c004": "7b4a10b63e27bd49005131f86944541482243fb37366779abd03efe861f95f9e",
+          "c005": "d23b0a836fbefba7f029d76008a0817b01dee25bb41e185280327470936727c3",
+          "c006": "26ab23d86c8e21e584fc0a537af606519422341d854e91d9688d98d5d9160726",
+          "c007": "a274c447c9bfccb4f34ea628c4ba343ceb4885ba2841d529031dd58d01dc3419",
+          "c008": "2c6a116e91dccfc094ef4cd5c3a05af23251cdbc5ae177bc0817434299fbf35a",
+          "c009": "f4eb4e7923cdf9f4d8253c2bbef3005f0f1250c26cbe9a0cb366da1c1997bc93",
+          "c010": "51fc9e56a9a63c30e9587f062c8253485c672a30aee4b452893a4b9f4207675b",
+          "c011": "1e590071c78c1875e251cb5d8d1d6450b4283c41d343000347ec04b413aa6040",
+          "c012": "50bb9c7a6587fb00f709da4eb6be8b254d26238422de441cf21cccf0a3344c75",
+          "c013": "632ea5ac71d22f8dd319046044bf88f1e906ca90af64c93de2f457efb260a318",
+          "c014": "0250556ba8ff407fea4d744f6f118b1c7ba7997eebcbca09daf43be03154ea67",
+          "c015": "8c00d01f8e196f66e7829228c1c94dca51d23eedb319a6d6ca1deecc9083fbbf",
+          "c016": "8307156a71139bd84959abc6bb67edbf68a0953647e09263658484ec258b3bd2",
+          "c017": "5065a0d2b255285dc26b65f8f71bb65b04df8dc84139b8de811abd0de24631ff",
+          "c018": "5397f331356006b6c5f07f9a206b25aebad65af8d150a959f6dc0ecda2af33af",
+          "c019": "836d9fbe376bb1e3b51c1b44db68b8e36f7b4e3415035f356ab021ffbfc438cf",
+          "c020": "a36e8ecb46ab25d674b931b53094c53234ce6fdd1c7429ea4990b3d694a3d365",
+          "c021": "b6f5eb3c9b9e471058e3e207d9eeb5fbfc2f29e6479ed575bc71d30cb1795813",
+          "c022": "0394ad6ca54a5e5c415ff913f474beca255ea4a5adbe45f7c165b607aa7a4aeb"
+        },
+        "column": "FOS_pred",
+        "platform": {
+          "machine": "arm64",
+          "system": "Darwin"
+        },
+        "stop_k": 22,
+        "subpool": 5
+      },
+      "realization": 5,
+      "repair": {
+        "n_repaired": 1,
+        "n_rows": 300,
+        "source": "pool"
+      },
+      "results_sha256": "029f40f0fe93c586fa6a14b1f63a13cc88d371cbca675654778dd9c4e74eb963",
+      "screener": {
+        "family": "rf",
+        "fit_seed": 42,
+        "n_train": 300,
+        "oob_r2_log": 0.956549202277174,
+        "oof_rmse": 0.79665558209963,
+        "oof_rmse_selection_range": 0.3851779423052841,
+        "oof_spearman": 0.9729485883176479,
+        "params": {
+          "n_estimators": 500
+        },
+        "trained_on": [
+          "seed"
+        ],
+        "trained_on_sha256": {
+          "seed": "5799af8b9031efc44b2ac03006dcd090f23f912372989521c771361e39c3110b"
+        }
+      },
+      "seed": 2461871601,
+      "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
+      "source": "pool",
+      "strategy": "guided-log-p",
+      "updated": "2026-09-25T14:43:57+00:00"
+    },
     "guided_log_r1": {
       "allocation": {
         "added": [
@@ -3790,6 +4470,688 @@
       "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
       "strategy": "guided-log",
       "updated": "2026-09-23T13:46:29+00:00"
+    },
+    "guided_oracle_r1": {
+      "allocation": {
+        "added": [
+          38,
+          35,
+          31,
+          28,
+          22,
+          18,
+          1,
+          12,
+          16,
+          9,
+          11,
+          12,
+          18,
+          17,
+          32
+        ],
+        "edges": [
+          0.5,
+          0.5900861491455028,
+          0.6964033268267372,
+          0.8218759147586129,
+          0.9699551872306948,
+          1.1447142425533319,
+          1.3509600385206135,
+          1.594365613560178,
+          1.8816261304714648,
+          2.22064303492292,
+          2.6207413942088964,
+          3.092926394429888,
+          3.650186051359235,
+          4.307848461422399,
+          5.084003419406245,
+          6.0
+        ],
+        "trained_counts": [
+          1,
+          4,
+          7,
+          10,
+          16,
+          20,
+          37,
+          26,
+          22,
+          29,
+          27,
+          26,
+          20,
+          21,
+          6
+        ]
+      },
+      "batch": 0,
+      "design_sha256": "fc5786c6b095790c9b3681d3f7030f28d6b84b1d8b2f02954e43cc07fe7c9d26",
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "68235657c89a997ef7d78ba966f33dff9e35ff70078893bdd9b2a93ceb2c829b",
+      "n": 300,
+      "non_converged": [
+        52
+      ],
+      "pool": {
+        "chunks_sha256": {
+          "c001": "06a929fbf8535fdf522eedc37ef1659f4f476e0f434c565a34a2fa332339df88",
+          "c002": "e8ade6217d8de713c12a84de677770bdfbd3749ff74444a7f7cea6c7f811276d",
+          "c003": "8079561fd59af738e274458b9a5392179a6b271f2d90994fdaf30676807d32c2",
+          "c004": "7b4a10b63e27bd49005131f86944541482243fb37366779abd03efe861f95f9e",
+          "c005": "d23b0a836fbefba7f029d76008a0817b01dee25bb41e185280327470936727c3",
+          "c006": "26ab23d86c8e21e584fc0a537af606519422341d854e91d9688d98d5d9160726",
+          "c007": "a274c447c9bfccb4f34ea628c4ba343ceb4885ba2841d529031dd58d01dc3419",
+          "c008": "2c6a116e91dccfc094ef4cd5c3a05af23251cdbc5ae177bc0817434299fbf35a",
+          "c009": "f4eb4e7923cdf9f4d8253c2bbef3005f0f1250c26cbe9a0cb366da1c1997bc93",
+          "c010": "51fc9e56a9a63c30e9587f062c8253485c672a30aee4b452893a4b9f4207675b",
+          "c011": "1e590071c78c1875e251cb5d8d1d6450b4283c41d343000347ec04b413aa6040",
+          "c012": "50bb9c7a6587fb00f709da4eb6be8b254d26238422de441cf21cccf0a3344c75",
+          "c013": "632ea5ac71d22f8dd319046044bf88f1e906ca90af64c93de2f457efb260a318",
+          "c014": "0250556ba8ff407fea4d744f6f118b1c7ba7997eebcbca09daf43be03154ea67",
+          "c015": "8c00d01f8e196f66e7829228c1c94dca51d23eedb319a6d6ca1deecc9083fbbf",
+          "c016": "8307156a71139bd84959abc6bb67edbf68a0953647e09263658484ec258b3bd2",
+          "c017": "5065a0d2b255285dc26b65f8f71bb65b04df8dc84139b8de811abd0de24631ff",
+          "c018": "5397f331356006b6c5f07f9a206b25aebad65af8d150a959f6dc0ecda2af33af",
+          "c019": "836d9fbe376bb1e3b51c1b44db68b8e36f7b4e3415035f356ab021ffbfc438cf",
+          "c020": "a36e8ecb46ab25d674b931b53094c53234ce6fdd1c7429ea4990b3d694a3d365",
+          "c021": "b6f5eb3c9b9e471058e3e207d9eeb5fbfc2f29e6479ed575bc71d30cb1795813",
+          "c022": "0394ad6ca54a5e5c415ff913f474beca255ea4a5adbe45f7c165b607aa7a4aeb"
+        },
+        "column": "FOS",
+        "platform": {
+          "machine": "arm64",
+          "system": "Darwin"
+        },
+        "stop_k": 22,
+        "subpool": 1
+      },
+      "realization": 1,
+      "repair": {
+        "n_repaired": 3,
+        "n_rows": 300,
+        "source": "pool"
+      },
+      "results_sha256": "759abc183b39d59a1ce35eac768eec21217eb56772363615b6b6e9297ed88370",
+      "screener": {
+        "family": "rf",
+        "fit_seed": 42,
+        "n_train": 300,
+        "oob_r2_log": 0.956549202277174,
+        "oof_rmse": 0.79665558209963,
+        "oof_rmse_selection_range": 0.3851779423052841,
+        "oof_spearman": 0.9729485883176479,
+        "params": {
+          "n_estimators": 500
+        },
+        "trained_on": [
+          "seed"
+        ],
+        "trained_on_sha256": {
+          "seed": "5799af8b9031efc44b2ac03006dcd090f23f912372989521c771361e39c3110b"
+        }
+      },
+      "seed": 3149372562,
+      "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
+      "source": "pool",
+      "strategy": "guided-oracle",
+      "updated": "2026-09-25T14:39:28+00:00"
+    },
+    "guided_oracle_r2": {
+      "allocation": {
+        "added": [
+          38,
+          35,
+          31,
+          28,
+          22,
+          18,
+          1,
+          12,
+          16,
+          9,
+          11,
+          12,
+          18,
+          17,
+          32
+        ],
+        "edges": [
+          0.5,
+          0.5900861491455028,
+          0.6964033268267372,
+          0.8218759147586129,
+          0.9699551872306948,
+          1.1447142425533319,
+          1.3509600385206135,
+          1.594365613560178,
+          1.8816261304714648,
+          2.22064303492292,
+          2.6207413942088964,
+          3.092926394429888,
+          3.650186051359235,
+          4.307848461422399,
+          5.084003419406245,
+          6.0
+        ],
+        "trained_counts": [
+          1,
+          4,
+          7,
+          10,
+          16,
+          20,
+          37,
+          26,
+          22,
+          29,
+          27,
+          26,
+          20,
+          21,
+          6
+        ]
+      },
+      "batch": 0,
+      "design_sha256": "8c5cbd76963a8f49f37e9b720bb6a75246d8d7a905e3673ea5c6be2c3b557a96",
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "f065badbfae5d3a19941de8a4f76c5b921cf3884e85c8704b72226ef79c1605d",
+      "n": 300,
+      "non_converged": [],
+      "pool": {
+        "chunks_sha256": {
+          "c001": "06a929fbf8535fdf522eedc37ef1659f4f476e0f434c565a34a2fa332339df88",
+          "c002": "e8ade6217d8de713c12a84de677770bdfbd3749ff74444a7f7cea6c7f811276d",
+          "c003": "8079561fd59af738e274458b9a5392179a6b271f2d90994fdaf30676807d32c2",
+          "c004": "7b4a10b63e27bd49005131f86944541482243fb37366779abd03efe861f95f9e",
+          "c005": "d23b0a836fbefba7f029d76008a0817b01dee25bb41e185280327470936727c3",
+          "c006": "26ab23d86c8e21e584fc0a537af606519422341d854e91d9688d98d5d9160726",
+          "c007": "a274c447c9bfccb4f34ea628c4ba343ceb4885ba2841d529031dd58d01dc3419",
+          "c008": "2c6a116e91dccfc094ef4cd5c3a05af23251cdbc5ae177bc0817434299fbf35a",
+          "c009": "f4eb4e7923cdf9f4d8253c2bbef3005f0f1250c26cbe9a0cb366da1c1997bc93",
+          "c010": "51fc9e56a9a63c30e9587f062c8253485c672a30aee4b452893a4b9f4207675b",
+          "c011": "1e590071c78c1875e251cb5d8d1d6450b4283c41d343000347ec04b413aa6040",
+          "c012": "50bb9c7a6587fb00f709da4eb6be8b254d26238422de441cf21cccf0a3344c75",
+          "c013": "632ea5ac71d22f8dd319046044bf88f1e906ca90af64c93de2f457efb260a318",
+          "c014": "0250556ba8ff407fea4d744f6f118b1c7ba7997eebcbca09daf43be03154ea67",
+          "c015": "8c00d01f8e196f66e7829228c1c94dca51d23eedb319a6d6ca1deecc9083fbbf",
+          "c016": "8307156a71139bd84959abc6bb67edbf68a0953647e09263658484ec258b3bd2",
+          "c017": "5065a0d2b255285dc26b65f8f71bb65b04df8dc84139b8de811abd0de24631ff",
+          "c018": "5397f331356006b6c5f07f9a206b25aebad65af8d150a959f6dc0ecda2af33af",
+          "c019": "836d9fbe376bb1e3b51c1b44db68b8e36f7b4e3415035f356ab021ffbfc438cf",
+          "c020": "a36e8ecb46ab25d674b931b53094c53234ce6fdd1c7429ea4990b3d694a3d365",
+          "c021": "b6f5eb3c9b9e471058e3e207d9eeb5fbfc2f29e6479ed575bc71d30cb1795813",
+          "c022": "0394ad6ca54a5e5c415ff913f474beca255ea4a5adbe45f7c165b607aa7a4aeb"
+        },
+        "column": "FOS",
+        "platform": {
+          "machine": "arm64",
+          "system": "Darwin"
+        },
+        "stop_k": 22,
+        "subpool": 2
+      },
+      "realization": 2,
+      "repair": {
+        "n_repaired": 1,
+        "n_rows": 300,
+        "source": "pool"
+      },
+      "results_sha256": "da673b4557d68083a6d4f064750d38e554107fd9b9783fb7e767f94390c509c0",
+      "screener": {
+        "family": "rf",
+        "fit_seed": 42,
+        "n_train": 300,
+        "oob_r2_log": 0.956549202277174,
+        "oof_rmse": 0.79665558209963,
+        "oof_rmse_selection_range": 0.3851779423052841,
+        "oof_spearman": 0.9729485883176479,
+        "params": {
+          "n_estimators": 500
+        },
+        "trained_on": [
+          "seed"
+        ],
+        "trained_on_sha256": {
+          "seed": "5799af8b9031efc44b2ac03006dcd090f23f912372989521c771361e39c3110b"
+        }
+      },
+      "seed": 3712519595,
+      "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
+      "source": "pool",
+      "strategy": "guided-oracle",
+      "updated": "2026-09-25T14:40:34+00:00"
+    },
+    "guided_oracle_r3": {
+      "allocation": {
+        "added": [
+          38,
+          35,
+          31,
+          28,
+          22,
+          18,
+          1,
+          12,
+          16,
+          9,
+          11,
+          12,
+          18,
+          17,
+          32
+        ],
+        "edges": [
+          0.5,
+          0.5900861491455028,
+          0.6964033268267372,
+          0.8218759147586129,
+          0.9699551872306948,
+          1.1447142425533319,
+          1.3509600385206135,
+          1.594365613560178,
+          1.8816261304714648,
+          2.22064303492292,
+          2.6207413942088964,
+          3.092926394429888,
+          3.650186051359235,
+          4.307848461422399,
+          5.084003419406245,
+          6.0
+        ],
+        "trained_counts": [
+          1,
+          4,
+          7,
+          10,
+          16,
+          20,
+          37,
+          26,
+          22,
+          29,
+          27,
+          26,
+          20,
+          21,
+          6
+        ]
+      },
+      "batch": 0,
+      "design_sha256": "e5814a9ddc37931ffdebd2c1b45e10e48a74b67841245179c5a6c7423b3aa6c4",
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "f2d80a4d83e23e25c9ccf36c88febdc98169d872dd5d325d07a242dd5f2691fc",
+      "n": 300,
+      "non_converged": [],
+      "pool": {
+        "chunks_sha256": {
+          "c001": "06a929fbf8535fdf522eedc37ef1659f4f476e0f434c565a34a2fa332339df88",
+          "c002": "e8ade6217d8de713c12a84de677770bdfbd3749ff74444a7f7cea6c7f811276d",
+          "c003": "8079561fd59af738e274458b9a5392179a6b271f2d90994fdaf30676807d32c2",
+          "c004": "7b4a10b63e27bd49005131f86944541482243fb37366779abd03efe861f95f9e",
+          "c005": "d23b0a836fbefba7f029d76008a0817b01dee25bb41e185280327470936727c3",
+          "c006": "26ab23d86c8e21e584fc0a537af606519422341d854e91d9688d98d5d9160726",
+          "c007": "a274c447c9bfccb4f34ea628c4ba343ceb4885ba2841d529031dd58d01dc3419",
+          "c008": "2c6a116e91dccfc094ef4cd5c3a05af23251cdbc5ae177bc0817434299fbf35a",
+          "c009": "f4eb4e7923cdf9f4d8253c2bbef3005f0f1250c26cbe9a0cb366da1c1997bc93",
+          "c010": "51fc9e56a9a63c30e9587f062c8253485c672a30aee4b452893a4b9f4207675b",
+          "c011": "1e590071c78c1875e251cb5d8d1d6450b4283c41d343000347ec04b413aa6040",
+          "c012": "50bb9c7a6587fb00f709da4eb6be8b254d26238422de441cf21cccf0a3344c75",
+          "c013": "632ea5ac71d22f8dd319046044bf88f1e906ca90af64c93de2f457efb260a318",
+          "c014": "0250556ba8ff407fea4d744f6f118b1c7ba7997eebcbca09daf43be03154ea67",
+          "c015": "8c00d01f8e196f66e7829228c1c94dca51d23eedb319a6d6ca1deecc9083fbbf",
+          "c016": "8307156a71139bd84959abc6bb67edbf68a0953647e09263658484ec258b3bd2",
+          "c017": "5065a0d2b255285dc26b65f8f71bb65b04df8dc84139b8de811abd0de24631ff",
+          "c018": "5397f331356006b6c5f07f9a206b25aebad65af8d150a959f6dc0ecda2af33af",
+          "c019": "836d9fbe376bb1e3b51c1b44db68b8e36f7b4e3415035f356ab021ffbfc438cf",
+          "c020": "a36e8ecb46ab25d674b931b53094c53234ce6fdd1c7429ea4990b3d694a3d365",
+          "c021": "b6f5eb3c9b9e471058e3e207d9eeb5fbfc2f29e6479ed575bc71d30cb1795813",
+          "c022": "0394ad6ca54a5e5c415ff913f474beca255ea4a5adbe45f7c165b607aa7a4aeb"
+        },
+        "column": "FOS",
+        "platform": {
+          "machine": "arm64",
+          "system": "Darwin"
+        },
+        "stop_k": 22,
+        "subpool": 3
+      },
+      "realization": 3,
+      "repair": {
+        "n_repaired": 1,
+        "n_rows": 300,
+        "source": "pool"
+      },
+      "results_sha256": "672a9b51f6e6ae32208ed158dfc8255ec76eb30b3e6b26e38c5381c0f773d06a",
+      "screener": {
+        "family": "rf",
+        "fit_seed": 42,
+        "n_train": 300,
+        "oob_r2_log": 0.956549202277174,
+        "oof_rmse": 0.79665558209963,
+        "oof_rmse_selection_range": 0.3851779423052841,
+        "oof_spearman": 0.9729485883176479,
+        "params": {
+          "n_estimators": 500
+        },
+        "trained_on": [
+          "seed"
+        ],
+        "trained_on_sha256": {
+          "seed": "5799af8b9031efc44b2ac03006dcd090f23f912372989521c771361e39c3110b"
+        }
+      },
+      "seed": 1901546098,
+      "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
+      "source": "pool",
+      "strategy": "guided-oracle",
+      "updated": "2026-09-25T14:41:43+00:00"
+    },
+    "guided_oracle_r4": {
+      "allocation": {
+        "added": [
+          38,
+          35,
+          31,
+          28,
+          22,
+          18,
+          1,
+          12,
+          16,
+          9,
+          11,
+          12,
+          18,
+          17,
+          32
+        ],
+        "edges": [
+          0.5,
+          0.5900861491455028,
+          0.6964033268267372,
+          0.8218759147586129,
+          0.9699551872306948,
+          1.1447142425533319,
+          1.3509600385206135,
+          1.594365613560178,
+          1.8816261304714648,
+          2.22064303492292,
+          2.6207413942088964,
+          3.092926394429888,
+          3.650186051359235,
+          4.307848461422399,
+          5.084003419406245,
+          6.0
+        ],
+        "trained_counts": [
+          1,
+          4,
+          7,
+          10,
+          16,
+          20,
+          37,
+          26,
+          22,
+          29,
+          27,
+          26,
+          20,
+          21,
+          6
+        ]
+      },
+      "batch": 0,
+      "design_sha256": "dda3d712f7756c808373f5bb869ec6bab727ae6af92686230cb75fecd3d398b9",
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "176c6c99ae5585fbcd796fe6dbcf59546d202b2630d88b45315f65105e6515e2",
+      "n": 300,
+      "non_converged": [],
+      "pool": {
+        "chunks_sha256": {
+          "c001": "06a929fbf8535fdf522eedc37ef1659f4f476e0f434c565a34a2fa332339df88",
+          "c002": "e8ade6217d8de713c12a84de677770bdfbd3749ff74444a7f7cea6c7f811276d",
+          "c003": "8079561fd59af738e274458b9a5392179a6b271f2d90994fdaf30676807d32c2",
+          "c004": "7b4a10b63e27bd49005131f86944541482243fb37366779abd03efe861f95f9e",
+          "c005": "d23b0a836fbefba7f029d76008a0817b01dee25bb41e185280327470936727c3",
+          "c006": "26ab23d86c8e21e584fc0a537af606519422341d854e91d9688d98d5d9160726",
+          "c007": "a274c447c9bfccb4f34ea628c4ba343ceb4885ba2841d529031dd58d01dc3419",
+          "c008": "2c6a116e91dccfc094ef4cd5c3a05af23251cdbc5ae177bc0817434299fbf35a",
+          "c009": "f4eb4e7923cdf9f4d8253c2bbef3005f0f1250c26cbe9a0cb366da1c1997bc93",
+          "c010": "51fc9e56a9a63c30e9587f062c8253485c672a30aee4b452893a4b9f4207675b",
+          "c011": "1e590071c78c1875e251cb5d8d1d6450b4283c41d343000347ec04b413aa6040",
+          "c012": "50bb9c7a6587fb00f709da4eb6be8b254d26238422de441cf21cccf0a3344c75",
+          "c013": "632ea5ac71d22f8dd319046044bf88f1e906ca90af64c93de2f457efb260a318",
+          "c014": "0250556ba8ff407fea4d744f6f118b1c7ba7997eebcbca09daf43be03154ea67",
+          "c015": "8c00d01f8e196f66e7829228c1c94dca51d23eedb319a6d6ca1deecc9083fbbf",
+          "c016": "8307156a71139bd84959abc6bb67edbf68a0953647e09263658484ec258b3bd2",
+          "c017": "5065a0d2b255285dc26b65f8f71bb65b04df8dc84139b8de811abd0de24631ff",
+          "c018": "5397f331356006b6c5f07f9a206b25aebad65af8d150a959f6dc0ecda2af33af",
+          "c019": "836d9fbe376bb1e3b51c1b44db68b8e36f7b4e3415035f356ab021ffbfc438cf",
+          "c020": "a36e8ecb46ab25d674b931b53094c53234ce6fdd1c7429ea4990b3d694a3d365",
+          "c021": "b6f5eb3c9b9e471058e3e207d9eeb5fbfc2f29e6479ed575bc71d30cb1795813",
+          "c022": "0394ad6ca54a5e5c415ff913f474beca255ea4a5adbe45f7c165b607aa7a4aeb"
+        },
+        "column": "FOS",
+        "platform": {
+          "machine": "arm64",
+          "system": "Darwin"
+        },
+        "stop_k": 22,
+        "subpool": 4
+      },
+      "realization": 4,
+      "repair": {
+        "n_repaired": 0,
+        "n_rows": 300,
+        "source": "pool"
+      },
+      "results_sha256": "ccace7cf1548f436b7fe75ae0e53a20daacc1cfa4a323307e6bd2a1c21b094a5",
+      "screener": {
+        "family": "rf",
+        "fit_seed": 42,
+        "n_train": 300,
+        "oob_r2_log": 0.956549202277174,
+        "oof_rmse": 0.79665558209963,
+        "oof_rmse_selection_range": 0.3851779423052841,
+        "oof_spearman": 0.9729485883176479,
+        "params": {
+          "n_estimators": 500
+        },
+        "trained_on": [
+          "seed"
+        ],
+        "trained_on_sha256": {
+          "seed": "5799af8b9031efc44b2ac03006dcd090f23f912372989521c771361e39c3110b"
+        }
+      },
+      "seed": 3655563287,
+      "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
+      "source": "pool",
+      "strategy": "guided-oracle",
+      "updated": "2026-09-25T14:42:48+00:00"
+    },
+    "guided_oracle_r5": {
+      "allocation": {
+        "added": [
+          38,
+          35,
+          31,
+          28,
+          22,
+          18,
+          1,
+          12,
+          16,
+          9,
+          11,
+          12,
+          18,
+          17,
+          32
+        ],
+        "edges": [
+          0.5,
+          0.5900861491455028,
+          0.6964033268267372,
+          0.8218759147586129,
+          0.9699551872306948,
+          1.1447142425533319,
+          1.3509600385206135,
+          1.594365613560178,
+          1.8816261304714648,
+          2.22064303492292,
+          2.6207413942088964,
+          3.092926394429888,
+          3.650186051359235,
+          4.307848461422399,
+          5.084003419406245,
+          6.0
+        ],
+        "trained_counts": [
+          1,
+          4,
+          7,
+          10,
+          16,
+          20,
+          37,
+          26,
+          22,
+          29,
+          27,
+          26,
+          20,
+          21,
+          6
+        ]
+      },
+      "batch": 0,
+      "design_sha256": "2be65caecdd83c848b15aa488ed29b99de43bc36054735c10bf9f3b772ee7cfa",
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "e0c15ddfae916a160fffe897afb7c4cb804bc75d96abdc2271fe21a7d6c64992",
+      "n": 300,
+      "non_converged": [],
+      "pool": {
+        "chunks_sha256": {
+          "c001": "06a929fbf8535fdf522eedc37ef1659f4f476e0f434c565a34a2fa332339df88",
+          "c002": "e8ade6217d8de713c12a84de677770bdfbd3749ff74444a7f7cea6c7f811276d",
+          "c003": "8079561fd59af738e274458b9a5392179a6b271f2d90994fdaf30676807d32c2",
+          "c004": "7b4a10b63e27bd49005131f86944541482243fb37366779abd03efe861f95f9e",
+          "c005": "d23b0a836fbefba7f029d76008a0817b01dee25bb41e185280327470936727c3",
+          "c006": "26ab23d86c8e21e584fc0a537af606519422341d854e91d9688d98d5d9160726",
+          "c007": "a274c447c9bfccb4f34ea628c4ba343ceb4885ba2841d529031dd58d01dc3419",
+          "c008": "2c6a116e91dccfc094ef4cd5c3a05af23251cdbc5ae177bc0817434299fbf35a",
+          "c009": "f4eb4e7923cdf9f4d8253c2bbef3005f0f1250c26cbe9a0cb366da1c1997bc93",
+          "c010": "51fc9e56a9a63c30e9587f062c8253485c672a30aee4b452893a4b9f4207675b",
+          "c011": "1e590071c78c1875e251cb5d8d1d6450b4283c41d343000347ec04b413aa6040",
+          "c012": "50bb9c7a6587fb00f709da4eb6be8b254d26238422de441cf21cccf0a3344c75",
+          "c013": "632ea5ac71d22f8dd319046044bf88f1e906ca90af64c93de2f457efb260a318",
+          "c014": "0250556ba8ff407fea4d744f6f118b1c7ba7997eebcbca09daf43be03154ea67",
+          "c015": "8c00d01f8e196f66e7829228c1c94dca51d23eedb319a6d6ca1deecc9083fbbf",
+          "c016": "8307156a71139bd84959abc6bb67edbf68a0953647e09263658484ec258b3bd2",
+          "c017": "5065a0d2b255285dc26b65f8f71bb65b04df8dc84139b8de811abd0de24631ff",
+          "c018": "5397f331356006b6c5f07f9a206b25aebad65af8d150a959f6dc0ecda2af33af",
+          "c019": "836d9fbe376bb1e3b51c1b44db68b8e36f7b4e3415035f356ab021ffbfc438cf",
+          "c020": "a36e8ecb46ab25d674b931b53094c53234ce6fdd1c7429ea4990b3d694a3d365",
+          "c021": "b6f5eb3c9b9e471058e3e207d9eeb5fbfc2f29e6479ed575bc71d30cb1795813",
+          "c022": "0394ad6ca54a5e5c415ff913f474beca255ea4a5adbe45f7c165b607aa7a4aeb"
+        },
+        "column": "FOS",
+        "platform": {
+          "machine": "arm64",
+          "system": "Darwin"
+        },
+        "stop_k": 22,
+        "subpool": 5
+      },
+      "realization": 5,
+      "repair": {
+        "n_repaired": 1,
+        "n_rows": 300,
+        "source": "pool"
+      },
+      "results_sha256": "f9bb5cdd1500d496b3fe4befed1e485eba16d65a60dff934620071957965ea70",
+      "screener": {
+        "family": "rf",
+        "fit_seed": 42,
+        "n_train": 300,
+        "oob_r2_log": 0.956549202277174,
+        "oof_rmse": 0.79665558209963,
+        "oof_rmse_selection_range": 0.3851779423052841,
+        "oof_spearman": 0.9729485883176479,
+        "params": {
+          "n_estimators": 500
+        },
+        "trained_on": [
+          "seed"
+        ],
+        "trained_on_sha256": {
+          "seed": "5799af8b9031efc44b2ac03006dcd090f23f912372989521c771361e39c3110b"
+        }
+      },
+      "seed": 3519281142,
+      "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
+      "source": "pool",
+      "strategy": "guided-oracle",
+      "updated": "2026-09-25T14:43:53+00:00"
     },
     "guided_seq_r1_b1": {
       "allocation": {
