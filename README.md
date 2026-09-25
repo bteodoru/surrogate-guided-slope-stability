@@ -49,6 +49,7 @@ python3.14 -m venv .venv
 .venv/bin/sgs fit                    # 40 fits (10 arms × 2 families × 2 scorings), each with a nested CV; hours
 .venv/bin/sgs evaluate               # seconds
 .venv/bin/sgs report                 # tables and figures
+.venv/bin/sgs pool --chunks 5 --workers 2  # optional: solve the reference pool in chunks until its rule is met (--status: read-only)
 ```
 
 On macOS the files under `.venv` can carry the `hidden` flag, and Python 3.14
@@ -70,6 +71,21 @@ design, a results file or a fit no longer matches the current configuration or
 data; `--force` regenerates; under `sgs replicate` it also re-solves every replicated
 set, so to refit the replications alone call `replicate.fit_all(force=True)`. All scientific parameters live in
 `sgs/config.py`; none are accepted on the command line.
+
+`sgs pool` is optional as well and is not part of `sgs all`: it solves the
+*reference pool*, uniform i.i.d. over the parameter domain and split into five
+sub-pools, one per replicated realization, from which the pool arms draw:
+C-oracle (bins on solved FOS), C-logP (bins on the seed-trained screener's
+prediction) and their ablations C₀-oracle and C₀-logP, all against C-log's
+allocation. It solves chunks of 1 000 analyses, at most `--chunks` more per
+call, and after each chunk checks the stopping rule declared before the first
+chunk (`docs/oracle-declaration.md` §4.4): every sub-pool must hold, in every
+one of the 15 log bins, at least as many solved points, and as many points
+predicted by the screener, as C-log's allocation asks for. At the first chunk
+that meets it, solving stops for good; the rule is never relaxed. It was met at
+chunk 22 (22 000 rows). `--status` prints the counts and the rule's state
+without solving. The files are described in `data/README.md`; the declared
+readings and their outcome are in `docs/predictions-and-outcomes.md`.
 
 `sgs structural` is optional as well and is not part of `sgs all`: it reads
 `outputs/metrics/replications.json`, `data/run_metadata.json` and the stored

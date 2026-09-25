@@ -296,3 +296,91 @@ r0 for any of them. C-oracle's allocation and displacement rows are exact by con
 table shows them as a check, not as a finding. The overlap between C-oracle and C-logP is counted
 by shared pool row. Recorded after the stage-1 note and the replication metrics of the pool arms
 existed, as the git history shows; nothing here is a preregistration.
+
+## Oracle (spec 2026-09-23): outcome
+
+Declared text: `docs/oracle-declaration.md` §9 (tag `oracle-declared`, ab43902),
+quoted below; `config.py` carries its summary. The pool stopped when its rule
+was met, at chunk 22 (c022, 22 000 rows). Stage 1 is recorded in
+`docs/oracle-stage1/RESULTS.md` (409c18a), before any fit of C-oracle or
+C-logP; its binding values are ρ_L = 1.227 and ρ_H = 1.088. Stage 2 is read
+from the `oracle` block of `outputs/metrics/replications.json` (fits and
+metrics of bbca97d), over r1–r5 only: there is no r0 for the pool arms. The
+four cells are given in the order GBM/natural, GBM/stratified, RF/natural,
+RF/stratified; *m* = ln 1.10 = 0.095. L = [0.5, 1) and H = [1, 2), log-RMSE
+against B, medians over r1–r5.
+
+**Step P: the gate for C-logP passes.** Median (L, H) pairs: (−0.417, +0.281),
+(−0.010, −0.156), (−0.242, +0.078), (−0.218, +0.215); median L < 0 and median
+H > 0 in 3 of 4 cells, GBM/stratified being the exception. The restriction
+that §9.3 places on the readings when this gate fails does not apply.
+
+**Group A (the gate passes for C-oracle): row A5.** C-oracle's median (L, H)
+pairs: (−0.256, +0.155), (−0.206, −0.274), (−0.487, +0.096), (−0.431, +0.181);
+the gate holds in 3 of 4 cells, GBM/stratified again the exception. With
+C-logP's gate passing, the reading of §9.3 is:
+
+> **Mixed / inconclusive** on dR_O, with the four medians and intervals shown
+
+No earlier row matched. The median dR_O is ≥ m in one cell (A1 needs 3) and
+≤ −m in one cell (A2 needs 3); no paired interval lies inside (−m, m) (A3);
+|median dR_O| < m in two cells (A4 needs 3). `attribution` is false, so no
+attribution sentence is written (§9.4). The implied direction declared in §9.2,
+dR_O > 0, appears in 2 of the 4 medians.
+
+| cell | median dR_O | mean dR_O, paired 95% interval |
+|---|---|---|
+| GBM / natural | −0.242 | −0.184 [−0.439, +0.072] |
+| GBM / stratified | −0.063 | −0.019 [−0.570, +0.531] |
+| RF / natural | +0.027 | +0.199 [−0.221, +0.619] |
+| RF / stratified | +0.108 | +0.118 [−0.094, +0.330] |
+
+Every paired dR_O interval contains 0: inconclusive in 4 of 4 cells, as §9.5
+expected at n = 5 (declared half-widths 0.14–0.42; observed 0.21–0.55). The
+interval is centred on the mean over r1–r5, the reading on the median, hence
+the two columns.
+
+**Group C (decision range, Welch against B): row C3.** C-oracle reaches
+level 2, C-logP level 1. The reading of §9.3:
+
+> "No demonstrated gain" stands, now also with known bin membership, in this design
+
+- C-oracle − B, mean [95% Welch interval]: +0.0014 [−0.0036, +0.0064],
+  −0.0082 [−0.0218, +0.0054], −0.0145 [−0.0265, −0.0026], −0.0131 [−0.0237,
+  −0.0026]. Entirely below 0 in the two RF cells (level 2), not in all four
+  (level 3 not reached).
+- C-logP − B: +0.0035 [−0.0025, +0.0096], −0.0077 [−0.0214, +0.0059], −0.0016
+  [−0.0163, +0.0130], +0.0035 [−0.0104, +0.0174]. The mean is below 0 in two
+  cells (level 1); no interval is entirely below 0.
+- C-oracle − C-logP, paired: −0.0021 [−0.0095, +0.0052], −0.0005 [−0.0084,
+  +0.0074], −0.0129 [−0.0303, +0.0046], −0.0166 [−0.0361, +0.0029]. Every
+  interval contains 0, so C1's second condition fails as well.
+
+C-oracle against B is not read as a statement about the screener (§9.4; only
+C1 would allow that). C-oracle's points are drawn from a solved pool, so its
+level against B is not a budget result.
+
+**Density prediction (§9.2), at its two levels.**
+
+- **L: ρ_L = 1.227 ≥ 1.10, predicted dL_O < 0.** Medians +0.047, −0.116,
+  −0.262, −0.304: the predicted sign in 3 of 4 cells, **direction met**;
+  |median| ≥ m in the same 3, **magnitude met**. As §9.2 declares, direction
+  alone is weak (P = 5/16 under a coin flip, and the cells share training
+  sets). The paired intervals of dL_O all contain 0: +0.109 [−0.098, +0.315],
+  −0.003 [−0.424, +0.417], −0.260 [−0.644, +0.123], −0.247 [−0.509, +0.016]
+  (mean, 95%).
+- **H: ρ_H = 1.088, inside (1/1.10, 1.10).** No directional prediction was
+  made for H, so neither level applies. Medians −0.008, −0.028, −0.046, −0.161;
+  paired intervals −0.075 [−0.239, +0.089], −0.023 [−0.238, +0.192], −0.061
+  [−0.247, +0.126], −0.128 [−0.336, +0.079], all containing 0.
+
+**Background prediction: held.** C-oracle does not reach level 3 against B; it
+reaches level 2.
+
+**The C₀ ablations (decision range).** C₀-oracle and C₀-logP train on the 300
+pool points alone, B on 600, so the comparison with B mixes the budget with the
+training distribution. C₀-oracle − B is above 0 in 4 of 4 cells with Welch
+intervals excluding 0 (+0.038 to +0.062), and so is C₀-logP − B (+0.035 to
++0.062). The paired intervals C-oracle − C₀-oracle (−0.044 to −0.076) and
+C-logP − C₀-logP (−0.043 to −0.058) are entirely below 0 in 4 of 4 cells.
+Neither pool design replaces the seed.

@@ -20,11 +20,15 @@ refuted "guided beats LHS" and "allocation matters more than the learner"):
 at a fixed budget, uniformizing the response space does not systematically
 improve accuracy over uniform sampling of the parameter space; it relocates
 accuracy along the FOS axis, following the training density actually
-achieved, which departs from the intended one. How much of that departure,
-and of its effect, belongs to the screener rather than the allocation rule is
-not isolated: that needs the oracle, deferred (2026-09-21) until after the
-first manuscript. Never write that the screener controls, causes or explains
-the departure.
+achieved, which departs from the intended one. How the departure splits
+between the screener and the allocation rule is definitional here: C-oracle
+meets the intended allocation by construction, so C-logP's whole departure is
+misbinning. What the oracle measures is the departure's _effect_ on accuracy
+and relocation, in the paired contrast C-oracle vs C-logP (stage 2, row A5:
+mixed / inconclusive on dR_O, no attribution). Only for that paired contrast,
+and only where its paired interval excludes 0 in ≥ 3 of 4 cells, may the paper
+write "attributable to the screener's error, in this design". Never write that
+the screener controls, causes or explains the departure.
 
 **The model is a measuring instrument, not an object of study.** The relevant
 comparison is always vertical (same learner, different sampling arm), never
@@ -70,12 +74,14 @@ never _caused by_ — and it is never cited as evidence about the screener.
 `achieved − intended` is net distortion of the requested distribution, not
 prediction error. Everything read from `replications.json` bins as `[lo, hi)`;
 the allocation and displacement rows bin as the generator does, `(lo, hi]`.
-Separating the allocation rule from the screener's error needs the oracle, not
-this.
+The departure's effect is measured by the oracle's paired contrast (C-oracle vs
+C-logP, `docs/oracle-declaration.md` §9), not by this.
 
-Arms (A, B, C, C₀, C-log, C₀-log, C-seq, C₀-seq, C-logG, C₀-logG) and set roles
-(seed, lhs-extension, guided, test-natural, test-stratified, guided-log,
-guided-seq-1..3, guided-log-g) are declared in `config.ARMS` and `config.ROLES`. Every C₀
+Arms (A, B, C, C₀, C-log, C₀-log, C-seq, C₀-seq, C-logG, C₀-logG, C-oracle,
+C₀-oracle, C-logP, C₀-logP) and set roles (seed, lhs-extension, guided,
+test-natural, test-stratified, guided-log, guided-seq-1..3, guided-log-g) are
+declared in `config.ARMS` and `config.ROLES`, except the pool arms and their
+strategies (`guided-oracle`, `guided-log-p`), declared as below. Every C₀
 variant is an ablation, not a budget arm (`budget=None, ablation=True`). A
 screener role learns from the solved roles in `SetRole.trained_on` (default:
 the seed); the sequential batches list the seed and every earlier batch.
@@ -84,14 +90,23 @@ C-logG is C-log with a GBM screener (`SetRole.screener_family`,
 `config.REP_SEED_STREAM` in the replications): a screener sensitivity, one GBM
 chosen post hoc, never evidence that the screener controls the departure.
 
+The pool arms are replication-only (no r0): strategies `guided-oracle` and
+`guided-log-p` (`config.REP_STRATEGIES`, `config.REP_POOL_STRATEGIES`; arms in
+`replicate.POOL_ARMS`), each drawing 300 points from its sub-pool of the solved reference pool (`sgs pool`,
+`data/pool/`) against C-log's allocation. C-oracle bins on solved FOS, C-logP
+on the seed-trained RF screener's prediction; nothing else differs. The
+declared text (stopping rule, predictions, readings, wording about the
+screener) is `docs/oracle-declaration.md`, frozen; the outcome is in
+`docs/predictions-and-outcomes.md`.
+
 The two test sets are two deployment scenarios, not two tests of the same
 thing. Both are disjoint from every other set by normalized distance;
 `data.validate_sets` asserts it before every fit and evaluation.
 
 ## Non-negotiable disciplines
 
-1. **Every C₀ variant (C₀, C₀-log, C₀-seq, C₀-logG) appears in every analysis**,
-   including robustness checks. Omitting it is selective reporting.
+1. **Every C₀ variant (C₀, C₀-log, C₀-seq, C₀-logG, C₀-oracle, C₀-logP)
+   appears in every analysis**, including robustness checks. Omitting it is selective reporting.
 2. **No threshold misclassification analysis anywhere** — no false-stable
    counts, no FOS = 1.0 crossing metrics, no classification metrics. This is a
    regression study; an engineer treats FOS 0.9 and 1.1 as effectively the
@@ -110,7 +125,8 @@ thing. Both are disjoint from every other set by normalized distance;
    model. Call it _cross-conformal-style_ and report coverage empirically. A
    CV+ implementation (Barber et al. 2023) would earn a citable guarantee.
 6. **No scientific parameter on the command line.** `--role` selects a config
-   entry; `--workers` and `--force` are execution control.
+   entry; `--workers` and `--force` are execution control, as are `sgs pool`'s
+   `--chunks` and `--status`.
 7. **The notebook computes nothing.** It reads `outputs/` and holds narrative
    and figures; no `sklearn` import, no `fit`.
 
@@ -161,7 +177,7 @@ realizations of the points each strategy adds, on the fixed seed, the fixed test
 sets and the common hyper-parameters fixed from the seed — every conclusion is
 conditional on those three. Realization r0 is the existing sets, refitted the
 same way; it shaped the variants and the predictions, so it is exploratory,
-reported apart, and enters no interval. Arms with no common realization-varying
+reported apart, and enters no interval (the pool arms have no r0). Arms with no common realization-varying
 draw get a Welch interval; arms sharing a realization's added points get a paired
 interval. P̂(first < second) over the realization pairs is descriptive only — the
 pairs are not independent. An interval containing 0 is inconclusive, never a tie
@@ -180,6 +196,14 @@ changed. `evaluate` is pure and reads fits and a test set passed as arguments.
 hashes stored in the structural artifact's provenance (one hash read per data file,
 without loading their contents), refusing to render if they mismatch. Provenance lives in
 `data/run_metadata.json`.
+
+`sgs pool` (optional, not part of `sgs all`) solves the reference pool into
+`data/pool/` in chunks of `config.POOL_CHUNK` until the stopping rule declared
+in `docs/oracle-declaration.md` §4.4 is met, then solves nothing more; the pool
+stopped at chunk c022. Its flags are execution control only: `--chunks N`
+(solve at most N more chunks, default 1), `--workers N` (solver processes,
+default 1; more than 2 is warned, never refused) and `--status` (read-only:
+counts per sub-pool and bin, platforms and the rule's state).
 
 ## Performance notes
 
