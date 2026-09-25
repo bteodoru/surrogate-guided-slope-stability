@@ -13,7 +13,11 @@ systematically improve accuracy over uniform sampling of the parameter space.
 Instead it relocates accuracy along the FOS axis, following the training density
 actually achieved. The relocation holds across five replicated designs (lower
 error in FOS 0.5–1, higher in 1–2). On the primary criterion, no guided arm
-shows an advantage.
+shows an advantage. C-oracle, which is not a budget arm (it costs the solved
+reference pool), reaches level 2 against B on the decision range (sustained
+improvement: the Welch interval entirely below 0 in one cell) but not level 3
+(all four cells), so "no demonstrated gain" stands (row C3,
+`docs/oracle-declaration.md` §9.3).
 
 Data are generated with xslope 0.5.2 (Bishop's simplified method), homogeneous
 drained slopes without a water table.
@@ -30,6 +34,10 @@ drained slopes without a water table.
 | C₀-seq| the three sequential batches only                | ablation, no budget |
 | C-logG | seed LHS-300 + guided-log-g-300: C-log's rule and candidate pool, GBM screener | 600 |
 | C₀-logG| guided-log-g-300 only                           | ablation, no budget |
+| C-oracle | seed LHS-300 + guided-oracle-300: C-log's allocation, drawn from the solved reference pool by solved FOS; replication-only, no r0 | 600, plus the pool |
+| C₀-oracle | guided-oracle-300 only; replication-only, no r0 | ablation, no budget |
+| C-logP | seed LHS-300 + guided-log-p-300: C-log's allocation, drawn from the same pool by the RF screener's predicted FOS; replication-only, no r0 | 600, plus the pool |
+| C₀-logP | guided-log-p-300 only; replication-only, no r0 | ablation, no budget |
 
 > guided-log fills the seed's deficit in 15 geometric log(FOS) bins over the selection range, with random selection inside each bin. C-seq runs the same procedure in three batches of 100. Before each batch the screener is refitted, and the deficit recomputed, on the solved FOS of the seed and every earlier batch. C-logG repeats C-log with a gradient-boosting screener in place of the random forest, drawing from the same candidate pool against the same intended allocation, so only the screener differs.
 >
@@ -62,7 +70,9 @@ the flag can come back within minutes. Run from the repository root with
 optional RF and GBM learning curves (fixed hyper-parameters, not part of `sgs all`).
 `sgs replicate --workers 2` is optional as well and is not part of `sgs all`: it
 generates and solves five further realizations of the points each strategy adds
-to the fixed seed (B, C-log, C-seq, C-logG), fits them with common fixed
+to the fixed seed (B, C-log, C-seq, C-logG, and the pool-backed C-oracle,
+C₀-oracle, C-logP, C₀-logP, whose rows are copied from the solved reference
+pool rather than solved), fits them with common fixed
 hyper-parameters and writes the interval metrics. Summed over the per-row
 `Runtime_s` of `data/replications/final/`, the 6000 replicated rows cost about
 nine hours of solver time, so roughly four and a half hours of wall clock with 2 workers.

@@ -303,7 +303,12 @@ Declared text: `docs/oracle-declaration.md` §9 (tag `oracle-declared`, ab43902)
 quoted below; `config.py` carries its summary. The pool stopped when its rule
 was met, at chunk 22 (c022, 22 000 rows). Stage 1 is recorded in
 `docs/oracle-stage1/RESULTS.md` (409c18a), before any fit of C-oracle or
-C-logP; its binding values are ρ_L = 1.227 and ρ_H = 1.088. Stage 2 is read
+C-logP; its binding values are ρ_L = 1.227 and ρ_H = 1.088. At the stop
+(chunk 22) the predicted side was binding: sub-pool r3, bin 0 held exactly 38
+predicted rows against a[0] = 38 (solved: 63), contrary to the expectation
+declared in `docs/oracle-declaration.md` §4.4 ("The predicted side does not
+bind"). C-logP therefore took all 38 of them in r3, the mirror of §4.4's "at
+the stop" note on C-oracle. Stage 2 is read
 from the `oracle` block of `outputs/metrics/replications.json` (fits and
 metrics of bbca97d), over r1–r5 only: there is no r0 for the pool arms. The
 four cells are given in the order GBM/natural, GBM/stratified, RF/natural,
