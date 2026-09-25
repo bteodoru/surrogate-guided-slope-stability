@@ -162,6 +162,13 @@ Four caveats travel with it:
 - the intervals cover between-design variability only. Seed variability is not measured at all — the LHS-300 seed is fixed by design — the two test sets are fixed, so their sampling error is common to every realization and never averages out, and the fits use common hyper-parameters fixed from the seed, so the replications do not replicate the tuned comparison;
 - the decision-range criterion was defined after the C-log results and before C-seq was run; it is built only from the lower end of the selection range and its log mirror around 1. The paper's title rests on this thesis, so the post-hoc origin of the criterion belongs in Methods, stated plainly.
 
+**Update 2026-09-25: the oracle.** The second caveat above, about the screener's share, is dated. The oracle it calls future work was brought into the study (2026-09-23) and run on a solved reference pool of 22 000 analyses. The outcome is in `docs/predictions-and-outcomes.md`.
+- **The relocation gate passes for C-oracle** in 3 of 4 cells. C-oracle meets the intended density exactly, so relocation is present even without the departure from it.
+- **The decision-range verdict is unchanged** with known bin membership (row C3): C-oracle reaches level 2, not level 3.
+- **The screener's share of the effect is inconclusive** (row A5): every paired interval contains 0.
+
+The thesis above is sharpened accordingly in `CLAUDE.md`. Accuracy follows the training density actually achieved, even when that density is the intended one. With a real screener, the achieved density departs from the intended one.
+
 ## 7. Reproducing the numbers here
 
 - **Zone shares (4.2):** `data.load_role(...)` and `design.bin_counts`, per zone with `config.ZONE_EDGES`.

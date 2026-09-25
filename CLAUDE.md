@@ -15,15 +15,26 @@ remaining analysis budget is spent on candidates chosen to even out the FOS
 distribution of the training set over the selection range. This is compared,
 budget-fair, against continued Latin hypercube sampling.
 
-Working thesis (reframed 2026-09-19, after the tuned-GBM and C-log results
-refuted "guided beats LHS" and "allocation matters more than the learner"):
-at a fixed budget, uniformizing the response space does not systematically
-improve accuracy over uniform sampling of the parameter space; it relocates
-accuracy along the FOS axis, following the training density actually
-achieved, which departs from the intended one. How the departure splits
-between the screener and the allocation rule is definitional here: C-oracle
-meets the intended allocation by construction, so C-logP's whole departure is
-misbinning. What the oracle measures is the departure's _effect_ on accuracy
+Working thesis. It was reframed on 2026-09-19, after the tuned-GBM and C-log
+results refuted "guided beats LHS" and "allocation matters more than the
+learner". It was sharpened on 2026-09-25, after the oracle's stage 2:
+- At a fixed budget, uniformizing the response space does not systematically
+  improve accuracy over uniform sampling of the parameter space.
+- It relocates accuracy along the FOS axis, following the training density
+  actually achieved.
+- It does so even when the intended density is met exactly. The relocation
+  gate passes in 3 of 4 cells for C-oracle, which bins on solved FOS.
+- With a real screener, the achieved density departs from the intended one.
+- Known bin membership does not change the decision-range verdict. C-oracle
+  reaches level 2 against B (the two RF cells), not level 3, so "no
+  demonstrated gain" stands (row C3).
+
+The relocation therefore does not require that departure. Write it as "even
+when the intended density is met", never as "not caused by the screener".
+
+How the departure splits between the screener and the allocation rule is
+definitional here: C-oracle meets the intended allocation by construction, so
+C-logP's whole departure is misbinning. What the oracle measures is the departure's _effect_ on accuracy
 and relocation, in the paired contrast C-oracle vs C-logP (stage 2, row A5:
 mixed / inconclusive on dR_O, no attribution). Only for that paired contrast,
 and only where its paired interval excludes 0 in ≥ 3 of 4 cells, may the paper
