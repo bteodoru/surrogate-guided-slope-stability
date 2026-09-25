@@ -155,6 +155,13 @@ def test_replication_bin_figure_has_ablations_and_no_warning(root, recwarn):
 
 # --- structural (Task 5) -----------------------------------------------------
 
+def _stub_with_pool_arms(by_realization, pool_row):
+    """`by_realization` (a per-r0/r1/r2 dict of arm rows, like structural's own
+    "allocation"/"displacement" sections) with `pool_row` (C-oracle's and C-logP's
+    row) merged into r1 and r2 only -- they have no r0, as in the real artifact."""
+    return {r: {**arms, **(pool_row if r != "0" else {})} for r, arms in by_realization.items()}
+
+
 def _struct_stub():
     labels = ["0.50-1.00", "1.00-6.00"]
     errors = [{"family": f, "test": t, "arm": a, "bin": b, "diff": -0.01, "ci": [-0.02, 0.0],
@@ -173,28 +180,40 @@ def _struct_stub():
         "outside": [{"kind": "density", "arm": "C-log", "side": "below 0.5",
                      "diff": 20.0, "ci": [10.0, 30.0]}],
         "concordance": [],
-        # r1 and r2 differ, so there is a spread; r0 is absurd, so a leak shows
-        "allocation": {r: {arm: {"seed": [2, 2], "intended": [4, 4],
-                                 "achieved": [3 + k, 5 - k], "deviation": [-1 + k, 1 - k],
-                                 "abs_deviation": 2 * abs(1 - k),
-                                 "achieved_outside": {"< 0.5": k, "> 6": 0}}
-                           for arm in ("C-log", "C-seq", "C-logG")}
-                       for r, k in (("0", 90), ("1", 0), ("2", 1))},
+        # r1 and r2 differ, so there is a spread; r0 is absurd, so a leak shows.
+        # C-oracle and C-logP (the pool arms) have no r0, as in the real artifact.
+        "allocation": _stub_with_pool_arms(
+            {r: {arm: {"seed": [2, 2], "intended": [4, 4],
+                      "achieved": [3 + k, 5 - k], "deviation": [-1 + k, 1 - k],
+                      "abs_deviation": 2 * abs(1 - k),
+                      "achieved_outside": {"< 0.5": k, "> 6": 0}}
+                 for arm in ("C-log", "C-seq", "C-logG")}
+             for r, k in (("0", 90), ("1", 0), ("2", 1))},
+            {arm: {"seed": [0, 0], "intended": [4, 4], "achieved": [4, 4], "deviation": [0, 0],
+                  "abs_deviation": 0, "achieved_outside": {"< 0.5": 0, "> 6": 0}}
+             for arm in ("C-oracle", "C-logP")}),
         "batches": {r: [{"batch": j, "seed": [0, 0], "intended": [2, 2], "achieved": [1 + k, 3],
                          "cumulative_intended": [2 * j, 2 * j], "cumulative_achieved": [j + j * k, 3 * j],
                          "achieved_outside": {"< 0.5": k, "> 6": 0}}
                         for j in (1, 2)]
                     for r, k in (("0", 90), ("1", 0), ("2", 1))},
-        "displacement": {r: {"C-log": {"n": 4, "stayed": 0.5, "mean_abs_shift": 0.5,
-                                       "median_abs_shift": 0.0, "outside": 0.25,
-                                       "matrix": [[2, 0, 1, 1], [1, 0, 1, 0]]},
-                             "C-seq": {"n": 4, "stayed": 0.5, "mean_abs_shift": 0.5,
-                                      "median_abs_shift": 0.0, "outside": 0.25,
-                                      "matrix": [[1, 1, 0, 2], [0, 1, 1, 0]]},
-                             "C-logG": {"n": 4, "stayed": 0.5, "mean_abs_shift": 0.5,
-                                       "median_abs_shift": 0.0, "outside": 0.25,
-                                       "matrix": [[2, 0, 1, 1], [1, 0, 1, 0]]}}
-                         for r in ("0", "1", "2")},
+        "displacement": _stub_with_pool_arms(
+            {r: {"C-log": {"n": 4, "stayed": 0.5, "mean_abs_shift": 0.5,
+                          "median_abs_shift": 0.0, "outside": 0.25,
+                          "matrix": [[2, 0, 1, 1], [1, 0, 1, 0]]},
+                "C-seq": {"n": 4, "stayed": 0.5, "mean_abs_shift": 0.5,
+                         "median_abs_shift": 0.0, "outside": 0.25,
+                         "matrix": [[1, 1, 0, 2], [0, 1, 1, 0]]},
+                "C-logG": {"n": 4, "stayed": 0.5, "mean_abs_shift": 0.5,
+                          "median_abs_shift": 0.0, "outside": 0.25,
+                          "matrix": [[2, 0, 1, 1], [1, 0, 1, 0]]}}
+             for r in ("0", "1", "2")},
+            {"C-logP": {"n": 4, "stayed": 0.5, "mean_abs_shift": 0.5,
+                       "median_abs_shift": 0.0, "outside": 0.25,
+                       "matrix": [[1, 1, 0, 2], [0, 1, 1, 0]]},
+             "C-oracle": {"n": 4, "stayed": 1.0, "mean_abs_shift": 0.0,
+                         "median_abs_shift": 0.0, "outside": 0.0,
+                         "matrix": [[0, 4, 0, 0], [0, 0, 4, 0]]}}),
         "screener_swap": {
             "allocation_gap_paired": [{"realization": 1, "gbm": 40, "rf": 55, "delta": -15},
                                       {"realization": 2, "gbm": 30, "rf": 50, "delta": -20}],
@@ -558,3 +577,39 @@ def test_structural_freshness_refuses_a_missing_input_file(root):
         files[name].unlink()
         with pytest.raises(report.StaleStructuralError, match="missing"):
             report.check_structural_fresh(struct)
+
+
+# --- Task 13: the pool arms (C-oracle, C-logP) everywhere -------------------------------------
+
+def test_oracle_reading_frame_names_the_rows_and_the_attribution():
+    rep = json.loads(config.replication_metrics_path().read_text())
+    frame = report.oracle_reading_frame(rep)
+    assert {"cell", "median L C-oracle", "median H C-oracle", "median dR_O", "dR_O CI low",
+            "dR_O CI high"} <= set(frame.columns)
+    summary = frame[frame["cell"] == "reading"].iloc[0]
+    assert summary["median dR_O"] in {"A1", "A2", "A3", "A4", "A5", "B1", "B2", "B3", "B4", "B5"}
+
+
+def _struct_without_r0(arm):
+    """The committed structural artifact with `arm` copied from C-log into r1..rN
+    only, as the pool arms are: present in every confirmatory realization, absent at r0."""
+    struct = json.loads(config.structural_metrics_path().read_text())
+    for r in map(str, struct["confirmatory"]):
+        struct["allocation"][r][arm] = struct["allocation"][r]["C-log"]
+        struct["displacement"][r][arm] = struct["displacement"][r]["C-log"]
+    assert arm not in struct["allocation"]["0"] and arm not in struct["displacement"]["0"]
+    return struct
+
+
+def test_allocation_frame_marks_the_missing_r0():
+    frame = report.structural_allocation_frame(_struct_without_r0("C-oracle"), "C-oracle")
+    assert set(frame["intended r0"]) == {"--"} and set(frame["deviation r0"]) == {"--"}
+    assert (frame["deviation"] != "--").all()                  # r1-r5 are all there
+
+
+def test_displacement_frame_keeps_an_arm_absent_at_r0():
+    # Taking the arms from r0 would drop C-oracle and C-logP without a trace.
+    frame = report.structural_displacement_frame(_struct_without_r0("C-logP"))
+    rows = frame[frame["arm"] == "C-logP"]
+    assert rows["set"].tolist() == ["r1-r5", "r0 (exploratory)"]
+    assert set(rows.iloc[1].drop(["arm", "set"])) == {"--"}

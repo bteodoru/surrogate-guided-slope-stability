@@ -1,0 +1,18 @@
+\begin{table}[htbp]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{The oracle, read as declared before the pool was solved: C-oracle against C-logP on the same sub-pool, r1-r5, medians per learner x test cell and the paired 95\% interval of dR\_O = R(C-oracle) - R(C-logP). 'Attributable to the screener's error, in this design' only where that interval excludes 0 in at least three of four cells; an interval containing 0 is inconclusive. C0-oracle and C0-logP are reported in the replication tables.}
+\label{tab:rep:oracle}
+\begin{tabular}{lrrrrrrrrrrr}
+\toprule
+cell & median L C-oracle & median H C-oracle & median L C-logP & median H C-logP & median dR\_O & dR\_O CI low & dR\_O CI high & median dL\_O & dL\_O CI & median dH\_O & dH\_O CI \\
+\midrule
+gbm/test-natural & -0.256 & 0.155 & -0.417 & 0.281 & -0.242 & -0.439 & 0.072 & 0.047 & [-0.098, +0.315] & -0.008 & [-0.239, +0.089] \\
+gbm/test-stratified & -0.206 & -0.274 & -0.010 & -0.156 & -0.063 & -0.570 & 0.531 & -0.116 & [-0.424, +0.417] & -0.028 & [-0.238, +0.192] \\
+rf/test-natural & -0.487 & 0.096 & -0.242 & 0.078 & 0.027 & -0.221 & 0.619 & -0.262 & [-0.644, +0.123] & -0.046 & [-0.247, +0.126] \\
+rf/test-stratified & -0.431 & 0.181 & -0.218 & 0.215 & 0.108 & -0.094 & 0.330 & -0.304 & [-0.509, +0.015] & -0.161 & [-0.336, +0.079] \\
+reading & gate passes & -- & gate passes & -- & A5 & no attribution & C3 & rho\_L 1.227 & -- & rho\_H 1.088 & -- \\
+\bottomrule
+\end{tabular}
+\end{table}

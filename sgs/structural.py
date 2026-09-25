@@ -142,10 +142,9 @@ def _sets_of(realization: int) -> dict[str, list[tuple[str, dict]]]:
                  "C-seq": list(replicate.SEQ_ROLES_R0)}
         return {arm: [(role, meta["datasets"][role]["allocation"]) for role in names]
                 for arm, names in roles.items()}
-    keys = replicate.set_keys(realization)
-    grouped = {"C-log": [k for k, s, _ in keys if s == "guided-log"],
-               "C-logG": [k for k, s, _ in keys if s == "guided-log-g"],
-               "C-seq": [k for k, s, _ in keys if s == "guided-seq"]}
+    by = replicate.keys_by_strategy(realization)
+    grouped = {"C-log": by["guided-log"], "C-logG": by["guided-log-g"], "C-seq": by["guided-seq"],
+               "C-oracle": by["guided-oracle"], "C-logP": by["guided-log-p"]}
     return {arm: [(key, meta["replications"][key]["allocation"]) for key in names]
             for arm, names in grouped.items()}
 
@@ -258,6 +257,17 @@ def shared_candidate_rows(realizations=(0, *range(1, config.REP_REALIZATIONS + 1
     return out
 
 
+def pool_overlap_rows(realizations=range(1, config.REP_REALIZATIONS + 1)) -> list[dict]:
+    """Per realization: how many rows C-oracle and C-logP both drew from their shared
+    sub-pool, by pool row. They are alternatives, never combined; overlap is expected."""
+    out = []
+    for r in realizations:
+        o = set(replicate.read_set_design(f"guided_oracle_r{r}")["pool_row"])
+        p = set(replicate.read_set_design(f"guided_log_p_r{r}")["pool_row"])
+        out.append({"realization": r, "n": len(o), "shared": len(o & p)})
+    return out
+
+
 def batch_allocation_rows(realization: int) -> list[dict]:
     """The C-seq batches, each on its own and cumulatively. The cumulative view
     shows whether retraining corrects a deviation or only moves it."""
@@ -340,7 +350,10 @@ def displacement_rows(realization: int) -> dict[str, dict]:
     return out
 
 
-ARMS_VS_B = ("C-log", "C-seq", "C-logG")
+ARMS_VS_B = ("C-log", "C-seq", "C-logG", "C-oracle", "C-logP")
+# Arms whose design bins come from a screener's prediction. C-oracle bins on solved
+# FOS: its matrix is the identity by construction and describes no screener.
+SCREENED_ARMS = tuple(arm for arm in ARMS_VS_B if arm != "C-oracle")
 # Both sides of these rows come from replications.json, whose bins and
 # train_counts are built with evaluate._zone_mask, i.e. [lo, hi). So the outer
 # bin is "at or above 6" for the density and for the error alike. The generator's
@@ -506,7 +519,8 @@ def concordance(error_rows_, density_diff_rows_) -> list[dict]:
 # declaration. None of it enters the main figure or the concordance count.
 
 # C0 arm -> the C arm whose guided points it trains on, in the same realization.
-ABLATIONS = {"C0-log": "C-log", "C0-seq": "C-seq", "C0-logG": "C-logG"}
+ABLATIONS = {"C0-log": "C-log", "C0-seq": "C-seq", "C0-logG": "C-logG",
+             "C0-oracle": "C-oracle", "C0-logP": "C-logP"}
 ABLATION_ARMS = ("B", *ARMS_VS_B, *ABLATIONS)
 
 
@@ -626,12 +640,15 @@ ABLATION_PROCEDURE = (
     "training distribution is compared as fractions n_bin / N_total, never raw counts. Thin bins are "
     "marked, never dropped. The intervals visualize between-design variability and constitute no "
     "test; an interval containing 0 is inconclusive, not a tie. r0 does not enter. C0-logG "
-    "(2026-09-23) follows the same procedure, extended to the GBM-screener arm.")
+    "(2026-09-23) follows the same procedure, extended to the GBM-screener arm. C0-oracle and "
+    "C0-logP follow the same procedure, on the pool-backed arms (Amendment 2, "
+    "docs/predictions-and-outcomes.md). C-oracle, C-logP and their C0 ablations exist only in "
+    "r1-r5; they have no r0.")
 
 SHARED_ROWS_NOTE = (
-    "C0-log, C0-seq and C0-logG train on the same guided points as C-log, C-seq and C-logG in every "
-    "realization, so their allocation, batch and displacement rows are those of C, shared rather "
-    "than duplicated.")
+    "C0-log, C0-seq, C0-logG, C0-oracle and C0-logP train on the same guided points as C-log, "
+    "C-seq, C-logG, C-oracle and C-logP in every realization, so their allocation, batch and "
+    "displacement rows are those of C, shared rather than duplicated.")
 
 ORIGINAL_C0_NOTE = (
     "The original C0 (arm C0, role guided) exists only as r0 in the main pipeline. It was never "
@@ -640,17 +657,18 @@ ORIGINAL_C0_NOTE = (
 
 
 ABLATION_CAPTION = (
-    "Supplementary ablation. C0-log, C0-seq and C0-logG train on the guided points alone, without "
-    "the seed. Training-set sizes: {budgets}. Red: C0 minus B, 95% Welch interval. Purple: C minus "
-    "the corresponding C0, 95% paired interval over the realizations, because within a "
-    "realization C0 trains on exactly the guided points that C adds to the seed. The two "
-    "differences are oriented oppositely; in both, a negative value means that the first-named "
-    "arm has the smaller log-RMSE. Every comparison joins arms trained on different budgets and "
-    "is not a like-for-like comparison. Means over the five confirmatory realizations, on the "
-    "half-open reporting zones; grey shading marks the two bins outside the selection range, and "
-    "hollow markers the bins with fewer than {min_n} test points. The intervals visualize "
-    "variability between designs and constitute no test; an interval containing 0 is "
-    "inconclusive, not a tie.")
+    "Supplementary ablation. C0-log, C0-seq, C0-logG, C0-oracle and C0-logP train on the guided "
+    "points alone, without the seed. Training-set sizes: {budgets}. Red: C0 minus B, 95% Welch "
+    "interval. Purple: C minus the corresponding C0, 95% paired interval over the realizations, "
+    "because within a realization C0 trains on exactly the guided points that C adds to the seed. "
+    "The two differences are oriented oppositely; in both, a negative value means that the "
+    "first-named arm has the smaller log-RMSE. Every comparison joins arms trained on different "
+    "budgets and is not a like-for-like comparison. Means over the five confirmatory realizations, "
+    "on the half-open reporting zones; grey shading marks the two bins outside the selection "
+    "range, and hollow markers the bins with fewer than {min_n} test points. The intervals "
+    "visualize variability between designs and constitute no test; an interval containing 0 is "
+    "inconclusive, not a tie. C-oracle, C-logP and their C0 ablations exist only in r1-r5; they "
+    "have no r0.")
 
 
 def _budget_text(budgets: dict) -> str:
@@ -671,8 +689,8 @@ def ablation(rep: dict) -> dict:
 
 
 FIGURE_CAPTION = (
-    "Per-bin training density (raw counts; B, C-log, C-seq and C-logG all train on {budget} "
-    "points) and "
+    "Per-bin training density (raw counts; B, C-log, C-seq, C-logG, C-oracle and C-logP all train "
+    "on {budget} points) and "
     "per-bin log-RMSE, each as the difference between an arm's mean over the five confirmatory "
     "realizations and B's, with 95% Welch intervals. A negative error difference means a smaller "
     "log-RMSE than B. Every interval, on the density panel and on the error panels alike, "
@@ -683,21 +701,26 @@ FIGURE_CAPTION = (
     "fewer than {min_n} of them; they are shown but carry no statement in the text. Both the "
     "densities and the errors in this figure are read from the replication metrics and use the "
     "half-open reporting zones; the allocation and displacement tables use the generator's "
-    "binning instead, which differs only on an exact bin edge.")
+    "binning instead, which differs only on an exact bin edge. C-oracle, C-logP and their C0 "
+    "ablations exist only in r1-r5; they have no r0.")
 
 # The same sentence closes the allocation and displacement captions in report.
-ORACLE_SENTENCE = ("None of this says what a perfect implementation would do; that is the "
-                   "oracle's question.")
+ORACLE_SENTENCE = ("C-oracle bins on the solved FOS and meets the intended allocation by "
+                   "construction; its rows are a check, not a finding. What known bin membership "
+                   "changes in test accuracy is read only from the paired contrast C-oracle "
+                   "against C-logP (Table tab:rep:oracle), in this design.")
 
 MATRIX_CAPTION = (
     "Predicted bin (rows) against true bin (columns) for the points the screener selected, C-log, "
-    "C-seq and C-logG, pooled over the confirmatory realizations r1-r5; r0 is excluded. Each row is "
-    "normalized by the number of points selected into that predicted bin, given beside its label; "
-    "a predicted bin into which nothing was selected is shown grey. Bins follow the generator, "
-    "(lo, hi], so the outer columns are FOS < 0.5 and FOS > 6. The matrices describe the screener "
-    "only on the points it selected, which were predicted inside the selection range and inside a "
-    "deficit bin; they are not its accuracy over the candidate pool. Off-diagonal mass includes "
-    "compensating errors, which leave achieved minus intended untouched. " + ORACLE_SENTENCE)
+    "C-seq, C-logG and C-logP, pooled over the confirmatory realizations r1-r5; r0 is excluded. "
+    "Each row is normalized by the number of points selected into that predicted bin, given beside "
+    "its label; a predicted bin into which nothing was selected is shown grey. Bins follow the "
+    "generator, (lo, hi], so the outer columns are FOS < 0.5 and FOS > 6. The matrices describe the "
+    "screener only on the points it selected, which were predicted inside the selection range and "
+    "inside a deficit bin; they are not its accuracy over the candidate pool. Off-diagonal mass "
+    "includes compensating errors, which leave achieved minus intended untouched. C-oracle has no "
+    "matrix: it bins on the solved FOS, so every selected point stays in its bin by construction. "
+    + ORACLE_SENTENCE)
 
 BATCHES_CAPTION = (
     "C-seq batch by batch: the intended count per bin and the deviation, achieved minus intended, "
@@ -719,7 +742,8 @@ PROCEDURE = (
     "exactly zero leave the denominator. achieved - intended is the net distortion of the "
     "requested bin-count distribution, not the screener's prediction error; the displacement rows "
     "describe the screener on the points it selected, conditioned on selection, and their shift "
-    "statistics cover only points whose true FOS stayed inside the selection range.")
+    "statistics cover only points whose true FOS stayed inside the selection range. C-oracle, "
+    "C-logP and their C0 ablations exist only in r1-r5; they have no r0.")
 
 
 def provenance(realizations) -> dict:
@@ -767,6 +791,7 @@ def build() -> dict:
         "batches": {str(r): batch_allocation_rows(r) for r in everything},
         "displacement": {str(r): displacement_rows(r) for r in everything},
         "ablation": ablation(rep),
+        "oracle": {"shared_rows": pool_overlap_rows()},
         "provenance": provenance(everything),
     }
 

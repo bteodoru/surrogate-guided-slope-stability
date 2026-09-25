@@ -277,8 +277,12 @@ def _error_stub(diff_by_arm, *, thin_bin=None, realizations=(1, 2, 3, 4, 5)):
     return {"values": values}
 
 
+FULL_ARMS_DIFFS = {"B": 0.20, "C-log": 0.10, "C-seq": 0.15, "C-logG": 0.12,
+                   "C-oracle": 0.05, "C-logP": 0.13}
+
+
 def test_error_rows_compare_each_arm_against_B_without_pairing():
-    stub = _error_stub({"B": 0.20, "C-log": 0.10, "C-seq": 0.15, "C-logG": 0.12})
+    stub = _error_stub(FULL_ARMS_DIFFS)
     rows = [r for r in structural.error_rows(stub)
             if r["arm"] == "C-log" and r["family"] == "rf" and r["test"] == config.TEST_ROLES[0]]
     assert len(rows) == config.N_BINS
@@ -288,7 +292,7 @@ def test_error_rows_compare_each_arm_against_B_without_pairing():
 
 
 def test_error_rows_mark_thin_bins_without_dropping_them():
-    stub = _error_stub({"B": 0.2, "C-log": 0.1, "C-seq": 0.15, "C-logG": 0.12}, thin_bin=0)
+    stub = _error_stub(FULL_ARMS_DIFFS, thin_bin=0)
     rows = [r for r in structural.error_rows(stub) if r["arm"] == "C-log"]
     assert len({r["bin"] for r in rows}) == config.N_BINS      # none dropped
     assert all(r["marked"] for r in rows if r["bin"] == 0)
@@ -296,19 +300,19 @@ def test_error_rows_mark_thin_bins_without_dropping_them():
 
 def test_error_rows_refuse_a_missing_arm():
     """A whole arm must not be able to disappear in silence."""
-    rep = _error_stub({"B": 0.2, "C-log": 0.1, "C-logG": 0.12})          # no C-seq at all
+    rep = _error_stub({k: v for k, v in FULL_ARMS_DIFFS.items() if k != "C-seq"})  # no C-seq at all
     with pytest.raises(structural.StructuralError, match=r"\['C-seq'\] are missing"):
         structural.error_rows(rep)
 
 
 def test_error_rows_refuse_a_missing_realization():
-    rep = _error_stub({"B": 0.2, "C-log": 0.1, "C-seq": 0.15, "C-logG": 0.12}, realizations=(1, 2, 3, 4))
+    rep = _error_stub(FULL_ARMS_DIFFS, realizations=(1, 2, 3, 4))
     with pytest.raises(structural.StructuralError, match=r"\[5\] are missing"):
         structural.error_rows(rep)
 
 
 def test_error_rows_refuse_a_test_count_that_differs_between_arms():
-    rep = _error_stub({"B": 0.2, "C-log": 0.1, "C-seq": 0.15, "C-logG": 0.12})
+    rep = _error_stub(FULL_ARMS_DIFFS)
     rep["values"][0]["bins"][1] = {"n": 99, "log_rmse": 0.2}
     with pytest.raises(structural.StructuralError, match="test count"):
         structural.error_rows(rep)
@@ -338,9 +342,10 @@ def test_build_is_deterministic(tmp_path, monkeypatch, guided_log_g_stub):
 def _ablation_stub(*, drop_arm=None, shuffle=False):
     """Errors vary by realization, so a Welch and a paired interval differ;
     C0 trains on half of B's budget with the same shape."""
-    budgets = {"B": 2, "C-log": 2, "C-seq": 2, "C-logG": 2, "C0-log": 1, "C0-seq": 1, "C0-logG": 1}
-    level = {"B": 0.20, "C-log": 0.15, "C-seq": 0.16, "C-logG": 0.17,
-             "C0-log": 0.30, "C0-seq": 0.35, "C0-logG": 0.32}
+    budgets = {"B": 2, "C-log": 2, "C-seq": 2, "C-logG": 2, "C-oracle": 2, "C-logP": 2,
+               "C0-log": 1, "C0-seq": 1, "C0-logG": 1, "C0-oracle": 1, "C0-logP": 1}
+    level = {"B": 0.20, "C-log": 0.15, "C-seq": 0.16, "C-logG": 0.17, "C-oracle": 0.05, "C-logP": 0.18,
+             "C0-log": 0.30, "C0-seq": 0.35, "C0-logG": 0.32, "C0-oracle": 0.10, "C0-logP": 0.33}
     values = []
     for family in config.REP_FAMILIES:
         for test in config.TEST_ROLES:
@@ -358,11 +363,14 @@ def _ablation_stub(*, drop_arm=None, shuffle=False):
     return {"values": values}
 
 
+ABLATION_ARM_NAMES = ("C0-log", "C0-seq", "C0-logG", "C0-oracle", "C0-logP")
+
+
 def test_ablation_covers_both_c0_variants_on_all_reporting_bins():
     rows = structural.ablation_error_rows(_ablation_stub())
-    assert {r["arm"] for r in rows} == {"C0-log", "C0-seq", "C0-logG"}
+    assert {r["arm"] for r in rows} == set(ABLATION_ARM_NAMES)
     per = len(config.REP_FAMILIES) * len(config.TEST_ROLES) * (config.N_BINS + 2) * 2
-    for arm in ("C0-log", "C0-seq", "C0-logG"):
+    for arm in ABLATION_ARM_NAMES:
         assert len([r for r in rows if r["arm"] == arm]) == per
     assert all(r["budget_differs"] for r in rows)
 
@@ -390,7 +398,7 @@ def test_ablation_pairs_by_realization_whatever_the_row_order():
     assert ordered == shuffled
 
 
-@pytest.mark.parametrize("arm", ["C0-log", "C0-seq", "C0-logG"])
+@pytest.mark.parametrize("arm", ABLATION_ARM_NAMES)
 def test_ablation_refuses_a_missing_c0_variant(arm):
     with pytest.raises(structural.StructuralError, match=rf"\['{arm}'\] are missing"):
         structural.ablation_error_rows(_ablation_stub(drop_arm=arm))
@@ -407,10 +415,10 @@ def test_ablation_refuses_an_undeclared_interval_type(monkeypatch):
 def test_ablation_fractions_remove_the_budget():
     """Same shape, half the budget: raw counts differ, fractions do not."""
     rows = structural.ablation_fraction_rows(_ablation_stub())
-    assert {r["arm"] for r in rows} == {"C0-log", "C0-seq", "C0-logG"}
+    assert {r["arm"] for r in rows} == set(ABLATION_ARM_NAMES)
     assert all(r["interval"] == "welch" and r["second"] == "B" for r in rows)
     assert all(r["diff"] == pytest.approx(0.0) for r in rows)
-    for arm in ("C0-log", "C0-seq", "C0-logG"):
+    for arm in ABLATION_ARM_NAMES:
         assert sum(r["first_mean"] for r in rows if r["arm"] == arm) == pytest.approx(1.0)
 
 
@@ -433,12 +441,13 @@ def test_built_artifact_carries_both_c0_variants_and_the_shared_rows(tmp_path, m
     structural.run()
     out = json.loads((tmp_path / "structural.json").read_text())
     section = out["ablation"]
-    assert {r["arm"] for r in section["errors"]} == {"C0-log", "C0-seq", "C0-logG"}
-    assert {r["arm"] for r in section["fractions"]} == {"C0-log", "C0-seq", "C0-logG"}
+    assert {r["arm"] for r in section["errors"]} == set(structural.ABLATIONS)
+    assert {r["arm"] for r in section["fractions"]} == set(structural.ABLATIONS)
     assert {r["interval"] for r in section["errors"] if r["second"] == "B"} == {"welch"}
     assert {r["interval"] for r in section["errors"] if r["second"] != "B"} == {"paired"}
     assert section["shared_rows"]["C0-log"] == "C-log" and section["shared_rows"]["C0-seq"] == "C-seq"
     assert section["shared_rows"]["C0-logG"] == "C-logG"
+    assert section["shared_rows"]["C0-oracle"] == "C-oracle" and section["shared_rows"]["C0-logP"] == "C-logP"
     assert "only as r0" in section["original_c0"]
     assert {r["arm"] for r in out["concordance"]} == set(structural.ARMS_VS_B)
 
@@ -528,8 +537,9 @@ def test_build_records_the_provenance_of_its_inputs(guided_log_g_stub):
     assert "guided-log" in out["provenance"]["sets_sha256"]
     assert out["provenance"]["sets_sha256"]["guided-log"]["realization"] == 0
     assert out["provenance"]["sets_sha256"]["guided_log_r1"]["realization"] == 1
-    # 5 labels per realization now: guided-log, guided-log-g and the 3 C-seq batches.
-    assert len(out["provenance"]["sets_sha256"]) == 5 * (config.REP_REALIZATIONS + 1)
+    # r0: guided-log, guided-log-g and the 3 C-seq batches (5 labels; no pool arms).
+    # r1..rN: the same 5, plus guided-oracle and guided-log-p (7 labels; no r0 for either).
+    assert len(out["provenance"]["sets_sha256"]) == 5 + 7 * config.REP_REALIZATIONS
 
 
 def test_captions_state_the_budgets_and_the_interval_level(guided_log_g_stub):
@@ -644,3 +654,38 @@ def test_build_includes_matrix_and_batches_captions(guided_log_g_stub):
         assert caption.endswith(structural.ORACLE_SENTENCE)
     assert "conformal" not in matrix.lower()           # a reserved term in this repository
     assert "intended" in out["batches_caption"]
+
+
+# --- Task 13: the pool arms (C-oracle, C-logP) everywhere -------------------------------------
+
+def test_structural_knows_the_pool_arms():
+    assert {"C-oracle", "C-logP"} <= set(structural.ARMS_VS_B)
+    assert structural.ABLATIONS["C0-oracle"] == "C-oracle" and structural.ABLATIONS["C0-logP"] == "C-logP"
+
+
+def test_sets_of_has_the_pool_arms_from_r1_only():
+    assert "C-oracle" not in structural._sets_of(0)
+    sets = structural._sets_of(1)
+    assert [label for label, _ in sets["C-oracle"]] == ["guided_oracle_r1"]
+    assert [label for label, _ in sets["C-logP"]] == ["guided_log_p_r1"]
+
+
+def test_pool_overlap_counts_shared_pool_rows(monkeypatch):
+    designs = {"guided_oracle_r1": pd.DataFrame({"pool_row": [1, 2, 3]}),
+               "guided_log_p_r1": pd.DataFrame({"pool_row": [3, 4, 5]})}
+    monkeypatch.setattr(structural.replicate, "read_set_design", lambda key: designs[key])
+    assert structural.pool_overlap_rows([1]) == [{"realization": 1, "n": 3, "shared": 1}]
+
+
+def test_oracle_allocation_is_exact_on_the_real_sets():
+    for r in range(1, config.REP_REALIZATIONS + 1):
+        row = structural.allocation_rows(r)["C-oracle"]
+        assert row["abs_deviation"] == 0 and row["achieved_outside"] == {"< 0.5": 0, "> 6": 0}
+        assert structural.displacement_rows(r)["C-oracle"]["stayed"] == 1.0
+
+
+def test_c_oracle_has_no_screener_matrix_and_the_sentence_names_the_contrast():
+    assert "C-oracle" in structural.ARMS_VS_B and "C-oracle" not in structural.SCREENED_ARMS
+    assert "C-logP" in structural.SCREENED_ARMS
+    assert "C-oracle against C-logP" in structural.ORACLE_SENTENCE
+    assert "C-logP" in structural.MATRIX_CAPTION

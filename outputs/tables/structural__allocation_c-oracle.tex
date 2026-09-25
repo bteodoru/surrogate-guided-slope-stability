@@ -1,0 +1,31 @@
+\begin{table}[htbp]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{Allocation fidelity for C-oracle: mean ± sd over the confirmatory realizations r1-r5, with r0 (exploratory) in its own columns. 'deviation' is achieved minus intended, the net distortion of the requested bin-count distribution and not the screener's prediction error. The two outside rows count the points whose true FOS left the selection range, where nothing was intended; the last row sums |deviation| over the 15 in-range bins. Bins follow the generator, (lo, hi], so the outer bin is FOS > 6. Selected equals intended by construction and is not shown. C-oracle bins on the solved FOS and meets the intended allocation by construction; its rows are a check, not a finding. What known bin membership changes in test accuracy is read only from the paired contrast C-oracle against C-logP (Table tab:rep:oracle), in this design. C0-log, C0-seq, C0-logG, C0-oracle and C0-logP train on the same guided points as C-log, C-seq, C-logG, C-oracle and C-logP in every realization, so their allocation, batch and displacement rows are those of C, shared rather than duplicated. C-oracle bins on the solved FOS: every deviation is 0 by construction, a check, not a finding.}
+\label{tab:structural:allocation:c-oracle}
+\begin{tabular}{lrrrrrrr}
+\toprule
+bin & seed & intended & achieved & deviation & intended r0 & achieved r0 & deviation r0 \\
+\midrule
+0.50-0.59 & 1 & 38 & 38 & 0 & -- & -- & -- \\
+0.59-0.70 & 4 & 35 & 35 & 0 & -- & -- & -- \\
+0.70-0.82 & 7 & 31 & 31 & 0 & -- & -- & -- \\
+0.82-0.97 & 10 & 28 & 28 & 0 & -- & -- & -- \\
+0.97-1.14 & 16 & 22 & 22 & 0 & -- & -- & -- \\
+1.14-1.35 & 20 & 18 & 18 & 0 & -- & -- & -- \\
+1.35-1.59 & 37 & 1 & 1 & 0 & -- & -- & -- \\
+1.59-1.88 & 26 & 12 & 12 & 0 & -- & -- & -- \\
+1.88-2.22 & 22 & 16 & 16 & 0 & -- & -- & -- \\
+2.22-2.62 & 29 & 9 & 9 & 0 & -- & -- & -- \\
+2.62-3.09 & 27 & 11 & 11 & 0 & -- & -- & -- \\
+3.09-3.65 & 26 & 12 & 12 & 0 & -- & -- & -- \\
+3.65-4.31 & 20 & 18 & 18 & 0 & -- & -- & -- \\
+4.31-5.08 & 21 & 17 & 17 & 0 & -- & -- & -- \\
+5.08-6.00 & 6 & 32 & 32 & 0 & -- & -- & -- \\
+< 0.5 (outside) & -- & 0 & 0 & 0 & -- & -- & -- \\
+> 6 (outside) & -- & 0 & 0 & 0 & -- & -- & -- \\
+Σ|deviation|, 15 bins &  &  &  & 0 & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\end{table}

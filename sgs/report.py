@@ -271,10 +271,32 @@ def replication_interaction_frame(rep: dict) -> pd.DataFrame:
                          for i in rep["interactions"] if i["measure"] in REPLICATION_MEASURES])
 
 
+def oracle_reading_frame(rep: dict) -> pd.DataFrame:
+    """The declared oracle reading: per cell, the medians and the paired intervals of
+    dR_O, dL_O and dH_O (all three are declared in spec §9.2 and §10), then one summary
+    row with the reading, the attribution flag, group C and the levels."""
+    o = rep["oracle"]
+    ci = lambda iv: f"[{iv['ci'][0]:+.3f}, {iv['ci'][1]:+.3f}]"
+    rows = [{"cell": cell, "median L C-oracle": c["L_o"], "median H C-oracle": c["H_o"],
+             "median L C-logP": c["L_p"], "median H C-logP": c["H_p"], "median dR_O": c["dR"],
+             "dR_O CI low": c["dR_interval"]["ci"][0], "dR_O CI high": c["dR_interval"]["ci"][1],
+             "median dL_O": c["dL"], "dL_O CI": ci(c["dL_interval"]),
+             "median dH_O": c["dH"], "dH_O CI": ci(c["dH_interval"])}
+            for cell, c in o["cells"].items()]
+    rows.append({"cell": "reading", "median L C-oracle": f"gate {'passes' if o['oracle_gate'] else 'fails'}",
+                 "median L C-logP": f"gate {'passes' if o['step_p']['logp_gate'] else 'fails'}",
+                 "median dR_O": o["row"],
+                 "dR_O CI low": "attributable" if o["attribution"] else "no attribution",
+                 "dR_O CI high": o["c_row"],
+                 "median dL_O": f"rho_L {o['rho']['L']:.3f}", "median dH_O": f"rho_H {o['rho']['H']:.3f}"})
+    return pd.DataFrame(rows)
+
+
 def fig_replication_bins(rep: dict, test: str, family: str):
     """Diagnostic: log-RMSE per design bin (confirmatory mean, min-max across
     realizations), test points per bin and the mean training count per bin."""
-    arms = ("B", "C-log", "C-seq", "C-logG", "C0-log", "C0-seq", "C0-logG")
+    arms = ("B", "C-log", "C-seq", "C-logG", "C-oracle", "C-logP",
+           "C0-log", "C0-seq", "C0-logG", "C0-oracle", "C0-logP")
     rows = [v for v in rep["values"] if v["test"] == test and v["family"] == family
             and v["realization"] in rep["confirmatory"]]
     labels = [b["zone"] for b in rows[0]["bins"]]
@@ -312,7 +334,8 @@ STRUCTURAL_CELLS = (("gbm", "test-natural"), ("gbm", "test-stratified"),
 
 # Explicit, because errorbar(fmt="none") and scatter do not advance the property
 # cycle in step: in a two-arm loop the second arm's bars keep the first arm's colour.
-STRUCTURAL_COLORS = {"C-log": "tab:blue", "C-seq": "tab:orange", "C-logG": "tab:green"}
+STRUCTURAL_COLORS = {"C-log": "tab:blue", "C-seq": "tab:orange", "C-logG": "tab:green",
+                     "C-oracle": "tab:red", "C-logP": "tab:brown"}
 
 # Arms drawn in one panel are dodged by this much, in bin units, so their bars
 # and markers do not occlude each other.
@@ -534,11 +557,15 @@ def structural_allocation_frame(struct: dict, arm: str) -> pd.DataFrame:
     The two rows outside the range carry the points that left it; nothing was
     intended there, so their deviation is their achieved count. The last row is
     Σ|deviation| over the 15 in-range bins, per realization, then averaged.
+
+    C-oracle and C-logP (and their C0 ablations) have no r0: `struct["allocation"]["0"]`
+    carries no entry for them, and every r0 cell reads as "--" instead.
     """
     labels = struct["bins"]["labels"]
     confirmatory = [str(r) for r in struct["confirmatory"]]
     rows_c = [struct["allocation"][k][arm] for k in confirmatory]
-    row_0 = struct["allocation"]["0"][arm]
+    row_0 = struct["allocation"]["0"].get(arm)
+    r0 = (lambda value: "--") if row_0 is None else _plain
     rows = []
     for b, label in enumerate(labels):
         rows.append({"bin": label,
@@ -546,19 +573,21 @@ def structural_allocation_frame(struct: dict, arm: str) -> pd.DataFrame:
                      "intended": _mean_sd([r["intended"][b] for r in rows_c]),
                      "achieved": _mean_sd([r["achieved"][b] for r in rows_c]),
                      "deviation": _mean_sd([r["deviation"][b] for r in rows_c]),
-                     "intended r0": _plain(row_0["intended"][b]),
-                     "achieved r0": _plain(row_0["achieved"][b]),
-                     "deviation r0": _plain(row_0["deviation"][b])})
+                     "intended r0": r0(row_0 and row_0["intended"][b]),
+                     "achieved r0": r0(row_0 and row_0["achieved"][b]),
+                     "deviation r0": r0(row_0 and row_0["deviation"][b])})
     for side in STRUCTURAL_OUTSIDE_LABELS:
         achieved = _mean_sd([r["achieved_outside"][side] for r in rows_c])
         rows.append({"bin": f"{side} (outside)", "seed": "--", "intended": "0",
-                     "achieved": achieved, "deviation": achieved, "intended r0": "0",
-                     "achieved r0": _plain(row_0["achieved_outside"][side]),
-                     "deviation r0": _plain(row_0["achieved_outside"][side])})
+                     "achieved": achieved, "deviation": achieved,
+                     "intended r0": "0" if row_0 is not None else "--",
+                     "achieved r0": r0(row_0 and row_0["achieved_outside"][side]),
+                     "deviation r0": r0(row_0 and row_0["achieved_outside"][side])})
+    blank = "" if row_0 is not None else "--"
     rows.append({"bin": "Σ|deviation|, 15 bins", "seed": "", "intended": "", "achieved": "",
                  "deviation": _mean_sd([r["abs_deviation"] for r in rows_c]),
-                 "intended r0": "", "achieved r0": "",
-                 "deviation r0": _plain(row_0["abs_deviation"])})
+                 "intended r0": blank, "achieved r0": blank,
+                 "deviation r0": r0(row_0 and row_0["abs_deviation"])})
     return pd.DataFrame(rows)
 
 
@@ -596,9 +625,16 @@ def structural_batch_frame(struct: dict) -> pd.DataFrame:
 
 
 def structural_displacement_frame(struct: dict) -> pd.DataFrame:
-    """Per arm: r1-r5 as mean ± sd, then r0 on its own row."""
+    """Per arm: r1-r5 as mean ± sd, then r0 on its own row.
+
+    Arms come from the union over every realization, not from r0 alone: C-oracle
+    and C-logP (and their C0 ablations) have no r0 entry, and taking the arms
+    from r0 would drop them from this table without a trace. Their r0 row reads
+    "--" in every field. The r1-r5 row still requires the arm in every
+    confirmatory realization; a KeyError there is a real defect, not papered over.
+    """
     confirmatory = [str(r) for r in struct["confirmatory"]]
-    arms = sorted(struct["displacement"]["0"])
+    arms = sorted({a for k in struct["displacement"] for a in struct["displacement"][k]})
     fields = (("n", "n", 0), ("stayed", "stayed", 2), ("mean |Δbin|", "mean_abs_shift", 2),
               ("median |Δbin|", "median_abs_shift", 2), ("outside", "outside", 2))
     rows = []
@@ -606,10 +642,14 @@ def structural_displacement_frame(struct: dict) -> pd.DataFrame:
         rows.append({"arm": arm, "set": "r1-r5",
                      **{name: _mean_sd([struct["displacement"][k][arm][key] for k in confirmatory],
                                        digits) for name, key, digits in fields}})
-        rows.append({"arm": arm, "set": "r0 (exploratory)",
-                     **{name: _plain(struct["displacement"]["0"][arm][key], max(digits, 1))
-                        if key == "n" else f"{struct['displacement']['0'][arm][key]:.{digits}f}"
-                        for name, key, digits in fields}})
+        row_0 = struct["displacement"]["0"].get(arm)
+        if row_0 is None:
+            rows.append({"arm": arm, "set": "r0 (exploratory)",
+                         **{name: "--" for name, _, _ in fields}})
+        else:
+            rows.append({"arm": arm, "set": "r0 (exploratory)",
+                         **{name: _plain(row_0[key], max(digits, 1)) if key == "n"
+                            else f"{row_0[key]:.{digits}f}" for name, key, digits in fields}})
     return pd.DataFrame(rows)
 
 
@@ -712,6 +752,7 @@ def _structural_text(text: str) -> str:
 
 
 def run() -> None:
+    from sgs import structural
     tables, figures = config.tables_dir(), config.figures_dir()
     _save_table(tables / "budget.tex", booktabs(
         budget_frame(), caption="Budget-fair arms. C0 is an ablation and carries no budget. "
@@ -773,15 +814,19 @@ def run() -> None:
             _save_table(tables / f"replications__{test}__values.tex", booktabs(
                 replication_value_frame(rep, test, "decision-range"),
                 caption=f"Log-RMSE on the decision range, {test}, every realization; r0 = existing sets "
-                        "(exploratory). Common fixed hyper-parameters. C0-log, C0-seq and C0-logG are "
-                        "ablations without the seed and carry no budget: they train on 300 points against "
-                        "the 600 of B, C-log, C-seq and C-logG.", label=f"tab:rep:{test}:values"))
+                        "(exploratory). Common fixed hyper-parameters. C0-log, C0-seq, C0-logG, "
+                        "C0-oracle and C0-logP are ablations without the seed and carry no budget: they "
+                        "train on 300 points against the 600 of B, C-log, C-seq, C-logG, C-oracle and "
+                        "C-logP. C-oracle, C-logP, C0-oracle and C0-logP have no r0 (shown as '--').",
+                label=f"tab:rep:{test}:values"))
             _save_table(tables / f"replications__{test}__comparisons.tex", booktabs(
                 replication_comparison_frame(rep, test),
                 caption=f"Replicated comparisons on {test}: Welch (independent arms) or paired intervals, "
-                        "log-RMSE and relative scale; P(first<second) is descriptive. C0-log, C0-seq and "
-                        "C0-logG are ablations without the seed and carry no budget: they train on 300 "
-                        "points against the 600 of B, C-log, C-seq and C-logG.",
+                        "log-RMSE and relative scale; P(first<second) is descriptive. C0-log, C0-seq, "
+                        "C0-logG, C0-oracle and C0-logP are ablations without the seed and carry no "
+                        "budget: they train on 300 points against the 600 of B, C-log, C-seq, C-logG, "
+                        "C-oracle and C-logP. C-oracle, C-logP, C0-oracle and C0-logP have no r0 (shown "
+                        "as '--').",
                 label=f"tab:rep:{test}:comparisons"))
             for family in config.REP_FAMILIES:
                 _save_figure(figures / f"replications__{test}__{family}.pdf", fig_replication_bins(rep, test, family))
@@ -790,14 +835,23 @@ def run() -> None:
             "log(log-RMSE_rf) − log(log-RMSE_gbm) between arms; Welch, or paired where the two "
             "arms share a realization's candidate pool and intended allocation.",
             label="tab:rep:interactions"))
+        if rep.get("oracle"):
+            _save_table(tables / "replications__oracle.tex", booktabs(
+                oracle_reading_frame(rep),
+                caption="The oracle, read as declared before the pool was solved: C-oracle against "
+                        "C-logP on the same sub-pool, r1-r5, medians per learner x test cell and the "
+                        "paired 95% interval of dR_O = R(C-oracle) - R(C-logP). 'Attributable to the "
+                        "screener's error, in this design' only where that interval excludes 0 in at "
+                        "least three of four cells; an interval containing 0 is inconclusive. C0-oracle "
+                        "and C0-logP are reported in the replication tables.",
+                label="tab:rep:oracle", small=True))
 
     if config.structural_metrics_path().exists():
         struct = load_structural()
         check_structural_fresh(struct)
         ablation = struct["ablation"]
         shared = ablation["shared_rows"]["note"]
-        oracle = ("None of this says what a perfect implementation would do; that is the "
-                  "oracle's question.")
+        oracle = structural.ORACLE_SENTENCE
         _save_figure(figures / "structural__bins.pdf", fig_structural(struct))
         _save_table(tables / "structural__caption.tex", _structural_text(struct["figure_caption"]))
         _save_table(tables / "structural__concordance.tex", booktabs(
@@ -809,9 +863,13 @@ def run() -> None:
                     "sensitivity. Bins where either difference is exactly zero leave the "
                     "denominator. A count, with no test attached.",
             label="tab:structural:concordance", small=True))
-        for arm in ("C-log", "C-seq", "C-logG"):
+        for arm in structural.SCREENED_ARMS:
+            # C-oracle bins on the solved FOS, not a screener's prediction: it gets no matrix.
             _save_figure(figures / f"structural__matrix_{arm.lower()}.pdf",
                          fig_structural_matrix(struct, arm))
+        for arm in structural.ARMS_VS_B:
+            oracle_note = (" C-oracle bins on the solved FOS: every deviation is 0 by "
+                           "construction, a check, not a finding.") if arm == "C-oracle" else ""
             _save_table(tables / f"structural__allocation_{arm.lower()}.tex", booktabs(
                 structural_allocation_frame(struct, arm),
                 caption=f"Allocation fidelity for {arm}: mean ± sd over the confirmatory "
@@ -822,7 +880,7 @@ def run() -> None:
                         "selection range, where nothing was intended; the last row sums "
                         "|deviation| over the 15 in-range bins. Bins follow the generator, "
                         "(lo, hi], so the outer bin is FOS > 6. Selected equals intended by "
-                        f"construction and is not shown. {oracle} {shared}",
+                        f"construction and is not shown. {oracle} {shared}{oracle_note}",
                 label=f"tab:structural:allocation:{arm.lower()}", small=True))
         _save_table(tables / "structural__matrix_caption.tex",
                     _structural_text(struct["matrix_caption"]))
@@ -842,7 +900,8 @@ def run() -> None:
                     "r1-r5, r0 (exploratory) apart. Conditioned on selection, so this is its "
                     "accuracy where it was used, not over the pool. The displacement columns "
                     "cover only points whose true FOS stayed inside the selection range; the "
-                    f"rest are counted by 'outside'. {oracle} {shared}",
+                    f"rest are counted by 'outside'. C-oracle's row is a construction check "
+                    f"(stayed = 1, shift 0), not a description of a screener. {oracle} {shared}",
             label="tab:structural:displacement", small=True))
         _save_table(tables / "structural__outside.tex", booktabs(
             structural_outside_frame(struct),
