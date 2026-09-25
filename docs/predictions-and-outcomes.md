@@ -287,3 +287,12 @@ that the original C₀ under-predicts every FOS ≥ 6 test point.
   also predates the log-deficit rule and stores no allocation provenance, so
   it has no allocation row. The artifact names it in a note and computes
   nothing for it.
+
+### Amendment 2 (2026-09-23 or the date of this commit): the pool arms in the structural analysis
+
+C-oracle and C-logP join `ARMS_VS_B`, and C0-oracle and C0-logP join the ablations, under the same
+procedure as C-logG: descriptive, Welch against B, paired against the corresponding C. There is no
+r0 for any of them. C-oracle's allocation and displacement rows are exact by construction; the
+table shows them as a check, not as a finding. The overlap between C-oracle and C-logP is counted
+by shared pool row. Recorded after the stage-1 note and the replication metrics of the pool arms
+existed, as the git history shows; nothing here is a preregistration.
