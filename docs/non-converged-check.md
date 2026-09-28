@@ -7,14 +7,14 @@ Some kept rows have `Search_Converged = False`. In those rows the circular searc
 Each case was solved again, outside the pipeline, with `scripts/xslope_colab.py` (not versioned). The script is a self-contained copy of `sgs/solver.py`: same xslope 0.5.2, same model, same search window and same `config.SOLVER` settings.
 
 - The runs used `max_iter` = 50, 100, 200 and 400. Nothing else changed.
-- They ran on Colab (x86), while the data were solved on darwin arm64.
-- At `max_iter = 50`, all 19 cases reproduced the stored FOS to every printed digit.
+- The first 19 cases ran on Colab (x86), while the data were solved on darwin arm64. The last three (the C-logG replications, added 2026-09-28) ran locally on darwin arm64, through `sgs.solver.calculate_fos` with only `search_max_iter` replaced.
+- At `max_iter = 50`, all 22 cases reproduced the stored FOS to every printed digit.
 
 Nothing in `data/` was modified. The pipeline reads nothing this check produced.
 
-## Results (2026-09-25, complete)
+## Results (2026-09-25; completed 2026-09-28)
 
-All five cases in the study sets and all 14 in the pool, chunks c001–c022. The pool stopped at c022. The first 14 cases were checked on 2026-09-25 as c001–c015 ran, and the last five after the stop. Row numbers are 0-based positions in `data/final/<set>.csv` and `data/pool/final/<chunk>.csv`.
+All eight cases in the study sets and all 14 in the pool, chunks c001–c022. The pool stopped at c022. The first 14 cases were checked on 2026-09-25 as c001–c015 ran, and the next five after the stop. The three cases in the C-logG replications (`guided_log_g_r4`, `guided_log_g_r5`) were missed by that check and added on 2026-09-28, found by listing `non_converged` over every entry of `run_metadata.json`. Row numbers are 0-based positions in `data/final/<set>.csv` and `data/pool/final/<chunk>.csv`.
 
 | Set | Row | Stored FOS (50 it.) | Converged FOS | Converged at | ΔFOS | Relative Δ |
 |---|---:|---:|---:|---:|---:|---:|
@@ -23,6 +23,9 @@ All five cases in the study sets and all 14 in the pool, chunks c001–c022. The
 | replications/guided_log_r1 | 75 | 0.566515 | 0.566506 | 100 | −9.0e−6 | −1.6e−5 |
 | replications/guided_log_r5 | 115 | 0.830120 | 0.829919 | 100 | −2.02e−4 | −2.4e−4 |
 | replications/lhs_r1 | 186 | 1.100943 | 1.100866 | 100 | −7.7e−5 | −7.0e−5 |
+| replications/guided_log_g_r4 | 94 | 0.652006 | 0.651774 | 100 | −2.32e−4 | −3.6e−4 |
+| replications/guided_log_g_r5 | 157 | 0.965329 | 0.965159 | 100 | −1.70e−4 | −1.8e−4 |
+| replications/guided_log_g_r5 | 242 | 4.578877 | 4.578877 | 100 | 0 | 0 |
 | pool/pool_c001 | 131 | 2.086449 | 2.086426 | 100 | −2.3e−5 | −1.1e−5 |
 | pool/pool_c001 | 937 | 2.178500 | 2.178282 | 100 | −2.18e−4 | −1.0e−4 |
 | pool/pool_c003 | 376 | 3.154162 | 3.153745 | 200 | −4.17e−4 | −1.3e−4 |
@@ -42,12 +45,12 @@ All five cases in the study sets and all 14 in the pool, chunks c001–c022. The
 
 ## Reading
 
-- **All 19 converge within 200 iterations.** Sixteen converge within 100.
-- **FOS never increases.** It decreases in 17 cases and is unchanged in 2 (pool_c016/572 and pool_c020/115), where the search met its tolerance a few circles later at the same minimum. The stored value lies at or slightly above the converged minimum, as expected when a minimum search is stopped early.
+- **All 22 converge within 200 iterations.** Nineteen converge within 100.
+- **FOS never increases.** It decreases in 19 cases and is unchanged in 3 (pool_c016/572, pool_c020/115 and guided_log_g_r5/242), where the search met its tolerance a few circles later at the same minimum. The stored value lies at or slightly above the converged minimum, as expected when a minimum search is stopped early.
 - **The largest change is small.**
   - It is at pool_c020/621 (FOS 1.45, in the decision range [0.5, 2)): 9.95 × 10⁻⁴ absolute, 6.8 × 10⁻⁴ relative.
   - Both are of the order of the search's own FOS tolerance (5 × 10⁻⁴).
-  - Seven of the 19 cases lie in the decision range, and none of them changed by more than this.
+  - Nine of the 22 cases lie in the decision range, and none of them changed by more than this.
   - On the log scale used for training and evaluation, |Δ log FOS| ≤ 6.8 × 10⁻⁴. That is at least two orders of magnitude below the surrogates' errors.
 - **No case changes FOS bin or reporting zone.** This covers the 15 geometric oracle bins on [0.5, 6] and the zones < 0.5 | 0.5–1 | 1–2 | 2–6 | ≥ 6. The pool's stopping rule and the oracle binning would come out the same with the converged values.
 
@@ -59,4 +62,4 @@ All five cases in the study sets and all 14 in the pool, chunks c001–c022. The
 
 ## Status
 
-Complete. The pool stopped at c022 and every non-converged row in `data/` is in the table above. The manuscript's Methods sentence quotes these counts and the maximum change (see `paper/HANDOFF.md`).
+Complete. The pool stopped at c022 and every non-converged row in `data/` is in the table above: 22 rows, checked on 2026-09-28 against the `non_converged` lists of every entry in `run_metadata.json` (datasets, replications, pool). The manuscript's Methods sentence quotes these counts and the maximum change (see `paper/HANDOFF.md`).
