@@ -134,7 +134,7 @@ thing. Both are disjoint from every other set by normalized distance;
 5. **No formal conformal guarantee.** Residuals are nested-CV out-of-fold
    residuals from several fold models; test predictions come from a refit
    model. Call it _cross-conformal-style_ and report coverage empirically. A
-   CV+ implementation (Barber et al. 2023) would earn a citable guarantee.
+   CV+ implementation (Barber et al. 2021, jackknife+) would earn a citable guarantee.
 6. **No scientific parameter on the command line.** `--role` selects a config
    entry; `--workers` and `--force` are execution control, as are `sgs pool`'s
    `--chunks` and `--status`.
