@@ -247,7 +247,7 @@ ALTERNATIVES = frozenset({frozenset({"guided-log", "guided-log-g"})})
 # numerical effect at n=300 (sklearn enables "auto" only above 10 000 samples);
 # it keeps this registry independent of ESTIMATOR_FIXED.
 # The GBM screener is a post hoc choice, made 2026-09-23 after the diagnostic in
-# docs/superpowers/notes/2026-09-23-diagnostics/RESULTS.md.
+# docs/screener-diagnostic/RESULTS.md.
 SCREENERS = {
     "rf": {"n_estimators": 500},
     "gbm": {"learning_rate": 0.06, "max_iter": 8000,
