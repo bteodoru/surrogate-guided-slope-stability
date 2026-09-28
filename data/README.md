@@ -48,8 +48,9 @@ Rows whose circular search stopped at the iteration limit
 (`Search_Converged = False`) are kept. Each set's entry in `run_metadata.json`
 lists them under `non_converged`. The five present before the final rerun,
 solved again to convergence, moved in the fourth decimal of FOS. The same
-check on the pool (14 cases in c001–c022, 2026-09-25) is in
-`docs/non-converged-check.md`. All 19 cases converged within 200 iterations.
+check on the pool (14 cases in c001–c022, 2026-09-25) and on the C-logG
+replications (3 cases in `guided_log_g_r4` and `guided_log_g_r5`, 2026-09-28) is in
+`docs/non-converged-check.md`. All 22 cases converged within 200 iterations.
 FOS moved by at most 6.8 × 10⁻⁴ relative, and no case changed FOS bin or zone.
 
 Rows with a non-empty `excluded` column (`solver_error`, `unresolved`) are kept
