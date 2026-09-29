@@ -1,10 +1,12 @@
 \begin{table}[htbp]
 \centering
-\caption{Zone RMSE (FOS) on test-stratified, rf.}
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{Zone RMSE (FOS) on test-stratified, rf. C$_0$, C$_0$-log, C$_0$-seq and C$_0$-logG are ablations: they train on the added points without the seed and carry no budget.}
 \label{tab:test-stratified__log-rmse:zones:rf}
 \begin{tabular}{lrrrrrrrrrrr}
 \toprule
-zone & n & A & B & C & C0 (ablation) & C-log & C0-log (ablation) & C-seq & C0-seq (ablation) & C-logG & C0-logG (ablation) \\
+zone & n & A & B & C & C$_0$ & C-log & C$_0$-log & C-seq & C$_0$-seq & C-logG & C$_0$-logG \\
 \midrule
 FOS < 0.5 & 3 & 0.331 & 0.157 & 0.121 & 0.184 & 0.052 & 0.021 & 0.098 & 0.058 & 0.075 & 0.106 \\
 0.5–1 & 12 & 0.133 & 0.110 & 0.128 & 0.180 & 0.124 & 0.190 & 0.087 & 0.121 & 0.076 & 0.091 \\

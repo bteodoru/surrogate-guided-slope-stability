@@ -1,391 +1,405 @@
-\begin{table}[htbp]
-\centering
-\caption{Replicated comparisons on test-stratified: Welch (independent arms) or paired intervals, log-RMSE and relative scale; P(first<second) is descriptive. C0-log, C0-seq, C0-logG, C0-oracle and C0-logP are ablations without the seed and carry no budget: they train on 300 points against the 600 of B, C-log, C-seq, C-logG, C-oracle and C-logP. C-oracle, C-logP, C0-oracle and C0-logP have no r0 (shown as '--').}
-\label{tab:rep:test-stratified:comparisons}
-\begin{tabular}{lrrrrrrrrr}
+\begingroup
+\small
+\setlength{\tabcolsep}{4pt}
+\setlength{\LTcapwidth}{\textwidth}
+\begin{longtable}{llllrrrrr}
+\caption{Replicated comparisons on test-stratified: Welch (independent arms) or paired intervals, log-RMSE and relative scale; P(first<second) is descriptive. C$_0$-log, C$_0$-seq, C$_0$-logG, C$_0$-oracle and C$_0$-logP are ablations without the seed and carry no budget: they train on 300 points against the 600 of B, C-log, C-seq, C-logG, C-oracle and C-logP. C-oracle, C-logP, C$_0$-oracle and C$_0$-logP have no r0 (shown as '--').}\label{tab:rep:test-stratified:comparisons} \\
 \toprule
-family & measure & comparison & method & scale & diff & CI low & CI high & df & P(first<second) \\
+measure & comparison & method & scale & diff & CI low & CI high & df & P(first<second) \\
 \midrule
-gbm & all & C-log vs B & welch & log-rmse & 0.000 & -0.007 & 0.007 & 6.056 & 0.520 \\
-gbm & all & C-log vs B & welch & relative & 0.005 & -0.138 & 0.147 & 6.089 & 0.520 \\
-gbm & all & C-seq vs B & welch & log-rmse & 0.004 & -0.003 & 0.011 & 4.538 & 0.280 \\
-gbm & all & C-seq vs B & welch & relative & 0.085 & -0.056 & 0.227 & 4.443 & 0.280 \\
-gbm & all & C0-log vs B & welch & log-rmse & 0.032 & 0.021 & 0.044 & 6.691 & 0.000 \\
-gbm & all & C0-log vs B & welch & relative & 0.502 & 0.335 & 0.669 & 7.998 & 0.000 \\
-gbm & all & C0-seq vs B & welch & log-rmse & 0.047 & 0.031 & 0.063 & 5.460 & 0.000 \\
-gbm & all & C0-seq vs B & welch & relative & 0.663 & 0.486 & 0.840 & 7.932 & 0.000 \\
-gbm & all & C-seq vs C-log & welch & log-rmse & 0.004 & 0.000 & 0.008 & 5.845 & 0.080 \\
-gbm & all & C-seq vs C-log & welch & relative & 0.081 & 0.006 & 0.155 & 5.517 & 0.080 \\
-gbm & all & C-logG vs B & welch & log-rmse & 0.002 & -0.005 & 0.010 & 7.244 & 0.360 \\
-gbm & all & C-logG vs B & welch & relative & 0.051 & -0.095 & 0.197 & 6.867 & 0.360 \\
-gbm & all & C0-logG vs B & welch & log-rmse & 0.043 & 0.033 & 0.054 & 7.150 & 0.000 \\
-gbm & all & C0-logG vs B & welch & relative & 0.630 & 0.479 & 0.781 & 7.486 & 0.000 \\
-gbm & all & C-oracle vs B & welch & log-rmse & 0.000 & -0.007 & 0.008 & 7.407 & 0.440 \\
-gbm & all & C-oracle vs B & welch & relative & 0.005 & -0.143 & 0.154 & 7.228 & 0.440 \\
-gbm & all & C-logP vs B & welch & log-rmse & 0.001 & -0.006 & 0.008 & 6.779 & 0.440 \\
-gbm & all & C-logP vs B & welch & relative & 0.020 & -0.126 & 0.165 & 6.816 & 0.440 \\
-gbm & all & C0-oracle vs B & welch & log-rmse & 0.045 & 0.038 & 0.052 & 7.276 & 0.000 \\
-gbm & all & C0-oracle vs B & welch & relative & 0.649 & 0.508 & 0.790 & 5.124 & 0.000 \\
-gbm & all & C0-logP vs B & welch & log-rmse & 0.039 & 0.023 & 0.055 & 5.399 & 0.000 \\
-gbm & all & C0-logP vs B & welch & relative & 0.576 & 0.378 & 0.774 & 7.488 & 0.000 \\
-gbm & all & C-logP vs C-log & welch & log-rmse & 0.001 & -0.004 & 0.006 & 7.729 & 0.320 \\
-gbm & all & C-logP vs C-log & welch & relative & 0.015 & -0.085 & 0.115 & 7.729 & 0.320 \\
-gbm & all & C-log vs C0-log & paired & log-rmse & -0.032 & -0.043 & -0.022 & 4.000 & 1.000 \\
-gbm & all & C-log vs C0-log & paired & relative & -0.497 & -0.628 & -0.367 & 4.000 & 1.000 \\
-gbm & all & C-seq vs C0-seq & paired & log-rmse & -0.043 & -0.060 & -0.026 & 4.000 & 1.000 \\
-gbm & all & C-seq vs C0-seq & paired & relative & -0.578 & -0.750 & -0.405 & 4.000 & 1.000 \\
-gbm & all & C-logG vs C-log & paired & log-rmse & 0.002 & -0.004 & 0.009 & 4.000 & 0.400 \\
-gbm & all & C-logG vs C-log & paired & relative & 0.047 & -0.080 & 0.173 & 4.000 & 0.400 \\
-gbm & all & C-logG vs C0-logG & paired & log-rmse & -0.041 & -0.049 & -0.033 & 4.000 & 1.000 \\
-gbm & all & C-logG vs C0-logG & paired & relative & -0.579 & -0.662 & -0.496 & 4.000 & 1.000 \\
-gbm & all & C-oracle vs C-logP & paired & log-rmse & -0.001 & -0.007 & 0.006 & 4.000 & 0.600 \\
-gbm & all & C-oracle vs C-logP & paired & relative & -0.014 & -0.144 & 0.115 & 4.000 & 0.600 \\
-gbm & all & C-oracle vs C0-oracle & paired & log-rmse & -0.045 & -0.053 & -0.037 & 4.000 & 1.000 \\
-gbm & all & C-oracle vs C0-oracle & paired & relative & -0.644 & -0.764 & -0.523 & 4.000 & 1.000 \\
-gbm & all & C-logP vs C0-logP & paired & log-rmse & -0.038 & -0.057 & -0.020 & 4.000 & 1.000 \\
-gbm & all & C-logP vs C0-logP & paired & relative & -0.556 & -0.789 & -0.323 & 4.000 & 1.000 \\
-gbm & selection-range & C-log vs B & welch & log-rmse & 0.002 & -0.004 & 0.009 & 5.046 & 0.360 \\
-gbm & selection-range & C-log vs B & welch & relative & 0.056 & -0.093 & 0.206 & 4.937 & 0.360 \\
-gbm & selection-range & C-seq vs B & welch & log-rmse & 0.005 & -0.002 & 0.012 & 4.712 & 0.200 \\
-gbm & selection-range & C-seq vs B & welch & relative & 0.106 & -0.044 & 0.256 & 4.565 & 0.200 \\
-gbm & selection-range & C0-log vs B & welch & log-rmse & 0.036 & 0.024 & 0.048 & 6.496 & 0.000 \\
-gbm & selection-range & C0-log vs B & welch & relative & 0.572 & 0.396 & 0.748 & 7.992 & 0.000 \\
-gbm & selection-range & C0-seq vs B & welch & log-rmse & 0.054 & 0.038 & 0.070 & 5.377 & 0.000 \\
-gbm & selection-range & C0-seq vs B & welch & relative & 0.766 & 0.584 & 0.948 & 7.989 & 0.000 \\
-gbm & selection-range & C-seq vs C-log & welch & log-rmse & 0.002 & -0.000 & 0.005 & 7.708 & 0.160 \\
-gbm & selection-range & C-seq vs C-log & welch & relative & 0.050 & -0.006 & 0.105 & 7.524 & 0.160 \\
-gbm & selection-range & C-logG vs B & welch & log-rmse & 0.002 & -0.005 & 0.009 & 5.005 & 0.440 \\
-gbm & selection-range & C-logG vs B & welch & relative & 0.044 & -0.106 & 0.193 & 4.892 & 0.440 \\
-gbm & selection-range & C0-logG vs B & welch & log-rmse & 0.045 & 0.032 & 0.058 & 6.080 & 0.000 \\
-gbm & selection-range & C0-logG vs B & welch & relative & 0.672 & 0.496 & 0.849 & 7.994 & 0.000 \\
-gbm & selection-range & C-oracle vs B & welch & log-rmse & -0.001 & -0.008 & 0.006 & 6.139 & 0.560 \\
-gbm & selection-range & C-oracle vs B & welch & relative & -0.011 & -0.163 & 0.140 & 6.108 & 0.560 \\
-gbm & selection-range & C-logP vs B & welch & log-rmse & 0.003 & -0.004 & 0.010 & 6.529 & 0.280 \\
-gbm & selection-range & C-logP vs B & welch & relative & 0.066 & -0.086 & 0.219 & 6.388 & 0.280 \\
-gbm & selection-range & C0-oracle vs B & welch & log-rmse & 0.038 & 0.030 & 0.046 & 7.999 & 0.000 \\
-gbm & selection-range & C0-oracle vs B & welch & relative & 0.599 & 0.447 & 0.752 & 6.324 & 0.000 \\
-gbm & selection-range & C0-logP vs B & welch & log-rmse & 0.044 & 0.026 & 0.062 & 5.121 & 0.000 \\
-gbm & selection-range & C0-logP vs B & welch & relative & 0.659 & 0.446 & 0.872 & 7.439 & 0.000 \\
-gbm & selection-range & C-logP vs C-log & welch & log-rmse & 0.001 & -0.004 & 0.005 & 6.623 & 0.320 \\
-gbm & selection-range & C-logP vs C-log & welch & relative & 0.010 & -0.078 & 0.098 & 6.541 & 0.320 \\
-gbm & selection-range & C-log vs C0-log & paired & log-rmse & -0.034 & -0.045 & -0.022 & 4.000 & 1.000 \\
-gbm & selection-range & C-log vs C0-log & paired & relative & -0.515 & -0.665 & -0.365 & 4.000 & 1.000 \\
-gbm & selection-range & C-seq vs C0-seq & paired & log-rmse & -0.049 & -0.067 & -0.031 & 4.000 & 1.000 \\
-gbm & selection-range & C-seq vs C0-seq & paired & relative & -0.660 & -0.848 & -0.472 & 4.000 & 1.000 \\
-gbm & selection-range & C-logG vs C-log & paired & log-rmse & -0.001 & -0.005 & 0.004 & 4.000 & 0.400 \\
-gbm & selection-range & C-logG vs C-log & paired & relative & -0.013 & -0.102 & 0.076 & 4.000 & 0.400 \\
-gbm & selection-range & C-logG vs C0-logG & paired & log-rmse & -0.043 & -0.056 & -0.031 & 4.000 & 1.000 \\
-gbm & selection-range & C-logG vs C0-logG & paired & relative & -0.629 & -0.764 & -0.493 & 4.000 & 1.000 \\
-gbm & selection-range & C-oracle vs C-logP & paired & log-rmse & -0.004 & -0.008 & 0.001 & 4.000 & 0.800 \\
-gbm & selection-range & C-oracle vs C-logP & paired & relative & -0.077 & -0.172 & 0.017 & 4.000 & 0.800 \\
-gbm & selection-range & C-oracle vs C0-oracle & paired & log-rmse & -0.039 & -0.047 & -0.030 & 4.000 & 1.000 \\
-gbm & selection-range & C-oracle vs C0-oracle & paired & relative & -0.611 & -0.736 & -0.486 & 4.000 & 1.000 \\
-gbm & selection-range & C-logP vs C0-logP & paired & log-rmse & -0.041 & -0.061 & -0.022 & 4.000 & 1.000 \\
-gbm & selection-range & C-logP vs C0-logP & paired & relative & -0.593 & -0.827 & -0.360 & 4.000 & 1.000 \\
-gbm & decision-range & C-log vs B & welch & log-rmse & -0.004 & -0.019 & 0.010 & 7.607 & 0.640 \\
-gbm & decision-range & C-log vs B & welch & relative & -0.083 & -0.361 & 0.195 & 7.805 & 0.640 \\
-gbm & decision-range & C-seq vs B & welch & log-rmse & -0.004 & -0.018 & 0.010 & 6.690 & 0.560 \\
-gbm & decision-range & C-seq vs B & welch & relative & -0.067 & -0.330 & 0.196 & 7.193 & 0.560 \\
-gbm & decision-range & C0-log vs B & welch & log-rmse & 0.032 & 0.016 & 0.047 & 7.984 & 0.040 \\
-gbm & decision-range & C0-log vs B & welch & relative & 0.480 & 0.222 & 0.738 & 6.771 & 0.040 \\
-gbm & decision-range & C0-seq vs B & welch & log-rmse & 0.065 & 0.048 & 0.081 & 7.990 & 0.000 \\
-gbm & decision-range & C0-seq vs B & welch & relative & 0.815 & 0.564 & 1.065 & 5.690 & 0.000 \\
-gbm & decision-range & C-seq vs C-log & welch & log-rmse & 0.001 & -0.011 & 0.012 & 7.567 & 0.440 \\
-gbm & decision-range & C-seq vs C-log & welch & relative & 0.016 & -0.219 & 0.251 & 7.730 & 0.440 \\
-gbm & decision-range & C-logG vs B & welch & log-rmse & -0.004 & -0.018 & 0.010 & 6.137 & 0.560 \\
-gbm & decision-range & C-logG vs B & welch & relative & -0.072 & -0.326 & 0.183 & 6.416 & 0.560 \\
-gbm & decision-range & C0-logG vs B & welch & log-rmse & 0.042 & 0.019 & 0.066 & 6.467 & 0.000 \\
-gbm & decision-range & C0-logG vs B & welch & relative & 0.591 & 0.295 & 0.886 & 7.998 & 0.000 \\
-gbm & decision-range & C-oracle vs B & welch & log-rmse & -0.008 & -0.022 & 0.005 & 5.007 & 0.760 \\
-gbm & decision-range & C-oracle vs B & welch & relative & -0.156 & -0.406 & 0.094 & 5.521 & 0.760 \\
-gbm & decision-range & C-logP vs B & welch & log-rmse & -0.008 & -0.021 & 0.006 & 5.804 & 0.720 \\
-gbm & decision-range & C-logP vs B & welch & relative & -0.147 & -0.401 & 0.107 & 6.364 & 0.720 \\
-gbm & decision-range & C0-oracle vs B & welch & log-rmse & 0.038 & 0.025 & 0.052 & 4.317 & 0.000 \\
-gbm & decision-range & C0-oracle vs B & welch & relative & 0.565 & 0.313 & 0.818 & 4.117 & 0.000 \\
-gbm & decision-range & C0-logP vs B & welch & log-rmse & 0.035 & 0.014 & 0.055 & 7.173 & 0.040 \\
-gbm & decision-range & C0-logP vs B & welch & relative & 0.511 & 0.226 & 0.796 & 7.923 & 0.040 \\
-gbm & decision-range & C-logP vs C-log & welch & log-rmse & -0.003 & -0.014 & 0.008 & 6.649 & 0.560 \\
-gbm & decision-range & C-logP vs C-log & welch & relative & -0.064 & -0.286 & 0.157 & 6.994 & 0.560 \\
-gbm & decision-range & C-log vs C0-log & paired & log-rmse & -0.036 & -0.047 & -0.025 & 4.000 & 1.000 \\
-gbm & decision-range & C-log vs C0-log & paired & relative & -0.563 & -0.742 & -0.383 & 4.000 & 1.000 \\
-gbm & decision-range & C-seq vs C0-seq & paired & log-rmse & -0.069 & -0.090 & -0.047 & 4.000 & 1.000 \\
-gbm & decision-range & C-seq vs C0-seq & paired & relative & -0.882 & -1.161 & -0.602 & 4.000 & 1.000 \\
-gbm & decision-range & C-logG vs C-log & paired & log-rmse & 0.000 & -0.017 & 0.017 & 4.000 & 0.400 \\
-gbm & decision-range & C-logG vs C-log & paired & relative & 0.011 & -0.325 & 0.347 & 4.000 & 0.400 \\
-gbm & decision-range & C-logG vs C0-logG & paired & log-rmse & -0.046 & -0.074 & -0.019 & 4.000 & 1.000 \\
-gbm & decision-range & C-logG vs C0-logG & paired & relative & -0.662 & -0.992 & -0.332 & 4.000 & 1.000 \\
-gbm & decision-range & C-oracle vs C-logP & paired & log-rmse & -0.000 & -0.008 & 0.007 & 4.000 & 0.400 \\
-gbm & decision-range & C-oracle vs C-logP & paired & relative & -0.008 & -0.182 & 0.165 & 4.000 & 0.400 \\
-gbm & decision-range & C-oracle vs C0-oracle & paired & log-rmse & -0.047 & -0.051 & -0.042 & 4.000 & 1.000 \\
-gbm & decision-range & C-oracle vs C0-oracle & paired & relative & -0.721 & -0.822 & -0.620 & 4.000 & 1.000 \\
-gbm & decision-range & C-logP vs C0-logP & paired & log-rmse & -0.043 & -0.067 & -0.018 & 4.000 & 1.000 \\
-gbm & decision-range & C-logP vs C0-logP & paired & relative & -0.659 & -1.004 & -0.313 & 4.000 & 1.000 \\
-gbm & 0.5–1 & C-log vs B & welch & log-rmse & -0.020 & -0.045 & 0.004 & 4.334 & 1.000 \\
-gbm & 0.5–1 & C-log vs B & welch & relative & -0.385 & -0.745 & -0.024 & 5.002 & 1.000 \\
-gbm & 0.5–1 & C-seq vs B & welch & log-rmse & -0.011 & -0.036 & 0.013 & 4.784 & 0.720 \\
-gbm & 0.5–1 & C-seq vs B & welch & relative & -0.175 & -0.536 & 0.187 & 5.368 & 0.720 \\
-gbm & 0.5–1 & C0-log vs B & welch & log-rmse & 0.006 & -0.021 & 0.033 & 7.654 & 0.440 \\
-gbm & 0.5–1 & C0-log vs B & welch & relative & 0.105 & -0.309 & 0.518 & 7.933 & 0.440 \\
-gbm & 0.5–1 & C0-seq vs B & welch & log-rmse & 0.029 & -0.001 & 0.059 & 7.975 & 0.120 \\
-gbm & 0.5–1 & C0-seq vs B & welch & relative & 0.410 & 0.014 & 0.806 & 7.685 & 0.120 \\
-gbm & 0.5–1 & C-seq vs C-log & welch & log-rmse & 0.009 & 0.001 & 0.017 & 6.870 & 0.080 \\
-gbm & 0.5–1 & C-seq vs C-log & welch & relative & 0.210 & 0.041 & 0.379 & 7.797 & 0.080 \\
-gbm & 0.5–1 & C-logG vs B & welch & log-rmse & -0.007 & -0.032 & 0.019 & 6.702 & 0.520 \\
-gbm & 0.5–1 & C-logG vs B & welch & relative & -0.102 & -0.502 & 0.298 & 7.763 & 0.520 \\
-gbm & 0.5–1 & C0-logG vs B & welch & log-rmse & 0.013 & -0.016 & 0.042 & 7.990 & 0.200 \\
-gbm & 0.5–1 & C0-logG vs B & welch & relative & 0.210 & -0.196 & 0.617 & 7.868 & 0.200 \\
-gbm & 0.5–1 & C-oracle vs B & welch & log-rmse & -0.013 & -0.037 & 0.012 & 5.659 & 0.720 \\
-gbm & 0.5–1 & C-oracle vs B & welch & relative & -0.219 & -0.593 & 0.155 & 6.856 & 0.720 \\
-gbm & 0.5–1 & C-logP vs B & welch & log-rmse & -0.012 & -0.037 & 0.013 & 6.242 & 0.760 \\
-gbm & 0.5–1 & C-logP vs B & welch & relative & -0.215 & -0.606 & 0.175 & 7.552 & 0.760 \\
-gbm & 0.5–1 & C0-oracle vs B & welch & log-rmse & 0.004 & -0.023 & 0.031 & 7.754 & 0.400 \\
-gbm & 0.5–1 & C0-oracle vs B & welch & relative & 0.076 & -0.335 & 0.487 & 7.915 & 0.400 \\
-gbm & 0.5–1 & C0-logP vs B & welch & log-rmse & 0.009 & -0.016 & 0.034 & 6.166 & 0.280 \\
-gbm & 0.5–1 & C0-logP vs B & welch & relative & 0.165 & -0.201 & 0.531 & 6.212 & 0.280 \\
-gbm & 0.5–1 & C-logP vs C-log & welch & log-rmse & 0.008 & -0.006 & 0.022 & 5.072 & 0.240 \\
-gbm & 0.5–1 & C-logP vs C-log & welch & relative & 0.169 & -0.113 & 0.452 & 5.604 & 0.240 \\
-gbm & 0.5–1 & C-log vs C0-log & paired & log-rmse & -0.026 & -0.043 & -0.009 & 4.000 & 1.000 \\
-gbm & 0.5–1 & C-log vs C0-log & paired & relative & -0.489 & -0.734 & -0.245 & 4.000 & 1.000 \\
-gbm & 0.5–1 & C-seq vs C0-seq & paired & log-rmse & -0.040 & -0.065 & -0.015 & 4.000 & 1.000 \\
-gbm & 0.5–1 & C-seq vs C0-seq & paired & relative & -0.584 & -0.873 & -0.296 & 4.000 & 1.000 \\
-gbm & 0.5–1 & C-logG vs C-log & paired & log-rmse & 0.014 & -0.006 & 0.033 & 4.000 & 0.200 \\
-gbm & 0.5–1 & C-logG vs C-log & paired & relative & 0.283 & -0.129 & 0.694 & 4.000 & 0.200 \\
-gbm & 0.5–1 & C-logG vs C0-logG & paired & log-rmse & -0.020 & -0.036 & -0.004 & 4.000 & 1.000 \\
-gbm & 0.5–1 & C-logG vs C0-logG & paired & relative & -0.313 & -0.539 & -0.086 & 4.000 & 1.000 \\
-gbm & 0.5–1 & C-oracle vs C-logP & paired & log-rmse & -0.000 & -0.021 & 0.020 & 4.000 & 0.600 \\
-gbm & 0.5–1 & C-oracle vs C-logP & paired & relative & -0.003 & -0.424 & 0.417 & 4.000 & 0.600 \\
-gbm & 0.5–1 & C-oracle vs C0-oracle & paired & log-rmse & -0.017 & -0.030 & -0.004 & 4.000 & 1.000 \\
-gbm & 0.5–1 & C-oracle vs C0-oracle & paired & relative & -0.295 & -0.506 & -0.084 & 4.000 & 1.000 \\
-gbm & 0.5–1 & C-logP vs C0-logP & paired & log-rmse & -0.021 & -0.041 & -0.001 & 4.000 & 0.800 \\
-gbm & 0.5–1 & C-logP vs C0-logP & paired & relative & -0.380 & -0.735 & -0.025 & 4.000 & 0.800 \\
-gbm & 1–2 & C-log vs B & welch & log-rmse & 0.004 & -0.011 & 0.020 & 7.887 & 0.360 \\
-gbm & 1–2 & C-log vs B & welch & relative & 0.085 & -0.235 & 0.405 & 7.923 & 0.360 \\
-gbm & 1–2 & C-seq vs B & welch & log-rmse & 0.001 & -0.012 & 0.014 & 7.713 & 0.440 \\
-gbm & 1–2 & C-seq vs B & welch & relative & 0.028 & -0.276 & 0.332 & 7.576 & 0.440 \\
-gbm & 1–2 & C0-log vs B & welch & log-rmse & 0.044 & 0.028 & 0.059 & 7.923 & 0.000 \\
-gbm & 1–2 & C0-log vs B & welch & relative & 0.665 & 0.382 & 0.948 & 6.009 & 0.000 \\
-gbm & 1–2 & C0-seq vs B & welch & log-rmse & 0.081 & 0.061 & 0.100 & 6.873 & 0.000 \\
-gbm & 1–2 & C0-seq vs B & welch & relative & 1.002 & 0.718 & 1.285 & 6.105 & 0.000 \\
-gbm & 1–2 & C-seq vs C-log & welch & log-rmse & -0.003 & -0.018 & 0.011 & 7.317 & 0.520 \\
-gbm & 1–2 & C-seq vs C-log & welch & relative & -0.058 & -0.342 & 0.227 & 7.844 & 0.520 \\
-gbm & 1–2 & C-logG vs B & welch & log-rmse & -0.002 & -0.015 & 0.010 & 6.842 & 0.640 \\
-gbm & 1–2 & C-logG vs B & welch & relative & -0.040 & -0.329 & 0.248 & 6.647 & 0.640 \\
-gbm & 1–2 & C0-logG vs B & welch & log-rmse & 0.055 & 0.022 & 0.088 & 5.061 & 0.000 \\
-gbm & 1–2 & C0-logG vs B & welch & relative & 0.757 & 0.403 & 1.110 & 7.920 & 0.000 \\
-gbm & 1–2 & C-oracle vs B & welch & log-rmse & -0.005 & -0.018 & 0.007 & 6.631 & 0.720 \\
-gbm & 1–2 & C-oracle vs B & welch & relative & -0.102 & -0.391 & 0.186 & 6.648 & 0.720 \\
-gbm & 1–2 & C-logP vs B & welch & log-rmse & -0.004 & -0.017 & 0.008 & 4.958 & 0.720 \\
-gbm & 1–2 & C-logP vs B & welch & relative & -0.080 & -0.360 & 0.200 & 4.955 & 0.720 \\
-gbm & 1–2 & C0-oracle vs B & welch & log-rmse & 0.054 & 0.041 & 0.066 & 7.237 & 0.000 \\
-gbm & 1–2 & C0-oracle vs B & welch & relative & 0.768 & 0.488 & 1.049 & 4.776 & 0.000 \\
-gbm & 1–2 & C0-logP vs B & welch & log-rmse & 0.047 & 0.018 & 0.075 & 5.439 & 0.000 \\
-gbm & 1–2 & C0-logP vs B & welch & relative & 0.677 & 0.326 & 1.028 & 7.937 & 0.000 \\
-gbm & 1–2 & C-logP vs C-log & welch & log-rmse & -0.009 & -0.022 & 0.005 & 4.758 & 0.760 \\
-gbm & 1–2 & C-logP vs C-log & welch & relative & -0.165 & -0.419 & 0.089 & 5.157 & 0.760 \\
-gbm & 1–2 & C-log vs C0-log & paired & log-rmse & -0.040 & -0.049 & -0.030 & 4.000 & 1.000 \\
-gbm & 1–2 & C-log vs C0-log & paired & relative & -0.580 & -0.762 & -0.397 & 4.000 & 1.000 \\
-gbm & 1–2 & C-seq vs C0-seq & paired & log-rmse & -0.080 & -0.108 & -0.051 & 4.000 & 1.000 \\
-gbm & 1–2 & C-seq vs C0-seq & paired & relative & -0.974 & -1.333 & -0.616 & 4.000 & 1.000 \\
-gbm & 1–2 & C-logG vs C-log & paired & log-rmse & -0.007 & -0.025 & 0.012 & 4.000 & 0.600 \\
-gbm & 1–2 & C-logG vs C-log & paired & relative & -0.126 & -0.483 & 0.231 & 4.000 & 0.600 \\
-gbm & 1–2 & C-logG vs C0-logG & paired & log-rmse & -0.057 & -0.090 & -0.024 & 4.000 & 1.000 \\
-gbm & 1–2 & C-logG vs C0-logG & paired & relative & -0.797 & -1.108 & -0.486 & 4.000 & 1.000 \\
-gbm & 1–2 & C-oracle vs C-logP & paired & log-rmse & -0.001 & -0.010 & 0.009 & 4.000 & 0.800 \\
-gbm & 1–2 & C-oracle vs C-logP & paired & relative & -0.023 & -0.238 & 0.192 & 4.000 & 0.800 \\
-gbm & 1–2 & C-oracle vs C0-oracle & paired & log-rmse & -0.059 & -0.067 & -0.051 & 4.000 & 1.000 \\
-gbm & 1–2 & C-oracle vs C0-oracle & paired & relative & -0.871 & -1.012 & -0.729 & 4.000 & 1.000 \\
-gbm & 1–2 & C-logP vs C0-logP & paired & log-rmse & -0.051 & -0.083 & -0.019 & 4.000 & 1.000 \\
-gbm & 1–2 & C-logP vs C0-logP & paired & relative & -0.757 & -1.143 & -0.370 & 4.000 & 1.000 \\
-rf & all & C-log vs B & welch & log-rmse & -0.019 & -0.032 & -0.005 & 4.730 & 1.000 \\
-rf & all & C-log vs B & welch & relative & -0.168 & -0.279 & -0.057 & 5.010 & 1.000 \\
-rf & all & C-seq vs B & welch & log-rmse & -0.009 & -0.028 & 0.011 & 7.181 & 0.760 \\
-rf & all & C-seq vs B & welch & relative & -0.081 & -0.247 & 0.085 & 7.189 & 0.760 \\
-rf & all & C0-log vs B & welch & log-rmse & 0.029 & 0.013 & 0.044 & 7.999 & 0.000 \\
-rf & all & C0-log vs B & welch & relative & 0.218 & 0.098 & 0.338 & 7.575 & 0.000 \\
-rf & all & C0-seq vs B & welch & log-rmse & 0.057 & 0.027 & 0.088 & 5.444 & 0.000 \\
-rf & all & C0-seq vs B & welch & relative & 0.389 & 0.208 & 0.570 & 6.777 & 0.000 \\
-rf & all & C-seq vs C-log & welch & log-rmse & 0.010 & -0.009 & 0.028 & 4.364 & 0.160 \\
-rf & all & C-seq vs C-log & welch & relative & 0.086 & -0.072 & 0.245 & 4.508 & 0.160 \\
-rf & all & C-logG vs B & welch & log-rmse & 0.010 & -0.004 & 0.023 & 6.656 & 0.200 \\
-rf & all & C-logG vs B & welch & relative & 0.081 & -0.032 & 0.195 & 6.383 & 0.200 \\
-rf & all & C0-logG vs B & welch & log-rmse & 0.080 & 0.058 & 0.101 & 6.726 & 0.000 \\
-rf & all & C0-logG vs B & welch & relative & 0.516 & 0.386 & 0.646 & 7.984 & 0.000 \\
-rf & all & C-oracle vs B & welch & log-rmse & 0.013 & 0.000 & 0.027 & 5.938 & 0.120 \\
-rf & all & C-oracle vs B & welch & relative & 0.109 & -0.002 & 0.221 & 5.621 & 0.120 \\
-rf & all & C-logP vs B & welch & log-rmse & -0.017 & -0.030 & -0.004 & 5.562 & 0.960 \\
-rf & all & C-logP vs B & welch & relative & -0.154 & -0.266 & -0.042 & 6.024 & 0.960 \\
-rf & all & C0-oracle vs B & welch & log-rmse & 0.074 & 0.058 & 0.090 & 7.963 & 0.000 \\
-rf & all & C0-oracle vs B & welch & relative & 0.487 & 0.371 & 0.603 & 7.005 & 0.000 \\
-rf & all & C0-logP vs B & welch & log-rmse & 0.030 & 0.008 & 0.052 & 6.554 & 0.080 \\
-rf & all & C0-logP vs B & welch & relative & 0.224 & 0.064 & 0.383 & 7.387 & 0.080 \\
-rf & all & C-logP vs C-log & welch & log-rmse & 0.001 & -0.005 & 0.008 & 7.007 & 0.440 \\
-rf & all & C-logP vs C-log & welch & relative & 0.014 & -0.047 & 0.074 & 7.088 & 0.440 \\
-rf & all & C-log vs C0-log & paired & log-rmse & -0.047 & -0.060 & -0.034 & 4.000 & 1.000 \\
-rf & all & C-log vs C0-log & paired & relative & -0.386 & -0.476 & -0.296 & 4.000 & 1.000 \\
-rf & all & C-seq vs C0-seq & paired & log-rmse & -0.066 & -0.087 & -0.045 & 4.000 & 1.000 \\
-rf & all & C-seq vs C0-seq & paired & relative & -0.470 & -0.602 & -0.339 & 4.000 & 1.000 \\
-rf & all & C-logG vs C-log & paired & log-rmse & 0.028 & 0.022 & 0.035 & 4.000 & 0.000 \\
-rf & all & C-logG vs C-log & paired & relative & 0.249 & 0.202 & 0.296 & 4.000 & 0.000 \\
-rf & all & C-logG vs C0-logG & paired & log-rmse & -0.070 & -0.093 & -0.047 & 4.000 & 1.000 \\
-rf & all & C-logG vs C0-logG & paired & relative & -0.435 & -0.561 & -0.308 & 4.000 & 1.000 \\
-rf & all & C-oracle vs C-logP & paired & log-rmse & 0.030 & 0.019 & 0.042 & 4.000 & 0.000 \\
-rf & all & C-oracle vs C-logP & paired & relative & 0.263 & 0.167 & 0.360 & 4.000 & 0.000 \\
-rf & all & C-oracle vs C0-oracle & paired & log-rmse & -0.061 & -0.069 & -0.052 & 4.000 & 1.000 \\
-rf & all & C-oracle vs C0-oracle & paired & relative & -0.377 & -0.414 & -0.341 & 4.000 & 1.000 \\
-rf & all & C-logP vs C0-logP & paired & log-rmse & -0.047 & -0.071 & -0.024 & 4.000 & 1.000 \\
-rf & all & C-logP vs C0-logP & paired & relative & -0.378 & -0.547 & -0.209 & 4.000 & 1.000 \\
-rf & selection-range & C-log vs B & welch & log-rmse & 0.001 & -0.007 & 0.008 & 7.944 & 0.440 \\
-rf & selection-range & C-log vs B & welch & relative & 0.006 & -0.081 & 0.093 & 7.922 & 0.440 \\
-rf & selection-range & C-seq vs B & welch & log-rmse & 0.005 & -0.006 & 0.016 & 6.804 & 0.320 \\
-rf & selection-range & C-seq vs B & welch & relative & 0.051 & -0.064 & 0.166 & 7.138 & 0.320 \\
-rf & selection-range & C0-log vs B & welch & log-rmse & 0.055 & 0.043 & 0.066 & 6.651 & 0.000 \\
-rf & selection-range & C0-log vs B & welch & relative & 0.474 & 0.383 & 0.565 & 8.000 & 0.000 \\
-rf & selection-range & C0-seq vs B & welch & log-rmse & 0.083 & 0.057 & 0.110 & 4.539 & 0.000 \\
-rf & selection-range & C0-seq vs B & welch & relative & 0.648 & 0.492 & 0.804 & 5.822 & 0.000 \\
-rf & selection-range & C-seq vs C-log & welch & log-rmse & 0.004 & -0.007 & 0.015 & 6.471 & 0.360 \\
-rf & selection-range & C-seq vs C-log & welch & relative & 0.045 & -0.068 & 0.158 & 6.742 & 0.360 \\
-rf & selection-range & C-logG vs B & welch & log-rmse & 0.001 & -0.010 & 0.013 & 6.729 & 0.480 \\
-rf & selection-range & C-logG vs B & welch & relative & 0.012 & -0.112 & 0.135 & 6.781 & 0.480 \\
-rf & selection-range & C0-logG vs B & welch & log-rmse & 0.086 & 0.056 & 0.117 & 4.405 & 0.000 \\
-rf & selection-range & C0-logG vs B & welch & relative & 0.664 & 0.490 & 0.837 & 5.484 & 0.000 \\
-rf & selection-range & C-oracle vs B & welch & log-rmse & -0.003 & -0.012 & 0.005 & 7.896 & 0.680 \\
-rf & selection-range & C-oracle vs B & welch & relative & -0.039 & -0.137 & 0.059 & 7.871 & 0.680 \\
-rf & selection-range & C-logP vs B & welch & log-rmse & 0.003 & -0.005 & 0.011 & 7.975 & 0.320 \\
-rf & selection-range & C-logP vs B & welch & relative & 0.033 & -0.054 & 0.120 & 7.932 & 0.320 \\
-rf & selection-range & C0-oracle vs B & welch & log-rmse & 0.060 & 0.045 & 0.076 & 5.519 & 0.000 \\
-rf & selection-range & C0-oracle vs B & welch & relative & 0.510 & 0.399 & 0.620 & 7.324 & 0.000 \\
-rf & selection-range & C0-logP vs B & welch & log-rmse & 0.057 & 0.031 & 0.083 & 4.564 & 0.000 \\
-rf & selection-range & C0-logP vs B & welch & relative & 0.479 & 0.299 & 0.660 & 5.383 & 0.000 \\
-rf & selection-range & C-logP vs C-log & welch & log-rmse & 0.002 & -0.005 & 0.010 & 7.994 & 0.360 \\
-rf & selection-range & C-logP vs C-log & welch & relative & 0.027 & -0.056 & 0.109 & 8.000 & 0.360 \\
-rf & selection-range & C-log vs C0-log & paired & log-rmse & -0.054 & -0.069 & -0.040 & 4.000 & 1.000 \\
-rf & selection-range & C-log vs C0-log & paired & relative & -0.467 & -0.582 & -0.353 & 4.000 & 1.000 \\
-rf & selection-range & C-seq vs C0-seq & paired & log-rmse & -0.078 & -0.106 & -0.051 & 4.000 & 1.000 \\
-rf & selection-range & C-seq vs C0-seq & paired & relative & -0.596 & -0.779 & -0.413 & 4.000 & 1.000 \\
-rf & selection-range & C-logG vs C-log & paired & log-rmse & 0.001 & -0.008 & 0.009 & 4.000 & 0.600 \\
-rf & selection-range & C-logG vs C-log & paired & relative & 0.005 & -0.085 & 0.096 & 4.000 & 0.600 \\
-rf & selection-range & C-logG vs C0-logG & paired & log-rmse & -0.085 & -0.114 & -0.056 & 4.000 & 1.000 \\
-rf & selection-range & C-logG vs C0-logG & paired & relative & -0.652 & -0.823 & -0.481 & 4.000 & 1.000 \\
-rf & selection-range & C-oracle vs C-logP & paired & log-rmse & -0.006 & -0.018 & 0.005 & 4.000 & 0.600 \\
-rf & selection-range & C-oracle vs C-logP & paired & relative & -0.072 & -0.197 & 0.052 & 4.000 & 0.600 \\
-rf & selection-range & C-oracle vs C0-oracle & paired & log-rmse & -0.064 & -0.078 & -0.050 & 4.000 & 1.000 \\
-rf & selection-range & C-oracle vs C0-oracle & paired & relative & -0.549 & -0.651 & -0.447 & 4.000 & 1.000 \\
-rf & selection-range & C-logP vs C0-logP & paired & log-rmse & -0.054 & -0.084 & -0.024 & 4.000 & 1.000 \\
-rf & selection-range & C-logP vs C0-logP & paired & relative & -0.446 & -0.673 & -0.219 & 4.000 & 1.000 \\
-rf & decision-range & C-log vs B & welch & log-rmse & -0.006 & -0.017 & 0.006 & 7.966 & 0.720 \\
-rf & decision-range & C-log vs B & welch & relative & -0.056 & -0.172 & 0.060 & 7.998 & 0.720 \\
-rf & decision-range & C-seq vs B & welch & log-rmse & -0.002 & -0.017 & 0.012 & 7.265 & 0.560 \\
-rf & decision-range & C-seq vs B & welch & relative & -0.025 & -0.172 & 0.122 & 7.179 & 0.560 \\
-rf & decision-range & C0-log vs B & welch & log-rmse & 0.068 & 0.037 & 0.098 & 4.833 & 0.000 \\
-rf & decision-range & C0-log vs B & welch & relative & 0.506 & 0.314 & 0.698 & 5.974 & 0.000 \\
-rf & decision-range & C0-seq vs B & welch & log-rmse & 0.112 & 0.072 & 0.152 & 4.507 & 0.000 \\
-rf & decision-range & C0-seq vs B & welch & relative & 0.739 & 0.548 & 0.931 & 5.984 & 0.000 \\
-rf & decision-range & C-seq vs C-log & welch & log-rmse & 0.003 & -0.011 & 0.018 & 7.009 & 0.440 \\
-rf & decision-range & C-seq vs C-log & welch & relative & 0.031 & -0.115 & 0.177 & 7.111 & 0.440 \\
-rf & decision-range & C-logG vs B & welch & log-rmse & -0.007 & -0.026 & 0.012 & 6.016 & 0.680 \\
-rf & decision-range & C-logG vs B & welch & relative & -0.080 & -0.281 & 0.121 & 5.815 & 0.680 \\
-rf & decision-range & C0-logG vs B & welch & log-rmse & 0.093 & 0.052 & 0.134 & 4.478 & 0.000 \\
-rf & decision-range & C0-logG vs B & welch & relative & 0.640 & 0.420 & 0.861 & 5.518 & 0.000 \\
-rf & decision-range & C-oracle vs B & welch & log-rmse & -0.013 & -0.024 & -0.003 & 7.205 & 0.880 \\
-rf & decision-range & C-oracle vs B & welch & relative & -0.138 & -0.245 & -0.032 & 7.637 & 0.880 \\
-rf & decision-range & C-logP vs B & welch & log-rmse & 0.003 & -0.010 & 0.017 & 7.523 & 0.360 \\
-rf & decision-range & C-logP vs B & welch & relative & 0.032 & -0.106 & 0.170 & 7.487 & 0.360 \\
-rf & decision-range & C0-oracle vs B & welch & log-rmse & 0.062 & 0.029 & 0.096 & 4.719 & 0.000 \\
-rf & decision-range & C0-oracle vs B & welch & relative & 0.471 & 0.254 & 0.688 & 5.566 & 0.000 \\
-rf & decision-range & C0-logP vs B & welch & log-rmse & 0.062 & 0.039 & 0.084 & 5.543 & 0.000 \\
-rf & decision-range & C0-logP vs B & welch & relative & 0.474 & 0.325 & 0.622 & 7.113 & 0.000 \\
-rf & decision-range & C-logP vs C-log & welch & log-rmse & 0.009 & -0.005 & 0.023 & 7.289 & 0.240 \\
-rf & decision-range & C-logP vs C-log & welch & relative & 0.088 & -0.049 & 0.225 & 7.426 & 0.240 \\
-rf & decision-range & C-log vs C0-log & paired & log-rmse & -0.073 & -0.102 & -0.044 & 4.000 & 1.000 \\
-rf & decision-range & C-log vs C0-log & paired & relative & -0.562 & -0.751 & -0.373 & 4.000 & 1.000 \\
-rf & decision-range & C-seq vs C0-seq & paired & log-rmse & -0.114 & -0.154 & -0.075 & 4.000 & 1.000 \\
-rf & decision-range & C-seq vs C0-seq & paired & relative & -0.764 & -0.975 & -0.554 & 4.000 & 1.000 \\
-rf & decision-range & C-logG vs C-log & paired & log-rmse & -0.002 & -0.014 & 0.011 & 4.000 & 0.600 \\
-rf & decision-range & C-logG vs C-log & paired & relative & -0.024 & -0.157 & 0.109 & 4.000 & 0.600 \\
-rf & decision-range & C-logG vs C0-logG & paired & log-rmse & -0.100 & -0.133 & -0.066 & 4.000 & 1.000 \\
-rf & decision-range & C-logG vs C0-logG & paired & relative & -0.721 & -0.909 & -0.533 & 4.000 & 1.000 \\
-rf & decision-range & C-oracle vs C-logP & paired & log-rmse & -0.017 & -0.036 & 0.003 & 4.000 & 0.800 \\
-rf & decision-range & C-oracle vs C-logP & paired & relative & -0.171 & -0.372 & 0.031 & 4.000 & 0.800 \\
-rf & decision-range & C-oracle vs C0-oracle & paired & log-rmse & -0.076 & -0.106 & -0.046 & 4.000 & 1.000 \\
-rf & decision-range & C-oracle vs C0-oracle & paired & relative & -0.609 & -0.793 & -0.426 & 4.000 & 1.000 \\
-rf & decision-range & C-logP vs C0-logP & paired & log-rmse & -0.058 & -0.093 & -0.024 & 4.000 & 1.000 \\
-rf & decision-range & C-logP vs C0-logP & paired & relative & -0.442 & -0.702 & -0.181 & 4.000 & 1.000 \\
-rf & 0.5–1 & C-log vs B & welch & log-rmse & -0.036 & -0.055 & -0.017 & 7.724 & 0.960 \\
-rf & 0.5–1 & C-log vs B & welch & relative & -0.304 & -0.461 & -0.146 & 7.973 & 0.960 \\
-rf & 0.5–1 & C-seq vs B & welch & log-rmse & -0.031 & -0.059 & -0.003 & 6.921 & 0.880 \\
-rf & 0.5–1 & C-seq vs B & welch & relative & -0.268 & -0.531 & -0.006 & 5.811 & 0.880 \\
-rf & 0.5–1 & C0-log vs B & welch & log-rmse & -0.025 & -0.055 & 0.005 & 6.494 & 0.800 \\
-rf & 0.5–1 & C0-log vs B & welch & relative & -0.215 & -0.485 & 0.056 & 5.706 & 0.800 \\
-rf & 0.5–1 & C0-seq vs B & welch & log-rmse & 0.013 & -0.032 & 0.058 & 5.189 & 0.440 \\
-rf & 0.5–1 & C0-seq vs B & welch & relative & 0.071 & -0.212 & 0.354 & 5.570 & 0.440 \\
-rf & 0.5–1 & C-seq vs C-log & welch & log-rmse & 0.005 & -0.022 & 0.032 & 6.177 & 0.400 \\
-rf & 0.5–1 & C-seq vs C-log & welch & relative & 0.035 & -0.228 & 0.299 & 6.007 & 0.400 \\
-rf & 0.5–1 & C-logG vs B & welch & log-rmse & -0.035 & -0.064 & -0.005 & 6.661 & 0.880 \\
-rf & 0.5–1 & C-logG vs B & welch & relative & -0.303 & -0.554 & -0.052 & 5.975 & 0.880 \\
-rf & 0.5–1 & C0-logG vs B & welch & log-rmse & -0.018 & -0.052 & 0.016 & 6.003 & 0.720 \\
-rf & 0.5–1 & C0-logG vs B & welch & relative & -0.156 & -0.428 & 0.116 & 5.690 & 0.720 \\
-rf & 0.5–1 & C-oracle vs B & welch & log-rmse & -0.050 & -0.069 & -0.031 & 7.630 & 1.000 \\
-rf & 0.5–1 & C-oracle vs B & welch & relative & -0.454 & -0.630 & -0.279 & 7.593 & 1.000 \\
-rf & 0.5–1 & C-logP vs B & welch & log-rmse & -0.026 & -0.046 & -0.006 & 7.913 & 0.920 \\
-rf & 0.5–1 & C-logP vs B & welch & relative & -0.208 & -0.366 & -0.050 & 7.964 & 0.920 \\
-rf & 0.5–1 & C0-oracle vs B & welch & log-rmse & -0.019 & -0.050 & 0.012 & 6.372 & 0.760 \\
-rf & 0.5–1 & C0-oracle vs B & welch & relative & -0.161 & -0.434 & 0.112 & 5.683 & 0.760 \\
-rf & 0.5–1 & C0-logP vs B & welch & log-rmse & -0.022 & -0.051 & 0.007 & 6.677 & 0.760 \\
-rf & 0.5–1 & C0-logP vs B & welch & relative & -0.186 & -0.441 & 0.069 & 5.909 & 0.760 \\
-rf & 0.5–1 & C-logP vs C-log & welch & log-rmse & 0.010 & -0.008 & 0.028 & 7.942 & 0.200 \\
-rf & 0.5–1 & C-logP vs C-log & welch & relative & 0.096 & -0.066 & 0.258 & 7.999 & 0.200 \\
-rf & 0.5–1 & C-log vs C0-log & paired & log-rmse & -0.011 & -0.037 & 0.015 & 4.000 & 0.800 \\
-rf & 0.5–1 & C-log vs C0-log & paired & relative & -0.089 & -0.332 & 0.154 & 4.000 & 0.800 \\
-rf & 0.5–1 & C-seq vs C0-seq & paired & log-rmse & -0.044 & -0.106 & 0.018 & 4.000 & 1.000 \\
-rf & 0.5–1 & C-seq vs C0-seq & paired & relative & -0.339 & -0.797 & 0.119 & 4.000 & 1.000 \\
-rf & 0.5–1 & C-logG vs C-log & paired & log-rmse & 0.001 & -0.028 & 0.031 & 4.000 & 0.800 \\
-rf & 0.5–1 & C-logG vs C-log & paired & relative & 0.001 & -0.252 & 0.254 & 4.000 & 0.800 \\
-rf & 0.5–1 & C-logG vs C0-logG & paired & log-rmse & -0.017 & -0.041 & 0.008 & 4.000 & 0.800 \\
-rf & 0.5–1 & C-logG vs C0-logG & paired & relative & -0.147 & -0.375 & 0.081 & 4.000 & 0.800 \\
-rf & 0.5–1 & C-oracle vs C-logP & paired & log-rmse & -0.024 & -0.051 & 0.002 & 4.000 & 0.800 \\
-rf & 0.5–1 & C-oracle vs C-logP & paired & relative & -0.247 & -0.509 & 0.015 & 4.000 & 0.800 \\
-rf & 0.5–1 & C-oracle vs C0-oracle & paired & log-rmse & -0.031 & -0.049 & -0.014 & 4.000 & 1.000 \\
-rf & 0.5–1 & C-oracle vs C0-oracle & paired & relative & -0.293 & -0.418 & -0.168 & 4.000 & 1.000 \\
-rf & 0.5–1 & C-logP vs C0-logP & paired & log-rmse & -0.004 & -0.028 & 0.020 & 4.000 & 0.400 \\
-rf & 0.5–1 & C-logP vs C0-logP & paired & relative & -0.022 & -0.226 & 0.182 & 4.000 & 0.400 \\
-rf & 1–2 & C-log vs B & welch & log-rmse & 0.016 & 0.007 & 0.025 & 7.984 & 0.000 \\
-rf & 1–2 & C-log vs B & welch & relative & 0.194 & 0.086 & 0.302 & 7.557 & 0.000 \\
-rf & 1–2 & C-seq vs B & welch & log-rmse & 0.018 & 0.008 & 0.029 & 7.514 & 0.000 \\
-rf & 1–2 & C-seq vs B & welch & relative & 0.213 & 0.092 & 0.335 & 7.989 & 0.000 \\
-rf & 1–2 & C0-log vs B & welch & log-rmse & 0.115 & 0.082 & 0.147 & 4.428 & 0.000 \\
-rf & 1–2 & C0-log vs B & welch & relative & 0.914 & 0.733 & 1.094 & 6.303 & 0.000 \\
-rf & 1–2 & C0-seq vs B & welch & log-rmse & 0.162 & 0.120 & 0.204 & 4.255 & 0.000 \\
-rf & 1–2 & C0-seq vs B & welch & relative & 1.135 & 0.947 & 1.323 & 6.139 & 0.000 \\
-rf & 1–2 & C-seq vs C-log & welch & log-rmse & 0.002 & -0.008 & 0.012 & 7.355 & 0.360 \\
-rf & 1–2 & C-seq vs C-log & welch & relative & 0.019 & -0.092 & 0.131 & 7.433 & 0.360 \\
-rf & 1–2 & C-logG vs B & welch & log-rmse & 0.012 & -0.011 & 0.035 & 4.867 & 0.240 \\
-rf & 1–2 & C-logG vs B & welch & relative & 0.134 & -0.100 & 0.367 & 5.420 & 0.240 \\
-rf & 1–2 & C0-logG vs B & welch & log-rmse & 0.145 & 0.097 & 0.193 & 4.197 & 0.000 \\
-rf & 1–2 & C0-logG vs B & welch & relative & 1.057 & 0.830 & 1.285 & 5.490 & 0.000 \\
-rf & 1–2 & C-oracle vs B & welch & log-rmse & 0.012 & 0.003 & 0.020 & 7.933 & 0.080 \\
-rf & 1–2 & C-oracle vs B & welch & relative & 0.145 & 0.037 & 0.253 & 7.540 & 0.080 \\
-rf & 1–2 & C-logP vs B & welch & log-rmse & 0.024 & 0.009 & 0.039 & 5.865 & 0.000 \\
-rf & 1–2 & C-logP vs B & welch & relative & 0.274 & 0.115 & 0.432 & 6.901 & 0.000 \\
-rf & 1–2 & C0-oracle vs B & welch & log-rmse & 0.105 & 0.069 & 0.142 & 4.345 & 0.000 \\
-rf & 1–2 & C0-oracle vs B & welch & relative & 0.861 & 0.651 & 1.072 & 5.727 & 0.000 \\
-rf & 1–2 & C0-logP vs B & welch & log-rmse & 0.104 & 0.070 & 0.139 & 4.376 & 0.000 \\
-rf & 1–2 & C0-logP vs B & welch & relative & 0.857 & 0.659 & 1.056 & 5.933 & 0.000 \\
-rf & 1–2 & C-logP vs C-log & welch & log-rmse & 0.008 & -0.007 & 0.023 & 5.720 & 0.200 \\
-rf & 1–2 & C-logP vs C-log & welch & relative & 0.080 & -0.074 & 0.234 & 5.962 & 0.200 \\
-rf & 1–2 & C-log vs C0-log & paired & log-rmse & -0.098 & -0.130 & -0.066 & 4.000 & 1.000 \\
-rf & 1–2 & C-log vs C0-log & paired & relative & -0.720 & -0.904 & -0.535 & 4.000 & 1.000 \\
-rf & 1–2 & C-seq vs C0-seq & paired & log-rmse & -0.144 & -0.180 & -0.108 & 4.000 & 1.000 \\
-rf & 1–2 & C-seq vs C0-seq & paired & relative & -0.921 & -1.054 & -0.789 & 4.000 & 1.000 \\
-rf & 1–2 & C-logG vs C-log & paired & log-rmse & -0.004 & -0.024 & 0.015 & 4.000 & 0.800 \\
-rf & 1–2 & C-logG vs C-log & paired & relative & -0.060 & -0.263 & 0.143 & 4.000 & 0.800 \\
-rf & 1–2 & C-logG vs C0-logG & paired & log-rmse & -0.133 & -0.175 & -0.091 & 4.000 & 1.000 \\
-rf & 1–2 & C-logG vs C0-logG & paired & relative & -0.924 & -1.149 & -0.698 & 4.000 & 1.000 \\
-rf & 1–2 & C-oracle vs C-logP & paired & log-rmse & -0.012 & -0.032 & 0.007 & 4.000 & 0.800 \\
-rf & 1–2 & C-oracle vs C-logP & paired & relative & -0.128 & -0.336 & 0.079 & 4.000 & 0.800 \\
-rf & 1–2 & C-oracle vs C0-oracle & paired & log-rmse & -0.094 & -0.130 & -0.057 & 4.000 & 1.000 \\
-rf & 1–2 & C-oracle vs C0-oracle & paired & relative & -0.716 & -0.934 & -0.498 & 4.000 & 1.000 \\
-rf & 1–2 & C-logP vs C0-logP & paired & log-rmse & -0.080 & -0.127 & -0.033 & 4.000 & 1.000 \\
-rf & 1–2 & C-logP vs C0-logP & paired & relative & -0.584 & -0.907 & -0.260 & 4.000 & 1.000 \\
+\endfirsthead
+\multicolumn{9}{l}{\textit{Table \thetable, continued}} \\
+\toprule
+measure & comparison & method & scale & diff & CI low & CI high & df & P(first<second) \\
+\midrule
+\endhead
+\midrule
+\multicolumn{9}{r}{\textit{continued on the next page}} \\
+\endfoot
 \bottomrule
-\end{tabular}
-\end{table}
+\endlastfoot
+\multicolumn{9}{l}{\textit{GBM}} \\
+all & C-log vs B & welch & log-rmse & 0.000 & -0.007 & 0.007 & 6.056 & 0.520 \\
+all & C-log vs B & welch & relative & 0.005 & -0.138 & 0.147 & 6.089 & 0.520 \\
+all & C-seq vs B & welch & log-rmse & 0.004 & -0.003 & 0.011 & 4.538 & 0.280 \\
+all & C-seq vs B & welch & relative & 0.085 & -0.056 & 0.227 & 4.443 & 0.280 \\
+all & C$_0$-log vs B & welch & log-rmse & 0.032 & 0.021 & 0.044 & 6.691 & 0.000 \\
+all & C$_0$-log vs B & welch & relative & 0.502 & 0.335 & 0.669 & 7.998 & 0.000 \\
+all & C$_0$-seq vs B & welch & log-rmse & 0.047 & 0.031 & 0.063 & 5.460 & 0.000 \\
+all & C$_0$-seq vs B & welch & relative & 0.663 & 0.486 & 0.840 & 7.932 & 0.000 \\
+all & C-seq vs C-log & welch & log-rmse & 0.004 & 0.000 & 0.008 & 5.845 & 0.080 \\
+all & C-seq vs C-log & welch & relative & 0.081 & 0.006 & 0.155 & 5.517 & 0.080 \\
+all & C-logG vs B & welch & log-rmse & 0.002 & -0.005 & 0.010 & 7.244 & 0.360 \\
+all & C-logG vs B & welch & relative & 0.051 & -0.095 & 0.197 & 6.867 & 0.360 \\
+all & C$_0$-logG vs B & welch & log-rmse & 0.043 & 0.033 & 0.054 & 7.150 & 0.000 \\
+all & C$_0$-logG vs B & welch & relative & 0.630 & 0.479 & 0.781 & 7.486 & 0.000 \\
+all & C-oracle vs B & welch & log-rmse & 0.000 & -0.007 & 0.008 & 7.407 & 0.440 \\
+all & C-oracle vs B & welch & relative & 0.005 & -0.143 & 0.154 & 7.228 & 0.440 \\
+all & C-logP vs B & welch & log-rmse & 0.001 & -0.006 & 0.008 & 6.779 & 0.440 \\
+all & C-logP vs B & welch & relative & 0.020 & -0.126 & 0.165 & 6.816 & 0.440 \\
+all & C$_0$-oracle vs B & welch & log-rmse & 0.045 & 0.038 & 0.052 & 7.276 & 0.000 \\
+all & C$_0$-oracle vs B & welch & relative & 0.649 & 0.508 & 0.790 & 5.124 & 0.000 \\
+all & C$_0$-logP vs B & welch & log-rmse & 0.039 & 0.023 & 0.055 & 5.399 & 0.000 \\
+all & C$_0$-logP vs B & welch & relative & 0.576 & 0.378 & 0.774 & 7.488 & 0.000 \\
+all & C-logP vs C-log & welch & log-rmse & 0.001 & -0.004 & 0.006 & 7.729 & 0.320 \\
+all & C-logP vs C-log & welch & relative & 0.015 & -0.085 & 0.115 & 7.729 & 0.320 \\
+all & C-log vs C$_0$-log & paired & log-rmse & -0.032 & -0.043 & -0.022 & 4.000 & 1.000 \\
+all & C-log vs C$_0$-log & paired & relative & -0.497 & -0.628 & -0.367 & 4.000 & 1.000 \\
+all & C-seq vs C$_0$-seq & paired & log-rmse & -0.043 & -0.060 & -0.026 & 4.000 & 1.000 \\
+all & C-seq vs C$_0$-seq & paired & relative & -0.578 & -0.750 & -0.405 & 4.000 & 1.000 \\
+all & C-logG vs C-log & paired & log-rmse & 0.002 & -0.004 & 0.009 & 4.000 & 0.400 \\
+all & C-logG vs C-log & paired & relative & 0.047 & -0.080 & 0.173 & 4.000 & 0.400 \\
+all & C-logG vs C$_0$-logG & paired & log-rmse & -0.041 & -0.049 & -0.033 & 4.000 & 1.000 \\
+all & C-logG vs C$_0$-logG & paired & relative & -0.579 & -0.662 & -0.496 & 4.000 & 1.000 \\
+all & C-oracle vs C-logP & paired & log-rmse & -0.001 & -0.007 & 0.006 & 4.000 & 0.600 \\
+all & C-oracle vs C-logP & paired & relative & -0.014 & -0.144 & 0.115 & 4.000 & 0.600 \\
+all & C-oracle vs C$_0$-oracle & paired & log-rmse & -0.045 & -0.053 & -0.037 & 4.000 & 1.000 \\
+all & C-oracle vs C$_0$-oracle & paired & relative & -0.644 & -0.764 & -0.523 & 4.000 & 1.000 \\
+all & C-logP vs C$_0$-logP & paired & log-rmse & -0.038 & -0.057 & -0.020 & 4.000 & 1.000 \\
+all & C-logP vs C$_0$-logP & paired & relative & -0.556 & -0.789 & -0.323 & 4.000 & 1.000 \\
+selection-range & C-log vs B & welch & log-rmse & 0.002 & -0.004 & 0.009 & 5.046 & 0.360 \\
+selection-range & C-log vs B & welch & relative & 0.056 & -0.093 & 0.206 & 4.937 & 0.360 \\
+selection-range & C-seq vs B & welch & log-rmse & 0.005 & -0.002 & 0.012 & 4.712 & 0.200 \\
+selection-range & C-seq vs B & welch & relative & 0.106 & -0.044 & 0.256 & 4.565 & 0.200 \\
+selection-range & C$_0$-log vs B & welch & log-rmse & 0.036 & 0.024 & 0.048 & 6.496 & 0.000 \\
+selection-range & C$_0$-log vs B & welch & relative & 0.572 & 0.396 & 0.748 & 7.992 & 0.000 \\
+selection-range & C$_0$-seq vs B & welch & log-rmse & 0.054 & 0.038 & 0.070 & 5.377 & 0.000 \\
+selection-range & C$_0$-seq vs B & welch & relative & 0.766 & 0.584 & 0.948 & 7.989 & 0.000 \\
+selection-range & C-seq vs C-log & welch & log-rmse & 0.002 & -0.000 & 0.005 & 7.708 & 0.160 \\
+selection-range & C-seq vs C-log & welch & relative & 0.050 & -0.006 & 0.105 & 7.524 & 0.160 \\
+selection-range & C-logG vs B & welch & log-rmse & 0.002 & -0.005 & 0.009 & 5.005 & 0.440 \\
+selection-range & C-logG vs B & welch & relative & 0.044 & -0.106 & 0.193 & 4.892 & 0.440 \\
+selection-range & C$_0$-logG vs B & welch & log-rmse & 0.045 & 0.032 & 0.058 & 6.080 & 0.000 \\
+selection-range & C$_0$-logG vs B & welch & relative & 0.672 & 0.496 & 0.849 & 7.994 & 0.000 \\
+selection-range & C-oracle vs B & welch & log-rmse & -0.001 & -0.008 & 0.006 & 6.139 & 0.560 \\
+selection-range & C-oracle vs B & welch & relative & -0.011 & -0.163 & 0.140 & 6.108 & 0.560 \\
+selection-range & C-logP vs B & welch & log-rmse & 0.003 & -0.004 & 0.010 & 6.529 & 0.280 \\
+selection-range & C-logP vs B & welch & relative & 0.066 & -0.086 & 0.219 & 6.388 & 0.280 \\
+selection-range & C$_0$-oracle vs B & welch & log-rmse & 0.038 & 0.030 & 0.046 & 7.999 & 0.000 \\
+selection-range & C$_0$-oracle vs B & welch & relative & 0.599 & 0.447 & 0.752 & 6.324 & 0.000 \\
+selection-range & C$_0$-logP vs B & welch & log-rmse & 0.044 & 0.026 & 0.062 & 5.121 & 0.000 \\
+selection-range & C$_0$-logP vs B & welch & relative & 0.659 & 0.446 & 0.872 & 7.439 & 0.000 \\
+selection-range & C-logP vs C-log & welch & log-rmse & 0.001 & -0.004 & 0.005 & 6.623 & 0.320 \\
+selection-range & C-logP vs C-log & welch & relative & 0.010 & -0.078 & 0.098 & 6.541 & 0.320 \\
+selection-range & C-log vs C$_0$-log & paired & log-rmse & -0.034 & -0.045 & -0.022 & 4.000 & 1.000 \\
+selection-range & C-log vs C$_0$-log & paired & relative & -0.515 & -0.665 & -0.365 & 4.000 & 1.000 \\
+selection-range & C-seq vs C$_0$-seq & paired & log-rmse & -0.049 & -0.067 & -0.031 & 4.000 & 1.000 \\
+selection-range & C-seq vs C$_0$-seq & paired & relative & -0.660 & -0.848 & -0.472 & 4.000 & 1.000 \\
+selection-range & C-logG vs C-log & paired & log-rmse & -0.001 & -0.005 & 0.004 & 4.000 & 0.400 \\
+selection-range & C-logG vs C-log & paired & relative & -0.013 & -0.102 & 0.076 & 4.000 & 0.400 \\
+selection-range & C-logG vs C$_0$-logG & paired & log-rmse & -0.043 & -0.056 & -0.031 & 4.000 & 1.000 \\
+selection-range & C-logG vs C$_0$-logG & paired & relative & -0.629 & -0.764 & -0.493 & 4.000 & 1.000 \\
+selection-range & C-oracle vs C-logP & paired & log-rmse & -0.004 & -0.008 & 0.001 & 4.000 & 0.800 \\
+selection-range & C-oracle vs C-logP & paired & relative & -0.077 & -0.172 & 0.017 & 4.000 & 0.800 \\
+selection-range & C-oracle vs C$_0$-oracle & paired & log-rmse & -0.039 & -0.047 & -0.030 & 4.000 & 1.000 \\
+selection-range & C-oracle vs C$_0$-oracle & paired & relative & -0.611 & -0.736 & -0.486 & 4.000 & 1.000 \\
+selection-range & C-logP vs C$_0$-logP & paired & log-rmse & -0.041 & -0.061 & -0.022 & 4.000 & 1.000 \\
+selection-range & C-logP vs C$_0$-logP & paired & relative & -0.593 & -0.827 & -0.360 & 4.000 & 1.000 \\
+decision-range & C-log vs B & welch & log-rmse & -0.004 & -0.019 & 0.010 & 7.607 & 0.640 \\
+decision-range & C-log vs B & welch & relative & -0.083 & -0.361 & 0.195 & 7.805 & 0.640 \\
+decision-range & C-seq vs B & welch & log-rmse & -0.004 & -0.018 & 0.010 & 6.690 & 0.560 \\
+decision-range & C-seq vs B & welch & relative & -0.067 & -0.330 & 0.196 & 7.193 & 0.560 \\
+decision-range & C$_0$-log vs B & welch & log-rmse & 0.032 & 0.016 & 0.047 & 7.984 & 0.040 \\
+decision-range & C$_0$-log vs B & welch & relative & 0.480 & 0.222 & 0.738 & 6.771 & 0.040 \\
+decision-range & C$_0$-seq vs B & welch & log-rmse & 0.065 & 0.048 & 0.081 & 7.990 & 0.000 \\
+decision-range & C$_0$-seq vs B & welch & relative & 0.815 & 0.564 & 1.065 & 5.690 & 0.000 \\
+decision-range & C-seq vs C-log & welch & log-rmse & 0.001 & -0.011 & 0.012 & 7.567 & 0.440 \\
+decision-range & C-seq vs C-log & welch & relative & 0.016 & -0.219 & 0.251 & 7.730 & 0.440 \\
+decision-range & C-logG vs B & welch & log-rmse & -0.004 & -0.018 & 0.010 & 6.137 & 0.560 \\
+decision-range & C-logG vs B & welch & relative & -0.072 & -0.326 & 0.183 & 6.416 & 0.560 \\
+decision-range & C$_0$-logG vs B & welch & log-rmse & 0.042 & 0.019 & 0.066 & 6.467 & 0.000 \\
+decision-range & C$_0$-logG vs B & welch & relative & 0.591 & 0.295 & 0.886 & 7.998 & 0.000 \\
+decision-range & C-oracle vs B & welch & log-rmse & -0.008 & -0.022 & 0.005 & 5.007 & 0.760 \\
+decision-range & C-oracle vs B & welch & relative & -0.156 & -0.406 & 0.094 & 5.521 & 0.760 \\
+decision-range & C-logP vs B & welch & log-rmse & -0.008 & -0.021 & 0.006 & 5.804 & 0.720 \\
+decision-range & C-logP vs B & welch & relative & -0.147 & -0.401 & 0.107 & 6.364 & 0.720 \\
+decision-range & C$_0$-oracle vs B & welch & log-rmse & 0.038 & 0.025 & 0.052 & 4.317 & 0.000 \\
+decision-range & C$_0$-oracle vs B & welch & relative & 0.565 & 0.313 & 0.818 & 4.117 & 0.000 \\
+decision-range & C$_0$-logP vs B & welch & log-rmse & 0.035 & 0.014 & 0.055 & 7.173 & 0.040 \\
+decision-range & C$_0$-logP vs B & welch & relative & 0.511 & 0.226 & 0.796 & 7.923 & 0.040 \\
+decision-range & C-logP vs C-log & welch & log-rmse & -0.003 & -0.014 & 0.008 & 6.649 & 0.560 \\
+decision-range & C-logP vs C-log & welch & relative & -0.064 & -0.286 & 0.157 & 6.994 & 0.560 \\
+decision-range & C-log vs C$_0$-log & paired & log-rmse & -0.036 & -0.047 & -0.025 & 4.000 & 1.000 \\
+decision-range & C-log vs C$_0$-log & paired & relative & -0.563 & -0.742 & -0.383 & 4.000 & 1.000 \\
+decision-range & C-seq vs C$_0$-seq & paired & log-rmse & -0.069 & -0.090 & -0.047 & 4.000 & 1.000 \\
+decision-range & C-seq vs C$_0$-seq & paired & relative & -0.882 & -1.161 & -0.602 & 4.000 & 1.000 \\
+decision-range & C-logG vs C-log & paired & log-rmse & 0.000 & -0.017 & 0.017 & 4.000 & 0.400 \\
+decision-range & C-logG vs C-log & paired & relative & 0.011 & -0.325 & 0.347 & 4.000 & 0.400 \\
+decision-range & C-logG vs C$_0$-logG & paired & log-rmse & -0.046 & -0.074 & -0.019 & 4.000 & 1.000 \\
+decision-range & C-logG vs C$_0$-logG & paired & relative & -0.662 & -0.992 & -0.332 & 4.000 & 1.000 \\
+decision-range & C-oracle vs C-logP & paired & log-rmse & -0.000 & -0.008 & 0.007 & 4.000 & 0.400 \\
+decision-range & C-oracle vs C-logP & paired & relative & -0.008 & -0.182 & 0.165 & 4.000 & 0.400 \\
+decision-range & C-oracle vs C$_0$-oracle & paired & log-rmse & -0.047 & -0.051 & -0.042 & 4.000 & 1.000 \\
+decision-range & C-oracle vs C$_0$-oracle & paired & relative & -0.721 & -0.822 & -0.620 & 4.000 & 1.000 \\
+decision-range & C-logP vs C$_0$-logP & paired & log-rmse & -0.043 & -0.067 & -0.018 & 4.000 & 1.000 \\
+decision-range & C-logP vs C$_0$-logP & paired & relative & -0.659 & -1.004 & -0.313 & 4.000 & 1.000 \\
+0.5–1 & C-log vs B & welch & log-rmse & -0.020 & -0.045 & 0.004 & 4.334 & 1.000 \\
+0.5–1 & C-log vs B & welch & relative & -0.385 & -0.745 & -0.024 & 5.002 & 1.000 \\
+0.5–1 & C-seq vs B & welch & log-rmse & -0.011 & -0.036 & 0.013 & 4.784 & 0.720 \\
+0.5–1 & C-seq vs B & welch & relative & -0.175 & -0.536 & 0.187 & 5.368 & 0.720 \\
+0.5–1 & C$_0$-log vs B & welch & log-rmse & 0.006 & -0.021 & 0.033 & 7.654 & 0.440 \\
+0.5–1 & C$_0$-log vs B & welch & relative & 0.105 & -0.309 & 0.518 & 7.933 & 0.440 \\
+0.5–1 & C$_0$-seq vs B & welch & log-rmse & 0.029 & -0.001 & 0.059 & 7.975 & 0.120 \\
+0.5–1 & C$_0$-seq vs B & welch & relative & 0.410 & 0.014 & 0.806 & 7.685 & 0.120 \\
+0.5–1 & C-seq vs C-log & welch & log-rmse & 0.009 & 0.001 & 0.017 & 6.870 & 0.080 \\
+0.5–1 & C-seq vs C-log & welch & relative & 0.210 & 0.041 & 0.379 & 7.797 & 0.080 \\
+0.5–1 & C-logG vs B & welch & log-rmse & -0.007 & -0.032 & 0.019 & 6.702 & 0.520 \\
+0.5–1 & C-logG vs B & welch & relative & -0.102 & -0.502 & 0.298 & 7.763 & 0.520 \\
+0.5–1 & C$_0$-logG vs B & welch & log-rmse & 0.013 & -0.016 & 0.042 & 7.990 & 0.200 \\
+0.5–1 & C$_0$-logG vs B & welch & relative & 0.210 & -0.196 & 0.617 & 7.868 & 0.200 \\
+0.5–1 & C-oracle vs B & welch & log-rmse & -0.013 & -0.037 & 0.012 & 5.659 & 0.720 \\
+0.5–1 & C-oracle vs B & welch & relative & -0.219 & -0.593 & 0.155 & 6.856 & 0.720 \\
+0.5–1 & C-logP vs B & welch & log-rmse & -0.012 & -0.037 & 0.013 & 6.242 & 0.760 \\
+0.5–1 & C-logP vs B & welch & relative & -0.215 & -0.606 & 0.175 & 7.552 & 0.760 \\
+0.5–1 & C$_0$-oracle vs B & welch & log-rmse & 0.004 & -0.023 & 0.031 & 7.754 & 0.400 \\
+0.5–1 & C$_0$-oracle vs B & welch & relative & 0.076 & -0.335 & 0.487 & 7.915 & 0.400 \\
+0.5–1 & C$_0$-logP vs B & welch & log-rmse & 0.009 & -0.016 & 0.034 & 6.166 & 0.280 \\
+0.5–1 & C$_0$-logP vs B & welch & relative & 0.165 & -0.201 & 0.531 & 6.212 & 0.280 \\
+0.5–1 & C-logP vs C-log & welch & log-rmse & 0.008 & -0.006 & 0.022 & 5.072 & 0.240 \\
+0.5–1 & C-logP vs C-log & welch & relative & 0.169 & -0.113 & 0.452 & 5.604 & 0.240 \\
+0.5–1 & C-log vs C$_0$-log & paired & log-rmse & -0.026 & -0.043 & -0.009 & 4.000 & 1.000 \\
+0.5–1 & C-log vs C$_0$-log & paired & relative & -0.489 & -0.734 & -0.245 & 4.000 & 1.000 \\
+0.5–1 & C-seq vs C$_0$-seq & paired & log-rmse & -0.040 & -0.065 & -0.015 & 4.000 & 1.000 \\
+0.5–1 & C-seq vs C$_0$-seq & paired & relative & -0.584 & -0.873 & -0.296 & 4.000 & 1.000 \\
+0.5–1 & C-logG vs C-log & paired & log-rmse & 0.014 & -0.006 & 0.033 & 4.000 & 0.200 \\
+0.5–1 & C-logG vs C-log & paired & relative & 0.283 & -0.129 & 0.694 & 4.000 & 0.200 \\
+0.5–1 & C-logG vs C$_0$-logG & paired & log-rmse & -0.020 & -0.036 & -0.004 & 4.000 & 1.000 \\
+0.5–1 & C-logG vs C$_0$-logG & paired & relative & -0.313 & -0.539 & -0.086 & 4.000 & 1.000 \\
+0.5–1 & C-oracle vs C-logP & paired & log-rmse & -0.000 & -0.021 & 0.020 & 4.000 & 0.600 \\
+0.5–1 & C-oracle vs C-logP & paired & relative & -0.003 & -0.424 & 0.417 & 4.000 & 0.600 \\
+0.5–1 & C-oracle vs C$_0$-oracle & paired & log-rmse & -0.017 & -0.030 & -0.004 & 4.000 & 1.000 \\
+0.5–1 & C-oracle vs C$_0$-oracle & paired & relative & -0.295 & -0.506 & -0.084 & 4.000 & 1.000 \\
+0.5–1 & C-logP vs C$_0$-logP & paired & log-rmse & -0.021 & -0.041 & -0.001 & 4.000 & 0.800 \\
+0.5–1 & C-logP vs C$_0$-logP & paired & relative & -0.380 & -0.735 & -0.025 & 4.000 & 0.800 \\
+1–2 & C-log vs B & welch & log-rmse & 0.004 & -0.011 & 0.020 & 7.887 & 0.360 \\
+1–2 & C-log vs B & welch & relative & 0.085 & -0.235 & 0.405 & 7.923 & 0.360 \\
+1–2 & C-seq vs B & welch & log-rmse & 0.001 & -0.012 & 0.014 & 7.713 & 0.440 \\
+1–2 & C-seq vs B & welch & relative & 0.028 & -0.276 & 0.332 & 7.576 & 0.440 \\
+1–2 & C$_0$-log vs B & welch & log-rmse & 0.044 & 0.028 & 0.059 & 7.923 & 0.000 \\
+1–2 & C$_0$-log vs B & welch & relative & 0.665 & 0.382 & 0.948 & 6.009 & 0.000 \\
+1–2 & C$_0$-seq vs B & welch & log-rmse & 0.081 & 0.061 & 0.100 & 6.873 & 0.000 \\
+1–2 & C$_0$-seq vs B & welch & relative & 1.002 & 0.718 & 1.285 & 6.105 & 0.000 \\
+1–2 & C-seq vs C-log & welch & log-rmse & -0.003 & -0.018 & 0.011 & 7.317 & 0.520 \\
+1–2 & C-seq vs C-log & welch & relative & -0.058 & -0.342 & 0.227 & 7.844 & 0.520 \\
+1–2 & C-logG vs B & welch & log-rmse & -0.002 & -0.015 & 0.010 & 6.842 & 0.640 \\
+1–2 & C-logG vs B & welch & relative & -0.040 & -0.329 & 0.248 & 6.647 & 0.640 \\
+1–2 & C$_0$-logG vs B & welch & log-rmse & 0.055 & 0.022 & 0.088 & 5.061 & 0.000 \\
+1–2 & C$_0$-logG vs B & welch & relative & 0.757 & 0.403 & 1.110 & 7.920 & 0.000 \\
+1–2 & C-oracle vs B & welch & log-rmse & -0.005 & -0.018 & 0.007 & 6.631 & 0.720 \\
+1–2 & C-oracle vs B & welch & relative & -0.102 & -0.391 & 0.186 & 6.648 & 0.720 \\
+1–2 & C-logP vs B & welch & log-rmse & -0.004 & -0.017 & 0.008 & 4.958 & 0.720 \\
+1–2 & C-logP vs B & welch & relative & -0.080 & -0.360 & 0.200 & 4.955 & 0.720 \\
+1–2 & C$_0$-oracle vs B & welch & log-rmse & 0.054 & 0.041 & 0.066 & 7.237 & 0.000 \\
+1–2 & C$_0$-oracle vs B & welch & relative & 0.768 & 0.488 & 1.049 & 4.776 & 0.000 \\
+1–2 & C$_0$-logP vs B & welch & log-rmse & 0.047 & 0.018 & 0.075 & 5.439 & 0.000 \\
+1–2 & C$_0$-logP vs B & welch & relative & 0.677 & 0.326 & 1.028 & 7.937 & 0.000 \\
+1–2 & C-logP vs C-log & welch & log-rmse & -0.009 & -0.022 & 0.005 & 4.758 & 0.760 \\
+1–2 & C-logP vs C-log & welch & relative & -0.165 & -0.419 & 0.089 & 5.157 & 0.760 \\
+1–2 & C-log vs C$_0$-log & paired & log-rmse & -0.040 & -0.049 & -0.030 & 4.000 & 1.000 \\
+1–2 & C-log vs C$_0$-log & paired & relative & -0.580 & -0.762 & -0.397 & 4.000 & 1.000 \\
+1–2 & C-seq vs C$_0$-seq & paired & log-rmse & -0.080 & -0.108 & -0.051 & 4.000 & 1.000 \\
+1–2 & C-seq vs C$_0$-seq & paired & relative & -0.974 & -1.333 & -0.616 & 4.000 & 1.000 \\
+1–2 & C-logG vs C-log & paired & log-rmse & -0.007 & -0.025 & 0.012 & 4.000 & 0.600 \\
+1–2 & C-logG vs C-log & paired & relative & -0.126 & -0.483 & 0.231 & 4.000 & 0.600 \\
+1–2 & C-logG vs C$_0$-logG & paired & log-rmse & -0.057 & -0.090 & -0.024 & 4.000 & 1.000 \\
+1–2 & C-logG vs C$_0$-logG & paired & relative & -0.797 & -1.108 & -0.486 & 4.000 & 1.000 \\
+1–2 & C-oracle vs C-logP & paired & log-rmse & -0.001 & -0.010 & 0.009 & 4.000 & 0.800 \\
+1–2 & C-oracle vs C-logP & paired & relative & -0.023 & -0.238 & 0.192 & 4.000 & 0.800 \\
+1–2 & C-oracle vs C$_0$-oracle & paired & log-rmse & -0.059 & -0.067 & -0.051 & 4.000 & 1.000 \\
+1–2 & C-oracle vs C$_0$-oracle & paired & relative & -0.871 & -1.012 & -0.729 & 4.000 & 1.000 \\
+1–2 & C-logP vs C$_0$-logP & paired & log-rmse & -0.051 & -0.083 & -0.019 & 4.000 & 1.000 \\
+1–2 & C-logP vs C$_0$-logP & paired & relative & -0.757 & -1.143 & -0.370 & 4.000 & 1.000 \\
+\addlinespace
+\multicolumn{9}{l}{\textit{RF}} \\
+all & C-log vs B & welch & log-rmse & -0.019 & -0.032 & -0.005 & 4.730 & 1.000 \\
+all & C-log vs B & welch & relative & -0.168 & -0.279 & -0.057 & 5.010 & 1.000 \\
+all & C-seq vs B & welch & log-rmse & -0.009 & -0.028 & 0.011 & 7.181 & 0.760 \\
+all & C-seq vs B & welch & relative & -0.081 & -0.247 & 0.085 & 7.189 & 0.760 \\
+all & C$_0$-log vs B & welch & log-rmse & 0.029 & 0.013 & 0.044 & 7.999 & 0.000 \\
+all & C$_0$-log vs B & welch & relative & 0.218 & 0.098 & 0.338 & 7.575 & 0.000 \\
+all & C$_0$-seq vs B & welch & log-rmse & 0.057 & 0.027 & 0.088 & 5.444 & 0.000 \\
+all & C$_0$-seq vs B & welch & relative & 0.389 & 0.208 & 0.570 & 6.777 & 0.000 \\
+all & C-seq vs C-log & welch & log-rmse & 0.010 & -0.009 & 0.028 & 4.364 & 0.160 \\
+all & C-seq vs C-log & welch & relative & 0.086 & -0.072 & 0.245 & 4.508 & 0.160 \\
+all & C-logG vs B & welch & log-rmse & 0.010 & -0.004 & 0.023 & 6.656 & 0.200 \\
+all & C-logG vs B & welch & relative & 0.081 & -0.032 & 0.195 & 6.383 & 0.200 \\
+all & C$_0$-logG vs B & welch & log-rmse & 0.080 & 0.058 & 0.101 & 6.726 & 0.000 \\
+all & C$_0$-logG vs B & welch & relative & 0.516 & 0.386 & 0.646 & 7.984 & 0.000 \\
+all & C-oracle vs B & welch & log-rmse & 0.013 & 0.000 & 0.027 & 5.938 & 0.120 \\
+all & C-oracle vs B & welch & relative & 0.109 & -0.002 & 0.221 & 5.621 & 0.120 \\
+all & C-logP vs B & welch & log-rmse & -0.017 & -0.030 & -0.004 & 5.562 & 0.960 \\
+all & C-logP vs B & welch & relative & -0.154 & -0.266 & -0.042 & 6.024 & 0.960 \\
+all & C$_0$-oracle vs B & welch & log-rmse & 0.074 & 0.058 & 0.090 & 7.963 & 0.000 \\
+all & C$_0$-oracle vs B & welch & relative & 0.487 & 0.371 & 0.603 & 7.005 & 0.000 \\
+all & C$_0$-logP vs B & welch & log-rmse & 0.030 & 0.008 & 0.052 & 6.554 & 0.080 \\
+all & C$_0$-logP vs B & welch & relative & 0.224 & 0.064 & 0.383 & 7.387 & 0.080 \\
+all & C-logP vs C-log & welch & log-rmse & 0.001 & -0.005 & 0.008 & 7.007 & 0.440 \\
+all & C-logP vs C-log & welch & relative & 0.014 & -0.047 & 0.074 & 7.088 & 0.440 \\
+all & C-log vs C$_0$-log & paired & log-rmse & -0.047 & -0.060 & -0.034 & 4.000 & 1.000 \\
+all & C-log vs C$_0$-log & paired & relative & -0.386 & -0.476 & -0.296 & 4.000 & 1.000 \\
+all & C-seq vs C$_0$-seq & paired & log-rmse & -0.066 & -0.087 & -0.045 & 4.000 & 1.000 \\
+all & C-seq vs C$_0$-seq & paired & relative & -0.470 & -0.602 & -0.339 & 4.000 & 1.000 \\
+all & C-logG vs C-log & paired & log-rmse & 0.028 & 0.022 & 0.035 & 4.000 & 0.000 \\
+all & C-logG vs C-log & paired & relative & 0.249 & 0.202 & 0.296 & 4.000 & 0.000 \\
+all & C-logG vs C$_0$-logG & paired & log-rmse & -0.070 & -0.093 & -0.047 & 4.000 & 1.000 \\
+all & C-logG vs C$_0$-logG & paired & relative & -0.435 & -0.561 & -0.308 & 4.000 & 1.000 \\
+all & C-oracle vs C-logP & paired & log-rmse & 0.030 & 0.019 & 0.042 & 4.000 & 0.000 \\
+all & C-oracle vs C-logP & paired & relative & 0.263 & 0.167 & 0.360 & 4.000 & 0.000 \\
+all & C-oracle vs C$_0$-oracle & paired & log-rmse & -0.061 & -0.069 & -0.052 & 4.000 & 1.000 \\
+all & C-oracle vs C$_0$-oracle & paired & relative & -0.377 & -0.414 & -0.341 & 4.000 & 1.000 \\
+all & C-logP vs C$_0$-logP & paired & log-rmse & -0.047 & -0.071 & -0.024 & 4.000 & 1.000 \\
+all & C-logP vs C$_0$-logP & paired & relative & -0.378 & -0.547 & -0.209 & 4.000 & 1.000 \\
+selection-range & C-log vs B & welch & log-rmse & 0.001 & -0.007 & 0.008 & 7.944 & 0.440 \\
+selection-range & C-log vs B & welch & relative & 0.006 & -0.081 & 0.093 & 7.922 & 0.440 \\
+selection-range & C-seq vs B & welch & log-rmse & 0.005 & -0.006 & 0.016 & 6.804 & 0.320 \\
+selection-range & C-seq vs B & welch & relative & 0.051 & -0.064 & 0.166 & 7.138 & 0.320 \\
+selection-range & C$_0$-log vs B & welch & log-rmse & 0.055 & 0.043 & 0.066 & 6.651 & 0.000 \\
+selection-range & C$_0$-log vs B & welch & relative & 0.474 & 0.383 & 0.565 & 8.000 & 0.000 \\
+selection-range & C$_0$-seq vs B & welch & log-rmse & 0.083 & 0.057 & 0.110 & 4.539 & 0.000 \\
+selection-range & C$_0$-seq vs B & welch & relative & 0.648 & 0.492 & 0.804 & 5.822 & 0.000 \\
+selection-range & C-seq vs C-log & welch & log-rmse & 0.004 & -0.007 & 0.015 & 6.471 & 0.360 \\
+selection-range & C-seq vs C-log & welch & relative & 0.045 & -0.068 & 0.158 & 6.742 & 0.360 \\
+selection-range & C-logG vs B & welch & log-rmse & 0.001 & -0.010 & 0.013 & 6.729 & 0.480 \\
+selection-range & C-logG vs B & welch & relative & 0.012 & -0.112 & 0.135 & 6.781 & 0.480 \\
+selection-range & C$_0$-logG vs B & welch & log-rmse & 0.086 & 0.056 & 0.117 & 4.405 & 0.000 \\
+selection-range & C$_0$-logG vs B & welch & relative & 0.664 & 0.490 & 0.837 & 5.484 & 0.000 \\
+selection-range & C-oracle vs B & welch & log-rmse & -0.003 & -0.012 & 0.005 & 7.896 & 0.680 \\
+selection-range & C-oracle vs B & welch & relative & -0.039 & -0.137 & 0.059 & 7.871 & 0.680 \\
+selection-range & C-logP vs B & welch & log-rmse & 0.003 & -0.005 & 0.011 & 7.975 & 0.320 \\
+selection-range & C-logP vs B & welch & relative & 0.033 & -0.054 & 0.120 & 7.932 & 0.320 \\
+selection-range & C$_0$-oracle vs B & welch & log-rmse & 0.060 & 0.045 & 0.076 & 5.519 & 0.000 \\
+selection-range & C$_0$-oracle vs B & welch & relative & 0.510 & 0.399 & 0.620 & 7.324 & 0.000 \\
+selection-range & C$_0$-logP vs B & welch & log-rmse & 0.057 & 0.031 & 0.083 & 4.564 & 0.000 \\
+selection-range & C$_0$-logP vs B & welch & relative & 0.479 & 0.299 & 0.660 & 5.383 & 0.000 \\
+selection-range & C-logP vs C-log & welch & log-rmse & 0.002 & -0.005 & 0.010 & 7.994 & 0.360 \\
+selection-range & C-logP vs C-log & welch & relative & 0.027 & -0.056 & 0.109 & 8.000 & 0.360 \\
+selection-range & C-log vs C$_0$-log & paired & log-rmse & -0.054 & -0.069 & -0.040 & 4.000 & 1.000 \\
+selection-range & C-log vs C$_0$-log & paired & relative & -0.467 & -0.582 & -0.353 & 4.000 & 1.000 \\
+selection-range & C-seq vs C$_0$-seq & paired & log-rmse & -0.078 & -0.106 & -0.051 & 4.000 & 1.000 \\
+selection-range & C-seq vs C$_0$-seq & paired & relative & -0.596 & -0.779 & -0.413 & 4.000 & 1.000 \\
+selection-range & C-logG vs C-log & paired & log-rmse & 0.001 & -0.008 & 0.009 & 4.000 & 0.600 \\
+selection-range & C-logG vs C-log & paired & relative & 0.005 & -0.085 & 0.096 & 4.000 & 0.600 \\
+selection-range & C-logG vs C$_0$-logG & paired & log-rmse & -0.085 & -0.114 & -0.056 & 4.000 & 1.000 \\
+selection-range & C-logG vs C$_0$-logG & paired & relative & -0.652 & -0.823 & -0.481 & 4.000 & 1.000 \\
+selection-range & C-oracle vs C-logP & paired & log-rmse & -0.006 & -0.018 & 0.005 & 4.000 & 0.600 \\
+selection-range & C-oracle vs C-logP & paired & relative & -0.072 & -0.197 & 0.052 & 4.000 & 0.600 \\
+selection-range & C-oracle vs C$_0$-oracle & paired & log-rmse & -0.064 & -0.078 & -0.050 & 4.000 & 1.000 \\
+selection-range & C-oracle vs C$_0$-oracle & paired & relative & -0.549 & -0.651 & -0.447 & 4.000 & 1.000 \\
+selection-range & C-logP vs C$_0$-logP & paired & log-rmse & -0.054 & -0.084 & -0.024 & 4.000 & 1.000 \\
+selection-range & C-logP vs C$_0$-logP & paired & relative & -0.446 & -0.673 & -0.219 & 4.000 & 1.000 \\
+decision-range & C-log vs B & welch & log-rmse & -0.006 & -0.017 & 0.006 & 7.966 & 0.720 \\
+decision-range & C-log vs B & welch & relative & -0.056 & -0.172 & 0.060 & 7.998 & 0.720 \\
+decision-range & C-seq vs B & welch & log-rmse & -0.002 & -0.017 & 0.012 & 7.265 & 0.560 \\
+decision-range & C-seq vs B & welch & relative & -0.025 & -0.172 & 0.122 & 7.179 & 0.560 \\
+decision-range & C$_0$-log vs B & welch & log-rmse & 0.068 & 0.037 & 0.098 & 4.833 & 0.000 \\
+decision-range & C$_0$-log vs B & welch & relative & 0.506 & 0.314 & 0.698 & 5.974 & 0.000 \\
+decision-range & C$_0$-seq vs B & welch & log-rmse & 0.112 & 0.072 & 0.152 & 4.507 & 0.000 \\
+decision-range & C$_0$-seq vs B & welch & relative & 0.739 & 0.548 & 0.931 & 5.984 & 0.000 \\
+decision-range & C-seq vs C-log & welch & log-rmse & 0.003 & -0.011 & 0.018 & 7.009 & 0.440 \\
+decision-range & C-seq vs C-log & welch & relative & 0.031 & -0.115 & 0.177 & 7.111 & 0.440 \\
+decision-range & C-logG vs B & welch & log-rmse & -0.007 & -0.026 & 0.012 & 6.016 & 0.680 \\
+decision-range & C-logG vs B & welch & relative & -0.080 & -0.281 & 0.121 & 5.815 & 0.680 \\
+decision-range & C$_0$-logG vs B & welch & log-rmse & 0.093 & 0.052 & 0.134 & 4.478 & 0.000 \\
+decision-range & C$_0$-logG vs B & welch & relative & 0.640 & 0.420 & 0.861 & 5.518 & 0.000 \\
+decision-range & C-oracle vs B & welch & log-rmse & -0.013 & -0.024 & -0.003 & 7.205 & 0.880 \\
+decision-range & C-oracle vs B & welch & relative & -0.138 & -0.245 & -0.032 & 7.637 & 0.880 \\
+decision-range & C-logP vs B & welch & log-rmse & 0.003 & -0.010 & 0.017 & 7.523 & 0.360 \\
+decision-range & C-logP vs B & welch & relative & 0.032 & -0.106 & 0.170 & 7.487 & 0.360 \\
+decision-range & C$_0$-oracle vs B & welch & log-rmse & 0.062 & 0.029 & 0.096 & 4.719 & 0.000 \\
+decision-range & C$_0$-oracle vs B & welch & relative & 0.471 & 0.254 & 0.688 & 5.566 & 0.000 \\
+decision-range & C$_0$-logP vs B & welch & log-rmse & 0.062 & 0.039 & 0.084 & 5.543 & 0.000 \\
+decision-range & C$_0$-logP vs B & welch & relative & 0.474 & 0.325 & 0.622 & 7.113 & 0.000 \\
+decision-range & C-logP vs C-log & welch & log-rmse & 0.009 & -0.005 & 0.023 & 7.289 & 0.240 \\
+decision-range & C-logP vs C-log & welch & relative & 0.088 & -0.049 & 0.225 & 7.426 & 0.240 \\
+decision-range & C-log vs C$_0$-log & paired & log-rmse & -0.073 & -0.102 & -0.044 & 4.000 & 1.000 \\
+decision-range & C-log vs C$_0$-log & paired & relative & -0.562 & -0.751 & -0.373 & 4.000 & 1.000 \\
+decision-range & C-seq vs C$_0$-seq & paired & log-rmse & -0.114 & -0.154 & -0.075 & 4.000 & 1.000 \\
+decision-range & C-seq vs C$_0$-seq & paired & relative & -0.764 & -0.975 & -0.554 & 4.000 & 1.000 \\
+decision-range & C-logG vs C-log & paired & log-rmse & -0.002 & -0.014 & 0.011 & 4.000 & 0.600 \\
+decision-range & C-logG vs C-log & paired & relative & -0.024 & -0.157 & 0.109 & 4.000 & 0.600 \\
+decision-range & C-logG vs C$_0$-logG & paired & log-rmse & -0.100 & -0.133 & -0.066 & 4.000 & 1.000 \\
+decision-range & C-logG vs C$_0$-logG & paired & relative & -0.721 & -0.909 & -0.533 & 4.000 & 1.000 \\
+decision-range & C-oracle vs C-logP & paired & log-rmse & -0.017 & -0.036 & 0.003 & 4.000 & 0.800 \\
+decision-range & C-oracle vs C-logP & paired & relative & -0.171 & -0.372 & 0.031 & 4.000 & 0.800 \\
+decision-range & C-oracle vs C$_0$-oracle & paired & log-rmse & -0.076 & -0.106 & -0.046 & 4.000 & 1.000 \\
+decision-range & C-oracle vs C$_0$-oracle & paired & relative & -0.609 & -0.793 & -0.426 & 4.000 & 1.000 \\
+decision-range & C-logP vs C$_0$-logP & paired & log-rmse & -0.058 & -0.093 & -0.024 & 4.000 & 1.000 \\
+decision-range & C-logP vs C$_0$-logP & paired & relative & -0.442 & -0.702 & -0.181 & 4.000 & 1.000 \\
+0.5–1 & C-log vs B & welch & log-rmse & -0.036 & -0.055 & -0.017 & 7.724 & 0.960 \\
+0.5–1 & C-log vs B & welch & relative & -0.304 & -0.461 & -0.146 & 7.973 & 0.960 \\
+0.5–1 & C-seq vs B & welch & log-rmse & -0.031 & -0.059 & -0.003 & 6.921 & 0.880 \\
+0.5–1 & C-seq vs B & welch & relative & -0.268 & -0.531 & -0.006 & 5.811 & 0.880 \\
+0.5–1 & C$_0$-log vs B & welch & log-rmse & -0.025 & -0.055 & 0.005 & 6.494 & 0.800 \\
+0.5–1 & C$_0$-log vs B & welch & relative & -0.215 & -0.485 & 0.056 & 5.706 & 0.800 \\
+0.5–1 & C$_0$-seq vs B & welch & log-rmse & 0.013 & -0.032 & 0.058 & 5.189 & 0.440 \\
+0.5–1 & C$_0$-seq vs B & welch & relative & 0.071 & -0.212 & 0.354 & 5.570 & 0.440 \\
+0.5–1 & C-seq vs C-log & welch & log-rmse & 0.005 & -0.022 & 0.032 & 6.177 & 0.400 \\
+0.5–1 & C-seq vs C-log & welch & relative & 0.035 & -0.228 & 0.299 & 6.007 & 0.400 \\
+0.5–1 & C-logG vs B & welch & log-rmse & -0.035 & -0.064 & -0.005 & 6.661 & 0.880 \\
+0.5–1 & C-logG vs B & welch & relative & -0.303 & -0.554 & -0.052 & 5.975 & 0.880 \\
+0.5–1 & C$_0$-logG vs B & welch & log-rmse & -0.018 & -0.052 & 0.016 & 6.003 & 0.720 \\
+0.5–1 & C$_0$-logG vs B & welch & relative & -0.156 & -0.428 & 0.116 & 5.690 & 0.720 \\
+0.5–1 & C-oracle vs B & welch & log-rmse & -0.050 & -0.069 & -0.031 & 7.630 & 1.000 \\
+0.5–1 & C-oracle vs B & welch & relative & -0.454 & -0.630 & -0.279 & 7.593 & 1.000 \\
+0.5–1 & C-logP vs B & welch & log-rmse & -0.026 & -0.046 & -0.006 & 7.913 & 0.920 \\
+0.5–1 & C-logP vs B & welch & relative & -0.208 & -0.366 & -0.050 & 7.964 & 0.920 \\
+0.5–1 & C$_0$-oracle vs B & welch & log-rmse & -0.019 & -0.050 & 0.012 & 6.372 & 0.760 \\
+0.5–1 & C$_0$-oracle vs B & welch & relative & -0.161 & -0.434 & 0.112 & 5.683 & 0.760 \\
+0.5–1 & C$_0$-logP vs B & welch & log-rmse & -0.022 & -0.051 & 0.007 & 6.677 & 0.760 \\
+0.5–1 & C$_0$-logP vs B & welch & relative & -0.186 & -0.441 & 0.069 & 5.909 & 0.760 \\
+0.5–1 & C-logP vs C-log & welch & log-rmse & 0.010 & -0.008 & 0.028 & 7.942 & 0.200 \\
+0.5–1 & C-logP vs C-log & welch & relative & 0.096 & -0.066 & 0.258 & 7.999 & 0.200 \\
+0.5–1 & C-log vs C$_0$-log & paired & log-rmse & -0.011 & -0.037 & 0.015 & 4.000 & 0.800 \\
+0.5–1 & C-log vs C$_0$-log & paired & relative & -0.089 & -0.332 & 0.154 & 4.000 & 0.800 \\
+0.5–1 & C-seq vs C$_0$-seq & paired & log-rmse & -0.044 & -0.106 & 0.018 & 4.000 & 1.000 \\
+0.5–1 & C-seq vs C$_0$-seq & paired & relative & -0.339 & -0.797 & 0.119 & 4.000 & 1.000 \\
+0.5–1 & C-logG vs C-log & paired & log-rmse & 0.001 & -0.028 & 0.031 & 4.000 & 0.800 \\
+0.5–1 & C-logG vs C-log & paired & relative & 0.001 & -0.252 & 0.254 & 4.000 & 0.800 \\
+0.5–1 & C-logG vs C$_0$-logG & paired & log-rmse & -0.017 & -0.041 & 0.008 & 4.000 & 0.800 \\
+0.5–1 & C-logG vs C$_0$-logG & paired & relative & -0.147 & -0.375 & 0.081 & 4.000 & 0.800 \\
+0.5–1 & C-oracle vs C-logP & paired & log-rmse & -0.024 & -0.051 & 0.002 & 4.000 & 0.800 \\
+0.5–1 & C-oracle vs C-logP & paired & relative & -0.247 & -0.509 & 0.015 & 4.000 & 0.800 \\
+0.5–1 & C-oracle vs C$_0$-oracle & paired & log-rmse & -0.031 & -0.049 & -0.014 & 4.000 & 1.000 \\
+0.5–1 & C-oracle vs C$_0$-oracle & paired & relative & -0.293 & -0.418 & -0.168 & 4.000 & 1.000 \\
+0.5–1 & C-logP vs C$_0$-logP & paired & log-rmse & -0.004 & -0.028 & 0.020 & 4.000 & 0.400 \\
+0.5–1 & C-logP vs C$_0$-logP & paired & relative & -0.022 & -0.226 & 0.182 & 4.000 & 0.400 \\
+1–2 & C-log vs B & welch & log-rmse & 0.016 & 0.007 & 0.025 & 7.984 & 0.000 \\
+1–2 & C-log vs B & welch & relative & 0.194 & 0.086 & 0.302 & 7.557 & 0.000 \\
+1–2 & C-seq vs B & welch & log-rmse & 0.018 & 0.008 & 0.029 & 7.514 & 0.000 \\
+1–2 & C-seq vs B & welch & relative & 0.213 & 0.092 & 0.335 & 7.989 & 0.000 \\
+1–2 & C$_0$-log vs B & welch & log-rmse & 0.115 & 0.082 & 0.147 & 4.428 & 0.000 \\
+1–2 & C$_0$-log vs B & welch & relative & 0.914 & 0.733 & 1.094 & 6.303 & 0.000 \\
+1–2 & C$_0$-seq vs B & welch & log-rmse & 0.162 & 0.120 & 0.204 & 4.255 & 0.000 \\
+1–2 & C$_0$-seq vs B & welch & relative & 1.135 & 0.947 & 1.323 & 6.139 & 0.000 \\
+1–2 & C-seq vs C-log & welch & log-rmse & 0.002 & -0.008 & 0.012 & 7.355 & 0.360 \\
+1–2 & C-seq vs C-log & welch & relative & 0.019 & -0.092 & 0.131 & 7.433 & 0.360 \\
+1–2 & C-logG vs B & welch & log-rmse & 0.012 & -0.011 & 0.035 & 4.867 & 0.240 \\
+1–2 & C-logG vs B & welch & relative & 0.134 & -0.100 & 0.367 & 5.420 & 0.240 \\
+1–2 & C$_0$-logG vs B & welch & log-rmse & 0.145 & 0.097 & 0.193 & 4.197 & 0.000 \\
+1–2 & C$_0$-logG vs B & welch & relative & 1.057 & 0.830 & 1.285 & 5.490 & 0.000 \\
+1–2 & C-oracle vs B & welch & log-rmse & 0.012 & 0.003 & 0.020 & 7.933 & 0.080 \\
+1–2 & C-oracle vs B & welch & relative & 0.145 & 0.037 & 0.253 & 7.540 & 0.080 \\
+1–2 & C-logP vs B & welch & log-rmse & 0.024 & 0.009 & 0.039 & 5.865 & 0.000 \\
+1–2 & C-logP vs B & welch & relative & 0.274 & 0.115 & 0.432 & 6.901 & 0.000 \\
+1–2 & C$_0$-oracle vs B & welch & log-rmse & 0.105 & 0.069 & 0.142 & 4.345 & 0.000 \\
+1–2 & C$_0$-oracle vs B & welch & relative & 0.861 & 0.651 & 1.072 & 5.727 & 0.000 \\
+1–2 & C$_0$-logP vs B & welch & log-rmse & 0.104 & 0.070 & 0.139 & 4.376 & 0.000 \\
+1–2 & C$_0$-logP vs B & welch & relative & 0.857 & 0.659 & 1.056 & 5.933 & 0.000 \\
+1–2 & C-logP vs C-log & welch & log-rmse & 0.008 & -0.007 & 0.023 & 5.720 & 0.200 \\
+1–2 & C-logP vs C-log & welch & relative & 0.080 & -0.074 & 0.234 & 5.962 & 0.200 \\
+1–2 & C-log vs C$_0$-log & paired & log-rmse & -0.098 & -0.130 & -0.066 & 4.000 & 1.000 \\
+1–2 & C-log vs C$_0$-log & paired & relative & -0.720 & -0.904 & -0.535 & 4.000 & 1.000 \\
+1–2 & C-seq vs C$_0$-seq & paired & log-rmse & -0.144 & -0.180 & -0.108 & 4.000 & 1.000 \\
+1–2 & C-seq vs C$_0$-seq & paired & relative & -0.921 & -1.054 & -0.789 & 4.000 & 1.000 \\
+1–2 & C-logG vs C-log & paired & log-rmse & -0.004 & -0.024 & 0.015 & 4.000 & 0.800 \\
+1–2 & C-logG vs C-log & paired & relative & -0.060 & -0.263 & 0.143 & 4.000 & 0.800 \\
+1–2 & C-logG vs C$_0$-logG & paired & log-rmse & -0.133 & -0.175 & -0.091 & 4.000 & 1.000 \\
+1–2 & C-logG vs C$_0$-logG & paired & relative & -0.924 & -1.149 & -0.698 & 4.000 & 1.000 \\
+1–2 & C-oracle vs C-logP & paired & log-rmse & -0.012 & -0.032 & 0.007 & 4.000 & 0.800 \\
+1–2 & C-oracle vs C-logP & paired & relative & -0.128 & -0.336 & 0.079 & 4.000 & 0.800 \\
+1–2 & C-oracle vs C$_0$-oracle & paired & log-rmse & -0.094 & -0.130 & -0.057 & 4.000 & 1.000 \\
+1–2 & C-oracle vs C$_0$-oracle & paired & relative & -0.716 & -0.934 & -0.498 & 4.000 & 1.000 \\
+1–2 & C-logP vs C$_0$-logP & paired & log-rmse & -0.080 & -0.127 & -0.033 & 4.000 & 1.000 \\
+1–2 & C-logP vs C$_0$-logP & paired & relative & -0.584 & -0.907 & -0.260 & 4.000 & 1.000 \\
+\end{longtable}
+\endgroup

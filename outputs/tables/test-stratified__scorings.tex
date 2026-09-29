@@ -1,31 +1,36 @@
 \begin{table}[htbp]
 \centering
-\caption{Selection-criterion sensitivity on test-stratified: global RMSE, minimax and within-family rank under each scoring.}
+\caption{Selection-criterion sensitivity on test-stratified: global RMSE, minimax and within-family rank under each scoring. C$_0$, C$_0$-log, C$_0$-seq and C$_0$-logG are ablations: they train on the added points without the seed and carry no budget.}
 \label{tab:test-stratified:scorings}
-\begin{tabular}{lrrrrrrr}
+\begin{tabular}{lrrrrrr}
 \toprule
-family & arm & RMSE log-rmse & minimax log-rmse & rank log-rmse & RMSE fos-rmse & minimax fos-rmse & rank fos-rmse \\
+ & \multicolumn{3}{c}{log-rmse} & \multicolumn{3}{c}{fos-rmse} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7}
+arm & RMSE & minimax & rank & RMSE & minimax & rank \\
 \midrule
-rf & A & 0.832 & 1.934 & 9 & 0.843 & 1.956 & 10 \\
-rf & B & 0.548 & 1.226 & 5 & 0.548 & 1.226 & 5 \\
-rf & C & 0.437 & 0.941 & 2 & 0.437 & 0.941 & 2 \\
-rf & C0 (ablation) & 0.464 & 0.982 & 3 & 0.464 & 0.982 & 3 \\
-rf & C-log & 0.530 & 1.157 & 4 & 0.530 & 1.157 & 4 \\
-rf & C0-log (ablation) & 0.704 & 1.357 & 8 & 0.704 & 1.357 & 8 \\
-rf & C-seq & 0.421 & 0.859 & 1 & 0.421 & 0.859 & 1 \\
-rf & C0-seq (ablation) & 0.631 & 1.048 & 6 & 0.631 & 1.048 & 6 \\
-rf & C-logG & 0.667 & 1.599 & 7 & 0.667 & 1.599 & 7 \\
-rf & C0-logG (ablation) & 0.841 & 1.847 & 10 & 0.841 & 1.847 & 9 \\
-gbm & A & 0.264 & 0.521 & 6 & 0.277 & 0.545 & 6 \\
-gbm & B & 0.147 & 0.246 & 1 & 0.214 & 0.434 & 2 \\
-gbm & C & 0.198 & 0.377 & 2 & 0.192 & 0.365 & 1 \\
-gbm & C0 (ablation) & 0.333 & 0.615 & 9 & 0.304 & 0.600 & 7 \\
-gbm & C-log & 0.241 & 0.524 & 5 & 0.259 & 0.542 & 5 \\
-gbm & C0-log (ablation) & 0.308 & 0.558 & 7 & 0.317 & 0.580 & 8 \\
-gbm & C-seq & 0.216 & 0.355 & 3 & 0.215 & 0.370 & 3 \\
-gbm & C0-seq (ablation) & 0.320 & 0.453 & 8 & 0.348 & 0.478 & 9 \\
-gbm & C-logG & 0.231 & 0.470 & 4 & 0.231 & 0.470 & 4 \\
-gbm & C0-logG (ablation) & 0.391 & 0.791 & 10 & 0.417 & 0.865 & 10 \\
+\multicolumn{7}{l}{\textit{RF}} \\
+A & 0.832 & 1.934 & 9 & 0.843 & 1.956 & 10 \\
+B & 0.548 & 1.226 & 5 & 0.548 & 1.226 & 5 \\
+C & 0.437 & 0.941 & 2 & 0.437 & 0.941 & 2 \\
+C$_0$ & 0.464 & 0.982 & 3 & 0.464 & 0.982 & 3 \\
+C-log & 0.530 & 1.157 & 4 & 0.530 & 1.157 & 4 \\
+C$_0$-log & 0.704 & 1.357 & 8 & 0.704 & 1.357 & 8 \\
+C-seq & 0.421 & 0.859 & 1 & 0.421 & 0.859 & 1 \\
+C$_0$-seq & 0.631 & 1.048 & 6 & 0.631 & 1.048 & 6 \\
+C-logG & 0.667 & 1.599 & 7 & 0.667 & 1.599 & 7 \\
+C$_0$-logG & 0.841 & 1.847 & 10 & 0.841 & 1.847 & 9 \\
+\addlinespace
+\multicolumn{7}{l}{\textit{GBM}} \\
+A & 0.264 & 0.521 & 6 & 0.277 & 0.545 & 6 \\
+B & 0.147 & 0.246 & 1 & 0.214 & 0.434 & 2 \\
+C & 0.198 & 0.377 & 2 & 0.192 & 0.365 & 1 \\
+C$_0$ & 0.333 & 0.615 & 9 & 0.304 & 0.600 & 7 \\
+C-log & 0.241 & 0.524 & 5 & 0.259 & 0.542 & 5 \\
+C$_0$-log & 0.308 & 0.558 & 7 & 0.317 & 0.580 & 8 \\
+C-seq & 0.216 & 0.355 & 3 & 0.215 & 0.370 & 3 \\
+C$_0$-seq & 0.320 & 0.453 & 8 & 0.348 & 0.478 & 9 \\
+C-logG & 0.231 & 0.470 & 4 & 0.231 & 0.470 & 4 \\
+C$_0$-logG & 0.391 & 0.791 & 10 & 0.417 & 0.865 & 10 \\
 \bottomrule
 \end{tabular}
 \end{table}

@@ -1,61 +1,76 @@
 \begin{table}[htbp]
 \centering
-\caption{Outside the selection range, where nothing was allocated. 'density' rows are the spillover itself: training points that landed there because the gate is on a predicted FOS. 'error' rows are the test error in those bins, with the number of test points; rows with fewer than 10 are thin and carry no statement in the text. Differences against B with descriptive 95\% Welch intervals over r1-r5. Both sides are read from the replication metrics, so both use the half-open reporting zones and the outer bin is FOS >= 6.}
-\label{tab:structural:outside}
-\begin{tabular}{lrrrrrrrrr}
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{Outside the selection range, where nothing was allocated. 'density' rows are the spillover itself: training points that landed there because the gate is on a predicted FOS. 'error' rows are the test error in those bins, with the number of test points; rows with fewer than 10 are thin and carry no statement in the text. Differences against B with descriptive 95\% Welch intervals over r1-r5. Both sides are read from the replication metrics, so both use the half-open reporting zones and the outer bin is FOS >= 6. This table: the 'density' rows.}
+\label{tab:structural:outside:density}
+\begin{tabular}{lrrrr}
 \toprule
-kind & arm & side & family & test & test n & thin & diff & ci lo & ci hi \\
+arm & side & diff & ci lo & ci hi \\
 \midrule
-density & C-log & at or above 6 & -- & -- & -- & -- & -0.400 & -3.364 & 2.564 \\
-density & C-log & below 0.5 & -- & -- & -- & -- & 35.800 & 29.077 & 42.523 \\
-density & C-logG & at or above 6 & -- & -- & -- & -- & -15.800 & -20.143 & -11.457 \\
-density & C-logG & below 0.5 & -- & -- & -- & -- & 14.400 & 7.526 & 21.274 \\
-density & C-logP & at or above 6 & -- & -- & -- & -- & 2.600 & -0.364 & 5.564 \\
-density & C-logP & below 0.5 & -- & -- & -- & -- & 35.000 & 26.931 & 43.069 \\
-density & C-oracle & at or above 6 & -- & -- & -- & -- & -23.400 & -26.390 & -20.410 \\
-density & C-oracle & below 0.5 & -- & -- & -- & -- & -7.800 & -10.631 & -4.969 \\
-density & C-seq & at or above 6 & -- & -- & -- & -- & -0.600 & -5.427 & 4.227 \\
-density & C-seq & below 0.5 & -- & -- & -- & -- & 26.600 & 22.385 & 30.815 \\
-error & C-log & at or above 6 & rf & test-natural & 24 & no & -0.034 & -0.066 & -0.001 \\
-error & C-log & at or above 6 & rf & test-stratified & 23 & no & -0.069 & -0.112 & -0.026 \\
-error & C-log & at or above 6 & gbm & test-natural & 24 & no & 0.035 & 0.023 & 0.048 \\
-error & C-log & at or above 6 & gbm & test-stratified & 23 & no & -0.006 & -0.019 & 0.007 \\
-error & C-log & below 0.5 & rf & test-natural & 10 & no & -0.056 & -0.145 & 0.032 \\
-error & C-log & below 0.5 & rf & test-stratified & 3 & yes & -0.089 & -0.196 & 0.018 \\
-error & C-log & below 0.5 & gbm & test-natural & 10 & no & -0.023 & -0.065 & 0.018 \\
-error & C-log & below 0.5 & gbm & test-stratified & 3 & yes & -0.026 & -0.080 & 0.029 \\
-error & C-logG & at or above 6 & rf & test-natural & 24 & no & 0.027 & -0.004 & 0.057 \\
-error & C-logG & at or above 6 & rf & test-stratified & 23 & no & 0.041 & -0.001 & 0.084 \\
-error & C-logG & at or above 6 & gbm & test-natural & 24 & no & 0.030 & 0.018 & 0.041 \\
-error & C-logG & at or above 6 & gbm & test-stratified & 23 & no & 0.008 & -0.008 & 0.024 \\
-error & C-logG & below 0.5 & rf & test-natural & 10 & no & 0.044 & -0.045 & 0.133 \\
-error & C-logG & below 0.5 & rf & test-stratified & 3 & yes & -0.058 & -0.145 & 0.029 \\
-error & C-logG & below 0.5 & gbm & test-natural & 10 & no & 0.004 & -0.033 & 0.041 \\
-error & C-logG & below 0.5 & gbm & test-stratified & 3 & yes & -0.007 & -0.063 & 0.050 \\
-error & C-logP & at or above 6 & rf & test-natural & 24 & no & -0.044 & -0.074 & -0.014 \\
-error & C-logP & at or above 6 & rf & test-stratified & 23 & no & -0.066 & -0.108 & -0.023 \\
-error & C-logP & at or above 6 & gbm & test-natural & 24 & no & 0.029 & 0.016 & 0.043 \\
-error & C-logP & at or above 6 & gbm & test-stratified & 23 & no & -0.005 & -0.018 & 0.008 \\
-error & C-logP & below 0.5 & rf & test-natural & 10 & no & -0.043 & -0.132 & 0.045 \\
-error & C-logP & below 0.5 & rf & test-stratified & 3 & yes & -0.120 & -0.214 & -0.025 \\
-error & C-logP & below 0.5 & gbm & test-natural & 10 & no & -0.014 & -0.052 & 0.023 \\
-error & C-logP & below 0.5 & gbm & test-stratified & 3 & yes & -0.027 & -0.087 & 0.034 \\
-error & C-oracle & at or above 6 & rf & test-natural & 24 & no & 0.026 & -0.005 & 0.056 \\
-error & C-oracle & at or above 6 & rf & test-stratified & 23 & no & 0.057 & 0.015 & 0.100 \\
-error & C-oracle & at or above 6 & gbm & test-natural & 24 & no & 0.037 & 0.024 & 0.049 \\
-error & C-oracle & at or above 6 & gbm & test-stratified & 23 & no & 0.007 & -0.009 & 0.022 \\
-error & C-oracle & below 0.5 & rf & test-natural & 10 & no & 0.063 & -0.026 & 0.151 \\
-error & C-oracle & below 0.5 & rf & test-stratified & 3 & yes & -0.005 & -0.092 & 0.083 \\
-error & C-oracle & below 0.5 & gbm & test-natural & 10 & no & 0.007 & -0.030 & 0.044 \\
-error & C-oracle & below 0.5 & gbm & test-stratified & 3 & yes & -0.012 & -0.068 & 0.043 \\
-error & C-seq & at or above 6 & rf & test-natural & 24 & no & -0.023 & -0.054 & 0.008 \\
-error & C-seq & at or above 6 & rf & test-stratified & 23 & no & -0.049 & -0.094 & -0.003 \\
-error & C-seq & at or above 6 & gbm & test-natural & 24 & no & 0.035 & 0.022 & 0.048 \\
-error & C-seq & at or above 6 & gbm & test-stratified & 23 & no & 0.006 & -0.010 & 0.021 \\
-error & C-seq & below 0.5 & rf & test-natural & 10 & no & -0.017 & -0.106 & 0.072 \\
-error & C-seq & below 0.5 & rf & test-stratified & 3 & yes & -0.029 & -0.193 & 0.136 \\
-error & C-seq & below 0.5 & gbm & test-natural & 10 & no & -0.011 & -0.048 & 0.026 \\
-error & C-seq & below 0.5 & gbm & test-stratified & 3 & yes & -0.024 & -0.079 & 0.031 \\
+C-log & at or above 6 & -0.400 & -3.364 & 2.564 \\
+C-log & below 0.5 & 35.800 & 29.077 & 42.523 \\
+C-logG & at or above 6 & -15.800 & -20.143 & -11.457 \\
+C-logG & below 0.5 & 14.400 & 7.526 & 21.274 \\
+C-logP & at or above 6 & 2.600 & -0.364 & 5.564 \\
+C-logP & below 0.5 & 35.000 & 26.931 & 43.069 \\
+C-oracle & at or above 6 & -23.400 & -26.390 & -20.410 \\
+C-oracle & below 0.5 & -7.800 & -10.631 & -4.969 \\
+C-seq & at or above 6 & -0.600 & -5.427 & 4.227 \\
+C-seq & below 0.5 & 26.600 & 22.385 & 30.815 \\
+\bottomrule
+\end{tabular}
+\end{table}
+\begin{table}[htbp]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{Outside the selection range, where nothing was allocated. 'density' rows are the spillover itself: training points that landed there because the gate is on a predicted FOS. 'error' rows are the test error in those bins, with the number of test points; rows with fewer than 10 are thin and carry no statement in the text. Differences against B with descriptive 95\% Welch intervals over r1-r5. Both sides are read from the replication metrics, so both use the half-open reporting zones and the outer bin is FOS >= 6. This table: the 'error' rows.}
+\label{tab:structural:outside:error}
+\begin{tabular}{lrrrrrrrr}
+\toprule
+arm & side & family & test & test n & thin & diff & ci lo & ci hi \\
+\midrule
+C-log & at or above 6 & rf & test-natural & 24 & no & -0.034 & -0.066 & -0.001 \\
+C-log & at or above 6 & rf & test-stratified & 23 & no & -0.069 & -0.112 & -0.026 \\
+C-log & at or above 6 & gbm & test-natural & 24 & no & 0.035 & 0.023 & 0.048 \\
+C-log & at or above 6 & gbm & test-stratified & 23 & no & -0.006 & -0.019 & 0.007 \\
+C-log & below 0.5 & rf & test-natural & 10 & no & -0.056 & -0.145 & 0.032 \\
+C-log & below 0.5 & rf & test-stratified & 3 & yes & -0.089 & -0.196 & 0.018 \\
+C-log & below 0.5 & gbm & test-natural & 10 & no & -0.023 & -0.065 & 0.018 \\
+C-log & below 0.5 & gbm & test-stratified & 3 & yes & -0.026 & -0.080 & 0.029 \\
+C-logG & at or above 6 & rf & test-natural & 24 & no & 0.027 & -0.004 & 0.057 \\
+C-logG & at or above 6 & rf & test-stratified & 23 & no & 0.041 & -0.001 & 0.084 \\
+C-logG & at or above 6 & gbm & test-natural & 24 & no & 0.030 & 0.018 & 0.041 \\
+C-logG & at or above 6 & gbm & test-stratified & 23 & no & 0.008 & -0.008 & 0.024 \\
+C-logG & below 0.5 & rf & test-natural & 10 & no & 0.044 & -0.045 & 0.133 \\
+C-logG & below 0.5 & rf & test-stratified & 3 & yes & -0.058 & -0.145 & 0.029 \\
+C-logG & below 0.5 & gbm & test-natural & 10 & no & 0.004 & -0.033 & 0.041 \\
+C-logG & below 0.5 & gbm & test-stratified & 3 & yes & -0.007 & -0.063 & 0.050 \\
+C-logP & at or above 6 & rf & test-natural & 24 & no & -0.044 & -0.074 & -0.014 \\
+C-logP & at or above 6 & rf & test-stratified & 23 & no & -0.066 & -0.108 & -0.023 \\
+C-logP & at or above 6 & gbm & test-natural & 24 & no & 0.029 & 0.016 & 0.043 \\
+C-logP & at or above 6 & gbm & test-stratified & 23 & no & -0.005 & -0.018 & 0.008 \\
+C-logP & below 0.5 & rf & test-natural & 10 & no & -0.043 & -0.132 & 0.045 \\
+C-logP & below 0.5 & rf & test-stratified & 3 & yes & -0.120 & -0.214 & -0.025 \\
+C-logP & below 0.5 & gbm & test-natural & 10 & no & -0.014 & -0.052 & 0.023 \\
+C-logP & below 0.5 & gbm & test-stratified & 3 & yes & -0.027 & -0.087 & 0.034 \\
+C-oracle & at or above 6 & rf & test-natural & 24 & no & 0.026 & -0.005 & 0.056 \\
+C-oracle & at or above 6 & rf & test-stratified & 23 & no & 0.057 & 0.015 & 0.100 \\
+C-oracle & at or above 6 & gbm & test-natural & 24 & no & 0.037 & 0.024 & 0.049 \\
+C-oracle & at or above 6 & gbm & test-stratified & 23 & no & 0.007 & -0.009 & 0.022 \\
+C-oracle & below 0.5 & rf & test-natural & 10 & no & 0.063 & -0.026 & 0.151 \\
+C-oracle & below 0.5 & rf & test-stratified & 3 & yes & -0.005 & -0.092 & 0.083 \\
+C-oracle & below 0.5 & gbm & test-natural & 10 & no & 0.007 & -0.030 & 0.044 \\
+C-oracle & below 0.5 & gbm & test-stratified & 3 & yes & -0.012 & -0.068 & 0.043 \\
+C-seq & at or above 6 & rf & test-natural & 24 & no & -0.023 & -0.054 & 0.008 \\
+C-seq & at or above 6 & rf & test-stratified & 23 & no & -0.049 & -0.094 & -0.003 \\
+C-seq & at or above 6 & gbm & test-natural & 24 & no & 0.035 & 0.022 & 0.048 \\
+C-seq & at or above 6 & gbm & test-stratified & 23 & no & 0.006 & -0.010 & 0.021 \\
+C-seq & below 0.5 & rf & test-natural & 10 & no & -0.017 & -0.106 & 0.072 \\
+C-seq & below 0.5 & rf & test-stratified & 3 & yes & -0.029 & -0.193 & 0.136 \\
+C-seq & below 0.5 & gbm & test-natural & 10 & no & -0.011 & -0.048 & 0.026 \\
+C-seq & below 0.5 & gbm & test-stratified & 3 & yes & -0.024 & -0.079 & 0.031 \\
 \bottomrule
 \end{tabular}
 \end{table}

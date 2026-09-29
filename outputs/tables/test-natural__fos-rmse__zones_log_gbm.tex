@@ -1,10 +1,12 @@
 \begin{table}[htbp]
 \centering
-\caption{Zone RMSE (log FOS) on test-natural, gbm.}
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{Zone RMSE (log FOS) on test-natural, gbm. C$_0$, C$_0$-log, C$_0$-seq and C$_0$-logG are ablations: they train on the added points without the seed and carry no budget.}
 \label{tab:test-natural__fos-rmse:zones_log:gbm}
 \begin{tabular}{lrrrrrrrrrrr}
 \toprule
-zone & n & A & B & C & C0 (ablation) & C-log & C0-log (ablation) & C-seq & C0-seq (ablation) & C-logG & C0-logG (ablation) \\
+zone & n & A & B & C & C$_0$ & C-log & C$_0$-log & C-seq & C$_0$-seq & C-logG & C$_0$-logG \\
 \midrule
 FOS < 0.5 & 10 & 0.288 & 0.201 & 0.128 & 0.423 & 0.096 & 0.167 & 0.132 & 0.284 & 0.183 & 0.250 \\
 0.5–1 & 33 & 0.086 & 0.065 & 0.060 & 0.134 & 0.052 & 0.086 & 0.047 & 0.068 & 0.056 & 0.074 \\

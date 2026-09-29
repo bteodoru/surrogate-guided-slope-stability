@@ -1,31 +1,44 @@
 \begin{table}[htbp]
 \centering
-\caption{Hyper-parameters selected by CV under each scoring.}
+\caption{Hyper-parameters selected by CV under each scoring, one column per hyper-parameter (scikit-learn names: rate: learning\_rate; max feat.: max\_features; iter.: max\_iter; leaves: max\_leaf\_nodes; min leaf: min\_samples\_leaf). C$_0$, C$_0$-log, C$_0$-seq and C$_0$-logG are ablations: they train on the added points without the seed and carry no budget.}
 \label{tab:scorings:params}
-\begin{tabular}{lrrr}
+\textit{RF}\par\smallskip
+\begin{tabular}{lrrrr}
 \toprule
-family & arm & log-rmse & fos-rmse \\
+ & \multicolumn{2}{c}{log-rmse} & \multicolumn{2}{c}{fos-rmse} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5}
+arm & max feat. & min leaf & max feat. & min leaf \\
 \midrule
-rf & A & max\_features=1, min\_samples\_leaf=1 & max\_features=1, min\_samples\_leaf=2 \\
-rf & B & max\_features=1, min\_samples\_leaf=1 & max\_features=1, min\_samples\_leaf=1 \\
-rf & C & max\_features=1, min\_samples\_leaf=1 & max\_features=1, min\_samples\_leaf=1 \\
-rf & C0 (ablation) & max\_features=1, min\_samples\_leaf=1 & max\_features=1, min\_samples\_leaf=1 \\
-rf & C-log & max\_features=1, min\_samples\_leaf=1 & max\_features=1, min\_samples\_leaf=1 \\
-rf & C0-log (ablation) & max\_features=1, min\_samples\_leaf=1 & max\_features=1, min\_samples\_leaf=1 \\
-rf & C-seq & max\_features=1, min\_samples\_leaf=1 & max\_features=1, min\_samples\_leaf=1 \\
-rf & C0-seq (ablation) & max\_features=1, min\_samples\_leaf=1 & max\_features=1, min\_samples\_leaf=1 \\
-rf & C-logG & max\_features=1, min\_samples\_leaf=1 & max\_features=1, min\_samples\_leaf=1 \\
-rf & C0-logG (ablation) & max\_features=1, min\_samples\_leaf=1 & max\_features=1, min\_samples\_leaf=1 \\
-gbm & A & learning\_rate=0.06, max\_iter=8000, max\_leaf\_nodes=3, min\_samples\_leaf=3 & learning\_rate=0.06, max\_iter=4000, max\_leaf\_nodes=3, min\_samples\_leaf=2 \\
-gbm & B & learning\_rate=0.06, max\_iter=8000, max\_leaf\_nodes=3, min\_samples\_leaf=3 & learning\_rate=0.06, max\_iter=8000, max\_leaf\_nodes=4, min\_samples\_leaf=1 \\
-gbm & C & learning\_rate=0.06, max\_iter=8000, max\_leaf\_nodes=3, min\_samples\_leaf=2 & learning\_rate=0.03, max\_iter=8000, max\_leaf\_nodes=3, min\_samples\_leaf=2 \\
-gbm & C0 (ablation) & learning\_rate=0.03, max\_iter=8000, max\_leaf\_nodes=4, min\_samples\_leaf=5 & learning\_rate=0.1, max\_iter=2000, max\_leaf\_nodes=3, min\_samples\_leaf=5 \\
-gbm & C-log & learning\_rate=0.06, max\_iter=8000, max\_leaf\_nodes=3, min\_samples\_leaf=3 & learning\_rate=0.1, max\_iter=8000, max\_leaf\_nodes=3, min\_samples\_leaf=1 \\
-gbm & C0-log (ablation) & learning\_rate=0.1, max\_iter=8000, max\_leaf\_nodes=3, min\_samples\_leaf=5 & learning\_rate=0.1, max\_iter=2000, max\_leaf\_nodes=3, min\_samples\_leaf=5 \\
-gbm & C-seq & learning\_rate=0.03, max\_iter=8000, max\_leaf\_nodes=3, min\_samples\_leaf=2 & learning\_rate=0.1, max\_iter=4000, max\_leaf\_nodes=3, min\_samples\_leaf=2 \\
-gbm & C0-seq (ablation) & learning\_rate=0.1, max\_iter=8000, max\_leaf\_nodes=3, min\_samples\_leaf=5 & learning\_rate=0.03, max\_iter=8000, max\_leaf\_nodes=3, min\_samples\_leaf=2 \\
-gbm & C-logG & learning\_rate=0.03, max\_iter=8000, max\_leaf\_nodes=3, min\_samples\_leaf=3 & learning\_rate=0.03, max\_iter=8000, max\_leaf\_nodes=3, min\_samples\_leaf=3 \\
-gbm & C0-logG (ablation) & learning\_rate=0.06, max\_iter=8000, max\_leaf\_nodes=3, min\_samples\_leaf=5 & learning\_rate=0.03, max\_iter=8000, max\_leaf\_nodes=3, min\_samples\_leaf=5 \\
+A & 1 & 1 & 1 & 2 \\
+B & 1 & 1 & 1 & 1 \\
+C & 1 & 1 & 1 & 1 \\
+C$_0$ & 1 & 1 & 1 & 1 \\
+C-log & 1 & 1 & 1 & 1 \\
+C$_0$-log & 1 & 1 & 1 & 1 \\
+C-seq & 1 & 1 & 1 & 1 \\
+C$_0$-seq & 1 & 1 & 1 & 1 \\
+C-logG & 1 & 1 & 1 & 1 \\
+C$_0$-logG & 1 & 1 & 1 & 1 \\
+\bottomrule
+\end{tabular}
+\par\medskip
+\textit{GBM}\par\smallskip
+\begin{tabular}{lrrrrrrrr}
+\toprule
+ & \multicolumn{4}{c}{log-rmse} & \multicolumn{4}{c}{fos-rmse} \\
+\cmidrule(lr){2-5} \cmidrule(lr){6-9}
+arm & rate & iter. & leaves & min leaf & rate & iter. & leaves & min leaf \\
+\midrule
+A & 0.06 & 8000 & 3 & 3 & 0.06 & 4000 & 3 & 2 \\
+B & 0.06 & 8000 & 3 & 3 & 0.06 & 8000 & 4 & 1 \\
+C & 0.06 & 8000 & 3 & 2 & 0.03 & 8000 & 3 & 2 \\
+C$_0$ & 0.03 & 8000 & 4 & 5 & 0.1 & 2000 & 3 & 5 \\
+C-log & 0.06 & 8000 & 3 & 3 & 0.1 & 8000 & 3 & 1 \\
+C$_0$-log & 0.1 & 8000 & 3 & 5 & 0.1 & 2000 & 3 & 5 \\
+C-seq & 0.03 & 8000 & 3 & 2 & 0.1 & 4000 & 3 & 2 \\
+C$_0$-seq & 0.1 & 8000 & 3 & 5 & 0.03 & 8000 & 3 & 2 \\
+C-logG & 0.03 & 8000 & 3 & 3 & 0.03 & 8000 & 3 & 3 \\
+C$_0$-logG & 0.06 & 8000 & 3 & 5 & 0.03 & 8000 & 3 & 5 \\
 \bottomrule
 \end{tabular}
 \end{table}

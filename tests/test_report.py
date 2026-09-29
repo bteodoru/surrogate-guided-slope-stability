@@ -46,9 +46,9 @@ def test_comparison_frame_formats_tiny_pvalues():
 
 def test_every_results_table_includes_the_ablation(root):
     metrics = _write_metrics()
-    assert "C0 (ablation)" in report.global_frame(metrics)["arm"].tolist()
-    assert "C0 (ablation)" in report.zone_frame(metrics, "rf").columns
-    assert "C0 (ablation)" in report.conformal_frame(metrics)["arm"].tolist()
+    assert "C₀" in report.global_frame(metrics)["arm"].tolist()
+    assert "C₀" in report.zone_frame(metrics, "rf").columns
+    assert "C₀" in report.conformal_frame(metrics)["arm"].tolist()
     assert "C vs C0" in report.comparison_frame(metrics)["comparison"].tolist()
     assert {"log-RMSE", "minimax log"} <= set(report.global_frame(metrics).columns)
 
@@ -82,7 +82,7 @@ def test_subset_frame_has_every_arm_and_both_scales(root):
     frame = report.subset_frame(metrics)
     assert len(frame) == len(config.FAMILIES) * len(config.ARMS)
     assert {"log-RMSE decision-range", "RMSE decision-range", "log-RMSE all"} <= set(frame.columns)
-    assert "C0 (ablation)" in frame["arm"].tolist()
+    assert "C₀" in frame["arm"].tolist()
 
 
 def test_scoring_frames_compare_the_selection_criteria():
@@ -91,13 +91,21 @@ def test_scoring_frames_compare_the_selection_criteria():
                             stub_test(), **EVAL_KWARGS).to_json()
     frame = report.scoring_frame({"log-rmse": log, "fos-rmse": fos})
     assert len(frame) == len(config.FAMILIES) * len(config.ARMS)
-    assert "C0 (ablation)" in frame["arm"].tolist()
+    assert "C₀" in frame["arm"].tolist()
     for scoring in ("log-rmse", "fos-rmse"):
         for family in config.FAMILIES:
             ranks = frame.loc[frame["family"] == family, f"rank {scoring}"]
             assert sorted(ranks) == list(range(1, len(config.ARMS) + 1))
-    params = report.scoring_params_frame({"log-rmse": log, "fos-rmse": fos})
-    assert list(params.columns) == ["family", "arm", "log-rmse", "fos-rmse"]
+    for family in config.FAMILIES:
+        params = report.scoring_params_frame({"log-rmse": log, "fos-rmse": fos}, family)
+        names = sorted(log["arms"][family]["A"]["best_params"])
+        # one column per hyper-parameter under each scoring, the arm first
+        assert list(params.columns) == ["arm", *((s, report.PARAM_HEADERS.get(n, n))
+                                                 for s in ("log-rmse", "fos-rmse") for n in names)]
+        first = params.iloc[0]
+        for n in names:
+            assert first[("log-rmse", report.PARAM_HEADERS.get(n, n))] == \
+                report._param(log["arms"][family]["A"]["best_params"][n])
 
 
 def test_run_writes_scoring_tables_when_both_scorings_are_active(root, monkeypatch):
@@ -613,3 +621,118 @@ def test_displacement_frame_keeps_an_arm_absent_at_r0():
     rows = frame[frame["arm"] == "C-logP"]
     assert rows["set"].tolist() == ["r1-r5", "r0 (exploratory)"]
     assert set(rows.iloc[1].drop(["arm", "set"])) == {"--"}
+
+
+# --- the layout of the tables (2026-09-29): fit the page, lose nothing -------------------------
+
+import re
+from collections import Counter
+
+_NUMBER = re.compile(r"^[-+]?\d+\.\d+$")
+
+
+def _table_numbers(tex: str) -> Counter:
+    """The cells of every body row that are a plain decimal number."""
+    cells = Counter()
+    for line in tex.splitlines():
+        if line.endswith(r"\\") and not line.startswith(("\\caption", "\\multicolumn")):
+            for cell in line[:-2].split("&"):
+                if _NUMBER.match(cell.strip()):
+                    cells[cell.strip()] += 1
+    return cells
+
+
+def _frame_numbers(frame: pd.DataFrame, digits: int = 3) -> Counter:
+    return Counter(f"{v:.{digits}f}" for row in frame.itertuples(index=False) for v in row
+                   if isinstance(v, (float, np.floating)) and not np.isnan(v))
+
+
+def test_arms_are_written_as_the_manuscript_writes_them():
+    assert report.arm_label("C0-logG") == "C₀-logG" and report.arm_label("C-log") == "C-log"
+    assert report._escape("C0-log vs C0") == "C$_0$-log vs C$_0$"
+    assert report._escape("C0 fraction; RC0 stays") == "C$_0$ fraction; RC0 stays"
+    assert report._escape(report.Tex(r"$R^2$")) == r"$R^2$"          # raw LaTeX passes as is
+
+
+def test_the_ablation_note_names_every_ablation_once():
+    note = report.ablation_note()
+    assert all(report.arm_label(arm) in note for arm, spec in config.ARMS.items() if spec.ablation)
+    assert note.count("C₀-log,") == 1 and "(ablation)" not in note
+    assert report.ablation_note(["C0"]).startswith("C₀ is an ablation")
+
+
+def test_grouped_headers_and_family_blocks():
+    frame = report.regroup(pd.DataFrame({"family": ["rf", "rf", "gbm"], "arm": ["A", "C0", "A"],
+                                         "x": [0.1, 0.2, 0.3], "y": [1.0, 2.0, 3.0]}),
+                           {"family": "family", "arm": "arm", "x": ("scale", "x"), "y": ("scale", "y")})
+    tex = report.booktabs(frame, caption="Demo.", label="tab:demo", block="family")
+    assert r"\multicolumn{2}{c}{scale}" in tex and r"\cmidrule(lr){2-3}" in tex
+    assert r"\multicolumn{3}{l}{\textit{RF}} \\" in tex and r"\multicolumn{3}{l}{\textit{GBM}} \\" in tex
+    assert "family" not in tex.split(r"\midrule")[0].split(r"\label")[1]    # the block column leaves
+    assert r"C$_0$ & 0.200 & 2.000" in tex
+    assert r"\begin{tabular}{lrr}" in tex
+
+
+def test_longtable_repeats_its_head_and_keeps_every_value():
+    frame = pd.DataFrame({"family": ["rf"] * 3, "subset": ["all"] * 3, "d": [0.1, -0.2, 0.3]})
+    tex = report.longtable(frame, caption="Inventory.", label="tab:inv", block="family")
+    assert tex.count("subset & d") == 2                       # first head, then every page
+    assert tex.index(r"\endfirsthead") < tex.index(r"\endhead") < tex.index(r"\endlastfoot")
+    assert r"\begin{longtable}{lr}" in tex and r"\caption{Inventory.}\label{tab:inv} \\" in tex
+    assert _table_numbers(tex) == _frame_numbers(frame)
+
+
+def test_the_restructured_tables_keep_every_value(root):
+    metrics = _write_metrics()
+    cases = [(report.global_table(metrics, "test-natural", "s"), report.global_frame(metrics)),
+             (report.subset_table(metrics, "test-natural", "s"), report.subset_frame(metrics)),
+             (report.comparison_table(metrics, "test-natural", "s"), report.comparison_frame(metrics)),
+             (report.conformal_tables(metrics, "test-natural", "s"), report.conformal_frame(metrics))]
+    for tex, frame in cases:
+        assert _table_numbers(tex) == _frame_numbers(frame)
+
+
+def test_conformal_is_two_tables_with_the_zones_as_columns(root):
+    metrics = _write_metrics()
+    tex = report.conformal_tables(metrics, "test-natural", "s")
+    assert tex.count(r"\begin{table}") == 2
+    assert r"\label{tab:s:conformal}" in tex and r"\label{tab:s:conformal:width}" in tex
+    zones = [z["zone"] for z in metrics["arms"]["rf"]["A"]["conformal"]["zones"]]
+    coverage, width = tex.split(r"\end{table}")[:2]
+    for part in (coverage, width):
+        assert all(report._escape(z) in part for z in zones)
+    assert "factor" in width and "factor" not in coverage.split(r"\label")[1]
+
+
+def test_scoring_params_table_has_one_panel_per_family(root):
+    metrics = _write_metrics()
+    tex = report.scoring_params_table({"log-rmse": metrics, "fos-rmse": metrics})
+    assert tex.count(r"\begin{tabular}") == len(config.FAMILIES)
+    assert tex.count(r"\label{tab:scorings:params}") == 1
+    assert r"\textit{RF}" in tex and r"\textit{GBM}" in tex and "=" not in tex.split(r"\label")[1]
+
+
+def test_oracle_table_splits_the_reading_with_its_columns():
+    rep = json.loads(config.replication_metrics_path().read_text())
+    tex = report.oracle_table(rep)
+    medians, intervals = tex.split(r"\par\medskip")
+    assert "gate passes" in medians and "rho" not in medians
+    assert rep["oracle"]["row"] in intervals and "rho\\_L" in intervals
+    assert _table_numbers(tex) == _frame_numbers(report.oracle_reading_frame(rep))
+
+
+def test_split_tables_drop_only_what_is_constant():
+    frame = pd.DataFrame({"kind": ["density", "error", "error"], "arm": ["C-log"] * 3,
+                          "test": ["--", "test-natural", "test-stratified"], "diff": [1.0, 2.0, 3.0]})
+    tex = report.booktabs_split(frame, "kind", caption="Out.", label="tab:out")
+    density, error = tex.split(r"\end{table}")[:2]
+    assert r"\label{tab:out:density}" in density and "test" not in density.split(r"\label")[1]
+    assert "This table: density." in density and "test-natural" in error
+    assert _table_numbers(tex) == _frame_numbers(frame)
+
+
+def test_zone_figure_keeps_its_legend():
+    metrics = evaluate.evaluate({**stub_fits("rf"), **stub_fits("gbm")}, stub_test(), **EVAL_KWARGS).to_json()
+    fig = report.fig_zone_rmse(metrics, "rf")
+    labels = [t.get_text() for t in fig.axes[0].get_legend().get_texts()]
+    assert "C0 (ablation)" in labels                      # figures are revised in their own pass

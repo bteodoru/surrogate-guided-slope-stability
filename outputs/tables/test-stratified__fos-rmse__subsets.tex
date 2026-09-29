@@ -1,31 +1,36 @@
 \begin{table}[htbp]
 \centering
-\caption{RMSE on test-stratified by subset, log and FOS scale. The decision range [0.5, 2) carries the primary criterion (log scale).}
+\caption{RMSE on test-stratified by subset, log and FOS scale. The decision range [0.5, 2) carries the primary criterion (log scale). C$_0$, C$_0$-log, C$_0$-seq and C$_0$-logG are ablations: they train on the added points without the seed and carry no budget.}
 \label{tab:test-stratified__fos-rmse:subsets}
-\begin{tabular}{lrrrrrrr}
+\begin{tabular}{lrrrrrr}
 \toprule
-family & arm & log-RMSE all & log-RMSE selection-range & log-RMSE decision-range & RMSE all & RMSE selection-range & RMSE decision-range \\
+ & \multicolumn{3}{c}{log-RMSE} & \multicolumn{3}{c}{RMSE} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7}
+arm & all & selection range & decision range & all & selection range & decision range \\
 \midrule
-rf & A & 0.176 & 0.121 & 0.129 & 0.843 & 0.384 & 0.142 \\
-rf & B & 0.114 & 0.089 & 0.098 & 0.548 & 0.289 & 0.102 \\
-rf & C & 0.103 & 0.090 & 0.117 & 0.437 & 0.258 & 0.124 \\
-rf & C0 (ablation) & 0.131 & 0.119 & 0.177 & 0.464 & 0.284 & 0.204 \\
-rf & C-log & 0.114 & 0.102 & 0.123 & 0.530 & 0.301 & 0.164 \\
-rf & C0-log (ablation) & 0.172 & 0.168 & 0.207 & 0.704 & 0.508 & 0.313 \\
-rf & C-seq & 0.099 & 0.091 & 0.101 & 0.421 & 0.277 & 0.137 \\
-rf & C0-seq (ablation) & 0.188 & 0.196 & 0.240 & 0.631 & 0.527 & 0.432 \\
-rf & C-logG & 0.119 & 0.083 & 0.083 & 0.667 & 0.253 & 0.103 \\
-rf & C0-logG (ablation) & 0.192 & 0.170 & 0.174 & 0.841 & 0.472 & 0.247 \\
-gbm & A & 0.072 & 0.065 & 0.078 & 0.277 & 0.194 & 0.093 \\
-gbm & B & 0.047 & 0.045 & 0.049 & 0.214 & 0.144 & 0.055 \\
-gbm & C & 0.045 & 0.043 & 0.045 & 0.192 & 0.141 & 0.049 \\
-gbm & C0 (ablation) & 0.085 & 0.078 & 0.087 & 0.304 & 0.212 & 0.110 \\
-gbm & C-log & 0.055 & 0.049 & 0.041 & 0.259 & 0.163 & 0.060 \\
-gbm & C0-log (ablation) & 0.078 & 0.078 & 0.088 & 0.317 & 0.243 & 0.120 \\
-gbm & C-seq & 0.055 & 0.056 & 0.059 & 0.215 & 0.174 & 0.080 \\
-gbm & C0-seq (ablation) & 0.108 & 0.114 & 0.119 & 0.348 & 0.322 & 0.175 \\
-gbm & C-logG & 0.052 & 0.048 & 0.050 & 0.231 & 0.153 & 0.070 \\
-gbm & C0-logG (ablation) & 0.100 & 0.096 & 0.103 & 0.417 & 0.268 & 0.147 \\
+\multicolumn{7}{l}{\textit{RF}} \\
+A & 0.176 & 0.121 & 0.129 & 0.843 & 0.384 & 0.142 \\
+B & 0.114 & 0.089 & 0.098 & 0.548 & 0.289 & 0.102 \\
+C & 0.103 & 0.090 & 0.117 & 0.437 & 0.258 & 0.124 \\
+C$_0$ & 0.131 & 0.119 & 0.177 & 0.464 & 0.284 & 0.204 \\
+C-log & 0.114 & 0.102 & 0.123 & 0.530 & 0.301 & 0.164 \\
+C$_0$-log & 0.172 & 0.168 & 0.207 & 0.704 & 0.508 & 0.313 \\
+C-seq & 0.099 & 0.091 & 0.101 & 0.421 & 0.277 & 0.137 \\
+C$_0$-seq & 0.188 & 0.196 & 0.240 & 0.631 & 0.527 & 0.432 \\
+C-logG & 0.119 & 0.083 & 0.083 & 0.667 & 0.253 & 0.103 \\
+C$_0$-logG & 0.192 & 0.170 & 0.174 & 0.841 & 0.472 & 0.247 \\
+\addlinespace
+\multicolumn{7}{l}{\textit{GBM}} \\
+A & 0.072 & 0.065 & 0.078 & 0.277 & 0.194 & 0.093 \\
+B & 0.047 & 0.045 & 0.049 & 0.214 & 0.144 & 0.055 \\
+C & 0.045 & 0.043 & 0.045 & 0.192 & 0.141 & 0.049 \\
+C$_0$ & 0.085 & 0.078 & 0.087 & 0.304 & 0.212 & 0.110 \\
+C-log & 0.055 & 0.049 & 0.041 & 0.259 & 0.163 & 0.060 \\
+C$_0$-log & 0.078 & 0.078 & 0.088 & 0.317 & 0.243 & 0.120 \\
+C-seq & 0.055 & 0.056 & 0.059 & 0.215 & 0.174 & 0.080 \\
+C$_0$-seq & 0.108 & 0.114 & 0.119 & 0.348 & 0.322 & 0.175 \\
+C-logG & 0.052 & 0.048 & 0.050 & 0.231 & 0.153 & 0.070 \\
+C$_0$-logG & 0.100 & 0.096 & 0.103 & 0.417 & 0.268 & 0.147 \\
 \bottomrule
 \end{tabular}
 \end{table}

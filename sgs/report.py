@@ -2,14 +2,16 @@
 
 Reads only outputs/metrics/ and recomputes no metric, so no number reaches a
 table without having passed through ``evaluate``. Every arm appears in every
-results table, C0 included and labelled as the ablation; the budget table
-lists budget arms only.
+results table, C0 included, written C$_0$ as in the manuscript and named as an
+ablation in the caption; the budget table lists budget arms only. Tables fit the
+text width; the comparison inventories are longtables for the Supplementary.
 """
 
 from __future__ import annotations
 
 import json
 import math
+import re
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -17,9 +19,31 @@ import pandas as pd
 
 from sgs import config, data
 
+_C0 = re.compile(r"\bC0\b")
+
 
 def arm_label(arm: str) -> str:
+    """The arm as the manuscript writes it, C₀ with a subscript; the ablations
+    are named once in each caption (`ablation_note`), not in every cell."""
+    return _C0.sub("C₀", arm)
+
+
+def _legend_label(arm: str) -> str:
+    """The figures' legend, unchanged: figures are revised in a separate pass."""
     return f"{arm} (ablation)" if config.ARMS[arm].ablation else arm
+
+
+def _join(names) -> str:
+    names = list(names)
+    return names[0] if len(names) == 1 else f"{', '.join(names[:-1])} and {names[-1]}"
+
+
+def ablation_note(arms=None) -> str:
+    """The sentence that marks the ablations in a caption, once."""
+    names = [arm_label(a) for a in (arms or [a for a, s in config.ARMS.items() if s.ablation])]
+    if len(names) == 1:
+        return f"{names[0]} is an ablation: it trains on the added points without the seed and carries no budget."
+    return f"{_join(names)} are ablations: they train on the added points without the seed and carry no budget."
 
 
 def _read(path) -> dict:
@@ -36,10 +60,18 @@ def load_learning_curve() -> dict:
     return _read(config.learning_curve_metrics_path())
 
 
-def _escape(text: str) -> str:
+class Tex(str):
+    """A header or cell already written in LaTeX: never escaped."""
+
+
+def _escape(text) -> str:
+    if isinstance(text, Tex):
+        return str(text)
+    text = _C0.sub("C₀", str(text))
     for raw, safe in (("\\", r"\textbackslash{}"), ("&", r"\&"), ("%", r"\%"), ("_", r"\_"), ("#", r"\#")):
         text = text.replace(raw, safe)
-    return text
+    # the manuscript's C$_0$, not a Unicode subscript the text font may lack
+    return text.replace("₀", "$_0$")
 
 
 def _cell(value, digits: int) -> str:
@@ -47,19 +79,132 @@ def _cell(value, digits: int) -> str:
         return "--"
     if isinstance(value, (float, np.floating)):
         return f"{value:.{digits}f}"
-    return _escape(str(value))
+    return _escape(value)
+
+
+SMALL = (r"\small", r"\setlength{\tabcolsep}{4pt}")
+
+
+def _columns(names) -> pd.Index:
+    """Column labels kept as given: a (group, name) pair stays one label, not a MultiIndex level."""
+    return pd.Index(list(names), dtype=object, tupleize_cols=False)
+
+
+def _frame(rows: list[dict]) -> pd.DataFrame:
+    columns = list(dict.fromkeys(k for r in rows for k in r))
+    return pd.DataFrame([[r.get(c) for c in columns] for r in rows], columns=_columns(columns))
+
+
+def regroup(frame: pd.DataFrame, columns: dict) -> pd.DataFrame:
+    """The columns of `frame` named in `columns`, in that order, relabelled
+    (a label may be a (group, name) pair). Selects and renames only: no value changes."""
+    out = frame[list(columns)].copy()
+    out.columns = _columns(columns.values())
+    return out
+
+
+def _header(columns) -> list[str]:
+    """One header row; two when a column is a (group, name) pair: the group
+    spans its columns and is underlined with \\cmidrule."""
+    groups = [c[0] if isinstance(c, tuple) else None for c in columns]
+    names = [c[1] if isinstance(c, tuple) else c for c in columns]
+    lines = []
+    if any(groups):
+        top, rules, i = [], [], 0
+        while i < len(columns):
+            j = i
+            while groups[i] is not None and j + 1 < len(columns) and groups[j + 1] == groups[i]:
+                j += 1
+            if groups[i] is None:
+                top.append("")
+            else:
+                top.append(rf"\multicolumn{{{j - i + 1}}}{{c}}{{{_escape(groups[i])}}}")
+                rules.append(rf"\cmidrule(lr){{{i + 1}-{j + 1}}}")
+            i = j + 1
+        lines += [" & ".join(top) + r" \\", " ".join(rules)]
+    lines.append(" & ".join(_escape(n) for n in names) + r" \\")
+    return lines
+
+
+def _body(frame: pd.DataFrame, digits: int, block: str | None) -> tuple[list, list[str]]:
+    """The rows; with `block`, that column leaves the table and its value heads
+    each run of rows instead (a learner family: RF, GBM)."""
+    columns = [c for c in frame.columns if c != block]
+    positions = [list(frame.columns).index(c) for c in columns]
+    where = list(frame.columns).index(block) if block is not None else None
+    lines, current = [], object()
+    for row in frame.itertuples(index=False):
+        if where is not None and row[where] != current:
+            current = row[where]
+            name = current.upper() if current in config.FAMILIES else current
+            if lines:
+                lines.append(r"\addlinespace")
+            lines.append(rf"\multicolumn{{{len(columns)}}}{{l}}{{\textit{{{_escape(name)}}}}} \\")
+        lines.append(" & ".join(_cell(row[p], digits) for p in positions) + r" \\")
+    return columns, lines
+
+
+def _spec(n: int, left: int) -> str:
+    return "l" * left + "r" * (n - left)
+
+
+def _tabular(frame: pd.DataFrame, *, digits: int = 3, block: str | None = None, left: int = 1) -> list[str]:
+    columns, body = _body(frame, digits, block)
+    return [rf"\begin{{tabular}}{{{_spec(len(columns), left)}}}", r"\toprule", *_header(columns),
+            r"\midrule", *body, r"\bottomrule", r"\end{tabular}"]
 
 
 def booktabs(frame: pd.DataFrame, *, caption: str, label: str, digits: int = 3,
-             small: bool = False) -> str:
-    columns = list(frame.columns)
-    lines = [r"\begin{table}[htbp]", r"\centering", *([r"\small", r"\setlength{\tabcolsep}{4pt}"] if small else []),
+             small: bool = False, block: str | None = None, left: int = 1) -> str:
+    lines = [r"\begin{table}[htbp]", r"\centering", *(SMALL if small else ()),
              rf"\caption{{{_escape(caption)}}}", rf"\label{{{label}}}",
-             rf"\begin{{tabular}}{{l{'r' * (len(columns) - 1)}}}", r"\toprule",
-             " & ".join(_escape(str(c)) for c in columns) + r" \\", r"\midrule"]
-    for row in frame.itertuples(index=False):
-        lines.append(" & ".join(_cell(v, digits) for v in row) + r" \\")
-    lines += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
+             *_tabular(frame, digits=digits, block=block, left=left), r"\end{table}"]
+    return "\n".join(lines) + "\n"
+
+
+def booktabs_panels(panels, *, caption: str, label: str, digits: int = 3, small: bool = False) -> str:
+    """Several tabulars under one caption and label, stacked; each panel is
+    (title or None, frame, keyword arguments of `_tabular`)."""
+    lines = [r"\begin{table}[htbp]", r"\centering", *(SMALL if small else ()),
+             rf"\caption{{{_escape(caption)}}}", rf"\label{{{label}}}"]
+    for i, (title, frame, kwargs) in enumerate(panels):
+        if i:
+            lines.append(r"\par\medskip")
+        if title:
+            lines += [rf"\textit{{{_escape(title)}}}\par\smallskip"]
+        lines += _tabular(frame, **{"digits": digits, **kwargs})
+    lines.append(r"\end{table}")
+    return "\n".join(lines) + "\n"
+
+
+def booktabs_split(frame: pd.DataFrame, by: str, *, caption: str, label: str,
+                   part=lambda value: f"This table: {value}.", **kwargs) -> str:
+    """One float per value of `by`, in order of appearance; `by` leaves the table and
+    the caption names the part. A column that is '--' throughout a part is dropped there."""
+    parts = []
+    for value in dict.fromkeys(frame[by]):
+        rows = frame[frame[by] == value].drop(columns=by)
+        rows = rows.loc[:, [c for c in rows.columns if not (rows[c].astype(str) == "--").all()]]
+        parts.append(booktabs(rows, caption=f"{caption} {part(value)}", label=f"{label}:{value}", **kwargs))
+    return "".join(parts)
+
+
+def longtable(frame: pd.DataFrame, *, caption: str, label: str, digits: int = 3,
+              small: bool = True, block: str | None = None, left: int = 1, colsep: int = 4) -> str:
+    """An inventory for the Supplementary material: it may run over several
+    pages, never wider than the text; the head repeats on every page."""
+    columns, body = _body(frame, digits, block)
+    head, n = _header(columns), len(columns)
+    lines = [r"\begingroup", *((r"\small", rf"\setlength{{\tabcolsep}}{{{colsep}pt}}") if small else ()),
+             r"\setlength{\LTcapwidth}{\textwidth}",
+             rf"\begin{{longtable}}{{{_spec(n, left)}}}",
+             rf"\caption{{{_escape(caption)}}}\label{{{label}}} \\",
+             r"\toprule", *head, r"\midrule", r"\endfirsthead",
+             rf"\multicolumn{{{n}}}{{l}}{{\textit{{Table \thetable, continued}}}} \\",
+             r"\toprule", *head, r"\midrule", r"\endhead",
+             r"\midrule", rf"\multicolumn{{{n}}}{{r}}{{\textit{{continued on the next page}}}} \\", r"\endfoot",
+             r"\bottomrule", r"\endlastfoot",
+             *body, r"\end{longtable}", r"\endgroup"]
     return "\n".join(lines) + "\n"
 
 
@@ -152,21 +297,36 @@ def scoring_frame(by_scoring: dict[str, dict]) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def _params(params: dict) -> str:
-    return ", ".join(f"{k}={v:g}" if isinstance(v, (int, float)) else f"{k}={v}"
-                     for k, v in sorted(params.items()))
+# Short headers for the hyper-parameters, spelled out in the caption.
+PARAM_HEADERS = {"max_features": "max feat.", "min_samples_leaf": "min leaf", "learning_rate": "rate",
+                 "max_iter": "iter.", "max_leaf_nodes": "leaves"}
 
 
-def scoring_params_frame(by_scoring: dict[str, dict]) -> pd.DataFrame:
-    """Hyper-parameters selected under each scoring; they do not depend on the test set."""
+def _param(value) -> str:
+    return f"{value:g}" if isinstance(value, (int, float)) else str(value)
+
+
+def scoring_params_frame(by_scoring: dict[str, dict], family: str) -> pd.DataFrame:
+    """Hyper-parameters of one family selected under each scoring, one column per
+    hyper-parameter; they do not depend on the test set."""
+    arms = {scoring: metrics["arms"][family] for scoring, metrics in by_scoring.items()}
+    names = sorted({k for a in arms.values() for m in a.values() for k in m["best_params"]})
     rows = []
-    for family in config.FAMILIES:
-        for arm in config.ARMS:
-            row = {"family": family, "arm": arm_label(arm)}
-            for scoring, metrics in by_scoring.items():
-                row[scoring] = _params(metrics["arms"][family][arm]["best_params"])
-            rows.append(row)
-    return pd.DataFrame(rows)
+    for arm in config.ARMS:
+        row = {"arm": arm_label(arm)}
+        for scoring, by_arm in arms.items():
+            params = by_arm[arm]["best_params"]
+            for name in names:
+                row[(scoring, PARAM_HEADERS.get(name, name))] = _param(params[name]) if name in params else None
+        rows.append(row)
+    return _frame(rows)
+
+
+def param_legend(by_scoring: dict[str, dict]) -> str:
+    """'rate: learning_rate; ...' for the headers actually used."""
+    names = sorted({k for metrics in by_scoring.values() for arms in metrics["arms"].values()
+                    for m in arms.values() for k in m["best_params"]})
+    return "; ".join(f"{PARAM_HEADERS[n]}: {n}" for n in names if n in PARAM_HEADERS)
 
 
 def budget_frame() -> pd.DataFrame:
@@ -176,13 +336,13 @@ def budget_frame() -> pd.DataFrame:
 
 def fig_zone_rmse(metrics: dict, family: str, key: str = "rmse"):
     frame = zone_frame(metrics, family, key)
-    labels = [arm_label(a) for a in config.ARMS]
+    arms = list(config.ARMS)
     x = np.arange(len(frame))
-    width = 0.8 / len(labels)
+    width = 0.8 / len(arms)
     fig, ax = plt.subplots(figsize=(8, 3.6))
-    for i, label in enumerate(labels):
-        ax.bar(x + i * width, frame[label].astype(float), width, label=label)
-    ax.set_xticks(x + width * (len(labels) - 1) / 2, frame["zone"])
+    for i, arm in enumerate(arms):
+        ax.bar(x + i * width, frame[arm_label(arm)].astype(float), width, label=_legend_label(arm))
+    ax.set_xticks(x + width * (len(arms) - 1) / 2, frame["zone"])
     ax.set_ylabel("RMSE (log FOS)" if key == "log_rmse" else "RMSE (FOS)")
     ax.set_title(f"{metrics['test']} — {family}")
     ax.legend(frameon=False)
@@ -751,6 +911,118 @@ def _structural_text(text: str) -> str:
     return _escape(text) + "\n"
 
 
+# --- the tables as the manuscript prints them -----------------------------------
+# Each only selects, relabels, blocks or splits a frame above; no value changes.
+
+def _zone_columns(frame: pd.DataFrame, prefix: str) -> dict:
+    """'<prefix><zone>' columns, relabelled as the zone under a 'by zone' group."""
+    return {c: ("by zone", c[len(prefix):]) for c in frame.columns
+            if isinstance(c, str) and c.startswith(prefix)}
+
+
+def global_table(metrics: dict, test: str, stem: str) -> str:
+    frame = global_frame(metrics)
+    columns = {c: (Tex(r"$R^2$") if c == "R2" else c) for c in frame.columns}
+    return booktabs(regroup(frame, columns), caption=f"Global metrics on {test}. {ablation_note()}",
+                    label=f"tab:{stem}:global", block="family", small=True)
+
+
+def comparison_table(metrics: dict, test: str, stem: str) -> str:
+    frame = comparison_frame(metrics)
+    columns = {"family": "family", "subset": "subset", "scale": "scale", "comparison": "comparison",
+               "alternative": "alternative",
+               "n": ("Wilcoxon on d", "n"), "median d": ("Wilcoxon on d", "median"),
+               "P(d<0)": ("Wilcoxon on d", "P(d<0)"), "p": ("Wilcoxon on d", "p"),
+               **{c: ("bootstrap", c) for c in ("ΔRMSE", "CI low", "CI high")}}
+    return longtable(regroup(frame, columns),
+                     caption=f"Paired comparisons on {test}: Wilcoxon on d = |e1| - |e2| (smaller absolute "
+                             f"errors) and bootstrap ΔRMSE. {ablation_note()}",
+                     label=f"tab:{stem}:comparisons", block="family", left=4, colsep=3)
+
+
+def conformal_tables(metrics: dict, test: str, stem: str) -> str:
+    """Coverage and mean width as two tables, each with the zones as columns, so
+    the arms stay rows as in every other table and each quantity reads along the
+    FOS axis in one row."""
+    frame = conformal_frame(metrics)
+    caption = f"Cross-conformal-style intervals on {test}, empirical coverage."
+    coverage = regroup(frame, {"family": "family", "arm": "arm", "coverage": "all",
+                               **_zone_columns(frame, "cov ")})
+    width = regroup(frame, {"family": "family", "arm": "arm", "factor": "factor", "mean width": "all",
+                            **_zone_columns(frame, "width ")})
+    return (booktabs(coverage, caption=f"{caption} Coverage over the whole test set and by reporting zone. "
+                                       f"{ablation_note()}",
+                     label=f"tab:{stem}:conformal", block="family")
+            + booktabs(width, caption=f"{caption} Mean interval width over the whole test set and by "
+                                      "reporting zone; the interval is [prediction / factor, prediction x "
+                                      f"factor]. {ablation_note()}",
+                       label=f"tab:{stem}:conformal:width", block="family"))
+
+
+def subset_table(metrics: dict, test: str, stem: str) -> str:
+    frame = subset_frame(metrics)
+    columns = {"family": "family", "arm": "arm"}
+    for scale in ("log-RMSE", "RMSE"):
+        columns.update({c: (scale, c[len(scale) + 1:].replace("-", " ")) for c in frame.columns
+                        if c.startswith(f"{scale} ")})
+    return booktabs(regroup(frame, columns),
+                    caption=f"RMSE on {test} by subset, log and FOS scale. The decision range [0.5, 2) "
+                            f"carries the primary criterion (log scale). {ablation_note()}",
+                    label=f"tab:{stem}:subsets", block="family")
+
+
+def scoring_table(by_scoring: dict[str, dict], test: str) -> str:
+    frame = scoring_frame(by_scoring)
+    columns = {"family": "family", "arm": "arm"}
+    for scoring in by_scoring:
+        columns.update({f"{m} {scoring}": (scoring, m) for m in ("RMSE", "minimax", "rank")})
+    return booktabs(regroup(frame, columns),
+                    caption=f"Selection-criterion sensitivity on {test}: global RMSE, minimax and "
+                            f"within-family rank under each scoring. {ablation_note()}",
+                    label=f"tab:{test}:scorings", block="family")
+
+
+def scoring_params_table(by_scoring: dict[str, dict]) -> str:
+    """RF and GBM as two panels: their hyper-parameters differ."""
+    return booktabs_panels(
+        [(family.upper(), scoring_params_frame(by_scoring, family), {}) for family in config.FAMILIES],
+        caption="Hyper-parameters selected by CV under each scoring, one column per hyper-parameter "
+                f"(scikit-learn names: {param_legend(by_scoring)}). {ablation_note()}",
+        label="tab:scorings:params")
+
+
+def _stack(text: str) -> Tex:
+    """Two words on two lines, right-aligned, with no package beyond LaTeX's own."""
+    first, rest = text.split(" ", 1)
+    return Tex(rf"\shortstack[r]{{{_escape(first)}\\{_escape(rest)}}}")
+
+
+def oracle_table(rep: dict) -> str:
+    """The oracle reading in two panels: the medians of L and H per arm, then
+    dR_O, dL_O and dH_O with their intervals. The reading row is split with its columns."""
+    frame = oracle_reading_frame(rep)
+    medians = regroup(frame, {"cell": "cell", **{f"median {q} {arm}": (arm, f"median {q}")
+                                                 for arm in ("C-oracle", "C-logP") for q in "LH"}})
+    intervals = regroup(frame, {"cell": "cell", "median dR_O": ("dR_O", "median"),
+                                "dR_O CI low": ("dR_O", "CI low"), "dR_O CI high": ("dR_O", "CI high"),
+                                "median dL_O": ("dL_O", "median"), "dL_O CI": ("dL_O", "CI"),
+                                "median dH_O": ("dH_O", "median"), "dH_O CI": ("dH_O", "CI")})
+    reading = intervals.index[intervals["cell"] == "reading"]
+    for column in intervals.columns[1:]:
+        value = intervals.at[reading[0], column] if len(reading) else None
+        if isinstance(value, str) and " " in value:
+            intervals.at[reading[0], column] = _stack(value)
+    return booktabs_panels(
+        [(None, medians, {}), (None, intervals, {})],
+        caption="The oracle, read as declared before the pool was solved: C-oracle against "
+                "C-logP on the same sub-pool, r1-r5, medians per learner x test cell and the "
+                "paired 95% interval of dR_O = R(C-oracle) - R(C-logP). 'Attributable to the "
+                "screener's error, in this design' only where that interval excludes 0 in at "
+                "least three of four cells; an interval containing 0 is inconclusive. C0-oracle "
+                "and C0-logP are reported in the replication tables.",
+        label="tab:rep:oracle", small=True)
+
+
 def run() -> None:
     from sgs import structural
     tables, figures = config.tables_dir(), config.figures_dir()
@@ -766,25 +1038,17 @@ def run() -> None:
                 continue
             metrics = load_metrics(test, scoring)
             stem = f"{test}__{scoring}"
-            _save_table(tables / f"{stem}__global.tex", booktabs(
-                global_frame(metrics), caption=f"Global metrics on {test}.", label=f"tab:{stem}:global"))
-            _save_table(tables / f"{stem}__comparisons.tex", booktabs(
-                comparison_frame(metrics), caption=f"Paired comparisons on {test}: Wilcoxon on "
-                "d = |e1| - |e2| (smaller absolute errors) and bootstrap ΔRMSE.",
-                label=f"tab:{stem}:comparisons"))
-            _save_table(tables / f"{stem}__conformal.tex", booktabs(
-                conformal_frame(metrics), caption=f"Cross-conformal-style intervals on {test}, "
-                "empirical coverage.", label=f"tab:{stem}:conformal"))
-            _save_table(tables / f"{stem}__subsets.tex", booktabs(
-                subset_frame(metrics), caption=f"RMSE on {test} by subset, log and FOS scale. "
-                "The decision range [0.5, 2) carries the primary criterion (log scale).",
-                label=f"tab:{stem}:subsets"))
+            _save_table(tables / f"{stem}__global.tex", global_table(metrics, test, stem))
+            _save_table(tables / f"{stem}__comparisons.tex", comparison_table(metrics, test, stem))
+            _save_table(tables / f"{stem}__conformal.tex", conformal_tables(metrics, test, stem))
+            _save_table(tables / f"{stem}__subsets.tex", subset_table(metrics, test, stem))
             for family in metrics["arms"]:
                 for key, tag in (("rmse", "zones"), ("log_rmse", "zones_log")):
                     scale = "log FOS" if key == "log_rmse" else "FOS"
                     _save_table(tables / f"{stem}__{tag}_{family}.tex", booktabs(
-                        zone_frame(metrics, family, key), caption=f"Zone RMSE ({scale}) on {test}, {family}.",
-                        label=f"tab:{stem}:{tag}:{family}"))
+                        zone_frame(metrics, family, key),
+                        caption=f"Zone RMSE ({scale}) on {test}, {family}. {ablation_note()}",
+                        label=f"tab:{stem}:{tag}:{family}", small=True))
                     _save_figure(figures / f"{stem}__{tag}_{family}.pdf", fig_zone_rmse(metrics, family, key))
 
     if len(config.ACTIVE_SCORINGS) > 1:
@@ -792,15 +1056,9 @@ def run() -> None:
                           if config.metrics_path(test, s).exists()} for test in config.TEST_ROLES}
         complete = {t: m for t, m in by_test.items() if len(m) == len(config.ACTIVE_SCORINGS)}
         for test, by_scoring in complete.items():
-            _save_table(tables / f"{test}__scorings.tex", booktabs(
-                scoring_frame(by_scoring), caption=f"Selection-criterion sensitivity on {test}: "
-                "global RMSE, minimax and within-family rank under each scoring.",
-                label=f"tab:{test}:scorings"))
+            _save_table(tables / f"{test}__scorings.tex", scoring_table(by_scoring, test))
         if complete:
-            _save_table(tables / "scorings_params.tex", booktabs(
-                scoring_params_frame(next(iter(complete.values()))),
-                caption="Hyper-parameters selected by CV under each scoring.",
-                label="tab:scorings:params"))
+            _save_table(tables / "scorings_params.tex", scoring_params_table(next(iter(complete.values()))))
 
     if config.learning_curve_metrics_path().exists():
         lc = load_learning_curve()
@@ -819,7 +1077,7 @@ def run() -> None:
                         "train on 300 points against the 600 of B, C-log, C-seq, C-logG, C-oracle and "
                         "C-logP. C-oracle, C-logP, C0-oracle and C0-logP have no r0 (shown as '--').",
                 label=f"tab:rep:{test}:values"))
-            _save_table(tables / f"replications__{test}__comparisons.tex", booktabs(
+            _save_table(tables / f"replications__{test}__comparisons.tex", longtable(
                 replication_comparison_frame(rep, test),
                 caption=f"Replicated comparisons on {test}: Welch (independent arms) or paired intervals, "
                         "log-RMSE and relative scale; P(first<second) is descriptive. C0-log, C0-seq, "
@@ -827,24 +1085,16 @@ def run() -> None:
                         "budget: they train on 300 points against the 600 of B, C-log, C-seq, C-logG, "
                         "C-oracle and C-logP. C-oracle, C-logP, C0-oracle and C0-logP have no r0 (shown "
                         "as '--').",
-                label=f"tab:rep:{test}:comparisons"))
+                label=f"tab:rep:{test}:comparisons", block="family", left=4))
             for family in config.REP_FAMILIES:
                 _save_figure(figures / f"replications__{test}__{family}.pdf", fig_replication_bins(rep, test, family))
-        _save_table(tables / "replications__interactions.tex", booktabs(
-            replication_interaction_frame(rep), caption="Learner interaction on "
+        _save_table(tables / "replications__interactions.tex", booktabs_split(
+            replication_interaction_frame(rep), "test", caption="Learner interaction on "
             "log(log-RMSE_rf) − log(log-RMSE_gbm) between arms; Welch, or paired where the two "
             "arms share a realization's candidate pool and intended allocation.",
             label="tab:rep:interactions"))
         if rep.get("oracle"):
-            _save_table(tables / "replications__oracle.tex", booktabs(
-                oracle_reading_frame(rep),
-                caption="The oracle, read as declared before the pool was solved: C-oracle against "
-                        "C-logP on the same sub-pool, r1-r5, medians per learner x test cell and the "
-                        "paired 95% interval of dR_O = R(C-oracle) - R(C-logP). 'Attributable to the "
-                        "screener's error, in this design' only where that interval excludes 0 in at "
-                        "least three of four cells; an interval containing 0 is inconclusive. C0-oracle "
-                        "and C0-logP are reported in the replication tables.",
-                label="tab:rep:oracle", small=True))
+            _save_table(tables / "replications__oracle.tex", oracle_table(rep))
 
     if config.structural_metrics_path().exists():
         struct = load_structural()
@@ -903,8 +1153,8 @@ def run() -> None:
                     f"rest are counted by 'outside'. C-oracle's row is a construction check "
                     f"(stayed = 1, shift 0), not a description of a screener. {oracle} {shared}",
             label="tab:structural:displacement", small=True))
-        _save_table(tables / "structural__outside.tex", booktabs(
-            structural_outside_frame(struct),
+        _save_table(tables / "structural__outside.tex", booktabs_split(
+            structural_outside_frame(struct), "kind",
             caption="Outside the selection range, where nothing was allocated. 'density' rows are "
                     "the spillover itself: training points that landed there because the gate is "
                     "on a predicted FOS. 'error' rows are the test error in those bins, with the "
@@ -913,7 +1163,8 @@ def run() -> None:
                     "Differences against B with descriptive 95% Welch intervals over r1-r5. Both "
                     "sides are read from the replication metrics, so both use the half-open "
                     "reporting zones and the outer bin is FOS >= 6.",
-            label="tab:structural:outside"))
+            label="tab:structural:outside", part=lambda kind: f"This table: the '{kind}' rows.",
+            small=True))
         _save_table(tables / "structural__shared_candidates.tex", booktabs(
             structural_shared_candidates_frame(struct),
             caption="Shared candidates (same pool, different screener): how many of guided-log-g's "
@@ -925,13 +1176,13 @@ def run() -> None:
         # never enter the main figure or the concordance count above.
         budgets = ablation["budgets"]
         _save_figure(figures / "structural__ablation.pdf", fig_structural_ablation(struct))
-        _save_table(tables / "structural__ablation_fractions.tex", booktabs(
+        _save_table(tables / "structural__ablation_fractions.tex", longtable(
             structural_ablation_fraction_frame(struct),
             caption="C0 training distribution against B, as the fraction of the training set in "
                     "each reporting bin, with descriptive 95% Welch intervals over r1-r5. "
                     "Fractions only, never raw counts, because C0 trains on "
                     f"{budgets['C0-log']} points and B on {budgets['B']}.",
-            label="tab:structural:ablation:fractions"))
+            label="tab:structural:ablation:fractions", left=2))
         _save_table(tables / "structural__ablation_caption.tex", _structural_text(ablation["caption"]))
         _save_table(tables / "structural__original_c0.tex", _structural_text(ablation["original_c0"]))
     else:

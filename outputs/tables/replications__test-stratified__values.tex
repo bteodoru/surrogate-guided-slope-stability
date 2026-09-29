@@ -1,6 +1,6 @@
 \begin{table}[htbp]
 \centering
-\caption{Log-RMSE on the decision range, test-stratified, every realization; r0 = existing sets (exploratory). Common fixed hyper-parameters. C0-log, C0-seq, C0-logG, C0-oracle and C0-logP are ablations without the seed and carry no budget: they train on 300 points against the 600 of B, C-log, C-seq, C-logG, C-oracle and C-logP. C-oracle, C-logP, C0-oracle and C0-logP have no r0 (shown as '--').}
+\caption{Log-RMSE on the decision range, test-stratified, every realization; r0 = existing sets (exploratory). Common fixed hyper-parameters. C$_0$-log, C$_0$-seq, C$_0$-logG, C$_0$-oracle and C$_0$-logP are ablations without the seed and carry no budget: they train on 300 points against the 600 of B, C-log, C-seq, C-logG, C-oracle and C-logP. C-oracle, C-logP, C$_0$-oracle and C$_0$-logP have no r0 (shown as '--').}
 \label{tab:rep:test-stratified:values}
 \begin{tabular}{lrrrrrrrrr}
 \toprule
@@ -13,11 +13,11 @@ gbm & C-logG & 0.055 & 0.058 & 0.042 & 0.047 & 0.047 & 0.047 & 0.048 & 0.006 \\
 gbm & C-logP & -- & 0.046 & 0.042 & 0.054 & 0.039 & 0.043 & 0.045 & 0.005 \\
 gbm & C-oracle & -- & 0.039 & 0.048 & 0.046 & 0.041 & 0.047 & 0.044 & 0.004 \\
 gbm & C-seq & 0.056 & 0.057 & 0.046 & 0.055 & 0.040 & 0.047 & 0.049 & 0.007 \\
-gbm & C0-log & 0.098 & 0.069 & 0.097 & 0.084 & 0.081 & 0.090 & 0.084 & 0.011 \\
-gbm & C0-logG & 0.103 & 0.092 & 0.123 & 0.100 & 0.070 & 0.090 & 0.095 & 0.019 \\
-gbm & C0-logP & -- & 0.067 & 0.106 & 0.077 & 0.100 & 0.087 & 0.087 & 0.016 \\
-gbm & C0-oracle & -- & 0.092 & 0.092 & 0.092 & 0.087 & 0.092 & 0.091 & 0.002 \\
-gbm & C0-seq & 0.111 & 0.107 & 0.134 & 0.108 & 0.123 & 0.115 & 0.117 & 0.012 \\
+gbm & C$_0$-log & 0.098 & 0.069 & 0.097 & 0.084 & 0.081 & 0.090 & 0.084 & 0.011 \\
+gbm & C$_0$-logG & 0.103 & 0.092 & 0.123 & 0.100 & 0.070 & 0.090 & 0.095 & 0.019 \\
+gbm & C$_0$-logP & -- & 0.067 & 0.106 & 0.077 & 0.100 & 0.087 & 0.087 & 0.016 \\
+gbm & C$_0$-oracle & -- & 0.092 & 0.092 & 0.092 & 0.087 & 0.092 & 0.091 & 0.002 \\
+gbm & C$_0$-seq & 0.111 & 0.107 & 0.134 & 0.108 & 0.123 & 0.115 & 0.117 & 0.012 \\
 rf & A & 0.124 & -- & -- & -- & -- & -- & -- & -- \\
 rf & B & 0.098 & 0.093 & 0.110 & 0.096 & 0.110 & 0.097 & 0.101 & 0.008 \\
 rf & C-log & 0.123 & 0.098 & 0.087 & 0.090 & 0.095 & 0.107 & 0.096 & 0.008 \\
@@ -25,11 +25,11 @@ rf & C-logG & 0.083 & 0.108 & 0.081 & 0.086 & 0.081 & 0.114 & 0.094 & 0.016 \\
 rf & C-logP & -- & 0.113 & 0.088 & 0.105 & 0.102 & 0.115 & 0.105 & 0.011 \\
 rf & C-oracle & -- & 0.089 & 0.097 & 0.085 & 0.086 & 0.082 & 0.088 & 0.006 \\
 rf & C-seq & 0.101 & 0.112 & 0.090 & 0.088 & 0.095 & 0.110 & 0.099 & 0.011 \\
-rf & C0-log & 0.207 & 0.132 & 0.160 & 0.168 & 0.191 & 0.193 & 0.169 & 0.025 \\
-rf & C0-logG & 0.174 & 0.227 & 0.215 & 0.168 & 0.149 & 0.210 & 0.194 & 0.033 \\
-rf & C0-logP & -- & 0.136 & 0.182 & 0.173 & 0.169 & 0.154 & 0.163 & 0.018 \\
-rf & C0-oracle & -- & 0.154 & 0.186 & 0.188 & 0.167 & 0.122 & 0.163 & 0.027 \\
-rf & C0-seq & 0.240 & 0.226 & 0.254 & 0.193 & 0.170 & 0.224 & 0.213 & 0.032 \\
+rf & C$_0$-log & 0.207 & 0.132 & 0.160 & 0.168 & 0.191 & 0.193 & 0.169 & 0.025 \\
+rf & C$_0$-logG & 0.174 & 0.227 & 0.215 & 0.168 & 0.149 & 0.210 & 0.194 & 0.033 \\
+rf & C$_0$-logP & -- & 0.136 & 0.182 & 0.173 & 0.169 & 0.154 & 0.163 & 0.018 \\
+rf & C$_0$-oracle & -- & 0.154 & 0.186 & 0.188 & 0.167 & 0.122 & 0.163 & 0.027 \\
+rf & C$_0$-seq & 0.240 & 0.226 & 0.254 & 0.193 & 0.170 & 0.224 & 0.213 & 0.032 \\
 \bottomrule
 \end{tabular}
 \end{table}
