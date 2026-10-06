@@ -1,6 +1,6 @@
 \begin{table}[htbp]
 \centering
-\caption{Hyper-parameters selected by CV under each scoring, one column per hyper-parameter (scikit-learn names: rate: learning\_rate; max feat.: max\_features; iter.: max\_iter; leaves: max\_leaf\_nodes; min leaf: min\_samples\_leaf). C$_0$, C$_0$-log, C$_0$-seq and C$_0$-logG are ablations: they train on the added points without the seed and carry no budget.}
+\caption{Hyper-parameters selected by CV under each scoring, one column per hyper-parameter (scikit-learn names: rate: learning\_rate; max feat.: max\_features, a fraction of the features, 1.0 = all; iter.: max\_iter; leaves: max\_leaf\_nodes; min leaf: min\_samples\_leaf). C$_0$, C$_0$-log, C$_0$-seq and C$_0$-logG are ablations: they train on the added points without the seed and carry no budget.}
 \label{tab:scorings:params}
 \textit{RF}\par\smallskip
 \begin{tabular}{lrrrr}
@@ -9,16 +9,16 @@
 \cmidrule(lr){2-3} \cmidrule(lr){4-5}
 arm & max feat. & min leaf & max feat. & min leaf \\
 \midrule
-A & 1 & 1 & 1 & 2 \\
-B & 1 & 1 & 1 & 1 \\
-C & 1 & 1 & 1 & 1 \\
-C$_0$ & 1 & 1 & 1 & 1 \\
-C-log & 1 & 1 & 1 & 1 \\
-C$_0$-log & 1 & 1 & 1 & 1 \\
-C-seq & 1 & 1 & 1 & 1 \\
-C$_0$-seq & 1 & 1 & 1 & 1 \\
-C-logG & 1 & 1 & 1 & 1 \\
-C$_0$-logG & 1 & 1 & 1 & 1 \\
+A & 1.0 & 1 & 1.0 & 2 \\
+B & 1.0 & 1 & 1.0 & 1 \\
+C & 1.0 & 1 & 1.0 & 1 \\
+C$_0$ & 1.0 & 1 & 1.0 & 1 \\
+C-log & 1.0 & 1 & 1.0 & 1 \\
+C$_0$-log & 1.0 & 1 & 1.0 & 1 \\
+C-seq & 1.0 & 1 & 1.0 & 1 \\
+C$_0$-seq & 1.0 & 1 & 1.0 & 1 \\
+C-logG & 1.0 & 1 & 1.0 & 1 \\
+C$_0$-logG & 1.0 & 1 & 1.0 & 1 \\
 \bottomrule
 \end{tabular}
 \par\medskip

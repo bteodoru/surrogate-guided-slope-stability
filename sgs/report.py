@@ -14,6 +14,7 @@ import math
 import re
 
 import matplotlib.pyplot as plt
+from matplotlib.transforms import blended_transform_factory
 import numpy as np
 import pandas as pd
 
@@ -302,7 +303,14 @@ PARAM_HEADERS = {"max_features": "max feat.", "min_samples_leaf": "min leaf", "l
                  "max_iter": "iter.", "max_leaf_nodes": "leaves"}
 
 
+# Glosses for a header whose values could be misread: max_features=1.0 is every feature, not one.
+PARAM_NOTES = {"max_features": "a fraction of the features, 1.0 = all"}
+
+
 def _param(value) -> str:
+    """An integer as an integer; a float keeps its point, so 1.0 never reads as the integer 1."""
+    if isinstance(value, float) and value.is_integer():
+        return f"{value:.1f}"
     return f"{value:g}" if isinstance(value, (int, float)) else str(value)
 
 
@@ -326,7 +334,8 @@ def param_legend(by_scoring: dict[str, dict]) -> str:
     """'rate: learning_rate; ...' for the headers actually used."""
     names = sorted({k for metrics in by_scoring.values() for arms in metrics["arms"].values()
                     for m in arms.values() for k in m["best_params"]})
-    return "; ".join(f"{PARAM_HEADERS[n]}: {n}" for n in names if n in PARAM_HEADERS)
+    return "; ".join(f"{PARAM_HEADERS[n]}: {n}" + (f", {PARAM_NOTES[n]}" if n in PARAM_NOTES else "")
+                     for n in names if n in PARAM_HEADERS)
 
 
 def budget_frame() -> pd.DataFrame:
@@ -485,6 +494,139 @@ def fig_replication_bins(rep: dict, test: str, family: str):
     bottom.set_xticks(x, labels, rotation=60, fontsize=7)
     fig.tight_layout()
     return fig
+
+
+# --- the primary criterion as a forest plot ---------------------------------
+# Every row against B, log scale, Welch over r1-r5. A, C and the original C0 have
+# no replications and no interval, so they are not rows; r0 enters no interval,
+# so it is not drawn.
+
+# (title, second line or None, arms); the C0 block names the budgets it joins.
+FOREST_BLOCKS = (("Main-text arms", None, ("C-log", "C-oracle", "C-logP")),
+                 ("Sensitivity arms (Supplementary)", None, ("C-seq", "C-logG")),
+                 ("C₀ ablations", "different budgets: 300 vs 600 points",
+                  ("C0-log", "C0-oracle", "C0-logP", "C0-seq", "C0-logG")))
+FOREST_MEASURES = (("decision-range", "Decision range [0.5, 2)"),
+                   ("0.5–1", "Lower half [0.5, 1)"), ("1–2", "Upper half [1, 2)"))
+FOREST_CELLS = (("rf", "test-natural"), ("rf", "test-stratified"),
+                ("gbm", "test-natural"), ("gbm", "test-stratified"))
+
+# Okabe-Ito, colour-blind safe; the family is also carried by the marker shape
+# and the test set by the fill, so neither depends on colour.
+FOREST_FAMILY_STYLE = {"rf": ("o", "#0072B2"), "gbm": ("s", "#D55E00")}
+FOREST_HOLLOW = {"test-natural": False, "test-stratified": True}
+
+
+def forest_frame(rep: dict) -> pd.DataFrame:
+    """The rows of the forest plot: each declared arm against B, log scale, on the
+    decision range and its two halves, in the four learner x test cells. A row
+    missing from the metrics, duplicated or not a Welch interval is refused."""
+    found = {}
+    for c in rep["comparisons"]:
+        if c["second"] == "B" and c["scale"] == "log-rmse":
+            key = (c["first"], c["measure"], c["family"], c["test"])
+            if key in found:
+                raise ValueError(f"comparison {key} vs B appears twice in the replication metrics")
+            found[key] = c
+    rows, missing = [], []
+    for block, _, arms in FOREST_BLOCKS:
+        for arm in arms:
+            for measure, _ in FOREST_MEASURES:
+                for family, test in FOREST_CELLS:
+                    c = found.get((arm, measure, family, test))
+                    if c is None:
+                        missing.append((arm, measure, family, test))
+                        continue
+                    if c["method"] != "welch":
+                        raise ValueError(f"{arm} vs B on {measure}, {family}, {test} is not a Welch interval")
+                    rows.append({"block": block, "arm": arm, "measure": measure, "family": family,
+                                 "test": test, "diff": c["diff"], "ci low": c["ci"][0],
+                                 "ci high": c["ci"][1], "level": c["level"]})
+    if missing:
+        raise KeyError(f"the forest plot needs comparisons absent from the replication metrics: {missing}")
+    return pd.DataFrame(rows)
+
+
+def fig_forest(rep: dict):
+    """Arm minus B, log-RMSE, on the decision range and its two halves; one row
+    per arm in three blocks, the four cells as dodged points in each row. Sized
+    for the DCE text width (144 mm), so it is included at \\textwidth unscaled."""
+    frame = forest_frame(rep)
+    dodge = {cell: (i - (len(FOREST_CELLS) - 1) / 2) * 0.19 for i, cell in enumerate(FOREST_CELLS)}
+    # one unit per arm, one more above each block for its title (two lines take more)
+    rows, titles, starts, y = {}, [], [], 0.0
+    for block, note, arms in FOREST_BLOCKS:
+        height = 1.0 if note is None else 1.5
+        starts.append(y)
+        titles.append((block, note, y))
+        y += height
+        for arm in arms:
+            rows[arm] = y
+            y += 1.0
+    fig, axes = plt.subplots(1, len(FOREST_MEASURES), sharey=True, figsize=(5.67, 5.4))
+    fig.subplots_adjust(left=0.135, right=0.985, top=0.93, bottom=0.165, wspace=0.12)
+    for ax, (measure, title) in zip(axes, FOREST_MEASURES):
+        for i, yi in enumerate(rows.values()):
+            if i % 2 == 0:
+                ax.axhspan(yi - 0.5, yi + 0.5, color="0.94", zorder=0, linewidth=0)
+        for (family, test), dy in dodge.items():
+            cell = frame[(frame["measure"] == measure) & (frame["family"] == family) & (frame["test"] == test)]
+            marker, colour = FOREST_FAMILY_STYLE[family]
+            ys = [rows[a] + dy for a in cell["arm"]]
+            ax.errorbar(cell["diff"], ys, xerr=[cell["diff"] - cell["ci low"], cell["ci high"] - cell["diff"]],
+                        fmt="none", ecolor=colour, elinewidth=0.9, capsize=0, zorder=2)
+            ax.scatter(cell["diff"], ys, marker=marker, s=14, linewidths=0.9, edgecolors=colour,
+                       facecolors="white" if FOREST_HOLLOW[test] else colour, zorder=3)
+        ax.axvline(0.0, color="black", linewidth=0.8, zorder=1)
+        for start in starts[1:]:
+            ax.axhline(start - 0.5, color="0.55", linewidth=0.6)
+        ax.set_title(title, fontsize=8)
+        ax.tick_params(axis="x", labelsize=7)
+        ax.tick_params(axis="y", length=0)
+        ax.xaxis.set_major_locator(plt.MaxNLocator(4))
+        ax.grid(axis="x", color="0.85", linewidth=0.5)
+        ax.set_axisbelow(True)
+    axes[0].set_ylim(y - 0.5, -0.5)
+    axes[0].set_yticks(list(rows.values()), [arm_label(a) for a in rows], fontsize=7.5)
+    edge = blended_transform_factory(fig.transFigure, axes[0].transData)
+    # from the figure's left edge, a title may run past the label column and over the zero line
+    behind = {"facecolor": "white", "edgecolor": "none", "pad": 0.6}
+    for block, note, yt in titles:
+        axes[0].text(0.01, yt, block, transform=edge, fontsize=7.5, fontweight="bold",
+                     va="center", ha="left", bbox=behind, zorder=4)
+        if note is not None:
+            axes[0].text(0.01, yt + 0.5, note, transform=edge, fontsize=7, va="center", ha="left",
+                         bbox=behind, zorder=4)
+    realizations = f"r{rep['confirmatory'][0]}–r{rep['confirmatory'][-1]}"
+    fig.supxlabel(f"Mean log-RMSE over {realizations}: arm − B (negative: smaller than B)", fontsize=8, y=0.075)
+    handles = [plt.Line2D([], [], linestyle="none", marker=FOREST_FAMILY_STYLE[f][0], markersize=5,
+                          markeredgewidth=0.9, markeredgecolor=FOREST_FAMILY_STYLE[f][1],
+                          markerfacecolor="white" if FOREST_HOLLOW[t] else FOREST_FAMILY_STYLE[f][1],
+                          label=f"{f.upper()}, {t}") for f, t in FOREST_CELLS]
+    fig.legend(handles=handles, loc="lower center", ncol=4, frameon=False, fontsize=7,
+               handletextpad=0.3, columnspacing=1.2, bbox_to_anchor=(0.5, 0.0))
+    return fig
+
+
+def forest_caption(rep: dict) -> str:
+    realizations = f"r{rep['confirmatory'][0]}-r{rep['confirmatory'][-1]}"
+    return (
+        "Primary criterion: log-RMSE against B on the decision range, FOS in [0.5, 2), and on its two "
+        f"halves, [0.5, 1) and [1, 2). Each point is the mean over the confirmatory realizations "
+        f"{realizations} of the arm's log-RMSE minus B's, with its 95% Welch interval; a negative "
+        "difference means a smaller log-RMSE than B. Each row carries the four learner-by-test cells: "
+        "circles RF, squares GBM; filled markers test-natural, hollow markers test-stratified. The rows "
+        "share one x axis within each column; the columns have their own. The intervals cover "
+        "variability between designs, conditional on the fixed seed, the fixed test sets and the common "
+        "hyper-parameters fixed from the seed; they constitute no test. An interval containing 0 is "
+        "inconclusive, never a tie or evidence of equivalence. C-seq and C-logG are sensitivity arms, "
+        "reported in Supplementary. The C0 rows are ablations: they train on the 300 guided points "
+        "without the seed, against the 600 of B, so they join different budgets and are not a "
+        "like-for-like comparison. A is absent: it has no replications, only its existing set (r0), "
+        "and therefore no interval; C and the original C0 are absent for the same reason, as they "
+        "were never replicated. r0 is exploratory and enters no interval, so it is not drawn; "
+        "C-oracle, C-logP and their C0 ablations have no r0. Bins are half-open, [lo, hi), as "
+        "everywhere the replication metrics are read.")
 
 
 # --- structural (Task 5): the figure, the heatmaps and the tables -----------
@@ -1095,6 +1237,10 @@ def run() -> None:
             label="tab:rep:interactions"))
         if rep.get("oracle"):
             _save_table(tables / "replications__oracle.tex", oracle_table(rep))
+            # The forest plot declares the pool arms; metrics built before the pool have none.
+            _save_figure(figures / "replications__decision_forest.pdf", fig_forest(rep))
+            _save_table(tables / "replications__decision_forest_caption.tex",
+                        _structural_text(forest_caption(rep)))
 
     if config.structural_metrics_path().exists():
         struct = load_structural()

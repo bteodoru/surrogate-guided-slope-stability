@@ -736,3 +736,50 @@ def test_zone_figure_keeps_its_legend():
     fig = report.fig_zone_rmse(metrics, "rf")
     labels = [t.get_text() for t in fig.axes[0].get_legend().get_texts()]
     assert "C0 (ablation)" in labels                      # figures are revised in their own pass
+
+
+def test_hyper_parameters_keep_the_point_of_a_whole_float():
+    assert report._param(1.0) == "1.0"                    # max_features: every feature, not one
+    assert report._param(0.5) == "0.5" and report._param(0.06) == "0.06"
+    assert report._param(8000) == "8000" and report._param(1) == "1"
+    metrics = {"arms": {"rf": {"A": {"best_params": {"max_features": 1.0}}}}}
+    assert "max_features, a fraction of the features, 1.0 = all" in report.param_legend({"log-rmse": metrics})
+
+
+def test_forest_plot_reads_every_declared_row_against_b():
+    rep = json.loads(config.replication_metrics_path().read_text())
+    frame = report.forest_frame(rep)
+    arms = [a for _, _, block in report.FOREST_BLOCKS for a in block]
+    # discipline 1: every C0 variant with a replicated row against B; A has none
+    c0 = {a for a in config.ARMS if config.ARMS[a].ablation and a != "C0"} | {"C0-oracle", "C0-logP"}
+    assert c0 <= set(arms) and "A" not in arms and "B" not in arms
+    assert set(frame["arm"]) == set(arms)
+    assert set(frame["measure"]) == {m for m, _ in report.FOREST_MEASURES}
+    assert set(zip(frame["family"], frame["test"])) == set(report.FOREST_CELLS)
+    assert len(frame) == len(arms) * len(report.FOREST_MEASURES) * len(report.FOREST_CELLS)
+    assert (frame["level"] == 0.95).all()
+    row = frame[(frame["arm"] == "C-oracle") & (frame["measure"] == "decision-range")
+                & (frame["family"] == "rf") & (frame["test"] == "test-natural")].iloc[0]
+    source = next(c for c in rep["comparisons"] if c["first"] == "C-oracle" and c["second"] == "B"
+                  and c["scale"] == "log-rmse" and c["measure"] == "decision-range"
+                  and c["family"] == "rf" and c["test"] == "test-natural")
+    assert (row["diff"], row["ci low"], row["ci high"]) == (source["diff"], *source["ci"])
+    fig = report.fig_forest(rep)
+    assert [ax.get_title() for ax in fig.axes] == [t for _, t in report.FOREST_MEASURES]
+    assert [t.get_text() for t in fig.axes[0].get_yticklabels()] == [report.arm_label(a) for a in arms]
+    assert len(fig.legends[0].get_texts()) == len(report.FOREST_CELLS)
+
+
+def test_forest_plot_refuses_a_missing_ablation():
+    rep = json.loads(config.replication_metrics_path().read_text())
+    rep["comparisons"] = [c for c in rep["comparisons"] if c["first"] != "C0-logG"]
+    with pytest.raises(KeyError, match="C0-logG"):
+        report.forest_frame(rep)
+
+
+def test_forest_caption_states_what_the_intervals_are_not():
+    caption = report.forest_caption(json.loads(config.replication_metrics_path().read_text()))
+    for phrase in ("r1-r5", "95% Welch interval", "never a tie or evidence of equivalence",
+                   "A is absent", "C and the original C0 are absent", "different budgets", "have no r0"):
+        assert phrase in caption
+    assert "significan" not in caption.lower() and "balanced" not in caption
