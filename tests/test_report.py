@@ -718,8 +718,20 @@ def test_oracle_table_splits_the_reading_with_its_columns():
     tex = report.oracle_table(rep)
     medians, intervals = tex.split(r"\par\medskip")
     assert "gate passes" in medians and "rho" not in medians
-    assert rep["oracle"]["row"] in intervals and "rho\\_L" in intervals
+    assert rep["oracle"]["row"] in intervals and r"$\rho_L$" in intervals
     assert _table_numbers(tex) == _frame_numbers(report.oracle_reading_frame(rep))
+
+
+def test_oracle_table_typesets_its_labels_and_keeps_its_values():
+    rep = json.loads(config.replication_metrics_path().read_text())
+    tex = report.oracle_table(rep)
+    for raw in ("dR\\_O", "dL\\_O", "dH\\_O", "rho\\_", "gbm/", "rf/", "test-natural"):
+        assert raw not in tex, raw
+    for typeset in (r"{$dR_O$}", r"{$dL_O$}", r"{$dH_O$}", r"$\rho_H$", "median $L$", "GBM, natural",
+                    "RF, stratified", r"$dR_O = R(\mbox{C-oracle}) - R(\mbox{C-logP})$"):
+        assert typeset in tex, typeset
+    for rho in (rep["oracle"]["rho"]["L"], rep["oracle"]["rho"]["H"]):
+        assert f"{rho:.3f}" in tex
 
 
 def test_split_tables_drop_only_what_is_constant():

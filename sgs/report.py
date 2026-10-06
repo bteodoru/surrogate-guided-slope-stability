@@ -1198,29 +1198,54 @@ def _stack(text: str) -> Tex:
     return Tex(rf"\shortstack[r]{{{_escape(first)}\\{_escape(rest)}}}")
 
 
+# The oracle's quantities as the manuscript typesets them.
+ORACLE_SYMBOLS = {"dR_O": r"$dR_O$", "dL_O": r"$dL_O$", "dH_O": r"$dH_O$",
+                  "rho_L": r"$\rho_L$", "rho_H": r"$\rho_H$", "L": "$L$", "H": "$H$"}
+
+
+def _oracle_cell(cell: str) -> str:
+    """'gbm/test-natural' as 'GBM, natural'; the reading row keeps its name."""
+    if "/" not in cell:
+        return cell
+    family, test = cell.split("/")
+    return f"{family.upper()}, {test.removeprefix('test-')}"
+
+
+def _oracle_reading(value):
+    """A reading cell of two words on two lines; a symbol among them is typeset."""
+    if not (isinstance(value, str) and " " in value):
+        return value
+    first, rest = value.split(" ", 1)
+    if first not in ORACLE_SYMBOLS:
+        return _stack(value)
+    return Tex(rf"\shortstack[r]{{{ORACLE_SYMBOLS[first]}\\{_escape(rest)}}}")
+
+
 def oracle_table(rep: dict) -> str:
     """The oracle reading in two panels: the medians of L and H per arm, then
-    dR_O, dL_O and dH_O with their intervals. The reading row is split with its columns."""
+    dR_O, dL_O and dH_O with their intervals. The reading row is split with its columns.
+    Labels only are typeset here; every value comes unchanged from `oracle_reading_frame`."""
     frame = oracle_reading_frame(rep)
-    medians = regroup(frame, {"cell": "cell", **{f"median {q} {arm}": (arm, f"median {q}")
+    frame["cell"] = frame["cell"].map(_oracle_cell)
+    sym = lambda name: Tex(ORACLE_SYMBOLS[name])
+    medians = regroup(frame, {"cell": "cell", **{f"median {q} {arm}": (arm, Tex(f"median {ORACLE_SYMBOLS[q]}"))
                                                  for arm in ("C-oracle", "C-logP") for q in "LH"}})
-    intervals = regroup(frame, {"cell": "cell", "median dR_O": ("dR_O", "median"),
-                                "dR_O CI low": ("dR_O", "CI low"), "dR_O CI high": ("dR_O", "CI high"),
-                                "median dL_O": ("dL_O", "median"), "dL_O CI": ("dL_O", "CI"),
-                                "median dH_O": ("dH_O", "median"), "dH_O CI": ("dH_O", "CI")})
+    intervals = regroup(frame, {"cell": "cell", "median dR_O": (sym("dR_O"), "median"),
+                                "dR_O CI low": (sym("dR_O"), "CI low"), "dR_O CI high": (sym("dR_O"), "CI high"),
+                                "median dL_O": (sym("dL_O"), "median"), "dL_O CI": (sym("dL_O"), "CI"),
+                                "median dH_O": (sym("dH_O"), "median"), "dH_O CI": (sym("dH_O"), "CI")})
     reading = intervals.index[intervals["cell"] == "reading"]
     for column in intervals.columns[1:]:
-        value = intervals.at[reading[0], column] if len(reading) else None
-        if isinstance(value, str) and " " in value:
-            intervals.at[reading[0], column] = _stack(value)
+        if len(reading):
+            intervals.at[reading[0], column] = _oracle_reading(intervals.at[reading[0], column])
     return booktabs_panels(
         [(None, medians, {}), (None, intervals, {})],
-        caption="The oracle, read as declared before the pool was solved: C-oracle against "
-                "C-logP on the same sub-pool, r1-r5, medians per learner x test cell and the "
-                "paired 95% interval of dR_O = R(C-oracle) - R(C-logP). 'Attributable to the "
-                "screener's error, in this design' only where that interval excludes 0 in at "
-                "least three of four cells; an interval containing 0 is inconclusive. C0-oracle "
-                "and C0-logP are reported in the replication tables.",
+        caption=Tex(r"The oracle, read as declared before the pool was solved: C-oracle against "
+                    r"C-logP on the same sub-pool, r1-r5, medians per learner $\times$ test cell and the "
+                    r"paired 95\% interval of $dR_O = R(\mbox{C-oracle}) - R(\mbox{C-logP})$. "
+                    r"`Attributable to the screener's error, in this design' only where that interval "
+                    r"excludes 0 in at least three of four cells; an interval containing 0 is "
+                    r"inconclusive. C$_0$-oracle and C$_0$-logP are reported in the replication tables."),
         label="tab:rep:oracle", small=True)
 
 
