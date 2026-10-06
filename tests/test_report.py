@@ -3,6 +3,7 @@ import json
 import numpy as np
 import pandas as pd
 import pytest
+from matplotlib.container import BarContainer
 
 from sgs import config, data, evaluate, report
 from tests.helpers import EVAL_KWARGS, stub_fits, stub_test
@@ -783,3 +784,18 @@ def test_forest_caption_states_what_the_intervals_are_not():
                    "A is absent", "C and the original C0 are absent", "different budgets", "have no r0"):
         assert phrase in caption
     assert "significan" not in caption.lower() and "balanced" not in caption
+
+
+def test_allocation_figure_draws_the_allocation_table_values():
+    struct = json.loads(config.structural_metrics_path().read_text())
+    fig = report.fig_structural_allocation(struct)
+    assert [ax.get_title(loc="left") for ax in fig.axes] == list(report.ALLOCATION_FIGURE_ARMS)
+    for ax, arm in zip(fig.axes, report.ALLOCATION_FIGURE_ARMS):
+        table = report.structural_allocation_frame(struct, arm).iloc[:-1]        # Σ row is not drawn
+        bars = next(c for c in ax.containers if isinstance(c, BarContainer))
+        assert [str(int(p.get_height())) for p in bars] == table["intended"].tolist()
+        means = ax.lines[0].get_ydata()
+        assert np.allclose(means, [float(a.split(" ± ")[0]) for a in table["achieved"]], atol=0.05)
+    caption = report.structural_allocation_caption(struct)
+    assert "(lo, hi]" in caption and "not a prediction error" in caption
+    assert "C0-oracle" in caption and "C0-logP" in caption                      # the shared rows, discipline 1

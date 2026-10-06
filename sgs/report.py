@@ -893,6 +893,65 @@ def structural_allocation_frame(struct: dict, arm: str) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+ALLOCATION_FIGURE_ARMS = ("C-log", "C-oracle", "C-logP")
+
+
+def fig_structural_allocation(struct: dict):
+    """Intended against achieved bin counts, one panel per arm, from the same rows as
+    `structural_allocation_frame`: r1-r5 only, achieved as mean ± sd, the generator's
+    (lo, hi] bins (the first closed at 0.5), then the two bins outside the selection range, where nothing was
+    intended. Descriptive; sized for the DCE text width (144 mm)."""
+    labels = [*struct["bins"]["labels"], *STRUCTURAL_OUTSIDE_LABELS]
+    n_in = len(struct["bins"]["labels"])
+    confirmatory = [str(r) for r in struct["confirmatory"]]
+    x = np.arange(len(labels))
+    fig, axes = plt.subplots(len(ALLOCATION_FIGURE_ARMS), 1, sharex=True, sharey=True, figsize=(5.67, 5.6))
+    fig.subplots_adjust(left=0.1, right=0.985, top=0.9, bottom=0.17, hspace=0.32)
+    for ax, arm in zip(axes, ALLOCATION_FIGURE_ARMS):
+        rows = [struct["allocation"][k][arm] for k in confirmatory]
+        intended = np.array([*rows[0]["intended"], 0, 0], dtype=float)
+        if any(r["intended"] != rows[0]["intended"] for r in rows):
+            raise ValueError(f"{arm}: the intended allocation differs between realizations")
+        achieved = np.array([[*r["achieved"], *(r["achieved_outside"][s] for s in STRUCTURAL_OUTSIDE_LABELS)]
+                             for r in rows], dtype=float)
+        mean, sd = achieved.mean(axis=0), achieved.std(axis=0, ddof=1)
+        ax.axvspan(n_in - 0.5, len(labels) - 0.5, color="0.92", zorder=0, linewidth=0)
+        ax.bar(x, intended, width=0.7, facecolor="white", edgecolor="0.35", hatch="////", linewidth=0.7,
+               label="intended", zorder=1)
+        ax.errorbar(x, mean, yerr=sd, fmt="o", markersize=3.5, color="#0072B2", elinewidth=0.9,
+                    capsize=1.5, label=f"achieved, mean ± sd over r{confirmatory[0]}–r{confirmatory[-1]}",
+                    zorder=3)
+        ax.set_title(arm, fontsize=8, loc="left")
+        ax.set_ylabel("points per bin", fontsize=7.5)
+        ax.tick_params(labelsize=7)
+        ax.grid(axis="y", color="0.85", linewidth=0.5)
+        ax.set_axisbelow(True)
+    axes[-1].set_xticks(x, labels, rotation=45, ha="right", fontsize=6.5)
+    axes[-1].set_xlabel("FOS bin, (lo, hi]; the shaded pair lies outside the selection range", fontsize=7.5)
+    handles, names = axes[0].get_legend_handles_labels()
+    fig.legend(handles, names, loc="upper center", ncol=2, frameon=False, fontsize=7,
+               bbox_to_anchor=(0.5, 0.99))
+    return fig
+
+
+def structural_allocation_caption(struct: dict) -> str:
+    realizations = f"r{struct['confirmatory'][0]}-r{struct['confirmatory'][-1]}"
+    shared = struct["ablation"]["shared_rows"]["note"]
+    return (
+        "Intended against achieved allocation of the 300 added points for C-log, C-oracle and C-logP: "
+        "per bin, the intended count (hatched) and the achieved count as the mean ± sd over the "
+        f"confirmatory realizations {realizations}; r0 is not drawn, and C-oracle and C-logP have none. "
+        "The intended allocation is the same in every realization. Descriptive only: achieved minus "
+        "intended is the net distortion of the requested bin-count distribution, not a prediction "
+        "error, and two points that swap bins leave it unchanged. Bins follow the generator, "
+        "(lo, hi] with the first bin closed at 0.5, as the allocation tables do; the two shaded bins, "
+        "FOS < 0.5 and FOS > 6, lie outside the selection range, where nothing was intended. The counts are those "
+        "of the allocation tables. C-oracle bins on the solved FOS and meets the intended allocation by "
+        "construction; its panel is a check, not a finding. What known bin membership changes in test "
+        "accuracy is read only from the paired contrast C-oracle against C-logP (Table tab:rep:oracle), "
+        f"in this design. {shared}")
+
+
 def structural_batch_frame(struct: dict) -> pd.DataFrame:
     """C-seq batch by batch: intended and deviation (achieved - intended) per
     batch, then the cumulative deviation; bins as rows, r1-r5 as mean ± sd,
@@ -1278,6 +1337,9 @@ def run() -> None:
                         "(lo, hi], so the outer bin is FOS > 6. Selected equals intended by "
                         f"construction and is not shown. {oracle} {shared}{oracle_note}",
                 label=f"tab:structural:allocation:{arm.lower()}", small=True))
+        _save_figure(figures / "structural__allocation.pdf", fig_structural_allocation(struct))
+        _save_table(tables / "structural__allocation_caption.tex",
+                    _structural_text(structural_allocation_caption(struct)))
         _save_table(tables / "structural__matrix_caption.tex",
                     _structural_text(struct["matrix_caption"]))
         # Two floats, r1-r5 and r0: r0 stays visibly apart and each fits the text width.
