@@ -796,6 +796,7 @@ def test_forest_caption_states_what_the_intervals_are_not():
                    "A is absent", "C and the original C0 are absent", "different budgets", "have no r0"):
         assert phrase in caption
     assert "significan" not in caption.lower() and "balanced" not in caption
+    assert "Zones are half-open, [lo, hi)" in caption and "Bins" not in caption
 
 
 def test_allocation_figure_draws_the_allocation_table_values():
@@ -810,4 +811,6 @@ def test_allocation_figure_draws_the_allocation_table_values():
         assert np.allclose(means, [float(a.split(" ± ")[0]) for a in table["achieved"]], atol=0.05)
     caption = report.structural_allocation_caption(struct)
     assert "(lo, hi]" in caption and "not a prediction error" in caption
-    assert "C0-oracle" in caption and "C0-logP" in caption                      # the shared rows, discipline 1
+    assert "C$_0$-oracle" in caption and "C$_0$-logP" in caption               # the shared rows, discipline 1
+    assert r"\cref{tab:rep:oracle}" in caption and "Table tab:rep:oracle" not in caption
+    assert "the arm it ablates" in caption and "those of C," not in caption

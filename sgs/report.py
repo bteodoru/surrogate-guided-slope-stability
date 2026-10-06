@@ -625,7 +625,7 @@ def forest_caption(rep: dict) -> str:
         "like-for-like comparison. A is absent: it has no replications, only its existing set (r0), "
         "and therefore no interval; C and the original C0 are absent for the same reason, as they "
         "were never replicated. r0 is exploratory and enters no interval, so it is not drawn; "
-        "C-oracle, C-logP and their C0 ablations have no r0. Bins are half-open, [lo, hi), as "
+        "C-oracle, C-logP and their C0 ablations have no r0. Zones are half-open, [lo, hi), as "
         "everywhere the replication metrics are read.")
 
 
@@ -934,10 +934,11 @@ def fig_structural_allocation(struct: dict):
     return fig
 
 
-def structural_allocation_caption(struct: dict) -> str:
+def structural_allocation_caption(struct: dict) -> Tex:
+    """Escaped as every caption is, except the cross-reference, which LaTeX resolves."""
     realizations = f"r{struct['confirmatory'][0]}-r{struct['confirmatory'][-1]}"
-    shared = struct["ablation"]["shared_rows"]["note"]
-    return (
+    ablations = [f"C0-{arm[2:]}" for arm in ALLOCATION_FIGURE_ARMS]
+    before = (
         "Intended against achieved allocation of the 300 added points for C-log, C-oracle and C-logP: "
         "per bin, the intended count (hatched) and the achieved count as the mean ± sd over the "
         f"confirmatory realizations {realizations}; r0 is not drawn, and C-oracle and C-logP have none. "
@@ -948,8 +949,12 @@ def structural_allocation_caption(struct: dict) -> str:
         "FOS < 0.5 and FOS > 6, lie outside the selection range, where nothing was intended. The counts are those "
         "of the allocation tables. C-oracle bins on the solved FOS and meets the intended allocation by "
         "construction; its panel is a check, not a finding. What known bin membership changes in test "
-        "accuracy is read only from the paired contrast C-oracle against C-logP (Table tab:rep:oracle), "
-        f"in this design. {shared}")
+        "accuracy is read only from the paired contrast C-oracle against C-logP (")
+    after = (
+        f"), in this design. {_join(ablations)} train on the same guided points as "
+        f"{_join(ALLOCATION_FIGURE_ARMS)} in every realization, so the allocation of each is that of "
+        "the arm it ablates, shown once rather than duplicated.")
+    return Tex(_escape(before) + r"\cref{tab:rep:oracle}" + _escape(after))
 
 
 def structural_batch_frame(struct: dict) -> pd.DataFrame:
