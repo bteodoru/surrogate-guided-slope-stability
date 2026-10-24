@@ -3,7 +3,7 @@
 Reads only outputs/metrics/ and recomputes no metric, so no number reaches a
 table without having passed through ``evaluate``. Every arm appears in every
 results table, C0 included, written C$_0$ as in the manuscript and named as an
-ablation in the caption; the budget table lists budget arms only. Tables fit the
+ablation in the caption; the arms table (tab:budget) lists every arm, ablations last. Tables fit the
 text width; the comparison inventories are longtables for the Supplementary.
 """
 
@@ -27,6 +27,28 @@ def arm_label(arm: str) -> str:
     """The arm as the manuscript writes it, C₀ with a subscript; the ablations
     are named once in each caption (`ablation_note`), not in every cell."""
     return _C0.sub("C₀", arm)
+
+
+# The arms table (tab:budget) in the reader's terms, keyed by arm: what the added
+# points are and how they are chosen. Presentation only; every count is read from
+# config, and an arm of config.ARMS or replicate.POOL_ARMS without an entry fails.
+# {batches} and {batch_n} are the arm's number of added sets and their size.
+ARM_TEXT = {
+    "A": (None, "--"),
+    "B": ("LHS", "Latin hypercube"),
+    "C": ("screened", "equal counts in linear FOS bins, max-min within bin"),
+    "C-log": ("screened", "log bins filled against the seed's deficit, random within bin"),
+    "C-seq": ("screened", "as C-log, in {batches} batches of {batch_n}, screener refitted before each"),
+    "C-logG": ("screened", "as C-log, gradient-boosting screener"),
+    "C-oracle": ("from the pool", "C-log's allocation from a solved sub-pool, binned on solved FOS"),
+    "C-logP": ("from the pool", "as C-oracle, binned on the screener's predicted FOS"),
+    "C0": ("screened", "as C"),
+    "C0-log": ("screened", "as C-log"),
+    "C0-seq": ("screened", "as C-seq"),
+    "C0-logG": ("screened", "as C-logG"),
+    "C0-oracle": ("from the pool", "as C-oracle"),
+    "C0-logP": ("from the pool", "as C-logP"),
+}
 
 
 def _legend_label(arm: str) -> str:
@@ -127,9 +149,12 @@ def _header(columns) -> list[str]:
     return lines
 
 
-def _body(frame: pd.DataFrame, digits: int, block: str | None) -> tuple[list, list[str]]:
+def _body(frame: pd.DataFrame, digits: int, block: str | None,
+          wrap: dict | None = None) -> tuple[list, list[str]]:
     """The rows; with `block`, that column leaves the table and its value heads
-    each run of rows instead (a learner family: RF, GBM)."""
+    each run of rows instead (a learner family: RF, GBM). A column named in `wrap`
+    breaks its text, ragged right, at the given width (core LaTeX: no array package)."""
+    wrap = wrap or {}
     columns = [c for c in frame.columns if c != block]
     positions = [list(frame.columns).index(c) for c in columns]
     where = list(frame.columns).index(block) if block is not None else None
@@ -141,7 +166,10 @@ def _body(frame: pd.DataFrame, digits: int, block: str | None) -> tuple[list, li
             if lines:
                 lines.append(r"\addlinespace")
             lines.append(rf"\multicolumn{{{len(columns)}}}{{l}}{{\textit{{{_escape(name)}}}}} \\")
-        lines.append(" & ".join(_cell(row[p], digits) for p in positions) + r" \\")
+        cells = [_cell(row[p], digits) for p in positions]
+        cells = [rf"\parbox[t]{{{wrap[c]}}}{{\raggedright {cell}\strut}}" if c in wrap else cell
+                 for c, cell in zip(columns, cells)]
+        lines.append(" & ".join(cells) + r" \\")
     return columns, lines
 
 
@@ -149,17 +177,18 @@ def _spec(n: int, left: int) -> str:
     return "l" * left + "r" * (n - left)
 
 
-def _tabular(frame: pd.DataFrame, *, digits: int = 3, block: str | None = None, left: int = 1) -> list[str]:
-    columns, body = _body(frame, digits, block)
+def _tabular(frame: pd.DataFrame, *, digits: int = 3, block: str | None = None, left: int = 1,
+             wrap: dict | None = None) -> list[str]:
+    columns, body = _body(frame, digits, block, wrap)
     return [rf"\begin{{tabular}}{{{_spec(len(columns), left)}}}", r"\toprule", *_header(columns),
             r"\midrule", *body, r"\bottomrule", r"\end{tabular}"]
 
 
 def booktabs(frame: pd.DataFrame, *, caption: str, label: str, digits: int = 3,
-             small: bool = False, block: str | None = None, left: int = 1) -> str:
+             small: bool = False, block: str | None = None, left: int = 1, wrap: dict | None = None) -> str:
     lines = [r"\begin{table}[htbp]", r"\centering", *(SMALL if small else ()),
              rf"\caption{{{_escape(caption)}}}", rf"\label{{{label}}}",
-             *_tabular(frame, digits=digits, block=block, left=left), r"\end{table}"]
+             *_tabular(frame, digits=digits, block=block, left=left, wrap=wrap), r"\end{table}"]
     return "\n".join(lines) + "\n"
 
 
@@ -338,9 +367,102 @@ def param_legend(by_scoring: dict[str, dict]) -> str:
                      for n in names if n in PARAM_HEADERS)
 
 
+def _arm_text(arm: str) -> tuple[str | None, str]:
+    if arm not in ARM_TEXT:
+        raise KeyError(f"arm {arm} has no description in report.ARM_TEXT")
+    return ARM_TEXT[arm]
+
+
+def _pool_arms() -> tuple[str, ...]:
+    from sgs import replicate
+    return replicate.POOL_ARMS
+
+
+def is_ablation(arm: str) -> bool:
+    return config.ARMS[arm].ablation if arm in config.ARMS else bool(_C0.search(arm))
+
+
+def arm_added(arm: str) -> tuple[int, ...]:
+    """The sizes of the sets of points an arm adds to the seed (its batches); a
+    pool arm adds one set of config.REP_EXTENSION points."""
+    if arm in config.ARMS:
+        return tuple(config.ROLES[role].n for role in config.ARMS[arm].roles if role != "seed")
+    return (config.REP_EXTENSION,)
+
+
+def arm_realizations(arm: str) -> tuple[int, ...]:
+    """r0 for every arm of the main pipeline (the existing sets); r1..rN for every
+    replicated arm that adds points: A, the fixed seed alone, has nothing to realize."""
+    from sgs import replicate
+    r0 = (0,) if arm in config.ARMS else ()
+    new = arm in replicate.REP_ARMS and bool(arm_added(arm))
+    return r0 + (tuple(range(1, config.REP_REALIZATIONS + 1)) if new else ())
+
+
+def _realizations_label(realizations) -> str:
+    parts = ["r0"] if 0 in realizations else []
+    new = [r for r in realizations if r]
+    if new:
+        parts.append(f"r{new[0]}–r{new[-1]}")
+    return ", ".join(parts)
+
+
+def budget_arms() -> list[tuple[str, list[str]]]:
+    """The arms of the arms table in their groups, ablations last."""
+    pool = _pool_arms()
+    return [("Budget arms", [a for a, s in config.ARMS.items() if not s.ablation]),
+            ("Pool arms", [a for a in pool if not is_ablation(a)]),
+            ("Ablations", [a for a, s in config.ARMS.items() if s.ablation]
+             + [a for a in pool if is_ablation(a)])]
+
+
 def budget_frame() -> pd.DataFrame:
-    return pd.DataFrame([{"arm": arm, "training sets": " + ".join(spec.roles), "solver budget": spec.budget}
-                         for arm, spec in config.ARMS.items() if not spec.ablation])
+    """One row per arm, ablations included: the training data, how the added
+    points are chosen, the analyses a budget arm spends and the realizations."""
+    pool, seed_n = _pool_arms(), config.ROLES["seed"].n
+    rows = []
+    for group, arms in budget_arms():
+        for arm in arms:
+            kind, chosen = _arm_text(arm)
+            added = arm_added(arm)
+            if not added:
+                training = "seed only"
+            else:
+                points = f"{sum(added)} {kind}"
+                training = f"{points} (no seed)" if is_ablation(arm) else f"seed + {points}"
+            if arm in pool:
+                analyses = None if is_ablation(arm) else f"{seed_n + sum(added)}†"
+            else:
+                analyses = config.ARMS[arm].budget
+            rows.append({"group": group, "arm": arm_label(arm), "training data": training,
+                         "added points chosen by": chosen.format(batches=len(added), batch_n=added[0])
+                         if added else chosen,
+                         "realizations": _realizations_label(arm_realizations(arm)), "analyses": analyses})
+    return pd.DataFrame(rows)
+
+
+def budget_caption() -> str:
+    groups = dict(budget_arms())
+    budget = [a for a in groups["Budget arms"] if a != "A"]
+    budgets = {config.ARMS[a].budget for a in budget}
+    if len(budgets) != 1:
+        raise ValueError(f"the budget arms do not share one budget: {budgets}")
+    lo, hi = config.SELECTION_RANGE
+    r_new = arm_realizations(groups["Pool arms"][0])
+    return (f"The arms. The seed is the initial Latin hypercube of {config.ROLES['seed'].n} analyses. "
+            f"Screened points are selected among {config.N_GUIDED_POOL:,} candidates by the screener's "
+            f"predicted FOS, in {config.N_BINS} bins on the selection range [{lo}, {hi}]; the screener is "
+            "a random forest trained on the seed (C-seq: refitted on the seed and its earlier batches; "
+            "C-logG: gradient boosting). "
+            f"The budget arms {_join(budget)} spend the same {budgets.pop()} analyses; A is the seed alone. "
+            f"The pool arms {_join(groups['Pool arms'])} draw C-log's allocation from one sub-pool of the "
+            "solved reference pool per realization: their points were solved before they were selected, "
+            "so their count (†) is not a budget result. They are a diagnostic reference, not a sampling "
+            f"strategy. {_join(groups['Ablations'])} are ablations: they train on the added points without "
+            "the seed, carry no budget and are not like-for-like comparisons with the budget arms. "
+            "r0 is the existing sets and is exploratory; "
+            f"r{r_new[0]}–r{r_new[-1]} are new realizations of the added points on the fixed seed, "
+            "so A, the seed alone, has none.")
 
 
 def fig_zone_rmse(metrics: dict, family: str, key: str = "rmse"):
@@ -1258,9 +1380,8 @@ def run() -> None:
     from sgs import structural
     tables, figures = config.tables_dir(), config.figures_dir()
     _save_table(tables / "budget.tex", booktabs(
-        budget_frame(), caption="Budget-fair arms. C0 is an ablation and carries no budget. "
-        "G: GBM screener; the learner is named separately.",
-        label="tab:budget"))
+        budget_frame(), caption=budget_caption(), label="tab:budget", small=True, block="group",
+        left=4, wrap={"added points chosen by": "4.6cm"}))
 
     for scoring in config.ACTIVE_SCORINGS:
         for test in config.TEST_ROLES:

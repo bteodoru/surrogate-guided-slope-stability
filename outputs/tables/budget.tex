@@ -1,17 +1,32 @@
 \begin{table}[htbp]
 \centering
-\caption{Budget-fair arms. C$_0$ is an ablation and carries no budget. G: GBM screener; the learner is named separately.}
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{The arms. The seed is the initial Latin hypercube of 300 analyses. Screened points are selected among 200,000 candidates by the screener's predicted FOS, in 15 bins on the selection range [0.5, 6.0]; the screener is a random forest trained on the seed (C-seq: refitted on the seed and its earlier batches; C-logG: gradient boosting). The budget arms B, C, C-log, C-seq and C-logG spend the same 600 analyses; A is the seed alone. The pool arms C-oracle and C-logP draw C-log's allocation from one sub-pool of the solved reference pool per realization: their points were solved before they were selected, so their count (†) is not a budget result. They are a diagnostic reference, not a sampling strategy. C$_0$, C$_0$-log, C$_0$-seq, C$_0$-logG, C$_0$-oracle and C$_0$-logP are ablations: they train on the added points without the seed, carry no budget and are not like-for-like comparisons with the budget arms. r0 is the existing sets and is exploratory; r1–r5 are new realizations of the added points on the fixed seed, so A, the seed alone, has none.}
 \label{tab:budget}
-\begin{tabular}{lrr}
+\begin{tabular}{llllr}
 \toprule
-arm & training sets & solver budget \\
+arm & training data & added points chosen by & realizations & analyses \\
 \midrule
-A & seed & 300 \\
-B & seed + lhs-extension & 600 \\
-C & seed + guided & 600 \\
-C-log & seed + guided-log & 600 \\
-C-seq & seed + guided-seq-1 + guided-seq-2 + guided-seq-3 & 600 \\
-C-logG & seed + guided-log-g & 600 \\
+\multicolumn{5}{l}{\textit{Budget arms}} \\
+A & seed only & \parbox[t]{4.6cm}{\raggedright --\strut} & r0 & 300 \\
+B & seed + 300 LHS & \parbox[t]{4.6cm}{\raggedright Latin hypercube\strut} & r0, r1–r5 & 600 \\
+C & seed + 300 screened & \parbox[t]{4.6cm}{\raggedright equal counts in linear FOS bins, max-min within bin\strut} & r0 & 600 \\
+C-log & seed + 300 screened & \parbox[t]{4.6cm}{\raggedright log bins filled against the seed's deficit, random within bin\strut} & r0, r1–r5 & 600 \\
+C-seq & seed + 300 screened & \parbox[t]{4.6cm}{\raggedright as C-log, in 3 batches of 100, screener refitted before each\strut} & r0, r1–r5 & 600 \\
+C-logG & seed + 300 screened & \parbox[t]{4.6cm}{\raggedright as C-log, gradient-boosting screener\strut} & r0, r1–r5 & 600 \\
+\addlinespace
+\multicolumn{5}{l}{\textit{Pool arms}} \\
+C-oracle & seed + 300 from the pool & \parbox[t]{4.6cm}{\raggedright C-log's allocation from a solved sub-pool, binned on solved FOS\strut} & r1–r5 & 600† \\
+C-logP & seed + 300 from the pool & \parbox[t]{4.6cm}{\raggedright as C-oracle, binned on the screener's predicted FOS\strut} & r1–r5 & 600† \\
+\addlinespace
+\multicolumn{5}{l}{\textit{Ablations}} \\
+C$_0$ & 300 screened (no seed) & \parbox[t]{4.6cm}{\raggedright as C\strut} & r0 & -- \\
+C$_0$-log & 300 screened (no seed) & \parbox[t]{4.6cm}{\raggedright as C-log\strut} & r0, r1–r5 & -- \\
+C$_0$-seq & 300 screened (no seed) & \parbox[t]{4.6cm}{\raggedright as C-seq\strut} & r0, r1–r5 & -- \\
+C$_0$-logG & 300 screened (no seed) & \parbox[t]{4.6cm}{\raggedright as C-logG\strut} & r0, r1–r5 & -- \\
+C$_0$-oracle & 300 from the pool (no seed) & \parbox[t]{4.6cm}{\raggedright as C-oracle\strut} & r1–r5 & -- \\
+C$_0$-logP & 300 from the pool (no seed) & \parbox[t]{4.6cm}{\raggedright as C-logP\strut} & r1–r5 & -- \\
 \bottomrule
 \end{tabular}
 \end{table}

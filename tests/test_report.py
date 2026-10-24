@@ -24,10 +24,64 @@ def test_booktabs_structure_and_escaping():
     assert r"C\_0 & 0.123 & --" in tex and r"\label{tab:demo}" in tex
 
 
-def test_budget_table_excludes_the_ablation():
+def test_booktabs_wraps_a_column_ragged_right():
+    tex = report.booktabs(pd.DataFrame({"arm": ["B"], "how": ["Latin hypercube"], "n": [600]}),
+                          caption="Demo.", label="tab:demo", left=2, wrap={"how": "3cm"})
+    assert r"\begin{tabular}{llr}" in tex
+    assert r"B & \parbox[t]{3cm}{\raggedright Latin hypercube\strut} & 600 \\" in tex
+
+
+def test_arms_table_lists_every_arm_and_every_ablation():
+    from sgs import replicate
     frame = report.budget_frame()
-    assert frame["arm"].tolist() == ["A", "B", "C", "C-log", "C-seq", "C-logG"]
-    assert frame["solver budget"].tolist() == [300, 600, 600, 600, 600, 600]
+    expected = [*config.ARMS, *replicate.POOL_ARMS]
+    assert sorted(frame["arm"]) == sorted(report.arm_label(a) for a in expected)
+    assert len(frame) == len(set(frame["arm"]))
+    ablations = frame.loc[frame["group"] == "Ablations", "arm"].tolist()
+    assert sorted(ablations) == sorted(report.arm_label(a) for a in expected if a.startswith("C0"))
+    assert list(dict.fromkeys(frame["group"])) == ["Budget arms", "Pool arms", "Ablations"]
+
+
+def test_arms_table_budgets_match_config():
+    from sgs import replicate
+    rows = report.budget_frame().set_index("arm")
+    for arm, spec in config.ARMS.items():
+        assert rows.at[report.arm_label(arm), "analyses"] == spec.budget
+        if spec.ablation:
+            assert pd.isna(rows.at[report.arm_label(arm), "analyses"])
+    for arm in replicate.POOL_ARMS:
+        cell = rows.at[report.arm_label(arm), "analyses"]
+        if report.is_ablation(arm):
+            assert pd.isna(cell)
+        else:
+            assert cell == f"{config.ROLES['seed'].n + config.REP_EXTENSION}†"
+
+
+def test_arms_table_realizations():
+    from sgs import replicate
+    new = tuple(range(1, config.REP_REALIZATIONS + 1))
+    assert report.arm_realizations("A") == (0,)
+    assert report.arm_realizations("C") == report.arm_realizations("C0") == (0,)
+    for arm in replicate.POOL_ARMS:
+        assert report.arm_realizations(arm) == new
+    for arm in replicate.REP_ARMS:
+        if arm in config.ARMS and arm != "A":
+            assert report.arm_realizations(arm) == (0, *new)
+
+
+def test_arms_table_realizations_match_the_replication_metrics():
+    path = config.replication_metrics_path()
+    if not path.exists():
+        pytest.skip("no replication metrics")
+    values = json.loads(path.read_text())["values"]
+    for arm in {v["arm"] for v in values}:
+        assert {v["realization"] for v in values if v["arm"] == arm} == set(report.arm_realizations(arm))
+
+
+def test_every_arm_needs_a_description(monkeypatch):
+    monkeypatch.delitem(report.ARM_TEXT, "C-logP")
+    with pytest.raises(KeyError, match="C-logP"):
+        report.budget_frame()
 
 
 def test_comparison_frame_formats_tiny_pvalues():
