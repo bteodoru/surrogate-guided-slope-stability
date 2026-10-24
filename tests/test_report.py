@@ -434,6 +434,25 @@ def test_structural_ablation_figure_has_a_row_per_c0_arm_and_a_column_per_cell()
     assert len(fig.axes) == expected
 
 
+def _contrast_on_white(colour) -> float:
+    from matplotlib.colors import to_rgb
+    lin = [c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4 for c in to_rgb(colour)]
+    luminance = 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2]
+    return 1.05 / (luminance + 0.05)
+
+
+def test_arm_colours_and_markers_meet_wcag():
+    """WCAG 2.1 AA: graphical objects need 3:1 against the white background, and
+    colour must not be the only carrier of an arm's identity, so the arms drawn
+    together also differ by marker."""
+    palettes = (report.STRUCTURAL_COLORS, report.REPLICATION_COLORS, report.STRUCTURAL_ABLATION_COLORS)
+    assert all(_contrast_on_white(c) >= 3.0 for palette in palettes for c in palette.values())
+    assert len({report.ARM_MARKERS[a] for a in report.STRUCTURAL_COLORS}) == len(report.STRUCTURAL_COLORS)
+    assert set(report.REPLICATION_COLORS) <= set(report.ARM_MARKERS)
+    markers = report.STRUCTURAL_ABLATION_MARKERS
+    assert markers["welch"] != markers["paired"]
+
+
 def test_structural_ablation_figure_uses_explicit_colours_by_comparison():
     """A single arm's panel draws two comparisons (C0-B welch, C-C0 paired); an
     implicit colour cycle would give them the same colour as a second arm's

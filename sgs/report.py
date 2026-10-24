@@ -622,7 +622,11 @@ def oracle_reading_frame(rep: dict) -> pd.DataFrame:
 # The arms of the bin diagnostic; each C0 ablation is drawn dashed in its arm's colour.
 REPLICATION_BIN_ARMS = ("B", "C-log", "C-seq", "C-logG", "C-oracle", "C-logP",
                         "C0-log", "C0-seq", "C0-logG", "C0-oracle", "C0-logP")
-REPLICATION_COLORS = {"B": "black", "C-log": "tab:blue", "C-seq": "tab:orange", "C-logG": "tab:green",
+# WCAG 2.1 AA: every arm also has its own marker, so colour never carries the
+# arm alone, and C-seq's orange is darkened from tab:orange (2.5:1 on white) to
+# #c75f00 (4.2:1); the other colours are above 3:1.
+ARM_MARKERS = {"B": "o", "C-log": "o", "C-seq": "v", "C-logG": "s", "C-oracle": "D", "C-logP": "^"}
+REPLICATION_COLORS = {"B": "black", "C-log": "tab:blue", "C-seq": "#c75f00", "C-logG": "tab:green",
                       "C-oracle": "tab:red", "C-logP": "tab:brown"}
 
 
@@ -666,8 +670,9 @@ def fig_replication_bins(rep: dict, test: str, family: str):
         if not arm_rows:
             continue
         ablation = arm.startswith("C0")
-        style = "o--" if ablation else "o-"
-        color = REPLICATION_COLORS[arm.replace("C0", "C", 1) if ablation else arm]
+        base = arm.replace("C0", "C", 1) if ablation else arm
+        style = ARM_MARKERS[base] + ("--" if ablation else "-")
+        color = REPLICATION_COLORS[base]
         grid = np.ma.masked_invalid(np.array(
             [[np.nan if b["log_rmse"] is None else b["log_rmse"] for b in v["bins"]] for v in arm_rows],
             dtype=float))
@@ -828,7 +833,7 @@ STRUCTURAL_CELLS = (("gbm", "test-natural"), ("gbm", "test-stratified"),
 
 # Explicit, because errorbar(fmt="none") and scatter do not advance the property
 # cycle in step: in a two-arm loop the second arm's bars keep the first arm's colour.
-STRUCTURAL_COLORS = {"C-log": "tab:blue", "C-seq": "tab:orange", "C-logG": "tab:green",
+STRUCTURAL_COLORS = {"C-log": "tab:blue", "C-seq": "#c75f00", "C-logG": "tab:green",
                      "C-oracle": "tab:red", "C-logP": "tab:brown"}
 
 # Arms drawn in one panel are dodged by this much, in bin units, so their bars
@@ -932,7 +937,7 @@ def _offsets(names) -> dict:
     return {name: (i - (len(names) - 1) / 2) * STRUCTURAL_DODGE for i, name in enumerate(names)}
 
 
-def _structural_errorbar(ax, rows, colour, *, x_key="bin", label=None, offset=0.0):
+def _structural_errorbar(ax, rows, colour, *, x_key="bin", label=None, offset=0.0, marker="o"):
     x = [r[x_key] + offset for r in rows]
     y = [r["diff"] for r in rows]
     lo = [r["diff"] - r["ci"][0] for r in rows]
@@ -941,10 +946,10 @@ def _structural_errorbar(ax, rows, colour, *, x_key="bin", label=None, offset=0.
     solid = [(xi, yi) for xi, yi, r in zip(x, y, rows) if not r.get("marked", False)]
     hollow = [(xi, yi) for xi, yi, r in zip(x, y, rows) if r.get("marked", False)]
     if solid:
-        ax.scatter(*zip(*solid), s=16, color=colour, label=label, zorder=3)
+        ax.scatter(*zip(*solid), s=16, color=colour, marker=marker, label=label, zorder=3)
     if hollow:
         # same colour, hollow face: a marked bin keeps its arm's identity
-        ax.scatter(*zip(*hollow), s=16, facecolors="none", edgecolors=colour, zorder=3,
+        ax.scatter(*zip(*hollow), s=16, facecolors="none", edgecolors=colour, marker=marker, zorder=3,
                    label=None if solid else label)
 
 
@@ -960,7 +965,8 @@ def fig_structural(struct: dict):
     top = fig.add_subplot(grid[0, :])
     for arm in arms:
         rows = [r for r in struct["densities"] if r["arm"] == arm]
-        _structural_errorbar(top, rows, STRUCTURAL_COLORS[arm], label=arm, offset=offsets[arm])
+        _structural_errorbar(top, rows, STRUCTURAL_COLORS[arm], label=arm, offset=offsets[arm],
+                            marker=ARM_MARKERS[arm])
     top.axhline(0.0, linewidth=0.8, color="black")
     top.set_ylabel("Δ training points vs B", fontsize=8)
     top.set_xticks(range(len(labels)))
@@ -973,7 +979,8 @@ def fig_structural(struct: dict):
         for arm in arms:
             rows = [r for r in struct["errors"]
                     if r["family"] == family and r["test"] == test and r["arm"] == arm]
-            _structural_errorbar(ax, rows, STRUCTURAL_COLORS[arm], label=arm, offset=offsets[arm])
+            _structural_errorbar(ax, rows, STRUCTURAL_COLORS[arm], label=arm, offset=offsets[arm],
+                                 marker=ARM_MARKERS[arm])
         ax.axhline(0.0, linewidth=0.8, color="black")
         ax.set_title(f"{family.upper()}, {test}", fontsize=9, pad=14 if i // 2 == 0 else 6)
         ax.set_ylabel("Δ log-RMSE vs B", fontsize=8)
@@ -1247,6 +1254,7 @@ def structural_concordance_frame(struct: dict) -> pd.DataFrame:
 # Explicit by comparison, not by arm: a single panel already draws both
 # comparisons for one C0 arm, so a property cycle would conflate them.
 STRUCTURAL_ABLATION_COLORS = {"welch": "tab:red", "paired": "tab:purple"}
+STRUCTURAL_ABLATION_MARKERS = {"welch": "o", "paired": "s"}
 
 
 def fig_structural_ablation(struct: dict):
@@ -1272,6 +1280,7 @@ def fig_structural_ablation(struct: dict):
                               key=lambda r: r["reporting_bin"])
                 _structural_errorbar(ax, rows, STRUCTURAL_ABLATION_COLORS[kind],
                                      x_key="reporting_bin", offset=offsets[kind],
+                                     marker=STRUCTURAL_ABLATION_MARKERS[kind],
                                      label=f"{first} ({budgets[first]}) − {second} "
                                            f"({budgets[second]}), {kind}")
             ax.axhline(0.0, linewidth=0.8, color="black")
