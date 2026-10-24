@@ -688,4 +688,6 @@ def test_c_oracle_has_no_screener_matrix_and_the_sentence_names_the_contrast():
     assert "C-oracle" in structural.ARMS_VS_B and "C-oracle" not in structural.SCREENED_ARMS
     assert "C-logP" in structural.SCREENED_ARMS
     assert "C-oracle against C-logP" in structural.ORACLE_SENTENCE
+    # Plain text: the captions it closes are typeset where no label of the article resolves.
+    assert "tab:" not in structural.ORACLE_SENTENCE
     assert "C-logP" in structural.MATRIX_CAPTION

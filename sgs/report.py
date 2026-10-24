@@ -488,6 +488,10 @@ def fig_zone_rmse(metrics: dict, family: str, key: str = "rmse"):
     return fig
 
 
+# The learning curve's strategies under the names of the arms they extend.
+LC_CURVE_LABELS = {"lhs": "B (LHS extension)", "guided": "C (linear-bin guided)"}
+
+
 def fig_learning_curve(lc: dict, test: str, family: str):
     """FOS-scale RMSE (global, selection range), log-scale RMSE (the trained response)
     and RMSE in the highest zone, where FOS-scale errors are largest."""
@@ -507,7 +511,7 @@ def fig_learning_curve(lc: dict, test: str, family: str):
         budgets = [r["budget"] for r in points]
         for ax, (_, _, value) in zip(axes.flat, panels):
             mean, std = (np.array(v, dtype=float) for v in zip(*(value(r) for r in points)))
-            ax.plot(budgets, mean, "o-", label=curve)
+            ax.plot(budgets, mean, "o-", label=LC_CURVE_LABELS[curve])
             ax.fill_between(budgets, mean - std, mean + std, alpha=0.15)
     for ax, (title, ylabel, _) in zip(axes.flat, panels):
         ax.set_title(title)
@@ -516,9 +520,34 @@ def fig_learning_curve(lc: dict, test: str, family: str):
     for ax in axes[1]:
         ax.set_xlabel("Solver budget")
     axes[0, 0].legend(frameon=False)
-    fig.suptitle(f"{test}, {family.upper()} with fixed hyper-parameters")
     fig.tight_layout()
     return fig
+
+
+def learning_curve_caption(lc: dict, test: str, family: str) -> str:
+    """The caption of one learning-curve figure; its limits are the ones Methods declares."""
+    n_seed = config.ROLES[config.LC_BASE_ROLE].n
+    budgets = sorted(config.LC_BUDGETS)
+    full = max(budgets)
+    params = ("scikit-learn defaults" if not config.LC_PARAMS[family] else
+              "the grid point selected by cross-validation on the seed alone ("
+              + ", ".join(f"{k} = {v}" for k, v in config.LC_PARAMS[family].items()) + ")")
+    below = [b for b in budgets if b < n_seed]
+    between = [b for b in budgets if n_seed < b < full]
+    return (
+        f"Learning curve on {test}, {family.upper()}, for B (seed + Latin hypercube extension) and C "
+        "(seed + the linear-bin guided design); C-log, C-seq, C-logG, the pool arms and every C0 "
+        "ablation are not covered. "
+        f"Hyper-parameters are fixed at every budget, not tuned per point: {params}. "
+        f"Budgets {_join([str(b) for b in below])} are random subsets of the {n_seed}-point seed, shared "
+        f"by both curves; {n_seed} is the seed itself; {_join([str(b) for b in between])} add a random "
+        f"subset of the arm's {full - n_seed} added points to the seed, so the subset of C is not itself "
+        f"a guided design at that budget; {full} is the arm's whole training set. Points are means over "
+        f"{config.LC_REPEATS} subsamples, and the band is plus or minus one standard deviation over them; "
+        f"at {n_seed} and {full} there is a single fit and no band. The band covers subsampling only. "
+        "Panels: global RMSE (FOS), RMSE on the selection range (FOS), global RMSE of log(FOS), and RMSE "
+        f"(FOS) in the highest reporting zone. The curve is not used to extrapolate the relocation to "
+        "other budgets.")
 
 
 def _save_table(path, text: str) -> None:
@@ -590,36 +619,70 @@ def oracle_reading_frame(rep: dict) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+# The arms of the bin diagnostic; each C0 ablation is drawn dashed in its arm's colour.
+REPLICATION_BIN_ARMS = ("B", "C-log", "C-seq", "C-logG", "C-oracle", "C-logP",
+                        "C0-log", "C0-seq", "C0-logG", "C0-oracle", "C0-logP")
+REPLICATION_COLORS = {"B": "black", "C-log": "tab:blue", "C-seq": "tab:orange", "C-logG": "tab:green",
+                      "C-oracle": "tab:red", "C-logP": "tab:brown"}
+
+
+def _bin_label(zone: str) -> str:
+    """'0.590086–0.696403' as '0.59–0.70'; the outer zones keep their names."""
+    if "–" not in zone or zone.startswith("FOS"):
+        return zone
+    return "–".join(f"{float(edge):.2f}" for edge in zone.split("–"))
+
+
+def replication_bins_caption(rep: dict, test: str, family: str) -> str:
+    realizations = f"r{rep['confirmatory'][0]}-r{rep['confirmatory'][-1]}"
+    budget = [a for a in REPLICATION_BIN_ARMS if not a.startswith("C0")]
+    ablations = [a for a in REPLICATION_BIN_ARMS if a.startswith("C0")]
+    return (
+        f"Bin diagnostic on {test}, {family.upper()}, over the confirmatory realizations {realizations}: "
+        f"the {config.N_BINS} bins of the selection range and the two zones outside it, half-open, "
+        "[lo, hi), as everywhere the replication metrics are read; edges are rounded to two decimals. "
+        "Top: log-RMSE per bin, mean over the realizations, with the min-max range over them shaded "
+        f"for {_join(budget)}. Bottom: mean training points per bin, each arm in its style "
+        "above, and the test points per bin (grey bars). The shaded range is no interval and no test. "
+        f"{_join(ablations)} are ablations, drawn dashed in the colour of their arm: they train on the "
+        f"{config.REP_EXTENSION} added points without the seed, against the "
+        f"{config.ROLES['seed'].n + config.REP_EXTENSION} of the other arms, so they join different "
+        "budgets and are not like-for-like comparisons. A, C and the original C0 have no replications "
+        "and are not drawn; r0 is exploratory and is not drawn. Common hyper-parameters fixed from the "
+        "seed. Descriptive only; bins with few test points are not marked here (see the structural "
+        "analysis).")
+
+
 def fig_replication_bins(rep: dict, test: str, family: str):
     """Diagnostic: log-RMSE per design bin (confirmatory mean, min-max across
     realizations), test points per bin and the mean training count per bin."""
-    arms = ("B", "C-log", "C-seq", "C-logG", "C-oracle", "C-logP",
-           "C0-log", "C0-seq", "C0-logG", "C0-oracle", "C0-logP")
     rows = [v for v in rep["values"] if v["test"] == test and v["family"] == family
             and v["realization"] in rep["confirmatory"]]
-    labels = [b["zone"] for b in rows[0]["bins"]]
+    labels = [_bin_label(b["zone"]) for b in rows[0]["bins"]]
     x = np.arange(len(labels))
     fig, (top, bottom) = plt.subplots(2, 1, figsize=(10, 6.5), sharex=True, height_ratios=(2, 1))
-    for arm in arms:
+    for arm in REPLICATION_BIN_ARMS:
         arm_rows = [v for v in rows if v["arm"] == arm]
         if not arm_rows:
             continue
         ablation = arm.startswith("C0")
         style = "o--" if ablation else "o-"
+        color = REPLICATION_COLORS[arm.replace("C0", "C", 1) if ablation else arm]
         grid = np.ma.masked_invalid(np.array(
             [[np.nan if b["log_rmse"] is None else b["log_rmse"] for b in v["bins"]] for v in arm_rows],
             dtype=float))
-        top.plot(x, grid.mean(axis=0).filled(np.nan), style, label=arm)
+        top.plot(x, grid.mean(axis=0).filled(np.nan), style, color=color, label=arm)
         if not ablation:
-            top.fill_between(x, grid.min(axis=0).filled(np.nan), grid.max(axis=0).filled(np.nan), alpha=0.15)
+            top.fill_between(x, grid.min(axis=0).filled(np.nan), grid.max(axis=0).filled(np.nan),
+                             color=color, alpha=0.15)
         counts = np.array([v["train_counts"] for v in arm_rows], dtype=float)
-        bottom.plot(x, counts.mean(axis=0), style, label=f"{arm} training")
+        bottom.plot(x, counts.mean(axis=0), style, color=color)
     bottom.bar(x, [b["n"] for b in rows[0]["bins"]], alpha=0.3, color="grey", label="test points")
     top.set_ylabel("log-RMSE")
-    top.set_title(f"{test}, {family.upper()}: mean over realizations {rep['confirmatory']}, min–max for budget arms")
-    top.legend(frameon=False)
-    bottom.set_ylabel("points per bin")
-    bottom.legend(frameon=False, fontsize=8)
+    # One legend for both panels, outside them: each arm keeps its style below.
+    top.legend(frameon=False, fontsize=8, loc="upper left", bbox_to_anchor=(1.01, 1.0))
+    bottom.set_ylabel("training points per bin")
+    bottom.legend(frameon=False, fontsize=8, loc="upper left", bbox_to_anchor=(1.01, 1.0))
     bottom.set_xticks(x, labels, rotation=60, fontsize=7)
     fig.tight_layout()
     return fig
@@ -1425,6 +1488,8 @@ def run() -> None:
             for family in sorted({r["family"] for r in lc["rows"]}):
                 _save_figure(figures / f"learning_curve__{test}__{family}.pdf",
                              fig_learning_curve(lc, test, family))
+                _save_table(tables / f"learning_curve__{test}__{family}_caption.tex",
+                            _structural_text(learning_curve_caption(lc, test, family)))
     if config.replication_metrics_path().exists():
         rep = load_replications()
         for test in config.TEST_ROLES:
@@ -1447,6 +1512,8 @@ def run() -> None:
                 label=f"tab:rep:{test}:comparisons", block="family", left=4))
             for family in config.REP_FAMILIES:
                 _save_figure(figures / f"replications__{test}__{family}.pdf", fig_replication_bins(rep, test, family))
+                _save_table(tables / f"replications__{test}__{family}_caption.tex",
+                            _structural_text(replication_bins_caption(rep, test, family)))
         _save_table(tables / "replications__interactions.tex", booktabs_split(
             replication_interaction_frame(rep), "test", caption="Learner interaction on "
             "log(log-RMSE_rf) − log(log-RMSE_gbm) between arms; Welch, or paired where the two "

@@ -126,7 +126,28 @@ def test_learning_curve_figure_reads_the_rows():
             for family in ("rf", "gbm") for curve in ("lhs", "guided") for b in (100, 200)]
     fig = report.fig_learning_curve({"rows": rows}, "test-natural", "gbm")
     assert len(fig.axes) == 4 and all(len(ax.lines) == 2 for ax in fig.axes)
-    assert "GBM" in fig.get_suptitle() and "FOS ≥ 6" in fig.axes[3].get_title()
+    # The test set and family go to the generated caption, not into the figure.
+    assert not fig.get_suptitle() and "FOS ≥ 6" in fig.axes[3].get_title()
+    assert {t.get_text() for t in fig.axes[0].get_legend().get_texts()} == set(report.LC_CURVE_LABELS.values())
+
+
+def test_learning_curve_caption_states_its_limits():
+    caption = report.learning_curve_caption({"rows": []}, "test-natural", "gbm")
+    assert caption.startswith("Learning curve on test-natural, GBM")
+    assert "not tuned per point" in caption and "every C0 ablation are not covered" in caption
+    assert "not used to extrapolate" in caption and "learning_rate = 0.06" in caption
+
+
+def test_replication_bins_caption_names_every_ablation_and_its_budget():
+    caption = report.replication_bins_caption({"confirmatory": [1, 2, 3, 4, 5]}, "test-natural", "rf")
+    for arm in report.REPLICATION_BIN_ARMS:
+        assert arm in caption
+    assert "r1-r5" in caption and "different budgets" in caption and "no interval and no test" in caption
+
+
+def test_bin_labels_are_rounded_and_outer_zones_kept():
+    assert report._bin_label("0.590086–0.696403") == "0.59–0.70"
+    assert report._bin_label("FOS < 0.5") == "FOS < 0.5" and report._bin_label("FOS ≥ 6") == "FOS ≥ 6"
 
 
 def test_run_writes_tables_and_figures(root):

@@ -708,7 +708,7 @@ FIGURE_CAPTION = (
 ORACLE_SENTENCE = ("C-oracle bins on the solved FOS and meets the intended allocation by "
                    "construction; its rows are a check, not a finding. What known bin membership "
                    "changes in test accuracy is read only from the paired contrast C-oracle "
-                   "against C-logP (Table tab:rep:oracle), in this design.")
+                   "against C-logP, in this design.")
 
 MATRIX_CAPTION = (
     "Predicted bin (rows) against true bin (columns) for the points the screener selected, C-log, "
