@@ -441,7 +441,7 @@ def budget_frame() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def budget_caption() -> str:
+def budget_caption() -> Tex:
     groups = dict(budget_arms())
     budget = [a for a in groups["Budget arms"] if a != "A"]
     budgets = {config.ARMS[a].budget for a in budget}
@@ -449,8 +449,9 @@ def budget_caption() -> str:
         raise ValueError(f"the budget arms do not share one budget: {budgets}")
     lo, hi = config.SELECTION_RANGE
     r_new = arm_realizations(groups["Pool arms"][0])
-    return (f"The arms. The seed is the initial Latin hypercube of {config.ROLES['seed'].n} analyses. "
-            f"Screened points are selected among {config.N_GUIDED_POOL:,} candidates by the screener's "
+    head = (f"The arms. The seed is the initial Latin hypercube of {config.ROLES['seed'].n} analyses. "
+            "Screened points are selected among ")
+    tail = (" candidates by the screener's "
             f"predicted FOS, in {config.N_BINS} bins on the selection range [{lo}, {hi}]; the screener is "
             "a random forest trained on the seed (C-seq: refitted on the seed and its earlier batches; "
             "C-logG: gradient boosting). "
@@ -463,6 +464,12 @@ def budget_caption() -> str:
             "r0 is the existing sets and is exploratory; "
             f"r{r_new[0]}–r{r_new[-1]} are new realizations of the added points on the fixed seed, "
             "so A, the seed alone, has none.")
+    return Tex(_escape(head) + thousands(config.N_GUIDED_POOL) + _escape(tail))
+
+
+def thousands(n: int) -> str:
+    """An integer as the manuscript writes it: thousands separated by a thin space, 200\\,000."""
+    return f"{n:,}".replace(",", r"\,")
 
 
 def fig_zone_rmse(metrics: dict, family: str, key: str = "rmse"):

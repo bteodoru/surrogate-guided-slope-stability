@@ -78,6 +78,14 @@ def test_arms_table_realizations_match_the_replication_metrics():
         assert {v["realization"] for v in values if v["arm"] == arm} == set(report.arm_realizations(arm))
 
 
+def test_arms_caption_writes_thousands_with_a_thin_space():
+    caption = report.budget_caption()
+    assert isinstance(caption, report.Tex)
+    assert rf"among {report.thousands(config.N_GUIDED_POOL)} candidates" in caption
+    assert report.thousands(200000) == r"200\,000" and report.thousands(300) == "300"
+    assert "C$_0$-logP" in caption and "textbackslash" not in caption
+
+
 def test_every_arm_needs_a_description(monkeypatch):
     monkeypatch.delitem(report.ARM_TEXT, "C-logP")
     with pytest.raises(KeyError, match="C-logP"):
