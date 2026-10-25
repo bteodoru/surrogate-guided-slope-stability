@@ -11,6 +11,13 @@
 ## Files
 
 - **`cases.csv`: sent to the checkers.** It holds the inputs only. The xslope FOS is withheld, so the check is blind. The columns to fill are `FOS_other`, `program_method`, `circle_*` and `notes`.
+- **`dxf/V01.dxf` … `dxf/V15.dxf`: may be sent with `cases.csv`.** These hold the geometry of each case as the pipeline builds it, exported with xslope's own `export_dxf`:
+  - the soil polygon is on layer `SOIL`, and the ground profile on `PROFILE_SOIL`;
+  - units are metres, with the toe at (0, 0);
+  - no circle is written, so the check stays blind;
+  - the material properties are in `cases.csv`.
+  - **Relation to `cases.csv`:** its coordinates are rounded to the millimetre, and the DXF coordinates differ from them by at most 2 mm.
+  - **How they were written:** `export_dxf.py`, which needs `ezdxf` (xslope's `cad` extra), not installed by the pipeline.
 - **`xslope_reference.csv`: kept here, not sent.** It holds the xslope FOS and the critical circle of each case, with its source row.
 
 ## The model to reproduce
