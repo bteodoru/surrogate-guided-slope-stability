@@ -39,3 +39,11 @@ Every case is the same model.
 - **Measure:** the relative difference FOS_other / FOS_xslope − 1, for each case.
 - **What it reads:** only agreement between the two programs. A difference is first traced to the search window or the slice count, before it is read as an error.
 - **Methods sentence:** written only from the numbers, for example: "A sample of 15 analyses spanning the five reporting zones was re-computed independently with [program], Bishop simplified; the FOS agreed within X%."
+
+## Results (2026-10-25)
+
+- **The check:** M. Aniculăesi re-computed the cases blind, with Slide2 9.044 (Rocscience): Bishop simplified, 50 slices, Auto Refine Search. The reports are kept by the authors; the extracted values are in `results.csv`.
+- **14 cases:** the FOS agree within 1.8%. The median absolute difference is 0.26%, and 13 of the 14 cases agree within 0.6%.
+  - Slide2 is the higher in 12 of the 14 cases, consistent with xslope's search finding a slightly lower minimum.
+  - The largest difference is V06 (+1.77%), where the two critical circles differ.
+- **V09:** the friction angle was entered as 16.858° instead of 13.937°, so this case is not comparable. With 16.858°, xslope gives 2.1477 against Slide2's 2.1494, a difference of +0.08%. A rerun with 13.937° has been requested.
