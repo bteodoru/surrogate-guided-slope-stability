@@ -81,3 +81,14 @@ Every case is the same model.
 - **On HYRCAN's own circle the two agree:** xslope gives 0.9525 with 25 slices, against HYRCAN's 0.9577.
 - **How common this geometry is:** about 12% of all critical circles in the data have their centre within 0.01 H of crest height. This is a cohesive slope with no tension crack modelled.
 - **Decision:** the paper reports only the largest difference, in FOS units, with its FOS. The point may matter for the data descriptor.
+
+### How the programs treat base tension at the crest (references)
+
+- **Slide2.** The user guide (Project Settings › Advanced, https://www.rocscience.com/help/slide2/documentation/slide-model/project-settings/advanced) gives the following defaults:
+  - tensile normal stress may be calculated on the base of steeply inclined slices near the crest;
+  - the tensile stress check is off by default, and even when on it leaves the crest slices unchecked;
+  - "zero shear strength when base in tension" is on by default, and acts only when the shear strength would be negative. That is not the case on V06's last slice.
+- **xslope.** The search page (https://xslope.org/en/stable/lem/search/#tension-at-the-crest) says:
+  - substantial tension at the crest draws a note ("Consider adding a tension crack") and does not change the FOS or the reported surface;
+  - circles whose ground crossing lies above the centre are rejected, which is why searches stop with the centre just above the crest.
+- **The robustness of the study's results to these surfaces** is in `../crest-entry-check/RESULTS.md`.
