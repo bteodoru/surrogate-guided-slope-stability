@@ -56,3 +56,11 @@ Every case is the same model.
   - **Not rounding:** with the inputs rounded as in `cases.csv`, xslope gives 0.93958.
   - **The slice count explains part of it:** with 50 slices, as in Slide2, xslope gives 0.9435.
   - **The rest is the surface:** the case is a steep (59°), strongly cohesive slope (c ≈ 50 kPa, φ ≈ 6°). xslope's critical circle enters the crest almost vertically, with base tension on the last slices. Slide2 and HYRCAN settle on a slightly flatter circle.
+
+### Open (2026-10-25)
+
+- **Slide2, V09:** rerun with φ = 13.937°.
+- **Slide2, V06:** the FOS on xslope's own critical circle, as a user-defined surface, with 30 and 50 slices. The circle has its centre at (0.474, 17.632) and radius 17.636 m, and runs from x = 0.001 to x = 18.109.
+  - **If it gives about 0.94,** the 1.8% is only the search: xslope finds the more critical circle.
+  - **If it is refused or very different,** an admissibility rule (m_α or base tension) explains it, and Methods must say so.
+- **HYRCAN slice count:** to confirm. It is probably the default, 50.
