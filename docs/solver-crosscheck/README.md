@@ -48,7 +48,9 @@ Every case is the same model.
   - The largest difference is V06 (+1.77%), where the two critical circles differ.
 - **V09:** the friction angle was entered as 16.858° instead of 13.937°, so this case is not comparable. With 16.858°, xslope gives 2.1477 against Slide2's 2.1494, a difference of +0.08%. A rerun with 13.937° has been requested.
 
-### HYRCAN (2026-10-25)
+### HYRCAN (2026-10-25): an extra check, not cited in the paper
+
+- **Status:** run by the first author as an additional check. The paper cites only Slide2 (decided 2026-10-25).
 
 - **The check:** the same 15 cases were solved with HYRCAN 2.0.15, Bishop simplified, by the authors' script (`../spencer_datasets/repo/hyrcan/run_analyses.py`, outside this repository). The script uses the same geometry and the same entry and exit windows as xslope (L/3, 2L/3), and HYRCAN's default of 25 slices. The values are in `FOS_hyrcan` in `results.csv`, to three decimals, and V06 is 0.95769. HYRCAN was given the correct inputs for all 15, V09 included.
 - **A correction:** the first copy of `cases_solved.csv` carried Slide2's value for V06 (0.956) by mistake; HYRCAN's own is 0.958.
