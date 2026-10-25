@@ -50,11 +50,12 @@ Every case is the same model.
 
 ### HYRCAN (2026-10-25)
 
-- **The check:** the same 15 cases were solved with HYRCAN 2.0.15, Bishop simplified (`FOS_hyrcan` in `results.csv`, reported to three decimals). HYRCAN was given the correct inputs for all 15, V09 included.
-- **Agreement:** within 1.75%. The median absolute difference is 0.29%, and 12 of the 15 cases agree within 0.6%. V09: 1.863 against xslope's 1.860, +0.17%.
-- **V06:** the largest difference in both programs. Slide2 and HYRCAN agree with each other at 0.956; xslope gives 0.940.
+- **The check:** the same 15 cases were solved with HYRCAN 2.0.15, Bishop simplified, by the authors' script (`../spencer_datasets/repo/hyrcan/run_analyses.py`, outside this repository). The script uses the same geometry and the same entry and exit windows as xslope (L/3, 2L/3), and HYRCAN's default of 25 slices. The values are in `FOS_hyrcan` in `results.csv`, to three decimals, and V06 is 0.95769. HYRCAN was given the correct inputs for all 15, V09 included.
+- **A correction:** the first copy of `cases_solved.csv` carried Slide2's value for V06 (0.956) by mistake; HYRCAN's own is 0.958.
+- **Agreement:** within 1.93%. The median absolute difference is 0.29%. Leaving V06 aside, every case agrees within 0.71%. V09: 1.863 against xslope's 1.860, +0.17%.
+- **V06:** the largest difference in both programs. Slide2 gives 0.956 and HYRCAN 0.958, on practically the same circle: centre about (−0.4 to −0.6, 21.4 to 21.7), radius about 21.5 m. xslope gives 0.940.
   - **Not rounding:** with the inputs rounded as in `cases.csv`, xslope gives 0.93958.
-  - **The slice count explains part of it:** with 50 slices, as in Slide2, xslope gives 0.9435.
+  - **The slice count does not explain it.** With 50 slices, xslope gives 0.9435. HYRCAN, with 25 slices, and Slide2, with 50, agree with each other.
   - **The rest is the surface:** the case is a steep (59°), strongly cohesive slope (c ≈ 50 kPa, φ ≈ 6°). xslope's critical circle enters the crest almost vertically, with base tension on the last slices. Slide2 and HYRCAN settle on a slightly flatter circle.
 
 ### Open (2026-10-25)
@@ -63,4 +64,4 @@ Every case is the same model.
 - **Slide2, V06:** the FOS on xslope's own critical circle, as a user-defined surface, with 30 and 50 slices. The circle has its centre at (0.474, 17.632) and radius 17.636 m, and runs from x = 0.001 to x = 18.109.
   - **If it gives about 0.94,** the 1.8% is only the search: xslope finds the more critical circle.
   - **If it is refused or very different,** an admissibility rule (m_α or base tension) explains it, and Methods must say so.
-- **HYRCAN slice count:** to confirm. It is probably the default, 50.
+- **HYRCAN slice count:** confirmed, 25.
