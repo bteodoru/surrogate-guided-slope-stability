@@ -77,7 +77,18 @@ Every case is the same model.
   - **HYRCAN:** the base is the chord between the slice's ends, rising 4.64 m over 0.628 m. So α = 82.3°, the base length is 4.70 m and the weight, from the area under the chord, is 27.5 kN. Then m_α = 0.241 and N' = −880 kN, as in HYRCAN's slice report.
   - **Why it matters here:** on that slice the arc turns from about 75° to 90° within 0.63 m, so the two conventions differ greatly. With cohesion dominant, this one slice moves the total by a few percent.
   - **The slice count:** xslope's FOS on its circle rises with it, from 0.940 with 30 slices to 0.948 with 200. Both programs should converge to the same limit as the slices get finer.
-  - **To confirm:** run HYRCAN on this circle with 100–200 slices.
+  - **Confirmed (2026-10-26):** on the same circle, the two programs converge from opposite sides as the slices get finer.
+
+    | slices | xslope (arc) | HYRCAN (chord) |
+|---|---|---|
+| 30 | 0.9396 | 0.963 |
+| 40 | 0.9426 | 0.959 |
+| 50 | 0.9440 | 0.957 |
+| 60 | 0.9449 | 0.955 |
+| 70+ | 0.9467 (100), 0.9480 (200) | refused: no valid surface |
+
+    - **The gap narrows** from 2.4% at 30 slices to 1.1% at 60. From 70 slices on, HYRCAN refuses the surface: the last slice's chord passes 85°, and m_α falls below 0.2. Computed for this circle, m_α is 0.240 at 30 slices, matching HYRCAN's 0.2412, 0.202 at 60 and 0.196 at 70.
+    - **The circle is at the edge of Bishop's admissibility,** and its FOS depends on how the last slice is discretized.
 - **On HYRCAN's own circle the two agree:** xslope gives 0.9525 with 25 slices, against HYRCAN's 0.9577.
 - **How common this geometry is:** about 12% of all critical circles in the data have their centre within 0.01 H of crest height. This is a cohesive slope with no tension crack modelled.
 - **Decision:** the paper reports only the largest difference, in FOS units, with its FOS. The point may matter for the data descriptor.
