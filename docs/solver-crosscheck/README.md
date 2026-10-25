@@ -70,7 +70,9 @@ Every case is the same model.
 
 ### V06 in detail (2026-10-25; not in the paper)
 
-- **xslope's critical circle enters the crest vertically:** its centre is at crest height. On that circle, xslope's FOS depends on the slice count: 0.9375 with 25 slices, 0.9396 with 30, 0.9440 with 50 and 0.9480 with 200. HYRCAN accepts the circle only with forced limits, and then gives 0.966.
-- **On HYRCAN's own circle the two programs agree:** xslope gives 0.9525 with 25 slices, against HYRCAN's 0.9577.
-- **How common this is:** about 12% of all critical circles in the data have their centre at crest height, and so enter vertically. This is a cohesive slope with no tension crack modelled, where the search stops at the vertical limit. On these surfaces, the FOS can depend on the program and the slice count by about 1–2%.
-- **Decision:** the paper reports only the largest difference. The point may matter for the data descriptor.
+- **The circle:** xslope's critical circle has its centre slightly above crest height, 0.009 m higher. So the circle enters the crest almost vertically, but not vertically. Slide2's critical circle has its centre much higher, at y ≈ 21.4 against a crest at 17.6.
+- **xslope, on its own circle:** the FOS depends on the slice count. It is 0.9375 with 25 slices, 0.9396 with 30, 0.9440 with 50 and 0.9480 with 200.
+- **HYRCAN, on the same circle:** the run had to be set to this surface, with its slip limits fixed at x = 0.001 and x = 18.109. HYRCAN does not refuse the circle. It gives 0.966, and m_α on the last of its 30 slices is 0.2412, above 0.2. The 2.8% gap between the two programs on the same surface is not explained here.
+- **On HYRCAN's own circle the two agree:** xslope gives 0.9525 with 25 slices, against HYRCAN's 0.9577.
+- **How common this geometry is:** about 12% of all critical circles in the data have their centre within 0.01 H of crest height. This is a cohesive slope with no tension crack modelled.
+- **Decision:** the paper reports only the largest difference, in FOS units, with its FOS. The point may matter for the data descriptor.
