@@ -47,3 +47,12 @@ Every case is the same model.
   - Slide2 is the higher in 12 of the 14 cases, consistent with xslope's search finding a slightly lower minimum.
   - The largest difference is V06 (+1.77%), where the two critical circles differ.
 - **V09:** the friction angle was entered as 16.858° instead of 13.937°, so this case is not comparable. With 16.858°, xslope gives 2.1477 against Slide2's 2.1494, a difference of +0.08%. A rerun with 13.937° has been requested.
+
+### HYRCAN (2026-10-25)
+
+- **The check:** the same 15 cases were solved with HYRCAN 2.0.15, Bishop simplified (`FOS_hyrcan` in `results.csv`, reported to three decimals). HYRCAN was given the correct inputs for all 15, V09 included.
+- **Agreement:** within 1.75%. The median absolute difference is 0.29%, and 12 of the 15 cases agree within 0.6%. V09: 1.863 against xslope's 1.860, +0.17%.
+- **V06:** the largest difference in both programs. Slide2 and HYRCAN agree with each other at 0.956; xslope gives 0.940.
+  - **Not rounding:** with the inputs rounded as in `cases.csv`, xslope gives 0.93958.
+  - **The slice count explains part of it:** with 50 slices, as in Slide2, xslope gives 0.9435.
+  - **The rest is the surface:** the case is a steep (59°), strongly cohesive slope (c ≈ 50 kPa, φ ≈ 6°). xslope's critical circle enters the crest almost vertically, with base tension on the last slices. Slide2 and HYRCAN settle on a slightly flatter circle.
