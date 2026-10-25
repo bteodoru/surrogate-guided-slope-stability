@@ -67,3 +67,10 @@ Every case is the same model.
   - **If it gives about 0.94,** the 1.8% is only the search: xslope finds the more critical circle.
   - **If it is refused or very different,** an admissibility rule (m_α or base tension) explains it, and Methods must say so.
 - **HYRCAN slice count:** confirmed, 25.
+
+### V06 in detail (2026-10-25; not in the paper)
+
+- **xslope's critical circle enters the crest vertically:** its centre is at crest height. On that circle, xslope's FOS depends on the slice count: 0.9375 with 25 slices, 0.9396 with 30, 0.9440 with 50 and 0.9480 with 200. HYRCAN accepts the circle only with forced limits, and then gives 0.966.
+- **On HYRCAN's own circle the two programs agree:** xslope gives 0.9525 with 25 slices, against HYRCAN's 0.9577.
+- **How common this is:** about 12% of all critical circles in the data have their centre at crest height, and so enter vertically. This is a cohesive slope with no tension crack modelled, where the search stops at the vertical limit. On these surfaces, the FOS can depend on the program and the slice count by about 1–2%.
+- **Decision:** the paper reports only the largest difference. The point may matter for the data descriptor.
