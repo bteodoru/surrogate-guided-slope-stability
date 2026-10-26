@@ -1,7 +1,7 @@
 """The reference pool: uniform i.i.d. analyses over the domain, solved in chunks
 the user launches, from which C-oracle and C-logP select.
 
-Spec: docs/superpowers/specs/2026-09-23-oracle-reference-pool-design.md.
+Stopping rule and declared readings: docs/oracle-declaration.md.
 
   sgs pool --chunks N --workers W   solve up to N more chunks; stop at the rule
   sgs pool --status                 read-only: counts per sub-pool and bin

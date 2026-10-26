@@ -1,4 +1,4 @@
-# Read-only, no solver. Handoff 2026-09-22 section 2: score both screeners on solved LHS
+# Read-only, no solver. Score both screeners on solved LHS
 # points that NEITHER screener selected, so the comparison is not conditional on the RF's
 # own selection. Evaluation sets: test-natural (300) and the replication lhs_r1..r5 (1500).
 # Both screeners are trained on the seed alone, as the strategy fixes them.
@@ -50,7 +50,7 @@ def report(title, frame, screeners):
 def main():
     seed = data.load_role("seed")
     Xs, ys = seed[list(config.FEATURES)], np.log(seed["FOS"].to_numpy(float))
-    rf, _ = design.fit_screener(seed, "rf")   # family argument added after 2026-09-23
+    rf, _ = design.fit_screener(seed, "rf")
     gbm = models.lc_estimator("gbm").fit(Xs, ys)
     screeners = (("RF (used)", rf), ("GBM (LC_PARAMS)", gbm))
 

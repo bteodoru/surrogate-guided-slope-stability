@@ -1,5 +1,5 @@
-# Read-only, no solver, no test data. Spec 2026-09-23-gbm-screener-arm-design.md §10.1:
-# stage 1 of the screener swap, recorded before any C-logG test prediction exists.
+# Read-only, no solver, no test data. Stage 1 of the screener swap, recorded before any
+# C-logG test prediction exists.
 # Paired Δ = GBM − RF (C-logG − C-log) per realization r1..r5; r0 is reported apart and
 # enters no threshold. Inputs are designs, solved finals and allocation metadata only,
 # through sgs.structural, which bins as the generator does: (lo, hi], first bin closed,
@@ -58,7 +58,7 @@ def main():
             cells.append(f"{f(rf)} / {f(gbm)} / {fmt(delta(q, key))}")
         print(f"| {label} | " + " | ".join(cells) + " |")
 
-    print("\n## Verdicts over r1..r5 (spec §10.1)\n")
+    print("\n## Verdicts over r1..r5\n")
     print("| quantity | mean Δ | Δ per realization | anticipated sign | threshold | met |")
     print("|---|---|---|---|---|---|")
     for key, label, sign, threshold in ROWS:

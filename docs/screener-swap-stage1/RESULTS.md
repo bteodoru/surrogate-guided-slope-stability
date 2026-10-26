@@ -37,7 +37,7 @@ and they say nothing yet about test accuracy (stage 2, §10.2).
 | realized FOS < 0.5 (points) | 49 / 23 / -26 | 36 / 30 / -6 | 48 / 24 / -24 | 45 / 19 / -26 | 40 / 15 / -25 |
 | realized FOS > 6 (points) | 25 / 4 / -21 | 22 / 13 / -9 | 22 / 8 / -14 | 23 / 6 / -17 | 23 / 7 / -16 |
 
-## Verdicts over r1..r5 (spec §10.1)
+## Verdicts over r1..r5
 
 | quantity | mean Δ | Δ per realization | anticipated sign | threshold | met |
 |---|---|---|---|---|---|

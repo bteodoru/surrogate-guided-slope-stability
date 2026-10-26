@@ -1,4 +1,4 @@
-# Read-only, no solver, no test data. Spec 2026-09-23-oracle-reference-pool-design.md §9.1:
+# Read-only, no solver, no test data. docs/oracle-declaration.md §9.1:
 # stage 1 of the oracle, recorded before any C-oracle or C-logP fit exists. Inputs are the
 # designs, the solved finals and the allocation metadata only. Allocation quantities bin as
 # the generator does, (lo, hi]; rho uses the evaluation zones [lo, hi).
@@ -45,7 +45,7 @@ for r in R:
     rows.append({"r": r, "o_dev": dev["o"][-1], "o_out": outside(o), "o_stayed": stayed(o),
                  "p_dev": dev["p"][-1], "c_dev": dev["c"][-1], "p_out": outside(p), "p_stayed": stayed(p),
                  "rho_L": oL / pL, "rho_H": oH / pH, "shared": shared})
-    # construction check (spec §9.1, first row): asserted, not predicted
+    # construction check (declaration §9.1, first row): asserted, not predicted
     assert dev["o"][-1] == 0 and outside(o) == (0, 0) and stayed(o) == 1.0, f"r{r}: C-oracle construction"
 
 welch = evaluate.welch_interval(dev["p"], dev["c"], config.REP_CI)

@@ -1,7 +1,6 @@
 """Descriptive structural artifacts: per-bin training density beside per-bin
 error, and the fidelity of the delivered allocation.
 
-Design: docs/superpowers/specs/2026-09-20-structural-analysis-design.md.
 Procedure in docs/predictions-and-outcomes.md, committed before this module
 was committed, on replication results that were already computed; it is not a
 preregistration, and the limit of its blinding is stated there. Nothing here computes a test or states an inferential claim; Welch
