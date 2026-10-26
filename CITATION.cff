@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-message: "If you use this code, please cite the article; if you use the data, cite the data deposit as well."
+message: "If you use this code, please cite it as below; if you use the data, cite the data deposit as well."
 type: software
 title: "sgs: response-balanced sampling for slope-stability surrogate models (analysis code)"
 version: 1.0.0
@@ -16,22 +16,6 @@ keywords:
   - design of experiments
   - Latin hypercube sampling
   - factor of safety
-preferred-citation:
-  type: article
-  title: "Response-balanced sampling relocates rather than improves accuracy in slope-stability surrogates under a fixed simulation budget"
-  authors:
-    - family-names: Teodoru
-      given-names: Iancu-Bogdan
-      orcid: "https://orcid.org/0000-0001-8298-9374"
-    - family-names: Amelio
-      given-names: Alessia
-      orcid: "https://orcid.org/0000-0002-3568-636X"
-    - family-names: Aniculăesi
-      given-names: Mircea
-      orcid: "https://orcid.org/0000-0002-1900-5819"
-    - family-names: Lungu
-      given-names: Irina
-      orcid: "https://orcid.org/0000-0003-0963-7027"
 references:
   - type: dataset
     title: "Factor of safety of homogeneous drained slopes: Bishop simplified analyses from a study of response-balanced sampling for surrogate models"
