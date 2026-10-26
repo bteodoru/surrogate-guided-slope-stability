@@ -62,7 +62,7 @@ Every case is the same model.
 
 ### Open (2026-10-25)
 
-- **Slide2, V09:** rerun with φ = 13.937°.
+- **Slide2, V09: DONE 2026-10-26.** The rerun with φ = 13.937° gives 1.865, against xslope's 1.860 (+0.28%).
 - **Slide2, V06 (DONE 2026-10-26: 0.964 with 30 slices, 0.958 with 50, see V06 in detail):** the FOS on xslope's own critical circle, as a user-defined surface, with 30 and 50 slices. The circle has its centre at (0.474, 17.632) and radius 17.636 m, and runs from x = 0.001 to x = 18.109.
   - **If it gives about 0.94,** the 1.8% is only the search: xslope finds the more critical circle.
   - **If it is refused or very different,** an admissibility rule (m_α or base tension) explains it, and Methods must say so.
@@ -105,3 +105,10 @@ Every case is the same model.
   - substantial tension at the crest draws a note ("Consider adding a tension crack") and does not change the FOS or the reported surface;
   - circles whose ground crossing lies above the centre are rejected, which is why searches stop with the centre just above the crest.
 - **The robustness of the study's results to these surfaces** is in `../crest-entry-check/RESULTS.md`.
+
+## Final (2026-10-26, Slide2, all 15 cases)
+
+- **Lower FOS:** xslope gave the lower FOS in 13 of the 15 cases. In the other two, V02 and V03, it was higher by at most 0.59%.
+- **Agreement:** the FOS agree within 0.6% in 14 of the 15 cases. The median absolute difference is 0.26%.
+- **V06:** the difference is 0.017 (1.8%, at FOS 0.94); see V06 in detail above.
+- **In the paper:** these figures are in Methods, "Independent check".
