@@ -66,9 +66,8 @@ secondary. It was defined after the C-log results and before C-seq was run,
 from the lower end of the selection range and its log mirror around 1;
 Methods must say so.
 
-**Response-balanced sampling**: the name the paper gives the guided strategy
-(`docs/motivation.md` §0). Use it for the
-strategy as a whole; the arms keep their letters. "Balanced" names the training
+**Response-balanced sampling**: the name the paper gives the guided strategy.
+Use it for the strategy as a whole; the arms keep their letters. "Balanced" names the training
 distribution that is aimed at, never a judgement of quality — never write that
 a design is better balanced, or that balancing improved anything. Note the
 collision with _balanced sampling_ in finite-population survey sampling
