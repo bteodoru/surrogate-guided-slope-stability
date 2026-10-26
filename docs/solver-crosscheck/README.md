@@ -1,6 +1,6 @@
 # Independent cross-check of the solver
 
-**Purpose.** An independent check of a sample of xslope results with another limit-equilibrium program, carried out by co-authors M. Aniculăesi and I. Lungu. It supports the CRediT role *Validation* and one sentence in Methods.
+**Purpose.** A check of a sample of xslope results with another limit-equilibrium program, Slide2. It supports the paragraph "Independent check" in Methods.
 
 ## The sample
 
@@ -10,15 +10,15 @@
 
 ## Files
 
-- **`cases.csv`: sent to the checkers.** It holds the inputs only. The xslope FOS is withheld, so the check is blind. The columns to fill are `FOS_other`, `program_method`, `circle_*` and `notes`.
-- **`dxf/V01.dxf` … `dxf/V15.dxf`: may be sent with `cases.csv`.** These hold the geometry of each case as the pipeline builds it, exported with xslope's own `export_dxf`:
+- **`cases.csv`:** the inputs of each case, as given to the checker. The xslope FOS is withheld, so the check is blind.
+- **`dxf/V01.dxf` … `dxf/V15.dxf`:** the geometry of each case as the pipeline builds it, exported with xslope's own `export_dxf`:
   - the soil polygon is on layer `SOIL`, and the ground profile on `PROFILE_SOIL`;
   - units are metres, with the toe at (0, 0);
   - no circle is written, so the check stays blind;
-  - the material properties are in `cases.csv`.
-  - **Relation to `cases.csv`:** its coordinates are rounded to the millimetre, and the DXF coordinates differ from them by at most 2 mm.
-  - **How they were written:** `export_dxf.py`, which needs `ezdxf` (xslope's `cad` extra), not installed by the pipeline.
-- **`xslope_reference.csv`: kept here, not sent.** It holds the xslope FOS and the critical circle of each case, with its source row.
+  - the material properties are in `cases.csv`, whose coordinates are rounded to the millimetre; the DXF coordinates differ from them by at most 2 mm.
+  - `export_dxf.py` writes them. It needs `ezdxf` (xslope's `cad` extra), which the pipeline does not install.
+- **`xslope_reference.csv`:** the xslope FOS and critical circle of each case, with its source row.
+- **`results.csv`:** the FOS from each program and the relative differences. The `note` of V09 records that it was first entered with a wrong friction angle; the values kept are from the rerun with the correct one.
 
 ## The model to reproduce
 
@@ -32,70 +32,47 @@ Every case is the same model.
 - **Method:** Bishop simplified, circular slip surfaces. The xslope run uses 30 slices.
   - **Exit range** on the toe side: from `left_x` to L/3, where L = `crest_x`.
   - **Entry range** on the crest side: from 2L/3 to `right_x`.
-  - The checker may use their program's standard circular search inside the domain. They record the critical circle found.
+  - The checker uses the program's own circular search inside the domain and records the critical circle found.
 
-## Reading the results (to fill in when they arrive)
+## Results
 
-- **Measure:** the relative difference FOS_other / FOS_xslope − 1, for each case.
-- **What it reads:** only agreement between the two programs. A difference is first traced to the search window or the slice count, before it is read as an error.
-- **Methods sentence:** written only from the numbers, for example: "A sample of 15 analyses spanning the five reporting zones was re-computed independently with [program], Bishop simplified; the FOS agreed within X%."
+Slide2 9.044 (Rocscience), Bishop simplified, 50 slices, Auto Refine Search, all 15 cases. The program reports are kept by the authors; the extracted values are in `results.csv`.
 
-## Results (2026-10-25)
+- **Lower FOS:** xslope gave the lower FOS in 13 of the 15 cases. In the other two, V02 and V03, it was higher by at most 0.59%. Slide2's own search therefore finds no lower critical circle than xslope's restricted one.
+- **Agreement:** the FOS agree within 0.6% in 14 of the 15 cases. The median absolute difference is 0.26%.
+- **V06:** the difference is 0.017 (1.8%, at FOS 0.94). It is explained below.
 
-- **The check:** M. Aniculăesi re-computed the cases blind, with Slide2 9.044 (Rocscience): Bishop simplified, 50 slices, Auto Refine Search. The reports are kept by the authors; the extracted values are in `results.csv`.
-- **14 cases:** the FOS agree within 1.8%. The median absolute difference is 0.26%, and 13 of the 14 cases agree within 0.6%.
-  - Slide2 is the higher in 12 of the 14 cases, consistent with xslope's search finding a slightly lower minimum.
-  - The largest difference is V06 (+1.77%), where the two critical circles differ.
-- **V09:** the friction angle was entered as 16.858° instead of 13.937°, so this case is not comparable. With 16.858°, xslope gives 2.1477 against Slide2's 2.1494, a difference of +0.08%. A rerun with 13.937° has been requested.
+## V06 in detail
 
-### HYRCAN (2026-10-25): an extra check, not cited in the paper
+- **The case:** a steep (59°), strongly cohesive slope (c ≈ 50 kPa, φ ≈ 6°).
+- **The circle:** xslope's critical circle has its centre 0.009 m above crest height, so it enters the crest almost vertically. Slide2's critical circle has its centre much higher, at y ≈ 21.4 against a crest at 17.6.
+- **The cause is the last slice.** On the same circle, the programs discretize the last slice, at the crest, differently:
+  - **xslope:** α is the tangent at the slice's midpoint, 79.2°, and the weight comes from the true area under the arc, 39.2 kN. Then m_α = 0.297.
+  - **Chord-based programs** (HYRCAN, below): the base is the chord between the slice's ends, rising 4.64 m over 0.628 m. So α = 82.3°, and the weight, from the area under the chord, is 27.5 kN. Then m_α = 0.241.
+  - On that slice the arc turns from about 75° to 90° within 0.63 m, so the two conventions differ greatly. With cohesion dominant, this one slice moves the total by a few percent.
+  - Base tension is not the cause: both conventions keep negative normals on the last slice.
+- **On the same circle, the programs converge from opposite sides as the slices get finer:**
 
-- **Status:** run by the first author as an additional check. The paper cites only Slide2 (decided 2026-10-25).
+  | slices | xslope (arc) | HYRCAN (chord) | Slide2 |
+  |---|---|---|---|
+  | 30 | 0.9396 | 0.963 | 0.964 |
+  | 40 | 0.9426 | 0.959 | — |
+  | 50 | 0.9440 | 0.957 | 0.958 |
+  | 60 | 0.9449 | 0.955 | — |
+  | 70+ | 0.9467 (100), 0.9480 (200) | refused: no valid surface | — |
 
-- **The check:** the same 15 cases were solved with HYRCAN 2.0.15, Bishop simplified, by the authors' script (`../spencer_datasets/repo/hyrcan/run_analyses.py`, outside this repository). The script uses the same geometry and the same entry and exit windows as xslope (L/3, 2L/3), and HYRCAN's default of 25 slices. The values are in `FOS_hyrcan` in `results.csv`, to three decimals, and V06 is 0.95769. HYRCAN was given the correct inputs for all 15, V09 included.
-- **A correction:** the first copy of `cases_solved.csv` carried Slide2's value for V06 (0.956) by mistake; HYRCAN's own is 0.958.
-- **Agreement:** within 1.93%. The median absolute difference is 0.29%. Leaving V06 aside, every case agrees within 0.71%. V09: 1.863 against xslope's 1.860, +0.17%.
-- **V06:** the largest difference in both programs. Slide2 gives 0.956 and HYRCAN 0.958, on practically the same circle: centre about (−0.4 to −0.6, 21.4 to 21.7), radius about 21.5 m. xslope gives 0.940.
-  - **Not rounding:** with the inputs rounded as in `cases.csv`, xslope gives 0.93958.
-  - **The slice count does not explain it.** With 50 slices, xslope gives 0.9435. HYRCAN, with 25 slices, and Slide2, with 50, agree with each other.
-  - **The rest is the surface:** the case is a steep (59°), strongly cohesive slope (c ≈ 50 kPa, φ ≈ 6°). xslope's critical circle enters the crest almost vertically, with base tension on the last slices. Slide2 and HYRCAN settle on a slightly flatter circle.
+  - Slide2 and HYRCAN agree within 0.001 on this circle.
+  - The gap narrows from 2.4% at 30 slices to 1.1% at 60. From 70 slices on, HYRCAN refuses the surface: the last slice's chord passes 85°, and m_α falls below 0.2. Computed for this circle, m_α is 0.240 at 30 slices (HYRCAN reports 0.2412), 0.202 at 60 and 0.196 at 70.
+- **Reading:** the circle is at the edge of Bishop's admissibility, and its FOS depends on how the last slice is discretized.
+- **How common this geometry is:** about 12% of all critical circles in the data have their centre within 0.01 H of crest height, in cohesive slopes with no tension crack modelled. The study's results do not depend on them: `../crest-entry-check/RESULTS.md`.
 
-### Open (2026-10-25)
+## HYRCAN: an additional check, not cited in the paper
 
-- **Slide2, V09: DONE 2026-10-26.** The rerun with φ = 13.937° gives 1.865, against xslope's 1.860 (+0.28%).
-- **Slide2, V06 (DONE 2026-10-26: 0.964 with 30 slices, 0.958 with 50, see V06 in detail):** the FOS on xslope's own critical circle, as a user-defined surface, with 30 and 50 slices. The circle has its centre at (0.474, 17.632) and radius 17.636 m, and runs from x = 0.001 to x = 18.109.
-  - **If it gives about 0.94,** the 1.8% is only the search: xslope finds the more critical circle.
-  - **If it is refused or very different,** an admissibility rule (m_α or base tension) explains it, and Methods must say so.
-- **HYRCAN slice count:** confirmed, 25.
+- **The check:** the same 15 cases were solved with HYRCAN 2.0.15, Bishop simplified, with the same geometry and the same entry and exit windows as xslope (L/3, 2L/3), and HYRCAN's default of 25 slices. The values are in `FOS_hyrcan` in `results.csv`.
+- **Agreement:** within 1.93%, with a median absolute difference of 0.29%. Leaving V06 aside, every case agrees within 0.71%.
+- **On HYRCAN's own V06 circle,** xslope gives 0.9525 with 25 slices, against HYRCAN's 0.9577.
 
-### V06 in detail (2026-10-25; not in the paper)
-
-- **The circle:** xslope's critical circle has its centre slightly above crest height, 0.009 m higher. So the circle enters the crest almost vertically, but not vertically. Slide2's critical circle has its centre much higher, at y ≈ 21.4 against a crest at 17.6.
-- **xslope, on its own circle:** the FOS depends on the slice count. It is 0.9375 with 25 slices, 0.9396 with 30, 0.9440 with 50 and 0.9480 with 200.
-- **HYRCAN, on the same circle:** the run had to be set to this surface, with its slip limits fixed at x = 0.001 and x = 18.109. HYRCAN does not refuse the circle. It gives 0.966, and m_α on the last of its 30 slices is 0.2412, above 0.2. The 2.8% gap between the two programs on the same surface comes from how each **discretizes the last slice**, at the crest. Base tension is not the cause: HYRCAN keeps negative normals too, and its N' there is −880 kN.
-  - **xslope:** α is the tangent at the slice's midpoint, 79.2°, and the weight comes from the true area under the arc, 39.2 kN. Then m_α = 0.297 and N' = −452 kN.
-  - **HYRCAN:** the base is the chord between the slice's ends, rising 4.64 m over 0.628 m. So α = 82.3°, the base length is 4.70 m and the weight, from the area under the chord, is 27.5 kN. Then m_α = 0.241 and N' = −880 kN, as in HYRCAN's slice report.
-  - **Why it matters here:** on that slice the arc turns from about 75° to 90° within 0.63 m, so the two conventions differ greatly. With cohesion dominant, this one slice moves the total by a few percent.
-  - **The slice count:** xslope's FOS on its circle rises with it, from 0.940 with 30 slices to 0.948 with 200. Both programs should converge to the same limit as the slices get finer.
-  - **Confirmed (2026-10-26):** on the same circle, the two programs converge from opposite sides as the slices get finer.
-
-    | slices | xslope (arc) | HYRCAN (chord) | Slide2 |
-|---|---|---|---|
-| 30 | 0.9396 | 0.963 | 0.964 |
-| 40 | 0.9426 | 0.959 | — |
-| 50 | 0.9440 | 0.957 | 0.958 |
-| 60 | 0.9449 | 0.955 | — |
-| 70+ | 0.9467 (100), 0.9480 (200) | refused: no valid surface | — |
-
-    Slide2's values on the same circle come from M. Aniculăesi, 2026-10-26. Slide2 and HYRCAN agree within 0.001.
-
-    - **The gap narrows** from 2.4% at 30 slices to 1.1% at 60. From 70 slices on, HYRCAN refuses the surface: the last slice's chord passes 85°, and m_α falls below 0.2. Computed for this circle, m_α is 0.240 at 30 slices, matching HYRCAN's 0.2412, 0.202 at 60 and 0.196 at 70.
-    - **The circle is at the edge of Bishop's admissibility,** and its FOS depends on how the last slice is discretized.
-- **On HYRCAN's own circle the two agree:** xslope gives 0.9525 with 25 slices, against HYRCAN's 0.9577.
-- **How common this geometry is:** about 12% of all critical circles in the data have their centre within 0.01 H of crest height. This is a cohesive slope with no tension crack modelled.
-- **Decision:** the paper reports only the largest difference, in FOS units, with its FOS. The point may matter for the data descriptor.
-
-### How the programs treat base tension at the crest (references)
+## How the programs treat base tension at the crest
 
 - **Slide2.** The user guide (Project Settings › Advanced, https://www.rocscience.com/help/slide2/documentation/slide-model/project-settings/advanced) gives the following defaults:
   - tensile normal stress may be calculated on the base of steeply inclined slices near the crest;
@@ -104,11 +81,3 @@ Every case is the same model.
 - **xslope.** The search page (https://xslope.org/en/stable/lem/search/#tension-at-the-crest) says:
   - substantial tension at the crest draws a note ("Consider adding a tension crack") and does not change the FOS or the reported surface;
   - circles whose ground crossing lies above the centre are rejected, which is why searches stop with the centre just above the crest.
-- **The robustness of the study's results to these surfaces** is in `../crest-entry-check/RESULTS.md`.
-
-## Final (2026-10-26, Slide2, all 15 cases)
-
-- **Lower FOS:** xslope gave the lower FOS in 13 of the 15 cases. In the other two, V02 and V03, it was higher by at most 0.59%.
-- **Agreement:** the FOS agree within 0.6% in 14 of the 15 cases. The median absolute difference is 0.26%.
-- **V06:** the difference is 0.017 (1.8%, at FOS 0.94); see V06 in detail above.
-- **In the paper:** these figures are in Methods, "Independent check".

@@ -1,4 +1,4 @@
-# Robustness to near-vertical crest entries (2026-10-26)
+# Robustness to near-vertical crest entries
 
 ## Why this check exists
 
