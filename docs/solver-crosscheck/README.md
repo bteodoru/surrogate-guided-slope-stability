@@ -63,7 +63,7 @@ Every case is the same model.
 ### Open (2026-10-25)
 
 - **Slide2, V09:** rerun with φ = 13.937°.
-- **Slide2, V06:** the FOS on xslope's own critical circle, as a user-defined surface, with 30 and 50 slices. The circle has its centre at (0.474, 17.632) and radius 17.636 m, and runs from x = 0.001 to x = 18.109.
+- **Slide2, V06 (DONE 2026-10-26: 0.964 with 30 slices, 0.958 with 50, see V06 in detail):** the FOS on xslope's own critical circle, as a user-defined surface, with 30 and 50 slices. The circle has its centre at (0.474, 17.632) and radius 17.636 m, and runs from x = 0.001 to x = 18.109.
   - **If it gives about 0.94,** the 1.8% is only the search: xslope finds the more critical circle.
   - **If it is refused or very different,** an admissibility rule (m_α or base tension) explains it, and Methods must say so.
 - **HYRCAN slice count:** confirmed, 25.
@@ -79,13 +79,15 @@ Every case is the same model.
   - **The slice count:** xslope's FOS on its circle rises with it, from 0.940 with 30 slices to 0.948 with 200. Both programs should converge to the same limit as the slices get finer.
   - **Confirmed (2026-10-26):** on the same circle, the two programs converge from opposite sides as the slices get finer.
 
-    | slices | xslope (arc) | HYRCAN (chord) |
-|---|---|---|
-| 30 | 0.9396 | 0.963 |
-| 40 | 0.9426 | 0.959 |
-| 50 | 0.9440 | 0.957 |
-| 60 | 0.9449 | 0.955 |
-| 70+ | 0.9467 (100), 0.9480 (200) | refused: no valid surface |
+    | slices | xslope (arc) | HYRCAN (chord) | Slide2 |
+|---|---|---|---|
+| 30 | 0.9396 | 0.963 | 0.964 |
+| 40 | 0.9426 | 0.959 | — |
+| 50 | 0.9440 | 0.957 | 0.958 |
+| 60 | 0.9449 | 0.955 | — |
+| 70+ | 0.9467 (100), 0.9480 (200) | refused: no valid surface | — |
+
+    Slide2's values on the same circle come from M. Aniculăesi, 2026-10-26. Slide2 and HYRCAN agree within 0.001.
 
     - **The gap narrows** from 2.4% at 30 slices to 1.1% at 60. From 70 slices on, HYRCAN refuses the surface: the last slice's chord passes 85°, and m_α falls below 0.2. Computed for this circle, m_α is 0.240 at 30 slices, matching HYRCAN's 0.2412, 0.202 at 60 and 0.196 at 70.
     - **The circle is at the edge of Bishop's admissibility,** and its FOS depends on how the last slice is discretized.
