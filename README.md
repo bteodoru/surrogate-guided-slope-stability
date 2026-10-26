@@ -1,19 +1,16 @@
 # Response-balanced sampling for slope-stability surrogates
 
-Code of the article *Response-balanced sampling relocates rather than improves
-accuracy in slope-stability surrogates under a fixed simulation budget*, by
-I.-B. Teodoru, A. Amelio, M. Aniculăesi and I. Lungu. The solved analyses are on
-Zenodo, [10.5281/zenodo.23618253](https://doi.org/10.5281/zenodo.23618253); how
-to cite the code and the data is in `CITATION.cff` and in the section
-[Citing](#citing).
-
 Research code for a study of how a fixed budget of physics-based slope-stability
 analyses should be allocated across the response space. A preliminary random
 forest (the screener), trained on a Latin hypercube seed, screens a large
 candidate pool. The remaining budget goes to candidates chosen to even out the
 factor-of-safety (FOS) distribution of the training set over the selection range
-[0.5, 6.0]. The paper calls this strategy *response-balanced sampling* and
+[0.5, 6.0]. The study calls this strategy *response-balanced sampling* and
 compares it, at the same budget, against continued Latin hypercube sampling.
+
+The solved analyses are on Zenodo,
+[10.5281/zenodo.23618253](https://doi.org/10.5281/zenodo.23618253); how to cite
+the code and the data is in `CITATION.cff` and in the section [Citing](#citing).
 
 The finding: at a fixed budget, response-balanced sampling does not
 systematically improve accuracy over uniform sampling of the parameter space.
@@ -165,20 +162,19 @@ Colab its first cell clones the repository, which already contains the metrics.
 ## Repository history
 
 The commit history records the order in which the study's declarations,
-designs and results were committed; the article's supplementary material cites
-it by commit hash. The history is never rewritten. The tag `oracle-declared`
+designs and results were committed, and it is never rewritten. The tag `oracle-declared`
 marks the frozen oracle declaration.
 
 `CLAUDE.md` holds the working rules given to the AI coding assistant used in
-the study (Claude Code; see the article's Acknowledgments): terminology, the
+the study (Claude Code): terminology, the
 disciplines of the analysis and the wording the results allow.
 
 ## Citing
 
-Please cite the article, and the data deposit when you use the data. The
-release of the code used for the article is archived on Zenodo, and the
-repository with its full history on Software Heritage; both identifiers are in
-the article's Data Availability Statement.
+Cite the code by its Zenodo record and, when you use the data, the data
+deposit, [10.5281/zenodo.23618253](https://doi.org/10.5281/zenodo.23618253);
+`CITATION.cff` holds both. Each release of the code is archived on Zenodo, and
+the repository with its full history on Software Heritage.
 
 ## License
 

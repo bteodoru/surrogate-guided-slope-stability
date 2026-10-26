@@ -1,7 +1,7 @@
 {
   "title": "sgs: response-balanced sampling for slope-stability surrogate models (analysis code)",
   "upload_type": "software",
-  "description": "<p>Code of the study on response-balanced sampling for slope-stability surrogate models: it generates the designs, solves them with xslope 0.5.2 (Bishop simplified), fits and tunes the surrogates, evaluates them on the two test sets, runs the replications and the structural analysis, and writes every table and figure of the article and its supplementary material. The solved analyses are deposited separately (doi:10.5281/zenodo.23618253). The Git history of the repository records the order of the study's declarations and results, cited in the supplementary material.</p>",
+  "description": "<p>Code of the study on response-balanced sampling for slope-stability surrogate models: it generates the designs, solves them with xslope 0.5.2 (Bishop simplified), fits and tunes the surrogates, evaluates them on the two test sets, runs the replications and the structural analysis, and writes every table and figure of the study. The solved analyses are deposited separately (doi:10.5281/zenodo.23618253). The Git history of the repository records the order of the study's declarations and results.</p>",
   "creators": [
     {
       "name": "Teodoru, Iancu-Bogdan",
