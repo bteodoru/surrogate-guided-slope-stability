@@ -229,8 +229,12 @@ a new test set costs seconds.
 ## Publishing
 
 Zenodo concept DOI 10.5281/zenodo.20706202 holds the earlier HYRCAN data only;
-it carries a note and stays as it is. The xslope data are unpublished; they go
-to a **new, separate Zenodo deposit** with its own DOI, published at submission
-of the paper and cited in it (decided 2026-09-24). Never describe them as
-published before that deposit exists. Where `artifacts/fits/` lives at
-publication is undecided.
+it carries a note and stays as it is. The xslope data are in a **new, separate
+Zenodo deposit**, 10.5281/zenodo.23618253, published on the day the paper is
+submitted and cited in it (decided 2026-09-24). The fits (`artifacts/fits/`)
+are not deposited; `sgs fit` regenerates them from the deposited data. The
+release of this code used for the paper is archived on Zenodo through the
+GitHub integration (`.zenodo.json`), and the repository with its full history
+on Software Heritage; both identifiers are in the paper's Data Availability
+Statement. The history is never rewritten: the supplementary material cites
+commits by hash.
