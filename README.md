@@ -56,6 +56,24 @@ LHS, 300) and `test-stratified` (random selection within predicted-FOS bins,
 
 ## Running the pipeline
 
+With the deposited data unpacked (see [Data](#data)), the tables and figures
+are rebuilt from the tracked metrics in seconds, and the fits from the data in
+hours; nothing needs to be solved:
+
+```bash
+python3.14 -m venv .venv
+.venv/bin/pip install -r requirements.lock
+.venv/bin/pip install --no-deps -e .
+.venv/bin/sgs report                 # tables and figures, from outputs/metrics/
+.venv/bin/sgs fit                    # 40 fits (10 arms × 2 families × 2 scorings), each with a nested CV; hours
+.venv/bin/sgs evaluate               # seconds
+```
+
+Skip `sgs generate` and `sgs all` in this case. They find every set up to date
+and solve nothing, but they rewrite the records in `data/run_metadata.json`, after
+which `sgs report` asks for `sgs structural` to be rerun. To regenerate the data
+from scratch:
+
 ```bash
 python3.14 -m venv .venv
 .venv/bin/pip install -r requirements.lock
@@ -117,9 +135,10 @@ The solved analyses are deposited on Zenodo,
 [10.5281/zenodo.23618253](https://doi.org/10.5281/zenodo.23618253): every set of
 the study, the replications and the reference pool, as designs, raw solver
 output and repaired final files. The CSV files are not tracked here. Download
-`data.zip` and unzip it in the repository root; it unpacks into `data/`, next to
-the tracked `data/run_metadata.json`, whose SHA-256 hashes the commands check
-before they use a file. `data/README.md` describes the files.
+`data.zip` and unzip it in the repository root with `unzip -n data.zip`. It
+unpacks into `data/`; `-n` keeps the tracked `data/README.md` and
+`data/run_metadata.json`, whose SHA-256 hashes the commands check before they
+use a file. `data/README.md` describes the files.
 
 The guided designs depend on the computing platform: the screener's predictions,
 and with them the points it selects, differ between x86 and arm64 processors. A
