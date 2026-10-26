@@ -15,9 +15,9 @@ remaining analysis budget is spent on candidates chosen to even out the FOS
 distribution of the training set over the selection range. This is compared,
 budget-fair, against continued Latin hypercube sampling.
 
-Working thesis. It was reframed on 2026-09-19, after the tuned-GBM and C-log
-results refuted "guided beats LHS" and "allocation matters more than the
-learner". It was sharpened on 2026-09-25, after the oracle's stage 2:
+Working thesis. It replaces "guided beats LHS" and "allocation matters more
+than the learner", which the tuned-GBM and C-log results refuted, and takes
+the oracle's stage 2 into account:
 - At a fixed budget, uniformizing the response space does not systematically
   improve accuracy over uniform sampling of the parameter space.
 - It relocates accuracy along the FOS axis, following the training density
@@ -62,12 +62,12 @@ guided selection, nothing more.
 against B, is the primary criterion; both halves are reported. Reporting zones
 are FOS < 0.5 | 0.5–1 | 1–2 | 2–6 | ≥ 6 (`config.ZONE_EDGES`). 1.3 is not an
 edge: it would read as a normative threshold. Log scale is primary, FOS scale
-secondary. It was defined on 2026-09-19, after the C-log results and before
-C-seq was run, from the lower end of the selection range and its log mirror
-around 1; Methods must say so.
+secondary. It was defined after the C-log results and before C-seq was run,
+from the lower end of the selection range and its log mirror around 1;
+Methods must say so.
 
-**Response-balanced sampling**: the name the paper gives the guided strategy,
-adopted 2026-09-20 with the title (`docs/motivation.md` §0). Use it for the
+**Response-balanced sampling**: the name the paper gives the guided strategy
+(`docs/motivation.md` §0). Use it for the
 strategy as a whole; the arms keep their letters. "Balanced" names the training
 distribution that is aimed at, never a judgement of quality — never write that
 a design is better balanced, or that balancing improved anything. Note the
@@ -222,8 +222,8 @@ Estimators get `n_jobs=1`; the search gets `n_jobs=-1`. The reverse
 oversubscribes cores. `sgs.cli` also defaults `OMP_NUM_THREADS=1`: on top of
 the searches' workers, HistGradientBoosting's OpenMP threads drove the load
 average to 47–106 on 8 cores. On one GBM unit (arm B, log-rmse) it cut the fit
-from 16 to 13 min with bit-identical parameters, CV scores and predictions
-(2026-09-22). The searches of `sgs fit` are test-independent, so evaluating on
+from 16 to 13 min with bit-identical parameters, CV scores and predictions.
+The searches of `sgs fit` are test-independent, so evaluating on
 a new test set costs seconds.
 
 ## Publishing
@@ -231,7 +231,7 @@ a new test set costs seconds.
 Zenodo concept DOI 10.5281/zenodo.20706202 holds the earlier HYRCAN data only;
 it carries a note and stays as it is. The xslope data are in a **new, separate
 Zenodo deposit**, 10.5281/zenodo.23618253, published on the day the paper is
-submitted and cited in it (decided 2026-09-24). The fits (`artifacts/fits/`)
+submitted and cited in it. The fits (`artifacts/fits/`)
 are not deposited; `sgs fit` regenerates them from the deposited data. The
 release of this code used for the paper is archived on Zenodo through the
 GitHub integration (`.zenodo.json`), and the repository with its full history
