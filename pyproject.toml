@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sgs"
-version = "0.1.0"
-description = "Surrogate-guided sampling for slope-stability surrogate models"
+version = "1.0.0"
+description = "Response-balanced sampling for slope-stability surrogate models"
 readme = "README.md"
 license = "MIT"
 # The reference environment is Python 3.14.4 (.python-version, requirements.lock);

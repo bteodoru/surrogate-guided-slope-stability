@@ -1,4 +1,11 @@
-# Surrogate-guided sampling for slope-stability surrogates
+# Response-balanced sampling for slope-stability surrogates
+
+Code of the article *Response-balanced sampling relocates rather than improves
+accuracy in slope-stability surrogates under a fixed simulation budget*, by
+I.-B. Teodoru, A. Amelio, M. Aniculăesi and I. Lungu. The solved analyses are on
+Zenodo, [10.5281/zenodo.23618253](https://doi.org/10.5281/zenodo.23618253); how
+to cite the code and the data is in `CITATION.cff` and in the section
+[Citing](#citing).
 
 Research code for a study of how a fixed budget of physics-based slope-stability
 analyses should be allocated across the response space. A preliminary random
@@ -106,9 +113,21 @@ generation path and refits nothing. Its procedure is declared in
 
 ## Data
 
-The xslope data sets are not yet published; they will go to a new Zenodo
-deposit of their own when the paper is submitted. `data/README.md` describes
-the files. The earlier HYRCAN data are on Zenodo, concept DOI
+The solved analyses are deposited on Zenodo,
+[10.5281/zenodo.23618253](https://doi.org/10.5281/zenodo.23618253): every set of
+the study, the replications and the reference pool, as designs, raw solver
+output and repaired final files. The CSV files are not tracked here. Download
+`data.zip` and unzip it in the repository root; it unpacks into `data/`, next to
+the tracked `data/run_metadata.json`, whose SHA-256 hashes the commands check
+before they use a file. `data/README.md` describes the files.
+
+The guided designs depend on the computing platform: the screener's predictions,
+and with them the points it selects, differ between x86 and arm64 processors. A
+rerun of `sgs generate` on another platform therefore gives different guided
+sets. The deposited sets, generated on macOS (arm64), are the reference; the
+fits, evaluation and report run from them on any platform.
+
+The earlier HYRCAN data are on Zenodo, concept DOI
 [10.5281/zenodo.20706202](https://doi.org/10.5281/zenodo.20706202), which holds
 nothing from the xslope runs.
 
@@ -123,3 +142,26 @@ Declared predictions and their observed outcomes: docs/predictions-and-outcomes.
 `notebooks/surrogate_guided_sampling.ipynb` holds the narrative and figures. It imports
 `sgs.report` and reads `outputs/metrics/`; it fits nothing and computes no metric. On
 Colab its first cell clones the repository, which already contains the metrics.
+
+## Repository history
+
+The commit history records the order in which the study's declarations,
+designs and results were committed; the article's supplementary material cites
+it by commit hash. The history is never rewritten. The tag `oracle-declared`
+marks the frozen oracle declaration.
+
+`CLAUDE.md` holds the working rules given to the AI coding assistant used in
+the study (Claude Code; see the article's Acknowledgments): terminology, the
+disciplines of the analysis and the wording the results allow.
+
+## Citing
+
+Please cite the article, and the data deposit when you use the data. The
+release of the code used for the article is archived on Zenodo, and the
+repository with its full history on Software Heritage; both identifiers are in
+the article's Data Availability Statement.
+
+## License
+
+The code is released under the MIT License (`LICENSE`). The data deposit is
+licensed separately, under CC BY 4.0.
