@@ -34,7 +34,7 @@ preferred-citation:
       orcid: "https://orcid.org/0000-0003-0963-7027"
 references:
   - type: dataset
-    title: "Factor of safety of homogeneous drained slopes: Bishop simplified analyses (xslope 0.5.2)"
+    title: "Factor of safety of homogeneous drained slopes: Bishop simplified analyses from a study of response-balanced sampling for surrogate models"
     authors:
       - family-names: Teodoru
         given-names: Iancu-Bogdan
