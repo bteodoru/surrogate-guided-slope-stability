@@ -135,10 +135,10 @@ The solved analyses are deposited on Zenodo,
 [10.5281/zenodo.23618253](https://doi.org/10.5281/zenodo.23618253): every set of
 the study, the replications and the reference pool, as designs, raw solver
 output and repaired final files. The CSV files are not tracked here. Download
-`data.zip` and unzip it in the repository root with `unzip -n data.zip`. It
-unpacks into `data/`; `-n` keeps the tracked `data/README.md` and
-`data/run_metadata.json`, whose SHA-256 hashes the commands check before they
-use a file. `data/README.md` describes the files.
+`data.zip` and unzip it in the repository root. It holds only the CSV files and
+unpacks into `data/`, next to the tracked `data/README.md`, which describes the
+files, and `data/run_metadata.json`, whose SHA-256 hashes the commands check
+before they use a file.
 
 The guided designs depend on the computing platform: the screener's predictions,
 and with them the points it selects, differ between x86 and arm64 processors. A
