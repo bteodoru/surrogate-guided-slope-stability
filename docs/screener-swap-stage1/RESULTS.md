@@ -1,9 +1,8 @@
 # Stage 1 of the screener swap — training data only
 
-Spec: `2026-09-23-gbm-screener-arm-design.md` §10.1 (local design notes, not tracked).
 Script: `stage1.py` beside this note, run as
 `PYTHONPATH=. .venv/bin/python docs/screener-swap-stage1/stage1.py`
-at commit caf7a04 (guided_log_g_r1..r5 solved), on 2026-09-23.
+at commit caf7a04 (guided_log_g_r1..r5 solved).
 
 **Recorded before any test evaluation of C-logG.** At the time of the run:
 - the replication fits in `artifacts/replications/` all predate the C-logG solves

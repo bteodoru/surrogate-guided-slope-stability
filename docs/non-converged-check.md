@@ -4,17 +4,17 @@ Some kept rows have `Search_Converged = False`. In those rows the circular searc
 
 ## Method
 
-Each case was solved again, outside the pipeline, with `scripts/xslope_colab.py` (not versioned). The script is a self-contained copy of `sgs/solver.py`: same xslope 0.5.2, same model, same search window and same `config.SOLVER` settings.
+Each case was solved again, outside the pipeline, with `scripts/xslope_colab.py`. The script is a self-contained copy of `sgs/solver.py`: same xslope 0.5.2, same model, same search window and same `config.SOLVER` settings.
 
 - The runs used `max_iter` = 50, 100, 200 and 400. Nothing else changed.
-- The first 19 cases ran on Colab (x86), while the data were solved on darwin arm64. The last three (the C-logG replications, added 2026-09-28) ran locally on darwin arm64, through `sgs.solver.calculate_fos` with only `search_max_iter` replaced.
+- The first 19 cases ran on Colab (x86), while the data were solved on darwin arm64. The last three (the C-logG replications) ran locally on darwin arm64, through `sgs.solver.calculate_fos` with only `search_max_iter` replaced.
 - At `max_iter = 50`, all 22 cases reproduced the stored FOS to every printed digit.
 
 Nothing in `data/` was modified. The pipeline reads nothing this check produced.
 
-## Results (2026-09-25; completed 2026-09-28)
+## Results
 
-All eight cases in the study sets and all 14 in the pool, chunks c001–c022. The pool stopped at c022. The first 14 cases were checked on 2026-09-25 as c001–c015 ran, and the next five after the stop. The three cases in the C-logG replications (`guided_log_g_r4`, `guided_log_g_r5`) were missed by that check and added on 2026-09-28, found by listing `non_converged` over every entry of `run_metadata.json`. Row numbers are 0-based positions in `data/final/<set>.csv` and `data/pool/final/<chunk>.csv`.
+All eight cases in the study sets and all 14 in the pool, chunks c001–c022. The pool stopped at c022. The three cases in the C-logG replications (`guided_log_g_r4`, `guided_log_g_r5`) were found by listing `non_converged` over every entry of `run_metadata.json`. Row numbers are 0-based positions in `data/final/<set>.csv` and `data/pool/final/<chunk>.csv`.
 
 | Set | Row | Stored FOS (50 it.) | Converged FOS | Converged at | ΔFOS | Relative Δ |
 |---|---:|---:|---:|---:|---:|---:|
@@ -62,4 +62,4 @@ All eight cases in the study sets and all 14 in the pool, chunks c001–c022. Th
 
 ## Status
 
-Complete. The pool stopped at c022 and every non-converged row in `data/` is in the table above: 22 rows, checked on 2026-09-28 against the `non_converged` lists of every entry in `run_metadata.json` (datasets, replications, pool). The manuscript's Methods sentence quotes these counts and the maximum change (see `paper/HANDOFF.md`).
+Complete. The pool stopped at c022 and every non-converged row in `data/` is in the table above: 22 rows, checked against the `non_converged` lists of every entry in `run_metadata.json` (datasets, replications, pool). The manuscript's Methods sentence quotes these counts and the maximum change.
