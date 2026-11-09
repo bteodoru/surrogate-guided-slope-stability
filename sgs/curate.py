@@ -422,7 +422,7 @@ def readme(tables: dict) -> str:
 
 
 README = """\
-# Limit-equilibrium analyses of homogeneous drained slopes: a curated dataset for surrogate modelling
+# A curated dataset of slope stability analyses of homogeneous drained slopes using the Bishop simplified method
 
 {n_sim} Bishop simplified analyses of homogeneous, drained slopes, organized for reuse: one table of
 distinct analyses, a table linking each to the published files it comes from, and fixed benchmark
