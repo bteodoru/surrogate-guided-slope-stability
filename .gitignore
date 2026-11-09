@@ -10,6 +10,8 @@ CLAUDE.local.md
 
 # Regenerable payloads. data/run_metadata.json and outputs/ stay tracked.
 data/**/*.csv
+# The curated deposit goes to Zenodo, never into git.
+data/curated/
 artifacts/
 
 # In-flight writes and the crash backup of the metadata file.

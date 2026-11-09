@@ -8,6 +8,7 @@
   sgs replicate       optional; replicated designs, fixed-HP fits, interval metrics
   sgs pool            optional; the reference pool, solved in chunks until its declared rule is met
   sgs structural      optional; descriptive density-and-error artifacts from the replications
+  sgs curate          optional; the curated deposit (unique analyses, membership, splits), from data/
   sgs all             generate, fit, evaluate, report
   sgs inspect         rerun one stored row and draw it with xslope's plots
 
@@ -155,6 +156,11 @@ def _structural(args):
     structural.run()
 
 
+def _curate(args):
+    from sgs import curate
+    curate.run()
+
+
 def _inspect(args):
     from sgs import inspection
     found = inspection.inspect_row(args.role, args.row, args.stage)
@@ -206,6 +212,8 @@ def build_parser() -> argparse.ArgumentParser:
                        "configuration mismatch")
     command("structural", _structural, "optional: descriptive density-and-error artifacts "
             "from the replications; reads committed data only")
+    command("curate", _curate, "optional: the curated deposit in data/curated/, read from data/ "
+            "and checked against run_metadata.json")
     p = sub.add_parser("pool", help="optional: solve the reference pool in chunks, until the declared "
                                     "stopping rule is met (then it solves nothing more)")
     p.add_argument("--chunks", type=int, default=1,
