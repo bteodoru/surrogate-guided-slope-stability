@@ -329,7 +329,7 @@ def write(tables: dict, entries: list[dict], target: Path) -> dict:
         "simulation_id": ID_RECIPE,
         "zone_edges": list(config.ZONE_EDGES),
         "counts": {"source_rows": len(tables["membership"]), "simulations": len(tables["simulations"]),
-                   "splits": tables["splits"]["split"].value_counts().reindex(SPLITS).astype(int).to_dict()},
+                   "splits": tables["splits"]["split"].value_counts().reindex(SPLITS, fill_value=0).astype(int).to_dict()},
         "checks": tables["checks"],
         "source_files": [{"path": _relative(Path(e["path"])), "sha256": e["sha256"]} for e in entries],
         "files": [{"path": p.relative_to(target).as_posix(), "sha256": data.sha256_file(p)} for p in files],
@@ -433,6 +433,10 @@ The id depends only on the five inputs, never on file or row order:
 
 with the inputs read as float64 from the CSV files of either deposit. Two analyses with the same five
 inputs therefore share one id.
+
+The text must be parsed exactly. Python's `float()` and the `csv` module do this, and the Parquet
+files store the exact values. pandas does not by default: its fast parser can change the last digit
+of a float64. Read with `pd.read_csv(path, float_precision="round_trip")`.
 
 In the source deposit, the `designs/` files of `guided_oracle_rN` and `guided_log_p_rN` hold inputs that
 differ from their `final/` rows by at most 7 × 10⁻¹⁵ (the last digit of a float64). The `final/` rows are

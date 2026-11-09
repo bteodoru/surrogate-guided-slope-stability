@@ -12,6 +12,7 @@ from tests.conftest import REAL_DATA
 def _row(values, *, fos="1.5", runtime="4.2", **membership):
     H, angle, phi, c, gamma = (repr(float(v)) for v in values)
     row = {column: "" for column in data.FINAL_COLUMNS}
+    row.update({column: "1.0" for column in curate._FLOAT})
     row.update(H=H, angle=angle, phi=phi, c=c, gamma=gamma, FOS=fos, Runtime_s=runtime,
                At_Boundary="False", Search_Converged="True", N_Circles_Tested="10",
                N_Valid_Surfaces="9", N_Unsolved="0")
@@ -112,7 +113,7 @@ def test_written_deposit_round_trips(root):
     entries = [{"path": root / "data" / "final" / "x.csv", "sha256": "0" * 64}]
     provenance = curate.write(tables, entries, curate.out_dir())
     base = curate.out_dir()
-    csv = pd.read_csv(base / "data" / "simulations.csv")
+    csv = pd.read_csv(base / "data" / "simulations.csv", float_precision="round_trip")
     ids = [curate.simulation_id(v) for v in csv[list(curate.ID_COLUMNS)].itertuples(index=False)]
     assert ids == csv["simulation_id"].tolist()          # full precision survives the CSV
     parquet = pd.read_parquet(base / "data" / "simulations.parquet")
@@ -164,3 +165,11 @@ def test_published_test_sets_are_disjoint_from_every_other_simulation(published)
         assert dis[f"non_test__{test}"]["n"] == 29_787
         assert dis[f"non_test__{test}"]["min_normalized_distance"] > config.MIN_DISTANCE
         assert dis[f"train__{test}"]["min_normalized_distance"] > config.MIN_DISTANCE
+
+
+def test_published_ids_are_reproducible_from_the_written_csv(published, tmp_path):
+    """The README's recipe, applied to the CSV as written and read with exact parsing."""
+    published["simulations"].head(2000).to_csv(tmp_path / "s.csv", index=False)
+    csv = pd.read_csv(tmp_path / "s.csv", float_precision="round_trip")
+    ids = [curate.simulation_id(v) for v in csv[list(curate.ID_COLUMNS)].itertuples(index=False)]
+    assert ids == csv["simulation_id"].tolist()
