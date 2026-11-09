@@ -276,8 +276,8 @@ _DICTIONARY = [
                                                "analysis-domain edge; False in every row after repair"),
     ("simulations", "slope_length", "float64", "m", "horizontal length of the slope face, H / tan(angle)"),
     ("simulations", "extension", "float64", "m", "extent of the analysis domain beyond the crest"),
-    ("simulations", "depth", "float64", "m", "extent of the analysis domain below the toe, and to the "
-                                             "left of it"),
+    ("simulations", "depth", "float64", "m", "depth of the analysis domain below the toe; the domain "
+                                             "extends by the same length to the left of the toe"),
     ("simulations", "Search_Converged", "bool", "", "the circular search met its tolerance before the "
                                                     "iteration limit"),
     ("simulations", "N_Circles_Tested", "int64", "", "trial circles evaluated by the search"),

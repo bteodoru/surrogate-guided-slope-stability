@@ -29,11 +29,11 @@ def output_dir() -> Path:
     return config.ROOT / "docs" / "curated-figures"
 
 
-def _dimension(ax, x0, y0, x1, y1, label, *, offset=(0, 0), ha="center", va="center"):
+def _dimension(ax, x0, y0, x1, y1, label, *, offset=(0, 0), ha="center", va="center", family="monospace"):
     ax.annotate("", xy=(x1, y1), xytext=(x0, y0),
                 arrowprops={"arrowstyle": "<->", "lw": 0.8, "color": "0.25", "shrinkA": 0, "shrinkB": 0})
     ax.text((x0 + x1) / 2 + offset[0], (y0 + y1) / 2 + offset[1], label, ha=ha, va=va, fontsize=8,
-            family="monospace", color="0.15")
+            family=family, color="0.15")
 
 
 def draw(row: pd.Series) -> plt.Figure:
@@ -86,7 +86,8 @@ def draw(row: pd.Series) -> plt.Figure:
     _dimension(ax, 0, y, L, y, "slope_length", offset=(0, -0.7), va="top")
     _dimension(ax, L, y, L + ext, y, "extension", offset=(0, -0.7), va="top")
     _dimension(ax, -depth - 1.2, 0, -depth - 1.2, -depth, "depth", offset=(-0.5, 0), ha="right")
-    _dimension(ax, -depth, y, 0, y, "depth", offset=(0, -0.7), va="top")
+    # the domain extends left of the toe by the same length; not a column of its own
+    _dimension(ax, -depth, y, 0, y, "left extent", offset=(0, -0.7), va="top", family="sans-serif")
     ax.plot([-depth, -depth], [-depth, y - 0.4], lw=0.4, color="0.6", ls=":")
     for x in (0, L, L + ext):
         ax.plot([x, x], [-depth, y - 0.4], lw=0.4, color="0.6", ls=":")
