@@ -435,7 +435,8 @@ def readme(tables: dict) -> str:
     n = len(sims)
     non_test = n - counts.get("test-natural", 0) - counts.get("test-stratified", 0)
     arm_table = "\n".join(f"| `{name}` | {origin} | {arms} |" for origin, name, arms in arm_rows(mem))
-    ablations = ", ".join(name for name, arm in config.ARMS.items() if arm.ablation)
+    ablations = ", ".join([name for name, arm in config.ARMS.items() if arm.ablation]
+                          + [name for name in replicate.POOL_ARMS if name.startswith("C0")])
     return README.format(
         arm_table=arm_table, ablations=ablations,
         n_sim=f"{n:,}", n_rows=f"{len(mem):,}", n_copies=f"{checks['copied_rows']:,}",
@@ -532,8 +533,8 @@ distribution of FOS. `stratified-random` is a test set stratified on predicted F
 ## Correspondence with the study
 
 The sets are the designs of the study that generated the data (arXiv:2610.38815). There, each training
-set ("arm") joins the seed to one added set; an arm whose name has a 0 ({ablations}, and C0-oracle,
-C0-logP) is the added set alone, an ablation. A set of origin `replication` enters the arms of its
+set ("arm") joins the seed to one added set; an arm whose name has a 0 ({ablations}) is the added
+set alone, an ablation. A set of origin `replication` enters the arms of its
 realization only.
 
 | set | origin | arms of the study it enters |
