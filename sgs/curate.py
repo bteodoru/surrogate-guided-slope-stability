@@ -322,10 +322,8 @@ def _git_state() -> dict:
 def _versions() -> dict:
     out = data.environment()
     out["packages"]["pyarrow"] = _metadata.version("pyarrow")
-    try:
-        out["packages"]["sgs"] = _metadata.version("sgs")
-    except _metadata.PackageNotFoundError:
-        pass
+    # No version of sgs itself: an editable install keeps the metadata of when it was
+    # installed. The commit in provenance["code"] identifies the code.
     return out
 
 
