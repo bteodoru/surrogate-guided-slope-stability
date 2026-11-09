@@ -174,6 +174,8 @@ def test_published_test_sets_are_disjoint_from_every_other_simulation(published)
         assert dis[f"non_test__{test}"]["n"] == 29_787
         assert dis[f"non_test__{test}"]["min_normalized_distance"] > config.MIN_DISTANCE
         assert dis[f"train__{test}"]["min_normalized_distance"] > config.MIN_DISTANCE
+    between = dis["__".join(config.TEST_ROLES)]["min_normalized_distance"]
+    assert between > config.MIN_DISTANCE
 
 
 def test_published_ids_are_reproducible_from_the_written_csv(published, tmp_path):

@@ -219,7 +219,8 @@ def build(rows: pd.DataFrame) -> dict:
 
 def disjointness(simulations: pd.DataFrame, splits: pd.DataFrame) -> dict:
     """Minimum normalized distance from the training split, and from every non-test
-    simulation, to each test set; both must exceed config.MIN_DISTANCE."""
+    simulation, to each test set, and between the two test sets; all must exceed
+    config.MIN_DISTANCE."""
     inputs = simulations.set_index("simulation_id")[INPUTS].astype(float)
     by = splits.set_index("simulation_id")["split"]
     out = {}
@@ -230,6 +231,12 @@ def disjointness(simulations: pd.DataFrame, splits: pd.DataFrame) -> dict:
             if closest <= config.MIN_DISTANCE:
                 raise CurateError(f"{name} is not disjoint from {test}: {closest:.2e}")
             out[f"{name}__{test}"] = {"n": int(mask.sum()), "min_normalized_distance": closest}
+    first, second = config.TEST_ROLES
+    closest = float(cKDTree(data.normalize(inputs.loc[by[by == first].index]))
+                    .query(data.normalize(inputs.loc[by[by == second].index]), k=1)[0].min())
+    if closest <= config.MIN_DISTANCE:
+        raise CurateError(f"{first} is not disjoint from {second}: {closest:.2e}")
+    out[f"{first}__{second}"] = {"min_normalized_distance": closest}
     out["threshold"] = config.MIN_DISTANCE
     return out
 
