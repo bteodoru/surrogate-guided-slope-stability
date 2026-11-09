@@ -31,16 +31,23 @@ from scipy.spatial import cKDTree
 from sgs import config, data, replicate
 
 SOURCE_DOI = "10.5281/zenodo.23618253"
-CODE_DOI = "10.5281/zenodo.23727658"          # concept DOI of the code; the version is in provenance
+CODE_DOI = "10.5281/zenodo.23727658"          # concept DOI of the code (all versions)
+CODE_RELEASE = "v1.1.0"
+CODE_RELEASE_DOI = None                       # the version DOI of CODE_RELEASE, once the release exists
 
 # The id recipe, stated once; the README prints it from here.
 ID_COLUMNS = ("H", "angle", "phi", "c", "gamma")
 ID_SEPARATOR = "|"
 ID_PREFIX = "sim_"
 ID_HEX = 16
+# Seven significant digits: a step of at most 1e-5 on these inputs, far below the
+# 3.6e-3 by which two distinct points differ in at least one input (MIN_DISTANCE in
+# the normalized domain), and coarse enough that a last-digit parsing difference
+# cannot move an id. stable_ids() checks the margin on the data.
+ID_DIGITS = 7
+ID_ULP_MARGIN = 1024
 ID_RECIPE = (f"{ID_PREFIX} + the first {ID_HEX} hexadecimal characters of SHA-256 over the UTF-8 text "
-             f"{ID_SEPARATOR!r}.join(repr(float(x)) for x in ({', '.join(ID_COLUMNS)})), "
-             "the inputs as float64 read from final/ of the source deposit")
+             f"{ID_SEPARATOR!r}.join(f'{{float(x):.{ID_DIGITS}g}}' for x in ({', '.join(ID_COLUMNS)}))")
 
 OUTPUT_COLUMNS = [c for c in data.FINAL_COLUMNS if c != "excluded"]   # excluded is empty everywhere
 INPUTS = list(ID_COLUMNS)
@@ -69,9 +76,28 @@ def out_dir() -> Path:
     return config.ROOT / "data" / "curated"
 
 
+def _id_text(values) -> str:
+    return ID_SEPARATOR.join(f"{float(v):.{ID_DIGITS}g}" for v in values)
+
+
 def simulation_id(values) -> str:
-    text = ID_SEPARATOR.join(repr(float(v)) for v in values)
-    return ID_PREFIX + hashlib.sha256(text.encode()).hexdigest()[:ID_HEX]
+    return ID_PREFIX + hashlib.sha256(_id_text(values).encode()).hexdigest()[:ID_HEX]
+
+
+def stable_ids(simulations: pd.DataFrame) -> dict:
+    """Every id must survive a change of up to ID_ULP_MARGIN units in the last place
+    of any input, so that a reader's float parser cannot change it."""
+    moved = 0
+    for column in INPUTS:
+        values = simulations[column].astype(float).to_numpy()
+        step = ID_ULP_MARGIN * np.spacing(values)
+        base = [f"{v:.{ID_DIGITS}g}" for v in values]
+        for shifted in (values - step, values + step):
+            moved += sum(f"{v:.{ID_DIGITS}g}" != b for v, b in zip(shifted, base))
+    if moved:
+        raise CurateError(f"{moved} inputs lie within {ID_ULP_MARGIN} ulp of a rounding boundary "
+                          f"at {ID_DIGITS} significant digits")
+    return {"significant_digits": ID_DIGITS, "ulp_margin": ID_ULP_MARGIN, "inputs_moved": 0}
 
 
 # --- the sources ------------------------------------------------------------------
@@ -186,6 +212,7 @@ def build(rows: pd.DataFrame) -> dict:
         split[ids] = name
     splits = split.rename("split").reset_index()
     checks["disjointness"] = disjointness(simulations, splits)
+    checks["id_stability"] = stable_ids(simulations)
     return {"simulations": simulations, "membership": membership, "splits": splits, "checks": checks}
 
 
@@ -388,7 +415,10 @@ def readme(tables: dict) -> str:
         n_repaired=int((sims["repair_variant"] != "").sum()),
         n_nonconv=int((sims["Search_Converged"] != "True").sum()),
         id_columns=", ".join(ID_COLUMNS), id_sep=ID_SEPARATOR, id_prefix=ID_PREFIX, id_hex=ID_HEX,
-        source=SOURCE_DOI)
+        id_digits=ID_DIGITS, id_margin=ID_ULP_MARGIN, source=SOURCE_DOI,
+        release=CODE_RELEASE, code_doi=CODE_DOI,
+        release_doi=(f"doi:{CODE_RELEASE_DOI}" if CODE_RELEASE_DOI
+                     else "version DOI to be added when the release is archived"))
 
 
 README = """\
@@ -414,7 +444,7 @@ recorded there.
 | `metadata/provenance.json` | source files and their SHA-256, code version, checks, SHA-256 of every file here |
 | `LICENSE` | CC BY 4.0 |
 
-The CSV files keep the values exactly as written in the source deposit (full float64 precision). The
+The CSV files keep the values as written in the source deposit, at full float64 precision. The
 Parquet files hold the same tables with typed columns.
 
 ## The model
@@ -428,19 +458,20 @@ H 1–25 m, slope angle 10–65°, φ 5–40°, c 1–75 kPa, γ 14–22 kN/m³.
 
 The id depends only on the five inputs, never on file or row order:
 
-    text = "{id_sep}".join(repr(float(x)) for x in ({id_columns}))
+    text = "{id_sep}".join(f"{{float(x):.{id_digits}g}}" for x in ({id_columns}))
     simulation_id = "{id_prefix}" + sha256(text.encode("utf-8")).hexdigest()[:{id_hex}]
 
-with the inputs read as float64 from the CSV files of either deposit. Two analyses with the same five
-inputs therefore share one id.
+Each input is written with {id_digits} significant digits before hashing. Two analyses with the same
+five inputs therefore share one id. Distinct analyses keep distinct ids: they differ in at least one
+input by far more than the rounding step.
 
-The text must be parsed exactly. Python's `float()` and the `csv` module do this, and the Parquet
-files store the exact values. pandas does not by default: its fast parser can change the last digit
-of a float64. Read with `pd.read_csv(path, float_precision="round_trip")`.
+The rounding also makes the id independent of how a file is read. No input in this dataset lies within
+{id_margin} units in the last place of a rounding boundary, so the ids come out the same with
+`pd.read_csv` (default or `float_precision="round_trip"`), Python's `csv` module, or the Parquet files.
 
 In the source deposit, the `designs/` files of `guided_oracle_rN` and `guided_log_p_rN` hold inputs that
-differ from their `final/` rows by at most 7 × 10⁻¹⁵ (the last digit of a float64). The `final/` rows are
-exact copies of the pool's. Ids are computed from `final/`.
+differ from their `final/` rows by at most 7 × 10⁻¹⁵, the last digit of a float64. The `final/` rows
+are exact copies of the pool's. Both give the same id.
 
 ## Distinct analyses and membership
 
@@ -486,6 +517,31 @@ of log(FOS), overall and per FOS zone: {zones}.
 - **Non-converged searches:** {n_nonconv} analyses stopped at the iteration limit (`Search_Converged = False`).
   Solved again to convergence, their FOS moved by at most 6.8 × 10⁻⁴ (relative).
 - **No analysis excluded.**
+- **Independent check with another program.** 15 analyses of `test-natural`, 3 per FOS zone, were
+  solved blind in Slide2 9.044 (Rocscience), Bishop simplified, with its own circular search. The
+  checker received the inputs and the geometry, not the xslope FOS.
+  - The FOS agree within 0.6% in 14 of the 15 cases. The median absolute difference is 0.26%.
+  - xslope gave the lower FOS in 13 cases, so Slide2's search found no lower critical circle in those.
+  - The exception (1.8%, at FOS 0.94) is a steep, strongly cohesive slope. Its critical circle enters
+    the crest almost vertically, where the two programs discretize the last slice differently; on the
+    same circle they converge from opposite sides as the slices get finer.
+  - The cases, both programs' values and the analysis of the exception are in
+    `docs/solver-crosscheck/` of the code repository.
+
+## Code and regeneration
+
+This deposit is produced by `sgs curate` in https://github.com/bteodoru/surrogate-guided-slope-stability,
+release {release} ({release_doi}; all versions: doi:{code_doi}). Unpack the source deposit's `data.zip`
+in the repository root, then:
+
+    python3.14 -m venv .venv
+    .venv/bin/pip install -r requirements.lock
+    .venv/bin/pip install --no-deps -e .
+    PYTHONPATH=. .venv/bin/sgs curate
+
+Instead of the lock file, `.venv/bin/pip install -e ".[curate]"` installs the package with the Parquet
+writer. `sgs curate` checks every source file against the SHA-256 in `run_metadata.json` before it
+builds anything, and writes `data/curated/`. `metadata/provenance.json` records the commit it ran on.
 
 ## Licence and citation
 

@@ -1,3 +1,4 @@
+import csv
 import hashlib
 import json
 
@@ -39,11 +40,19 @@ def _tests():
 
 def test_simulation_id_follows_the_stated_recipe():
     values = (12.5, 33.0, 21.25, 7.0, 19.0)
-    text = "|".join(repr(float(v)) for v in values)
+    text = "|".join(f"{float(v):.7g}" for v in values)
     assert curate.simulation_id(values) == "sim_" + hashlib.sha256(text.encode()).hexdigest()[:16]
-    # the same inputs as strings or floats give the same id; any change gives another
+    # strings or floats, and a last-digit difference, give the same id; a real change gives another
     assert curate.simulation_id([repr(v) for v in values]) == curate.simulation_id(values)
-    assert curate.simulation_id((12.5, 33.0, 21.25, 7.0, 19.000000000000004)) != curate.simulation_id(values)
+    assert curate.simulation_id((12.5, 33.0, 21.25, 7.0, 19.000000000000004)) == curate.simulation_id(values)
+    assert curate.simulation_id((12.5, 33.0, 21.25, 7.0, 19.0001)) != curate.simulation_id(values)
+
+
+def test_an_input_at_a_rounding_boundary_is_refused():
+    frame = pd.DataFrame({c: [1.0] for c in curate.INPUTS})
+    frame["gamma"] = [19.000005]          # halfway between 19.00000 and 19.00001 at 7 digits
+    with pytest.raises(curate.CurateError, match="rounding boundary"):
+        curate.stable_ids(frame)
 
 
 def test_copies_and_repeated_runs_collapse_to_one_simulation():
@@ -80,7 +89,7 @@ def test_a_copy_without_a_solver_run_is_refused():
 
 
 def test_a_non_test_point_near_a_test_set_is_refused():
-    near = tuple(np.array(NATURAL) + 1e-6)
+    near = tuple(np.array(NATURAL) + 1e-4)       # a distinct id, well inside MIN_DISTANCE
     rows = _rows(_row(POOL[0]), _row(near, set="guided-log", origin="replication"), *_tests())
     with pytest.raises(curate.CurateError, match="not disjoint"):
         curate.build(rows)
@@ -173,3 +182,33 @@ def test_published_ids_are_reproducible_from_the_written_csv(published, tmp_path
     csv = pd.read_csv(tmp_path / "s.csv", float_precision="round_trip")
     ids = [curate.simulation_id(v) for v in csv[list(curate.ID_COLUMNS)].itertuples(index=False)]
     assert ids == csv["simulation_id"].tolist()
+
+
+def test_published_ids_survive_every_way_of_reading_the_csv(published, tmp_path):
+    pytest.importorskip("pyarrow")
+    sims = published["simulations"]
+    sims.to_csv(tmp_path / "s.csv", index=False)
+    curate.typed(sims).to_parquet(tmp_path / "s.parquet", index=False)
+    columns = list(curate.ID_COLUMNS)
+    readers = {
+        "pandas default": pd.read_csv(tmp_path / "s.csv"),
+        "pandas round_trip": pd.read_csv(tmp_path / "s.csv", float_precision="round_trip"),
+        "csv module": pd.DataFrame(list(csv.DictReader((tmp_path / "s.csv").open()))),
+        "parquet": pd.read_parquet(tmp_path / "s.parquet"),
+    }
+    for name, frame in readers.items():
+        ids = [curate.simulation_id(v) for v in frame[columns].itertuples(index=False)]
+        assert ids == sims["simulation_id"].tolist(), name
+    assert published["checks"]["id_stability"]["inputs_moved"] == 0
+
+
+def test_pool_backed_designs_give_the_same_ids_as_their_final_rows():
+    if not (REAL_DATA / "replications" / "designs").exists():
+        pytest.skip("the published data are not unpacked under data/")
+    columns = list(curate.ID_COLUMNS)
+    for r in range(1, config.REP_REALIZATIONS + 1):
+        for key in (f"guided_oracle_r{r}", f"guided_log_p_r{r}"):
+            design = pd.read_csv(config.replication_path("designs", key), dtype=str)
+            final = pd.read_csv(config.replication_path("final", key), dtype=str)
+            assert ([curate.simulation_id(v) for v in design[columns].itertuples(index=False)]
+                    == [curate.simulation_id(v) for v in final[columns].itertuples(index=False)]), key
