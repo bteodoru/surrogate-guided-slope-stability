@@ -151,6 +151,9 @@ SEEDS = {
     # Declared 2026-09-23 with the oracle spec, before any pool chunk was solved:
     # the uniform reference pool from which C-oracle and C-logP select.
     "pool_design": 20260930,
+    # Declared 2026-11-09 for the curated deposit's FOS baseline (random_state of
+    # its one estimator), before the baseline was run.
+    "benchmark_baseline": 20261109,
 }
 
 
