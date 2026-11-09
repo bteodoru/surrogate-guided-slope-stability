@@ -31,6 +31,7 @@ from scipy.spatial import cKDTree
 from sgs import config, data, replicate
 
 SOURCE_DOI = "10.5281/zenodo.23618253"
+CURATED_DOI = "10.5281/zenodo.24088012"        # reserved for this deposit (Zenodo draft)
 CODE_DOI = "10.5281/zenodo.23727658"          # concept DOI of the code (all versions)
 CODE_RELEASE = "v1.1.0"
 CODE_RELEASE_DOI = None                       # the version DOI of CODE_RELEASE, once the release exists
@@ -413,7 +414,7 @@ def readme(tables: dict) -> str:
         n_repaired=int((sims["repair_variant"] != "").sum()),
         n_nonconv=int((sims["Search_Converged"] != "True").sum()),
         id_columns=", ".join(ID_COLUMNS), id_sep=ID_SEPARATOR, id_prefix=ID_PREFIX, id_hex=ID_HEX,
-        id_digits=ID_DIGITS, id_margin=ID_ULP_MARGIN, source=SOURCE_DOI,
+        id_digits=ID_DIGITS, id_margin=ID_ULP_MARGIN, source=SOURCE_DOI, curated=CURATED_DOI,
         release=CODE_RELEASE, code_doi=CODE_DOI,
         release_doi=(f"doi:{CODE_RELEASE_DOI}" if CODE_RELEASE_DOI
                      else "version DOI to be added when the release is archived"))
@@ -543,5 +544,5 @@ builds anything, and writes `data/curated/`. `metadata/provenance.json` records 
 
 ## Licence and citation
 
-CC BY 4.0. Please cite this deposit, and the source deposit doi:{source}.
+CC BY 4.0. Please cite this deposit, doi:{curated}, and the source deposit, doi:{source}.
 """
