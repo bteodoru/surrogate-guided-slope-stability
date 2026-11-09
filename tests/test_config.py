@@ -25,7 +25,7 @@ def test_every_declared_seed_has_a_user():
     used = {s for role in config.ROLES.values() for s in role.seeds}
     used |= {"screener_fit", "screener_cv", "protocol_cv_split", "protocol_estimator",
              "bootstrap_resampling", "learning_curve_subsampling", "replication_design",
-             "pool_design"}
+             "pool_design", "benchmark_baseline"}
     assert used == set(config.SEEDS)
 
 
