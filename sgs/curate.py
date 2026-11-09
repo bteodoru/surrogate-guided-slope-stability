@@ -387,6 +387,40 @@ They are derived from doi:10.5281/zenodo.23618253 (CC BY 4.0), by the same autho
 """
 
 
+# The fixed role whose design each replicated strategy repeats (replicate.arm_frames composes
+# the arms the same way); the pool-backed strategies have no fixed role, only their own arms.
+_STRATEGY_ROLES = {"lhs": ("lhs-extension",), "guided-log": ("guided-log",),
+                   "guided-log-g": ("guided-log-g",), "guided-seq": replicate.SEQ_ROLES_R0}
+_POOL_STRATEGY_ARMS = {"guided-oracle": ("C-oracle", "C0-oracle"), "guided-log-p": ("C-logP", "C0-logP")}
+
+
+def _arms_of_role(role: str) -> list[str]:
+    return [name for name, arm in config.ARMS.items() if role in arm.roles]
+
+
+def arm_rows(membership: pd.DataFrame) -> list[tuple[str, str, str]]:
+    """(origin, set, arms) for the README: the training sets of the study each set enters."""
+    if set(sum(_POOL_STRATEGY_ARMS.values(), ())) != set(replicate.POOL_ARMS):
+        raise CurateError("the pool-backed arms differ from replicate.POOL_ARMS")
+    rows = []
+    for origin, name in membership[["origin", "set"]].drop_duplicates().itertuples(index=False):
+        if name in config.TEST_ROLES:
+            arms = "test set of every arm"
+        elif name == "pool":
+            arms = "none; the pool-backed sets are drawn from it"
+        elif origin == "fixed":
+            arms = ", ".join(_arms_of_role(name))
+            if name == "seed":                    # the pool-backed arms exist in the replications only
+                arms += "; in the replications also " + ", ".join(
+                    a for a in replicate.POOL_ARMS if not config.ARMS.get(a) and not a.startswith("C0"))
+        elif name in _POOL_STRATEGY_ARMS:
+            arms = ", ".join(_POOL_STRATEGY_ARMS[name])
+        else:
+            arms = ", ".join(dict.fromkeys(a for r in _STRATEGY_ROLES[name] for a in _arms_of_role(r)))
+        rows.append((origin, name, arms))
+    return rows
+
+
 def readme(tables: dict) -> str:
     sims, mem, splits = tables["simulations"], tables["membership"], tables["splits"]
     checks = tables["checks"]
@@ -400,7 +434,10 @@ def readme(tables: dict) -> str:
                        + [f"FOS ≥ {edges[-1]:g}"])
     n = len(sims)
     non_test = n - counts.get("test-natural", 0) - counts.get("test-stratified", 0)
+    arm_table = "\n".join(f"| `{name}` | {origin} | {arms} |" for origin, name, arms in arm_rows(mem))
+    ablations = ", ".join(name for name, arm in config.ARMS.items() if arm.ablation)
     return README.format(
+        arm_table=arm_table, ablations=ablations,
         n_sim=f"{n:,}", n_rows=f"{len(mem):,}", n_copies=f"{checks['copied_rows']:,}",
         n_repeat=len(repeats), repeat_sets=" and ".join(repeat_sets),
         n_train=f"{counts.get('train', 0):,}", n_tn=f"{counts.get('test-natural', 0):,}",
@@ -491,6 +528,17 @@ Design labels (`membership.design`) say how a point was chosen; only `uniform-ii
 random sample of the domain. `lhs` sets are Latin hypercube designs. `guided-maxmin`,
 `guided-log-deficit` and `pool-selection` were chosen from predicted or computed FOS to reach a target
 distribution of FOS. `stratified-random` is a test set stratified on predicted FOS.
+
+## Correspondence with the study
+
+The sets are the designs of the study that generated the data (arXiv:2610.38815). There, each training
+set ("arm") joins the seed to one added set; an arm whose name has a 0 ({ablations}, and C0-oracle,
+C0-logP) is the added set alone, an ablation. A set of origin `replication` enters the arms of its
+realization only.
+
+| set | origin | arms of the study it enters |
+|---|---|---|
+{arm_table}
 
 ## Benchmark splits
 

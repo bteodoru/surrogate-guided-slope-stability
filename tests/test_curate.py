@@ -212,3 +212,12 @@ def test_pool_backed_designs_give_the_same_ids_as_their_final_rows():
             final = pd.read_csv(config.replication_path("final", key), dtype=str)
             assert ([curate.simulation_id(v) for v in design[columns].itertuples(index=False)]
                     == [curate.simulation_id(v) for v in final[columns].itertuples(index=False)]), key
+
+
+def test_published_arm_table_follows_the_arm_registry(published):
+    rows = {(origin, name): arms for origin, name, arms in curate.arm_rows(published["membership"])}
+    assert rows[("fixed", "lhs-extension")] == "B"
+    assert rows[("fixed", "guided-log")] == "C-log, C0-log"
+    assert rows[("replication", "guided-oracle")] == "C-oracle, C0-oracle"
+    assert "C0-oracle" not in rows[("fixed", "seed")]
+    assert len(rows) == published["membership"][["origin", "set"]].drop_duplicates().shape[0]
