@@ -494,7 +494,7 @@ Parquet files hold the same tables with typed columns.
 ## The model
 
 A homogeneous slope in one Mohr–Coulomb soil, drained, with no water table and no external load. The
-toe is at (0, 0) and the crest at (L, H); the ground is flat on both sides and the same soil continues
+toe is at the origin (0, 0); the ground is flat on both sides of the slope and the same soil continues
 below the toe. Bishop simplified method, circular slip surfaces, 30 slices, xslope 0.5.2. Inputs:
 H 1–25 m, slope angle 10–65°, φ 5–40°, c 1–75 kPa, γ 14–22 kN/m³.
 
