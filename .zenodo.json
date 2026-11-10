@@ -1,7 +1,7 @@
 {
   "title": "sgs: response-balanced sampling for slope-stability surrogate models (analysis code)",
   "upload_type": "software",
-  "description": "<p>Code of the study on response-balanced sampling for slope-stability surrogate models: it generates the designs, solves them with xslope 0.5.2 (Bishop simplified), fits and tunes the surrogates, evaluates them on the two test sets, runs the replications and the structural analysis, and writes every table and figure of the study. The solved analyses are deposited separately (doi:10.5281/zenodo.23618253). The Git history of the repository records the order of the study's declarations and results.</p>",
+  "description": "<p>Code of the study on response-balanced sampling for slope-stability surrogate models: it generates the designs, solves them with xslope 0.5.2 (Bishop simplified), fits and tunes the surrogates, evaluates them on the two test sets, runs the replications and the structural analysis, and writes every table and figure of the study. The solved analyses are deposited separately (doi:10.5281/zenodo.23618253). The Git history of the repository records the order of the study's declarations and results. Release 1.1.0 adds <code>sgs curate</code>, which writes the curated deposit of the same analyses (doi:10.5281/zenodo.24088012), and <code>sgs benchmark</code>, its FOS baseline; the study's own results are unchanged.</p>",
   "creators": [
     {
       "name": "Teodoru, Iancu-Bogdan",
@@ -21,6 +21,12 @@
     {
       "relation": "isSupplementTo",
       "identifier": "10.5281/zenodo.23618253",
+      "scheme": "doi",
+      "resource_type": "dataset"
+    },
+    {
+      "relation": "isSupplementTo",
+      "identifier": "10.5281/zenodo.24088012",
       "scheme": "doi",
       "resource_type": "dataset"
     }

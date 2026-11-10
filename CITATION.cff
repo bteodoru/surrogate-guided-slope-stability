@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use this code, please cite it as below; if you use the data, cite the data deposit as well."
 type: software
 title: "sgs: response-balanced sampling for slope-stability surrogate models (analysis code)"
-version: 1.0.0
+version: 1.1.0
 license: MIT
 repository-code: "https://github.com/bteodoru/surrogate-guided-slope-stability"
 authors:
@@ -24,4 +24,12 @@ references:
         given-names: Iancu-Bogdan
         orcid: "https://orcid.org/0000-0001-8298-9374"
     doi: 10.5281/zenodo.23618253
+    license: CC-BY-4.0
+  - type: dataset
+    title: "A curated dataset of slope stability analyses of homogeneous drained slopes using the Bishop simplified method"
+    authors:
+      - family-names: Teodoru
+        given-names: Iancu-Bogdan
+        orcid: "https://orcid.org/0000-0001-8298-9374"
+    doi: 10.5281/zenodo.24088012
     license: CC-BY-4.0
