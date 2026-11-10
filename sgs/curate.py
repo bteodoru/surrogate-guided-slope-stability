@@ -34,7 +34,7 @@ SOURCE_DOI = "10.5281/zenodo.23618253"
 CURATED_DOI = "10.5281/zenodo.24088012"        # reserved for this deposit (Zenodo draft)
 CODE_DOI = "10.5281/zenodo.23727658"          # concept DOI of the code (all versions)
 CODE_RELEASE = "v1.1.0"
-CODE_RELEASE_DOI = None                       # the version DOI of CODE_RELEASE, once the release exists
+CODE_RELEASE_DOI = "10.5281/zenodo.24105054"   # the version DOI of CODE_RELEASE (Zenodo, archived 2026-11-10)
 
 # The id recipe, stated once; the README prints it from here.
 ID_COLUMNS = ("H", "angle", "phi", "c", "gamma")
