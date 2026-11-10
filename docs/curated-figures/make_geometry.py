@@ -1,7 +1,9 @@
 """The geometry figure of the curated deposit's data article: one real analysis, annotated with
 the column names of `simulations`.
 
-  PYTHONPATH=. python -m sgs.figure_geometry     read data/curated/, write docs/curated-figures/
+  PYTHONPATH=. python docs/curated-figures/make_geometry.py    read data/curated/, write this folder
+
+A one-off script beside the figure it draws, outside the sgs package, as the other scripts in docs/.
 
 The analysis is named by its simulation_id (FIGURE_ID). It is a toe circle whose centre lies left of
 the toe, so the lowest point of the full circle (Circle_Nadir_Y) falls outside the slip surface and
