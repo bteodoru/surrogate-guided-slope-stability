@@ -389,3 +389,34 @@ intervals excluding 0 (+0.038 to +0.062), and so is C₀-logP − B (+0.035 to
 +0.062). The paired intervals C-oracle − C₀-oracle (−0.044 to −0.076) and
 C-logP − C₀-logP (−0.043 to −0.058) are entirely below 0 in 4 of 4 cells.
 Neither pool design replaces the seed.
+
+## Revision (declared in 1e75b97, tag `revision-declared`, 2026-11-18)
+
+### Deviation 1 (2026-11-18, before any pool-backed revision set was drawn or fitted): capacity of C-seqF
+
+§4 of `revision-declaration.md` draws C-seqF and C-seqP from sub-pool *r*, three batches of
+100, with no rule for a bin that runs out of points. Building the designs, before anything
+was written or fitted and with only pool counts read, showed that C-seqF's third batch asks
+for more points in the lowest selection bin, (0.500, 0.590] on predicted FOS, than its
+sub-pool has left:
+
+- r1: 9 requested, 6 left, a shortfall of 3;
+- r3: 13 requested, 1 left, a shortfall of 12.
+
+No other batch of C-seqF, no batch of C-seqP and no D set is short. With the screener frozen,
+the deficit in the lowest bin persisted from batch to batch, and the predicted-bin rows of the
+4,400-row sub-pool were used up; C-seq draws a new 200,000-candidate pool for each batch and
+cannot run out.
+
+**Rule adopted (the user's decision, 2026-11-18):** a short bin keeps every point it has, and
+the shortfall is water-filled, as the deficit is, over the bins that still have points, so
+every batch keeps 100 points and every arm 300. The rule is applied to C-seqF and C-seqP alike
+(`revision_pool.capped_allocation`); it fires only in the two batches above, moving 15 of the
+3,000 points of the two arms. The other option, keeping the short bins short, was rejected
+because it would make the C-seqP − C-seqF contrast compare unequal budgets. Each batch records
+its requested and its drawn allocation and its shortfall. The shortfall is reported with
+stage 1 as a finding of the frozen-screener control.
+
+The draw streams were also fixed at this point, before any draw: C-seqF and C-seqP share
+theirs, so their first batches, screened by the same seed-trained RF against the same
+deficit, are the same rows (`revision_pool.STREAM`).

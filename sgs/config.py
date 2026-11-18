@@ -170,6 +170,9 @@ SEEDS = {
     "rev_test_stratified_large_selection": 20261128,
     # §3: the bootstrap over realizations of the density exponent.
     "rev_density_bootstrap": 20261129,
+    # §2 and §4: the within-bin draws of the pool-backed revision sets, a SeedSequence
+    # keyed on (strategy, realization, batch) (sgs/revision_pool.py).
+    "rev_pool_design": 20261130,
 }
 
 
@@ -584,6 +587,11 @@ REV_SEED_N = 300
 REV_TEST_NATURAL_N = 5_000
 REV_TEST_STRAT_SOURCE_N = 6_000
 REV_TEST_STRAT_PER_BIN = 30
+# §2: the decision-range target, the seed water-filled to REP_EXTENSION points over
+# REV_D_BINS geometric bins on DECISION_RANGE, (lo, hi] as the generator bins. The
+# allocation is the declared one, asserted when the sets are drawn.
+REV_D_BINS = 4
+REV_D_ALLOCATION = (102, 85, 72, 41)
 # Large sets are solved in parts of this size, each recorded on its own, so that an
 # interrupted run loses at most one part.
 REV_SOLVE_CHUNK = 1_000

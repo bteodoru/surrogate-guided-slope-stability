@@ -15,3 +15,10 @@ def test_fit_slope_recovers_a_common_slope_with_group_intercepts():
                 rows.append({"zone": zone, "family": family, "test": "t", "n_train": int(n),
                              "log_rmse": float(e), "realization": 1})
     assert abs(density.fit_slope(rows) - 0.55) < 0.01
+
+
+def test_capped_allocation_keeps_the_batch_size():
+    from sgs import revision_pool
+    alloc, short = revision_pool.capped_allocation(have=[1, 5, 5], alloc=[9, 2, 1], avail=[6, 50, 50])
+    assert short == 3 and alloc.tolist()[0] == 6 and alloc.sum() == 12
+    assert (alloc <= [6, 50, 50]).all()
