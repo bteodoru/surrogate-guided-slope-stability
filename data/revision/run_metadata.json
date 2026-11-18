@@ -5893,6 +5893,448 @@
       "set": "seed_s4",
       "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
       "updated": "2026-11-18T11:22:51+00:00"
+    },
+    "test_natural_large_p01": {
+      "design_sha256": "a1c187ded5d9f2608e55d6061d2f2479c95de40ffca2999cfd9f9ed7dc5382e4",
+      "dropped": {},
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "5df00a1d6ae43e7ce8149921ad8f05e7027f55fda4e7315c419b1c788b43bcae",
+      "n": 1000,
+      "n_design": 5000,
+      "n_dropped": 0,
+      "non_converged": [],
+      "part": "test_natural_large_p01",
+      "platform": {
+        "machine": "arm64",
+        "system": "Darwin"
+      },
+      "repair": {
+        "n_boundary": 7,
+        "n_repaired": 7,
+        "n_rows": 1000,
+        "n_solver_error": 0,
+        "n_unresolved": 0
+      },
+      "results_sha256": "49f565d4eee3b153504b25ab7d65f79da28be2a376dff9f38eaca483eec56893",
+      "seed": 20261126,
+      "seed_key": "rev_test_natural_large",
+      "set": "test_natural_large",
+      "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
+      "updated": "2026-11-18T12:56:38+00:00"
+    },
+    "test_natural_large_p02": {
+      "design_sha256": "d613210a9bf491f687b71510d7ca9f816d3bd0fb60b2f3eb862c12b92592d3f4",
+      "dropped": {},
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "93bfe182f6f7434521644e4c5e25779694cb8a0742f6a4720100dc242a44e937",
+      "n": 1000,
+      "n_design": 5000,
+      "n_dropped": 0,
+      "non_converged": [
+        271
+      ],
+      "part": "test_natural_large_p02",
+      "platform": {
+        "machine": "arm64",
+        "system": "Darwin"
+      },
+      "repair": {
+        "n_boundary": 6,
+        "n_repaired": 6,
+        "n_rows": 1000,
+        "n_solver_error": 0,
+        "n_unresolved": 0
+      },
+      "results_sha256": "928cb0798fe13799694792068a98fe0afee7e7d33f272550accb1f59ad406c96",
+      "seed": 20261126,
+      "seed_key": "rev_test_natural_large",
+      "set": "test_natural_large",
+      "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
+      "updated": "2026-11-18T13:41:34+00:00"
+    },
+    "test_natural_large_p03": {
+      "design_sha256": "ce962cd0cfbb183468ba9edd3bac20292158c73e3ecb90fb39601c96e3bb7817",
+      "dropped": {},
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "d28f2d79186b2a10310180561b6b59785137fa46d75224125b192ace9ed893b7",
+      "n": 1000,
+      "n_design": 5000,
+      "n_dropped": 0,
+      "non_converged": [
+        37,
+        580
+      ],
+      "part": "test_natural_large_p03",
+      "platform": {
+        "machine": "arm64",
+        "system": "Darwin"
+      },
+      "repair": {
+        "n_boundary": 12,
+        "n_repaired": 12,
+        "n_rows": 1000,
+        "n_solver_error": 0,
+        "n_unresolved": 0
+      },
+      "results_sha256": "4cc7fe4586d605bb2505931b9f43c1f4e7c2dff670050070cb00a79d5671c9c8",
+      "seed": 20261126,
+      "seed_key": "rev_test_natural_large",
+      "set": "test_natural_large",
+      "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
+      "updated": "2026-11-18T14:25:48+00:00"
+    },
+    "test_natural_large_p04": {
+      "design_sha256": "65b8143fad1e4c9878016c37789055ff26b10060a64b38a5472d575c68176b39",
+      "dropped": {},
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "ce153c55fa131662f911e7475571a69e2887f03ae5e3db68a2383ff97f45d55f",
+      "n": 1000,
+      "n_design": 5000,
+      "n_dropped": 0,
+      "non_converged": [
+        245
+      ],
+      "part": "test_natural_large_p04",
+      "platform": {
+        "machine": "arm64",
+        "system": "Darwin"
+      },
+      "repair": {
+        "n_boundary": 10,
+        "n_repaired": 10,
+        "n_rows": 1000,
+        "n_solver_error": 0,
+        "n_unresolved": 0
+      },
+      "results_sha256": "c55a0c9419697fad937c84ddbb60861e692b347401a21a70e2a954f52db489d9",
+      "seed": 20261126,
+      "seed_key": "rev_test_natural_large",
+      "set": "test_natural_large",
+      "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
+      "updated": "2026-11-18T15:13:31+00:00"
+    },
+    "test_natural_large_p05": {
+      "design_sha256": "ef0cb52c795c3ae18472986abf51b5367941a60bb4408bc70dd7383a4db852ab",
+      "dropped": {},
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "92570bf82edd05cd4cf30f49872f1c69b65578e7ac0c52942428c87ba60614de",
+      "n": 1000,
+      "n_design": 5000,
+      "n_dropped": 0,
+      "non_converged": [],
+      "part": "test_natural_large_p05",
+      "platform": {
+        "machine": "arm64",
+        "system": "Darwin"
+      },
+      "repair": {
+        "n_boundary": 8,
+        "n_repaired": 8,
+        "n_rows": 1000,
+        "n_solver_error": 0,
+        "n_unresolved": 0
+      },
+      "results_sha256": "9cb9faf444cd45413a9c19b2091529ef5e1c27f7f5f27fadb07d577edfb331e8",
+      "seed": 20261126,
+      "seed_key": "rev_test_natural_large",
+      "set": "test_natural_large",
+      "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
+      "updated": "2026-11-18T16:19:01+00:00"
+    },
+    "test_stratified_large_source_p01": {
+      "design_sha256": "e76637e4f90bc72d6ab69040b7c806c27729a5cad1f7b2d8466b0a918d3e7cb9",
+      "dropped": {},
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "d99a15fd01b4751558ff6f7586bfed10f5c5553aa0217b01c632ea03b0492d51",
+      "n": 1000,
+      "n_design": 6000,
+      "n_dropped": 0,
+      "non_converged": [
+        478,
+        593,
+        682
+      ],
+      "part": "test_stratified_large_source_p01",
+      "platform": {
+        "machine": "arm64",
+        "system": "Darwin"
+      },
+      "repair": {
+        "n_boundary": 8,
+        "n_repaired": 8,
+        "n_rows": 1000,
+        "n_solver_error": 0,
+        "n_unresolved": 0
+      },
+      "results_sha256": "ff265f0bcb9ceb83f1e1909ecf321c33ab8f989a365c353901f2ca0cd4f7cee1",
+      "seed": 20261127,
+      "seed_key": "rev_test_stratified_large_source",
+      "set": "test_stratified_large_source",
+      "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
+      "updated": "2026-11-18T17:31:17+00:00"
+    },
+    "test_stratified_large_source_p02": {
+      "design_sha256": "1eb5c12e9305c81507957a0e5f19298b8b60665ec9a1e7d30eec218beb813e37",
+      "dropped": {},
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "6ef24ed46ccca0c78a0a31666e4e7f8411fcc88d30de62a7b12e813522e9e735",
+      "n": 1000,
+      "n_design": 6000,
+      "n_dropped": 0,
+      "non_converged": [],
+      "part": "test_stratified_large_source_p02",
+      "platform": {
+        "machine": "arm64",
+        "system": "Darwin"
+      },
+      "repair": {
+        "n_boundary": 4,
+        "n_repaired": 4,
+        "n_rows": 1000,
+        "n_solver_error": 0,
+        "n_unresolved": 0
+      },
+      "results_sha256": "e53953e2064a8b932b41f59c0c4223401c4f9ae76de34c4337feb199e1dad5dd",
+      "seed": 20261127,
+      "seed_key": "rev_test_stratified_large_source",
+      "set": "test_stratified_large_source",
+      "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
+      "updated": "2026-11-18T18:48:23+00:00"
+    },
+    "test_stratified_large_source_p03": {
+      "design_sha256": "5ba028213435251c9b340f01c752ee2b3eee45f2bea6dc31546f67daa50d7deb",
+      "dropped": {},
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "37751afc6a6c9ea9d40c16b95ed70b6b6420fd652a44846b9ac75c46f7c8c471",
+      "n": 1000,
+      "n_design": 6000,
+      "n_dropped": 0,
+      "non_converged": [
+        112
+      ],
+      "part": "test_stratified_large_source_p03",
+      "platform": {
+        "machine": "arm64",
+        "system": "Darwin"
+      },
+      "repair": {
+        "n_boundary": 11,
+        "n_repaired": 11,
+        "n_rows": 1000,
+        "n_solver_error": 0,
+        "n_unresolved": 0
+      },
+      "results_sha256": "786e6d65a36211136e499b8d34bf56db2611e92bfe16d3415ddcc7a5b208027d",
+      "seed": 20261127,
+      "seed_key": "rev_test_stratified_large_source",
+      "set": "test_stratified_large_source",
+      "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
+      "updated": "2026-11-18T19:32:05+00:00"
+    },
+    "test_stratified_large_source_p04": {
+      "design_sha256": "b0e9c7de5181da6942457c42aa5b5a49e0b17c33c95f2cd3673de41d5e2a0208",
+      "dropped": {},
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "d2589660031ef132705b6cb25ed8ee382968c5ea7baccfee3311d562494c1232",
+      "n": 1000,
+      "n_design": 6000,
+      "n_dropped": 0,
+      "non_converged": [],
+      "part": "test_stratified_large_source_p04",
+      "platform": {
+        "machine": "arm64",
+        "system": "Darwin"
+      },
+      "repair": {
+        "n_boundary": 6,
+        "n_repaired": 6,
+        "n_rows": 1000,
+        "n_solver_error": 0,
+        "n_unresolved": 0
+      },
+      "results_sha256": "c9869656767f3248a9c4dc6807d85c9d4eedcb38ff199588d854ed6342c24651",
+      "seed": 20261127,
+      "seed_key": "rev_test_stratified_large_source",
+      "set": "test_stratified_large_source",
+      "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
+      "updated": "2026-11-18T20:14:22+00:00"
+    },
+    "test_stratified_large_source_p05": {
+      "design_sha256": "d47a7178e4f6ea4ee92c4762e4e1f07a74a1e8ac9ee0c6e85ba0001f6afb01cc",
+      "dropped": {},
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "4cb781fcf8a69efe99b148b24a99a717153a731ae3191491fc8250a701316c59",
+      "n": 1000,
+      "n_design": 6000,
+      "n_dropped": 0,
+      "non_converged": [],
+      "part": "test_stratified_large_source_p05",
+      "platform": {
+        "machine": "arm64",
+        "system": "Darwin"
+      },
+      "repair": {
+        "n_boundary": 3,
+        "n_repaired": 3,
+        "n_rows": 1000,
+        "n_solver_error": 0,
+        "n_unresolved": 0
+      },
+      "results_sha256": "8fa5d316b08c1959a7680668564cf350d89593770b4900cc690db20c287a1eb0",
+      "seed": 20261127,
+      "seed_key": "rev_test_stratified_large_source",
+      "set": "test_stratified_large_source",
+      "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
+      "updated": "2026-11-18T20:56:07+00:00"
+    },
+    "test_stratified_large_source_p06": {
+      "design_sha256": "bc6bdd45b978f64c3abc75deeecd3110ac529af3ca6f136395a64c1ec939df75",
+      "dropped": {},
+      "environment": {
+        "packages": {
+          "joblib": "1.6.0",
+          "numpy": "2.5.3",
+          "pandas": "3.0.5",
+          "scikit-learn": "1.9.1",
+          "scipy": "1.18.1",
+          "shapely": "2.1.2",
+          "xslope": "0.5.2"
+        },
+        "python": "3.14.4"
+      },
+      "final_sha256": "c35deeb86d31c16a040082639892879e460002016e1db94f09aa9d4a99d07e62",
+      "n": 1000,
+      "n_design": 6000,
+      "n_dropped": 0,
+      "non_converged": [],
+      "part": "test_stratified_large_source_p06",
+      "platform": {
+        "machine": "arm64",
+        "system": "Darwin"
+      },
+      "repair": {
+        "n_boundary": 10,
+        "n_repaired": 10,
+        "n_rows": 1000,
+        "n_solver_error": 0,
+        "n_unresolved": 0
+      },
+      "results_sha256": "7fb179a0903ef4fcb41b60561bf080c210e0688c7988cca6607ff15e3a442da3",
+      "seed": 20261127,
+      "seed_key": "rev_test_stratified_large_source",
+      "set": "test_stratified_large_source",
+      "solver_fingerprint": "b6882e283b435560e30859c7ea999f906184fbb661dda621ad35525f2f7b5295",
+      "updated": "2026-11-18T21:41:03+00:00"
     }
   }
 }
