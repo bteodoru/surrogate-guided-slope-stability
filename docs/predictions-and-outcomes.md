@@ -548,3 +548,34 @@ of 0. Levels, fixed → large:
 entries are 2,523 of the 30,250 unique analyses, 8.3%. The "about 12%" in
 `docs/crest-entry-check/RESULTS.md`, and the "one in eight" in the submitted paper, were
 wrong. The record is left as it is, and the paper now says "one in twelve".
+
+**§9, the Gaussian process** (code 15c6a8d, run 2026-11-19; fixed test sets, Welch, r1..r5).
+
+The declared **prediction is not met**: the relocation gate passes for C-log under the GP in 0
+of the 2 test sets (L −0.15, H −0.00 on natural; L +0.30, H +0.03 on stratified).
+
+- **B's decision-range log-RMSE.** It is 0.0054 on the natural set and 0.0048 on the stratified
+  set. For the same arm, GBM is about 0.05 and RF about 0.10.
+- **The kernel.** In 72 of the 95 fits, the length scales of c, γ and H go to the upper bound
+  (10⁵). The GP then uses only angle, φ and ln(γH/c), which is the dimensionless group.
+- **Levels against B.**
+
+  | Arm | Level | Cells below 0 |
+  |---|---|---|
+  | D-oracle | 2 | natural only, −0.0005 [−0.0010, −0.0001] |
+  | Every other budget arm | 1 | none |
+  | Every ablation | 0 | none |
+
+- **Size of the differences.** No budget-arm difference exceeds 0.001 in absolute value, which
+  is 0.1% in FOS.
+- **Gate passes.** C-logP, C-seq and C-seqP pass in 1/2. C-log, C-logG, C-oracle, C-seqF and the
+  D arms pass in 0/2.
+- **Reading.** Relocation is consistent across the two tree-ensemble families and is not
+  observed under the GP in this design. The paper may not write "consistent across two
+  tree-ensemble families and a Gaussian process" (§9 wording) for relocation; it is written as
+  a property observed with the tree ensembles. The GP-versus-tree comparison is horizontal. It
+  is reported only as a scale, never as a ranking claim.
+
+**§8.1, the independent retuning:** stopped on 2026-11-19 at the user's request, after the 25
+RF units and before any GBM unit. Nothing was read. It is resumed only with the user's
+agreement.

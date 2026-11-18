@@ -91322,6 +91322,616 @@
       }
     ]
   },
+  "gp": {
+    "B_decision_log_rmse": {
+      "test-natural": 0.005390516073406679,
+      "test-stratified": 0.004813244211051968
+    },
+    "kernels": {
+      "B/r1": "27**2 * Matern(length_scale=[16.6, 20.8, 1e+05, 1e+05, 1e+05, 32.1], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "B/r2": "25.7**2 * Matern(length_scale=[16.3, 22, 1e+05, 1e+05, 9.42e+04, 27.2], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "B/r3": "27.8**2 * Matern(length_scale=[16.8, 22.3, 1e+05, 1e+05, 1e+05, 31.5], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "B/r4": "22.5**2 * Matern(length_scale=[14.3, 20.1, 1e+05, 1e+05, 1e+05, 26.8], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "B/r5": "23.7**2 * Matern(length_scale=[15.3, 19, 1e+05, 1e+05, 9.2e+04, 28.7], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C-log/r1": "23.8**2 * Matern(length_scale=[16.9, 20.7, 1e+05, 1e+05, 1e+05, 29.1], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C-log/r2": "23.4**2 * Matern(length_scale=[15.6, 19.7, 1e+05, 1e+05, 1e+05, 26.6], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C-log/r3": "22.4**2 * Matern(length_scale=[16.5, 19.5, 1e+05, 1e+05, 1e+05, 23.4], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C-log/r4": "27**2 * Matern(length_scale=[18.6, 22.5, 1e+05, 1e+05, 1e+05, 30.2], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C-log/r5": "20.1**2 * Matern(length_scale=[16.6, 19.6, 1e+05, 1e+05, 1e+05, 22.1], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C-logG/r1": "22.9**2 * Matern(length_scale=[16.4, 20.6, 1e+05, 1e+05, 1e+05, 26.6], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C-logG/r2": "21.3**2 * Matern(length_scale=[16.8, 19.9, 1e+05, 1e+05, 1e+05, 23.9], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C-logG/r3": "23.4**2 * Matern(length_scale=[15.6, 20.6, 1e+05, 1e+05, 1e+05, 24.8], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C-logG/r4": "26.1**2 * Matern(length_scale=[18, 21.6, 1e+05, 1e+05, 1e+05, 29.3], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C-logG/r5": "22.7**2 * Matern(length_scale=[16.5, 20.9, 1e+05, 1e+05, 1e+05, 25.4], nu=2.5) + WhiteKernel(noise_level=1.17e-05)",
+      "C-logP/r1": "25.9**2 * Matern(length_scale=[18.2, 17.6, 1e+05, 1e+05, 1e+05, 31], nu=2.5) + WhiteKernel(noise_level=1.39e-05)",
+      "C-logP/r2": "27**2 * Matern(length_scale=[17.4, 21.3, 1e+05, 1e+05, 1e+05, 27.8], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C-logP/r3": "19.4**2 * Matern(length_scale=[15.8, 18.5, 1e+05, 1e+05, 1e+05, 24.4], nu=2.5) + WhiteKernel(noise_level=1.01e-05)",
+      "C-logP/r4": "19.6**2 * Matern(length_scale=[14.9, 17.9, 1e+05, 1e+05, 1e+05, 26], nu=2.5) + WhiteKernel(noise_level=1.7e-05)",
+      "C-logP/r5": "24.5**2 * Matern(length_scale=[17.9, 20, 1e+05, 1e+05, 1e+05, 25.1], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C-oracle/r1": "25.6**2 * Matern(length_scale=[16.1, 22.2, 3.73e+04, 1e+05, 3.1e+04, 25.5], nu=2.5) + WhiteKernel(noise_level=1.24e-05)",
+      "C-oracle/r2": "31.5**2 * Matern(length_scale=[18.7, 22.4, 1e+05, 1e+05, 1e+05, 33.3], nu=2.5) + WhiteKernel(noise_level=1.06e-05)",
+      "C-oracle/r3": "24**2 * Matern(length_scale=[14.7, 21.1, 1e+05, 1e+05, 5.01e+04, 25.7], nu=2.5) + WhiteKernel(noise_level=1.02e-05)",
+      "C-oracle/r4": "25.5**2 * Matern(length_scale=[17.4, 24.2, 1e+05, 1e+05, 1e+05, 22.9], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C-oracle/r5": "28.7**2 * Matern(length_scale=[18.4, 22.5, 1e+05, 1e+05, 1e+05, 31.3], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C-seq/r1": "25.7**2 * Matern(length_scale=[18.5, 23.1, 1e+05, 1e+05, 1e+05, 29], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C-seq/r2": "18.6**2 * Matern(length_scale=[13.9, 19, 1e+05, 6.86e+03, 1e+05, 21.8], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C-seq/r3": "25.9**2 * Matern(length_scale=[19.2, 21.4, 1e+05, 1e+05, 1e+05, 26.5], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C-seq/r4": "21.6**2 * Matern(length_scale=[16.1, 19.8, 1e+05, 1e+05, 1e+05, 26.2], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C-seq/r5": "20.8**2 * Matern(length_scale=[15.5, 19.8, 1e+05, 1e+05, 1e+05, 24.6], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C-seqF/r1": "21.6**2 * Matern(length_scale=[16.8, 17.8, 1e+05, 1e+05, 1e+05, 26.2], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C-seqF/r2": "22.8**2 * Matern(length_scale=[17.7, 21.1, 1e+05, 1e+05, 1e+05, 26.3], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C-seqF/r3": "21.1**2 * Matern(length_scale=[16.6, 19.2, 1e+05, 1e+05, 1e+05, 25.2], nu=2.5) + WhiteKernel(noise_level=1.3e-05)",
+      "C-seqF/r4": "14.9**2 * Matern(length_scale=[14.2, 15.6, 1e+05, 1e+05, 1e+05, 21.4], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C-seqF/r5": "21.2**2 * Matern(length_scale=[16.7, 18.5, 1e+05, 1e+05, 1e+05, 25.5], nu=2.5) + WhiteKernel(noise_level=1.15e-05)",
+      "C-seqP/r1": "15.9**2 * Matern(length_scale=[13.7, 17.2, 1e+05, 1e+05, 766, 21.1], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C-seqP/r2": "24.4**2 * Matern(length_scale=[17.6, 20.6, 1e+05, 1e+05, 1e+05, 25], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C-seqP/r3": "21.9**2 * Matern(length_scale=[16.6, 20.3, 1e+05, 1e+05, 1e+05, 25.2], nu=2.5) + WhiteKernel(noise_level=1.24e-05)",
+      "C-seqP/r4": "18.4**2 * Matern(length_scale=[15, 19.2, 1e+05, 1e+05, 1e+05, 23.2], nu=2.5) + WhiteKernel(noise_level=1.3e-05)",
+      "C-seqP/r5": "21.1**2 * Matern(length_scale=[16.8, 19.7, 1e+05, 1e+05, 6.57e+04, 24.4], nu=2.5) + WhiteKernel(noise_level=1.26e-05)",
+      "C0-log/r1": "24.5**2 * Matern(length_scale=[18.2, 20.4, 1e+05, 1e+05, 1e+05, 30.8], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C0-log/r2": "19.6**2 * Matern(length_scale=[14.7, 17.8, 1e+05, 1e+05, 1e+05, 24.6], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C0-log/r3": "20.3**2 * Matern(length_scale=[18.5, 17.6, 1e+05, 1e+05, 1e+05, 23], nu=2.5) + WhiteKernel(noise_level=1.09e-05)",
+      "C0-log/r4": "33.8**2 * Matern(length_scale=[21.9, 23.5, 1e+05, 1e+05, 1e+05, 35.4], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C0-log/r5": "15.8**2 * Matern(length_scale=[16.6, 18.7, 1e+05, 1e+05, 1e+05, 19.6], nu=2.5) + WhiteKernel(noise_level=1.59e-05)",
+      "C0-logG/r1": "24.4**2 * Matern(length_scale=[17, 20.5, 1e+05, 1e+05, 1e+05, 27.7], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C0-logG/r2": "20.2**2 * Matern(length_scale=[16.9, 19.3, 1e+05, 1e+05, 1e+05, 26], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C0-logG/r3": "23.9**2 * Matern(length_scale=[16, 21.1, 1e+05, 6.8e+04, 1e+05, 25.4], nu=2.5) + WhiteKernel(noise_level=1.02e-05)",
+      "C0-logG/r4": "21.6**2 * Matern(length_scale=[17.9, 19.3, 1e+05, 1e+05, 1e+05, 27.5], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C0-logG/r5": "23.2**2 * Matern(length_scale=[17.5, 22.8, 1e+05, 1e+05, 1e+05, 25.9], nu=2.5) + WhiteKernel(noise_level=2.16e-05)",
+      "C0-logP/r1": "28.1**2 * Matern(length_scale=[20.6, 18.6, 1e+05, 1e+05, 1e+05, 32.1], nu=2.5) + WhiteKernel(noise_level=2.07e-05)",
+      "C0-logP/r2": "24.5**2 * Matern(length_scale=[16.8, 20.9, 1e+05, 6.84e+04, 1e+05, 26], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C0-logP/r3": "18.9**2 * Matern(length_scale=[17.2, 19.8, 1e+05, 1e+05, 1e+05, 23.5], nu=2.5) + WhiteKernel(noise_level=1.4e-05)",
+      "C0-logP/r4": "19.8**2 * Matern(length_scale=[16.4, 18.5, 1e+05, 6.01e+04, 1e+05, 24.5], nu=2.5) + WhiteKernel(noise_level=2.24e-05)",
+      "C0-logP/r5": "20.8**2 * Matern(length_scale=[17.9, 18.6, 1e+05, 5.29e+04, 1e+05, 22.4], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C0-oracle/r1": "20.9**2 * Matern(length_scale=[15.4, 21.6, 1.83e+04, 6.21e+04, 1.37e+04, 22.8], nu=2.5) + WhiteKernel(noise_level=1.81e-05)",
+      "C0-oracle/r2": "25.9**2 * Matern(length_scale=[17, 22.5, 1e+05, 7.99e+04, 1e+05, 29.1], nu=2.5) + WhiteKernel(noise_level=1.54e-05)",
+      "C0-oracle/r3": "26.6**2 * Matern(length_scale=[16.2, 22, 1e+05, 1e+05, 7.89e+04, 27.5], nu=2.5) + WhiteKernel(noise_level=1.84e-05)",
+      "C0-oracle/r4": "20.2**2 * Matern(length_scale=[15.8, 20.7, 1e+05, 1e+05, 1e+05, 22], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C0-oracle/r5": "27.7**2 * Matern(length_scale=[18.6, 20.9, 1e+05, 1e+05, 1e+05, 31.5], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C0-seq/r1": "22.6**2 * Matern(length_scale=[17.9, 22.9, 1e+05, 1e+05, 1e+05, 26.6], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C0-seq/r2": "17.4**2 * Matern(length_scale=[13, 20, 1e+05, 1e+05, 1e+05, 19.2], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C0-seq/r3": "23.3**2 * Matern(length_scale=[19.7, 19.3, 1e+05, 1e+05, 1e+05, 25.6], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C0-seq/r4": "17.1**2 * Matern(length_scale=[15.6, 19.1, 1e+05, 1e+05, 1e+05, 21.6], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C0-seq/r5": "20**2 * Matern(length_scale=[16.3, 18.2, 7.87e+04, 1e+05, 1e+05, 23.3], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C0-seqF/r1": "18.3**2 * Matern(length_scale=[17.5, 15.1, 1e+05, 1e+05, 1e+05, 24.9], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C0-seqF/r2": "19.7**2 * Matern(length_scale=[17.8, 20.4, 1e+05, 8.73e+04, 1e+05, 24], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C0-seqF/r3": "17**2 * Matern(length_scale=[15.8, 18, 1e+05, 1e+05, 1e+05, 21.1], nu=2.5) + WhiteKernel(noise_level=1.39e-05)",
+      "C0-seqF/r4": "12.7**2 * Matern(length_scale=[14.5, 16.4, 1e+05, 1e+05, 2.75e+04, 20], nu=2.5) + WhiteKernel(noise_level=1.29e-05)",
+      "C0-seqF/r5": "23**2 * Matern(length_scale=[17.9, 20.5, 1e+05, 1e+05, 1e+05, 25.2], nu=2.5) + WhiteKernel(noise_level=1.3e-05)",
+      "C0-seqP/r1": "12.9**2 * Matern(length_scale=[13.3, 15.3, 1e+05, 1e+05, 1.11e+03, 18.4], nu=2.5) + WhiteKernel(noise_level=1e-05)",
+      "C0-seqP/r2": "26.6**2 * Matern(length_scale=[19.3, 21.9, 1e+05, 1e+05, 1e+05, 25.6], nu=2.5) + WhiteKernel(noise_level=1.17e-05)",
+      "C0-seqP/r3": "18.1**2 * Matern(length_scale=[18.5, 19.8, 1e+05, 1e+05, 1e+05, 23], nu=2.5) + WhiteKernel(noise_level=2.11e-05)",
+      "C0-seqP/r4": "16.5**2 * Matern(length_scale=[15.3, 20.7, 1e+05, 1e+05, 1e+05, 21.9], nu=2.5) + WhiteKernel(noise_level=2.24e-05)",
+      "C0-seqP/r5": "14.8**2 * Matern(length_scale=[15.3, 17.8, 1e+05, 1e+05, 4.24e+04, 20.5], nu=2.5) + WhiteKernel(noise_level=1.47e-05)",
+      "D-P/r1": "23.9**2 * Matern(length_scale=[18, 17.4, 1e+05, 1e+05, 5.72e+04, 28.2], nu=2.5) + WhiteKernel(noise_level=2.06e-05)",
+      "D-P/r2": "16.2**2 * Matern(length_scale=[13.2, 14.8, 1e+05, 1e+05, 1e+05, 22], nu=2.5) + WhiteKernel(noise_level=1.19e-05)",
+      "D-P/r3": "20.3**2 * Matern(length_scale=[17.2, 18.2, 1e+05, 1e+05, 1e+05, 24.5], nu=2.5) + WhiteKernel(noise_level=1.21e-05)",
+      "D-P/r4": "17.6**2 * Matern(length_scale=[14, 16, 1e+05, 1e+05, 1e+05, 22.6], nu=2.5) + WhiteKernel(noise_level=1.36e-05)",
+      "D-P/r5": "21.3**2 * Matern(length_scale=[17.2, 18.8, 1e+05, 1e+05, 1e+05, 25.9], nu=2.5) + WhiteKernel(noise_level=2.27e-05)",
+      "D-oracle/r1": "25.4**2 * Matern(length_scale=[18.7, 20.6, 1e+05, 1e+05, 1e+05, 27.1], nu=2.5) + WhiteKernel(noise_level=1.84e-05)",
+      "D-oracle/r2": "21.5**2 * Matern(length_scale=[14.5, 17.7, 1e+05, 1e+05, 1e+05, 26], nu=2.5) + WhiteKernel(noise_level=1.15e-05)",
+      "D-oracle/r3": "26.1**2 * Matern(length_scale=[16.8, 20.1, 1e+05, 1e+05, 1e+05, 27.7], nu=2.5) + WhiteKernel(noise_level=1.93e-05)",
+      "D-oracle/r4": "22.2**2 * Matern(length_scale=[16.3, 19.6, 1e+05, 1e+05, 1e+05, 26.5], nu=2.5) + WhiteKernel(noise_level=1.68e-05)",
+      "D-oracle/r5": "21.9**2 * Matern(length_scale=[16.6, 17.9, 2.17e+03, 1e+05, 5.45e+04, 27], nu=2.5) + WhiteKernel(noise_level=1.35e-05)",
+      "D0-P/r1": "23.1**2 * Matern(length_scale=[19.1, 13, 1e+05, 1e+05, 6.33e+04, 25], nu=2.5) + WhiteKernel(noise_level=7.75e-05)",
+      "D0-P/r2": "17.8**2 * Matern(length_scale=[14.1, 11.8, 1e+05, 1e+05, 1e+05, 23.9], nu=2.5) + WhiteKernel(noise_level=4.98e-05)",
+      "D0-P/r3": "30.2**2 * Matern(length_scale=[21.3, 17.9, 1e+05, 1e+05, 1e+05, 31.4], nu=2.5) + WhiteKernel(noise_level=5.83e-05)",
+      "D0-P/r4": "22.1**2 * Matern(length_scale=[16.4, 12.9, 1e+05, 1e+05, 1e+05, 26.2], nu=2.5) + WhiteKernel(noise_level=5.92e-05)",
+      "D0-P/r5": "13.7**2 * Matern(length_scale=[14.4, 12.8, 1e+05, 1e+05, 1e+05, 14.8], nu=2.5) + WhiteKernel(noise_level=4.94e-05)",
+      "D0-oracle/r1": "35.6**2 * Matern(length_scale=[20.9, 17, 1e+05, 1e+05, 1e+05, 29], nu=2.5) + WhiteKernel(noise_level=8.65e-05)",
+      "D0-oracle/r2": "37.3**2 * Matern(length_scale=[16.7, 11.8, 1e+05, 1e+05, 1e+05, 36.2], nu=2.5) + WhiteKernel(noise_level=4.47e-05)",
+      "D0-oracle/r3": "40.1**2 * Matern(length_scale=[16.3, 17, 1e+05, 1e+05, 1e+05, 34], nu=2.5) + WhiteKernel(noise_level=9.39e-05)",
+      "D0-oracle/r4": "41.9**2 * Matern(length_scale=[22.5, 18.8, 1e+05, 1e+05, 1e+05, 34.1], nu=2.5) + WhiteKernel(noise_level=0.000102)",
+      "D0-oracle/r5": "51.5**2 * Matern(length_scale=[22.8, 17, 3.86e+03, 1e+05, 3.76e+04, 41.8], nu=2.5) + WhiteKernel(noise_level=8.49e-05)"
+    },
+    "prediction_C-log_gate": false,
+    "readings": {
+      "C-log": {
+        "cells": {
+          "test-natural": {
+            "H": -0.0015135685379797073,
+            "L": -0.14790344262098545,
+            "ci": [
+              -0.0006198794116358759,
+              0.00024263787231616687
+            ],
+            "diff": -0.00018862076965985453,
+            "gate": false,
+            "verdict": "contains 0"
+          },
+          "test-stratified": {
+            "H": 0.034380483345275104,
+            "L": 0.3013655024977909,
+            "ci": [
+              -0.0006748534042704869,
+              0.0020219834328963804
+            ],
+            "diff": 0.0006735650143129468,
+            "gate": false,
+            "verdict": "contains 0"
+          }
+        },
+        "gate_passes": 0,
+        "level": 1
+      },
+      "C-logG": {
+        "cells": {
+          "test-natural": {
+            "H": -0.11547545206655285,
+            "L": -0.11275916753950736,
+            "ci": [
+              -0.0011473245585689688,
+              0.00013141656059123183
+            ],
+            "diff": -0.0005079539989888684,
+            "gate": false,
+            "verdict": "contains 0"
+          },
+          "test-stratified": {
+            "H": -0.022878154468904708,
+            "L": 0.1978285143610881,
+            "ci": [
+              -0.0006859409352353693,
+              0.002019308109823547
+            ],
+            "diff": 0.0006666835872940887,
+            "gate": false,
+            "verdict": "contains 0"
+          }
+        },
+        "gate_passes": 0,
+        "level": 1
+      },
+      "C-logP": {
+        "cells": {
+          "test-natural": {
+            "H": 0.020224273827585494,
+            "L": -0.05345412534369924,
+            "ci": [
+              -0.001022218971270908,
+              0.0002334244812341185
+            ],
+            "diff": -0.0003943972450183948,
+            "gate": true,
+            "verdict": "contains 0"
+          },
+          "test-stratified": {
+            "H": -0.0883445437533378,
+            "L": -0.17163305214558883,
+            "ci": [
+              -0.0012433779335652058,
+              0.002033394504664399
+            ],
+            "diff": 0.00039500828554959663,
+            "gate": false,
+            "verdict": "contains 0"
+          }
+        },
+        "gate_passes": 1,
+        "level": 1
+      },
+      "C-oracle": {
+        "cells": {
+          "test-natural": {
+            "H": -0.050604713979957465,
+            "L": -0.200087531895849,
+            "ci": [
+              -0.0008809749020104355,
+              6.0995758022917216e-05
+            ],
+            "diff": -0.00040998957199375914,
+            "gate": false,
+            "verdict": "contains 0"
+          },
+          "test-stratified": {
+            "H": 0.03838680912551995,
+            "L": 0.15727489207650036,
+            "ci": [
+              -0.0008038070494600551,
+              0.001914745373467878
+            ],
+            "diff": 0.0005554691620039114,
+            "gate": false,
+            "verdict": "contains 0"
+          }
+        },
+        "gate_passes": 0,
+        "level": 1
+      },
+      "C-seq": {
+        "cells": {
+          "test-natural": {
+            "H": 0.004894645273002121,
+            "L": -0.15491150883527896,
+            "ci": [
+              -0.000720884264351224,
+              0.0003734897689529539
+            ],
+            "diff": -0.00017369724769913508,
+            "gate": true,
+            "verdict": "contains 0"
+          },
+          "test-stratified": {
+            "H": -0.04061324921390715,
+            "L": 0.33563474378858194,
+            "ci": [
+              -0.0008303809119630816,
+              0.0019062556437521112
+            ],
+            "diff": 0.0005379373658945148,
+            "gate": false,
+            "verdict": "contains 0"
+          }
+        },
+        "gate_passes": 1,
+        "level": 1
+      },
+      "C-seqF": {
+        "cells": {
+          "test-natural": {
+            "H": -0.00824193910619237,
+            "L": -0.047902645924319885,
+            "ci": [
+              -0.0008079632310712761,
+              0.00014392662200692362
+            ],
+            "diff": -0.0003320183045321763,
+            "gate": false,
+            "verdict": "contains 0"
+          },
+          "test-stratified": {
+            "H": 0.038227002023316865,
+            "L": 0.13652780271225656,
+            "ci": [
+              -0.0012825206239628713,
+              0.001547203749512664
+            ],
+            "diff": 0.00013234156277489636,
+            "gate": false,
+            "verdict": "contains 0"
+          }
+        },
+        "gate_passes": 0,
+        "level": 1
+      },
+      "C-seqP": {
+        "cells": {
+          "test-natural": {
+            "H": 0.019691500878529906,
+            "L": -0.14985422949549546,
+            "ci": [
+              -0.0009272507385135103,
+              0.00027056606090265117
+            ],
+            "diff": -0.0003283423388054296,
+            "gate": true,
+            "verdict": "contains 0"
+          },
+          "test-stratified": {
+            "H": 0.06290687245304963,
+            "L": 0.4270590703245663,
+            "ci": [
+              -0.0011473984642151084,
+              0.0022212424776085985
+            ],
+            "diff": 0.0005369220066967452,
+            "gate": false,
+            "verdict": "contains 0"
+          }
+        },
+        "gate_passes": 1,
+        "level": 1
+      },
+      "C0-log": {
+        "cells": {
+          "test-natural": {
+            "H": 0.20936405909075048,
+            "L": 0.31751870987620473,
+            "ci": [
+              0.00013613591857545627,
+              0.0023384501557670596
+            ],
+            "diff": 0.0012372930371712578,
+            "gate": false,
+            "verdict": "above 0"
+          },
+          "test-stratified": {
+            "H": 0.24341325676873582,
+            "L": 0.4411542622212959,
+            "ci": [
+              0.0007446685667290764,
+              0.004276600677442048
+            ],
+            "diff": 0.002510634622085562,
+            "gate": false,
+            "verdict": "above 0"
+          }
+        },
+        "gate_passes": 0,
+        "level": 0
+      },
+      "C0-logG": {
+        "cells": {
+          "test-natural": {
+            "H": 0.11987505278597417,
+            "L": 0.1694753856686043,
+            "ci": [
+              -0.0006712630677803376,
+              0.002714522362189488
+            ],
+            "diff": 0.0010216296472045751,
+            "gate": false,
+            "verdict": "contains 0"
+          },
+          "test-stratified": {
+            "H": 0.24670001810185704,
+            "L": 0.324114926481731,
+            "ci": [
+              0.0003491585514054699,
+              0.0035590533245832023
+            ],
+            "diff": 0.001954105937994336,
+            "gate": false,
+            "verdict": "above 0"
+          }
+        },
+        "gate_passes": 0,
+        "level": 0
+      },
+      "C0-logP": {
+        "cells": {
+          "test-natural": {
+            "H": 0.4037026309877862,
+            "L": 0.5752586056241223,
+            "ci": [
+              -6.7694337587367e-05,
+              0.0038525268975542386
+            ],
+            "diff": 0.0018924162799834358,
+            "gate": false,
+            "verdict": "contains 0"
+          },
+          "test-stratified": {
+            "H": 0.7206653763596026,
+            "L": 0.11797855659543069,
+            "ci": [
+              -8.79155365736484e-05,
+              0.005933012879679318
+            ],
+            "diff": 0.0029225486715528347,
+            "gate": false,
+            "verdict": "contains 0"
+          }
+        },
+        "gate_passes": 0,
+        "level": 0
+      },
+      "C0-oracle": {
+        "cells": {
+          "test-natural": {
+            "H": 0.07659395031141561,
+            "L": -0.03053393714582026,
+            "ci": [
+              -0.0003302453411592696,
+              0.0008622990429657448
+            ],
+            "diff": 0.00026602685090323756,
+            "gate": true,
+            "verdict": "contains 0"
+          },
+          "test-stratified": {
+            "H": 0.46738280959271894,
+            "L": 0.35815500474596584,
+            "ci": [
+              4.170597565753475e-05,
+              0.003932591003400317
+            ],
+            "diff": 0.0019871484895289263,
+            "gate": false,
+            "verdict": "above 0"
+          }
+        },
+        "gate_passes": 1,
+        "level": 0
+      },
+      "C0-seq": {
+        "cells": {
+          "test-natural": {
+            "H": 0.08593512483232131,
+            "L": 0.45125853832150253,
+            "ci": [
+              -0.0009609264524052018,
+              0.004113682493753616
+            ],
+            "diff": 0.001576378020674207,
+            "gate": false,
+            "verdict": "contains 0"
+          },
+          "test-stratified": {
+            "H": 0.1983329923920151,
+            "L": 0.525747780303392,
+            "ci": [
+              -0.0013700594721091511,
+              0.007384733494461489
+            ],
+            "diff": 0.003007337011176169,
+            "gate": false,
+            "verdict": "contains 0"
+          }
+        },
+        "gate_passes": 0,
+        "level": 0
+      },
+      "C0-seqF": {
+        "cells": {
+          "test-natural": {
+            "H": 0.2269008146272899,
+            "L": 0.35271138403823155,
+            "ci": [
+              -0.00042179125932586756,
+              0.004765239951028165
+            ],
+            "diff": 0.002171724345851149,
+            "gate": false,
+            "verdict": "contains 0"
+          },
+          "test-stratified": {
+            "H": 0.24955002361423917,
+            "L": 0.34658766119279866,
+            "ci": [
+              -5.0861070969892425e-05,
+              0.005997768128709476
+            ],
+            "diff": 0.0029734535288697917,
+            "gate": false,
+            "verdict": "contains 0"
+          }
+        },
+        "gate_passes": 0,
+        "level": 0
+      },
+      "C0-seqP": {
+        "cells": {
+          "test-natural": {
+            "H": 0.35954009157639377,
+            "L": 0.5061772183608284,
+            "ci": [
+              0.0009814928731682005,
+              0.004064088363774923
+            ],
+            "diff": 0.0025227906184715617,
+            "gate": false,
+            "verdict": "above 0"
+          },
+          "test-stratified": {
+            "H": 0.24747636891247318,
+            "L": 0.5386033659015046,
+            "ci": [
+              0.0010362864956376368,
+              0.006567643734147818
+            ],
+            "diff": 0.0038019651148927273,
+            "gate": false,
+            "verdict": "above 0"
+          }
+        },
+        "gate_passes": 0,
+        "level": 0
+      },
+      "D-P": {
+        "cells": {
+          "test-natural": {
+            "H": -0.09408379040158077,
+            "L": -0.29470616384284354,
+            "ci": [
+              -0.0010154564398143465,
+              4.901763912147324e-05
+            ],
+            "diff": -0.00048321940034643657,
+            "gate": false,
+            "verdict": "contains 0"
+          },
+          "test-stratified": {
+            "H": -0.12676664842124374,
+            "L": 0.02374127553110883,
+            "ci": [
+              -0.0014156166695059834,
+              0.0014577667749131
+            ],
+            "diff": 2.107505270355827e-05,
+            "gate": false,
+            "verdict": "contains 0"
+          }
+        },
+        "gate_passes": 0,
+        "level": 1
+      },
+      "D-oracle": {
+        "cells": {
+          "test-natural": {
+            "H": -0.11584255336990992,
+            "L": -0.4177060236030969,
+            "ci": [
+              -0.0010078670085973739,
+              -6.0686319006769413e-05
+            ],
+            "diff": -0.0005342766638020717,
+            "gate": false,
+            "verdict": "below 0"
+          },
+          "test-stratified": {
+            "H": -0.16941385977421483,
+            "L": 0.14570584432614916,
+            "ci": [
+              -0.0013814065667206422,
+              0.00140449171835294
+            ],
+            "diff": 1.1542575816148905e-05,
+            "gate": false,
+            "verdict": "contains 0"
+          }
+        },
+        "gate_passes": 0,
+        "level": 2
+      },
+      "D0-P": {
+        "cells": {
+          "test-natural": {
+            "H": 0.3540317264326144,
+            "L": 0.10086055700910233,
+            "ci": [
+              -4.430322181771338e-05,
+              0.0042925705883547416
+            ],
+            "diff": 0.002124133683268514,
+            "gate": false,
+            "verdict": "contains 0"
+          },
+          "test-stratified": {
+            "H": 0.2304430597039508,
+            "L": 0.12499000962348594,
+            "ci": [
+              -0.0009947794681717439,
+              0.008510427124307385
+            ],
+            "diff": 0.0037578238280678205,
+            "gate": false,
+            "verdict": "contains 0"
+          }
+        },
+        "gate_passes": 0,
+        "level": 0
+      },
+      "D0-oracle": {
+        "cells": {
+          "test-natural": {
+            "H": 0.1921826945252519,
+            "L": -0.1413251205375586,
+            "ci": [
+              0.00015969245268130706,
+              0.001933532572026641
+            ],
+            "diff": 0.001046612512353974,
+            "gate": true,
+            "verdict": "above 0"
+          },
+          "test-stratified": {
+            "H": 0.372274720275383,
+            "L": 0.3180459038963449,
+            "ci": [
+              0.0012729712075114346,
+              0.003968691960548935
+            ],
+            "diff": 0.002620831584030185,
+            "gate": false,
+            "verdict": "above 0"
+          }
+        },
+        "gate_passes": 1,
+        "level": 0
+      }
+    }
+  },
   "large_tests": {
     "comparisons": [
       {
