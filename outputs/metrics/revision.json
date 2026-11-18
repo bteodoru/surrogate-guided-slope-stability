@@ -28,5 +28,1119 @@
     },
     "n_obs": 672,
     "procedure": "The density model of the revision (docs/revision-declaration.md \u00a73).\n\nPer learner x test cell, ln E_Z = alpha_{Z,cell} - a ln n_Z, with E_Z the log-RMSE on\nevaluation zone Z ([lo, hi)), n_Z the training points in Z, and the slope a common to\nevery zone and cell. Fitted by ordinary least squares on results that already exist:\nthe replicated arms r1..r5 (and A, the seed alone, once: it is the same in every\nrealization), the zones [0.5, 1), [1, 2) and [2, 6). Reported pooled and per learner,\neach with a 95% percentile interval from a bootstrap over realizations.\n\nReads ``outputs/metrics/replications.json`` for the zone errors and the stored\nreplication fits for the training FOS; writes the ``density`` entry of\n``outputs/metrics/revision.json``. Nothing here reads a revision set."
+  },
+  "stage1": {
+    "B_zone_train_mean": [
+      15.8,
+      60.4,
+      198.6,
+      281.8,
+      43.4
+    ],
+    "a_pooled": 0.5830904071855578,
+    "density_prediction": {
+      "D-P": {
+        "decision_range": {
+          "gbm/test-natural": {
+            "B_mean_decision_range": 0.049192293606157914,
+            "predicted_decision_range": 0.04120014365540389,
+            "predicted_log_ratio": -0.1772952340776426
+          },
+          "gbm/test-stratified": {
+            "B_mean_decision_range": 0.052631372271893705,
+            "predicted_decision_range": 0.043098328518997794,
+            "predicted_log_ratio": -0.19982815807805326
+          },
+          "rf/test-natural": {
+            "B_mean_decision_range": 0.1041399430026773,
+            "predicted_decision_range": 0.08157083143679576,
+            "predicted_log_ratio": -0.2442638602358341
+          },
+          "rf/test-stratified": {
+            "B_mean_decision_range": 0.10111283492121578,
+            "predicted_decision_range": 0.07540413649742338,
+            "predicted_log_ratio": -0.2933749364830647
+          }
+        },
+        "predicted_log_ratio_vs_B": [
+          [
+            -0.6717277673843843,
+            -0.6463539950243798,
+            -0.004095985583916346,
+            0.37945483622910325,
+            0.45173597958582423
+          ],
+          [
+            -0.9003237479795823,
+            -0.571670733189812,
+            0.001764268841253393,
+            0.37945483622910325,
+            0.45173597958582423
+          ],
+          [
+            -0.7682376487113616,
+            -0.6068072897088299,
+            -0.01564270759738969,
+            0.383434990981437,
+            0.45173597958582423
+          ],
+          [
+            -0.7378086366458487,
+            -0.6302008732237879,
+            -0.01277739270532539,
+            0.3955411090290847,
+            0.45173597958582423
+          ],
+          [
+            -0.7971571493154762,
+            -0.6033873948191391,
+            -0.0070041731944430734,
+            0.37945483622910325,
+            0.45173597958582423
+          ]
+        ]
+      },
+      "D-oracle": {
+        "decision_range": {
+          "gbm/test-natural": {
+            "B_mean_decision_range": 0.049192293606157914,
+            "predicted_decision_range": 0.03909394880939686,
+            "predicted_log_ratio": -0.22976928410224084
+          },
+          "gbm/test-stratified": {
+            "B_mean_decision_range": 0.052631372271893705,
+            "predicted_decision_range": 0.04083712504033367,
+            "predicted_log_ratio": -0.2537207778377239
+          },
+          "rf/test-natural": {
+            "B_mean_decision_range": 0.1041399430026773,
+            "predicted_decision_range": 0.07676483360585831,
+            "predicted_log_ratio": -0.3049889608898948
+          },
+          "rf/test-stratified": {
+            "B_mean_decision_range": 0.10111283492121578,
+            "predicted_decision_range": 0.07048507261883986,
+            "predicted_log_ratio": -0.36083611920468295
+          }
+        },
+        "predicted_log_ratio_vs_B": [
+          [
+            0.3968329045133235,
+            -0.7430258684088472,
+            -0.04354709447213754,
+            0.3996329883280692,
+            0.45173597958582423
+          ],
+          [
+            0.3968329045133235,
+            -0.7430258684088472,
+            -0.04354709447213754,
+            0.3996329883280692,
+            0.45173597958582423
+          ],
+          [
+            0.3968329045133235,
+            -0.7430258684088472,
+            -0.04354709447213754,
+            0.3996329883280692,
+            0.45173597958582423
+          ],
+          [
+            0.3968329045133235,
+            -0.7430258684088472,
+            -0.04354709447213754,
+            0.3996329883280692,
+            0.45173597958582423
+          ],
+          [
+            0.3968329045133235,
+            -0.7430258684088472,
+            -0.04354709447213754,
+            0.3996329883280692,
+            0.45173597958582423
+          ]
+        ]
+      }
+    },
+    "note": "training data only, apart from B's existing zone errors used for the decision-range combination; committed before any fit of a new arm",
+    "realizations": [
+      {
+        "arms": {
+          "C-seqF": {
+            "above_6": 41,
+            "achieved": [
+              31,
+              34,
+              32,
+              33,
+              35,
+              30,
+              40,
+              33,
+              34,
+              36,
+              33,
+              35,
+              32,
+              34,
+              18
+            ],
+            "below_0_5": 41,
+            "intended": [
+              39,
+              39,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38
+            ],
+            "overlap_C_logP": 91,
+            "overlap_C_oracle": 46,
+            "shortfall": [
+              0,
+              0,
+              3
+            ],
+            "sum_abs_dev": 86,
+            "zones_added": [
+              41,
+              110,
+              39,
+              69,
+              41
+            ],
+            "zones_train": [
+              49,
+              139,
+              140,
+              211,
+              61
+            ]
+          },
+          "C-seqP": {
+            "above_6": 20,
+            "achieved": [
+              34,
+              33,
+              38,
+              33,
+              35,
+              31,
+              44,
+              37,
+              35,
+              32,
+              37,
+              33,
+              34,
+              38,
+              31
+            ],
+            "below_0_5": 27,
+            "intended": [
+              39,
+              39,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38
+            ],
+            "overlap_C_logP": 69,
+            "overlap_C_oracle": 45,
+            "shortfall": [
+              0,
+              0,
+              0
+            ],
+            "sum_abs_dev": 59,
+            "zones_added": [
+              27,
+              121,
+              49,
+              83,
+              20
+            ],
+            "zones_train": [
+              35,
+              150,
+              150,
+              225,
+              40
+            ]
+          },
+          "D-P": {
+            "above_6": 0,
+            "achieved": [
+              78,
+              105,
+              93,
+              107
+            ],
+            "below_0_5": 42,
+            "intended": [
+              108,
+              108,
+              107,
+              107
+            ],
+            "overlap_C_logP": 86,
+            "overlap_C_oracle": 63,
+            "sum_abs_dev": 47,
+            "zones_added": [
+              42,
+              154,
+              99,
+              5,
+              0
+            ],
+            "zones_train": [
+              50,
+              183,
+              200,
+              147,
+              20
+            ]
+          },
+          "D-oracle": {
+            "above_6": 0,
+            "achieved": [
+              108,
+              108,
+              107,
+              107
+            ],
+            "below_0_5": 0,
+            "intended": [
+              108,
+              108,
+              107,
+              107
+            ],
+            "overlap_C_logP": 50,
+            "overlap_C_oracle": 59,
+            "sum_abs_dev": 0,
+            "zones_added": [
+              0,
+              187,
+              113,
+              0,
+              0
+            ],
+            "zones_train": [
+              8,
+              216,
+              214,
+              142,
+              20
+            ]
+          }
+        },
+        "realization": 1
+      },
+      {
+        "arms": {
+          "C-seqF": {
+            "above_6": 41,
+            "achieved": [
+              33,
+              24,
+              33,
+              35,
+              34,
+              29,
+              39,
+              33,
+              31,
+              33,
+              32,
+              37,
+              29,
+              33,
+              21
+            ],
+            "below_0_5": 55,
+            "intended": [
+              39,
+              39,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38
+            ],
+            "overlap_C_logP": 90,
+            "overlap_C_oracle": 55,
+            "shortfall": [
+              0,
+              0,
+              0
+            ],
+            "sum_abs_dev": 98,
+            "zones_added": [
+              55,
+              105,
+              36,
+              63,
+              41
+            ],
+            "zones_train": [
+              63,
+              134,
+              137,
+              205,
+              61
+            ]
+          },
+          "C-seqP": {
+            "above_6": 24,
+            "achieved": [
+              32,
+              33,
+              33,
+              33,
+              37,
+              36,
+              42,
+              34,
+              34,
+              39,
+              32,
+              34,
+              33,
+              34,
+              30
+            ],
+            "below_0_5": 32,
+            "intended": [
+              39,
+              39,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38
+            ],
+            "overlap_C_logP": 65,
+            "overlap_C_oracle": 55,
+            "shortfall": [
+              0,
+              0,
+              0
+            ],
+            "sum_abs_dev": 66,
+            "zones_added": [
+              32,
+              116,
+              50,
+              78,
+              24
+            ],
+            "zones_train": [
+              40,
+              145,
+              151,
+              220,
+              44
+            ]
+          },
+          "D-P": {
+            "above_6": 0,
+            "achieved": [
+              59,
+              102,
+              93,
+              105
+            ],
+            "below_0_5": 66,
+            "intended": [
+              108,
+              108,
+              107,
+              107
+            ],
+            "overlap_C_logP": 80,
+            "overlap_C_oracle": 47,
+            "sum_abs_dev": 71,
+            "zones_added": [
+              66,
+              132,
+              97,
+              5,
+              0
+            ],
+            "zones_train": [
+              74,
+              161,
+              198,
+              147,
+              20
+            ]
+          },
+          "D-oracle": {
+            "above_6": 0,
+            "achieved": [
+              108,
+              108,
+              107,
+              107
+            ],
+            "below_0_5": 0,
+            "intended": [
+              108,
+              108,
+              107,
+              107
+            ],
+            "overlap_C_logP": 45,
+            "overlap_C_oracle": 73,
+            "sum_abs_dev": 0,
+            "zones_added": [
+              0,
+              187,
+              113,
+              0,
+              0
+            ],
+            "zones_train": [
+              8,
+              216,
+              214,
+              142,
+              20
+            ]
+          }
+        },
+        "realization": 2
+      },
+      {
+        "arms": {
+          "C-seqF": {
+            "above_6": 37,
+            "achieved": [
+              26,
+              26,
+              43,
+              30,
+              32,
+              33,
+              41,
+              33,
+              33,
+              37,
+              31,
+              37,
+              31,
+              34,
+              21
+            ],
+            "below_0_5": 47,
+            "intended": [
+              39,
+              39,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38
+            ],
+            "overlap_C_logP": 93,
+            "overlap_C_oracle": 53,
+            "shortfall": [
+              0,
+              0,
+              12
+            ],
+            "sum_abs_dev": 100,
+            "zones_added": [
+              47,
+              104,
+              42,
+              70,
+              37
+            ],
+            "zones_train": [
+              55,
+              133,
+              143,
+              212,
+              57
+            ]
+          },
+          "C-seqP": {
+            "above_6": 20,
+            "achieved": [
+              38,
+              29,
+              40,
+              31,
+              34,
+              34,
+              40,
+              39,
+              31,
+              34,
+              34,
+              33,
+              35,
+              37,
+              28
+            ],
+            "below_0_5": 35,
+            "intended": [
+              39,
+              39,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38
+            ],
+            "overlap_C_logP": 75,
+            "overlap_C_oracle": 62,
+            "shortfall": [
+              0,
+              0,
+              0
+            ],
+            "sum_abs_dev": 65,
+            "zones_added": [
+              35,
+              118,
+              48,
+              79,
+              20
+            ],
+            "zones_train": [
+              43,
+              147,
+              149,
+              221,
+              40
+            ]
+          },
+          "D-P": {
+            "above_6": 0,
+            "achieved": [
+              78,
+              93,
+              105,
+              99
+            ],
+            "below_0_5": 51,
+            "intended": [
+              108,
+              108,
+              107,
+              107
+            ],
+            "overlap_C_logP": 90,
+            "overlap_C_oracle": 59,
+            "sum_abs_dev": 55,
+            "zones_added": [
+              51,
+              142,
+              103,
+              4,
+              0
+            ],
+            "zones_train": [
+              59,
+              171,
+              204,
+              146,
+              20
+            ]
+          },
+          "D-oracle": {
+            "above_6": 0,
+            "achieved": [
+              108,
+              108,
+              107,
+              107
+            ],
+            "below_0_5": 0,
+            "intended": [
+              108,
+              108,
+              107,
+              107
+            ],
+            "overlap_C_logP": 48,
+            "overlap_C_oracle": 72,
+            "sum_abs_dev": 0,
+            "zones_added": [
+              0,
+              187,
+              113,
+              0,
+              0
+            ],
+            "zones_train": [
+              8,
+              216,
+              214,
+              142,
+              20
+            ]
+          }
+        },
+        "realization": 3
+      },
+      {
+        "arms": {
+          "C-seqF": {
+            "above_6": 42,
+            "achieved": [
+              32,
+              35,
+              28,
+              37,
+              29,
+              33,
+              44,
+              34,
+              32,
+              36,
+              35,
+              31,
+              31,
+              35,
+              20
+            ],
+            "below_0_5": 38,
+            "intended": [
+              39,
+              39,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38
+            ],
+            "overlap_C_logP": 77,
+            "overlap_C_oracle": 39,
+            "shortfall": [
+              0,
+              0,
+              0
+            ],
+            "sum_abs_dev": 92,
+            "zones_added": [
+              38,
+              111,
+              46,
+              63,
+              42
+            ],
+            "zones_train": [
+              46,
+              140,
+              147,
+              205,
+              62
+            ]
+          },
+          "C-seqP": {
+            "above_6": 28,
+            "achieved": [
+              34,
+              33,
+              36,
+              41,
+              27,
+              35,
+              40,
+              34,
+              32,
+              39,
+              35,
+              33,
+              30,
+              44,
+              25
+            ],
+            "below_0_5": 26,
+            "intended": [
+              39,
+              39,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38
+            ],
+            "overlap_C_logP": 73,
+            "overlap_C_oracle": 45,
+            "shortfall": [
+              0,
+              0,
+              0
+            ],
+            "sum_abs_dev": 78,
+            "zones_added": [
+              26,
+              125,
+              40,
+              81,
+              28
+            ],
+            "zones_train": [
+              34,
+              154,
+              141,
+              223,
+              48
+            ]
+          },
+          "D-P": {
+            "above_6": 0,
+            "achieved": [
+              80,
+              98,
+              97,
+              106
+            ],
+            "below_0_5": 48,
+            "intended": [
+              108,
+              108,
+              107,
+              107
+            ],
+            "overlap_C_logP": 77,
+            "overlap_C_oracle": 48,
+            "sum_abs_dev": 49,
+            "zones_added": [
+              48,
+              149,
+              102,
+              1,
+              0
+            ],
+            "zones_train": [
+              56,
+              178,
+              203,
+              143,
+              20
+            ]
+          },
+          "D-oracle": {
+            "above_6": 0,
+            "achieved": [
+              108,
+              108,
+              107,
+              107
+            ],
+            "below_0_5": 0,
+            "intended": [
+              108,
+              108,
+              107,
+              107
+            ],
+            "overlap_C_logP": 49,
+            "overlap_C_oracle": 68,
+            "sum_abs_dev": 0,
+            "zones_added": [
+              0,
+              187,
+              113,
+              0,
+              0
+            ],
+            "zones_train": [
+              8,
+              216,
+              214,
+              142,
+              20
+            ]
+          }
+        },
+        "realization": 4
+      },
+      {
+        "arms": {
+          "C-seqF": {
+            "above_6": 36,
+            "achieved": [
+              26,
+              32,
+              35,
+              33,
+              32,
+              30,
+              41,
+              32,
+              35,
+              36,
+              29,
+              37,
+              27,
+              31,
+              24
+            ],
+            "below_0_5": 56,
+            "intended": [
+              39,
+              39,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38
+            ],
+            "overlap_C_logP": 85,
+            "overlap_C_oracle": 53,
+            "shortfall": [
+              0,
+              0,
+              0
+            ],
+            "sum_abs_dev": 98,
+            "zones_added": [
+              56,
+              106,
+              40,
+              62,
+              36
+            ],
+            "zones_train": [
+              64,
+              135,
+              141,
+              204,
+              56
+            ]
+          },
+          "C-seqP": {
+            "above_6": 21,
+            "achieved": [
+              34,
+              33,
+              38,
+              30,
+              36,
+              32,
+              42,
+              32,
+              31,
+              37,
+              31,
+              37,
+              29,
+              37,
+              33
+            ],
+            "below_0_5": 39,
+            "intended": [
+              39,
+              39,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38,
+              38
+            ],
+            "overlap_C_logP": 73,
+            "overlap_C_oracle": 51,
+            "shortfall": [
+              0,
+              0,
+              0
+            ],
+            "sum_abs_dev": 68,
+            "zones_added": [
+              39,
+              116,
+              42,
+              82,
+              21
+            ],
+            "zones_train": [
+              47,
+              145,
+              143,
+              224,
+              41
+            ]
+          },
+          "D-P": {
+            "above_6": 0,
+            "achieved": [
+              74,
+              96,
+              97,
+              104
+            ],
+            "below_0_5": 54,
+            "intended": [
+              108,
+              108,
+              107,
+              107
+            ],
+            "overlap_C_logP": 77,
+            "overlap_C_oracle": 61,
+            "sum_abs_dev": 59,
+            "zones_added": [
+              54,
+              141,
+              100,
+              5,
+              0
+            ],
+            "zones_train": [
+              62,
+              170,
+              201,
+              147,
+              20
+            ]
+          },
+          "D-oracle": {
+            "above_6": 0,
+            "achieved": [
+              108,
+              108,
+              107,
+              107
+            ],
+            "below_0_5": 0,
+            "intended": [
+              108,
+              108,
+              107,
+              107
+            ],
+            "overlap_C_logP": 46,
+            "overlap_C_oracle": 76,
+            "sum_abs_dev": 0,
+            "zones_added": [
+              0,
+              187,
+              113,
+              0,
+              0
+            ],
+            "zones_train": [
+              8,
+              216,
+              214,
+              142,
+              20
+            ]
+          }
+        },
+        "realization": 5
+      }
+    ],
+    "zones": [
+      [
+        null,
+        0.5
+      ],
+      [
+        0.5,
+        1.0
+      ],
+      [
+        1.0,
+        2.0
+      ],
+      [
+        2.0,
+        6.0
+      ],
+      [
+        6.0,
+        null
+      ]
+    ]
   }
 }

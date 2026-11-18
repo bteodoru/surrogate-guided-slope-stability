@@ -205,3 +205,92 @@ def generate_all() -> None:
 
 def load_set(key: str) -> pd.DataFrame:
     return data.load_final(config.revision_path("final", key), f"rev:{key}")
+
+
+# --- stage 1 (declaration §4.1 and the prediction of §3): training data only ---------------------
+
+ZONES = ((None, 0.5), (0.5, 1.0), (1.0, 2.0), (2.0, 6.0), (6.0, None))
+
+
+def zone_counts(fos) -> list[int]:
+    fos = np.asarray(fos, dtype=float)
+    return [int((((fos >= lo) if lo is not None else True) & ((fos < hi) if hi is not None else True)).sum())
+            for lo, hi in ZONES]
+
+
+def arm_sets(r: int) -> dict[str, pd.DataFrame]:
+    """The added points of each new arm in realization r (the ablations' training sets)."""
+    out = {"D0-oracle": load_set(f"d_oracle_r{r}"), "D0-P": load_set(f"d_p_r{r}")}
+    for name, s in (("C0-seqF", "seq_f"), ("C0-seqP", "seq_p")):
+        out[name] = pd.concat([load_set(f"{s}_r{r}_b{b}") for b in range(1, len(config.REP_SEQ_BATCHES) + 1)],
+                              ignore_index=True)
+    return out
+
+
+def stage1() -> dict:
+    from sgs import density, replicate
+    seed = data.load_role("seed")
+    seed_fos = seed["FOS"].to_numpy(float)
+    a_d = np.asarray(config.REV_D_ALLOCATION)
+    intended_d = design.bin_counts(seed_fos, d_edges()) + a_d
+    intended_seq = design.bin_counts(seed_fos, sel_edges()) + pool.allocation()
+    meta = data.read_metadata(config.revision_metadata_path())[SECTION]
+    per_r, b_zone = [], []
+    for r in range(1, config.REP_REALIZATIONS + 1):
+        b_zone.append(zone_counts(np.concatenate([seed_fos, replicate.load_set(f"lhs_r{r}")["FOS"]])))
+        oracle = set(pd.read_csv(config.replication_path("designs", f"guided_oracle_r{r}"))["pool_row"])
+        logp = set(pd.read_csv(config.replication_path("designs", f"guided_log_p_r{r}"))["pool_row"])
+        entry = {"realization": r, "arms": {}}
+        for ablation, added in arm_sets(r).items():
+            arm = ablation.replace("0", "", 1)
+            full = np.concatenate([seed_fos, added["FOS"].to_numpy(float)])
+            edges, intended = (d_edges(), intended_d) if arm.startswith("D") else (sel_edges(), intended_seq)
+            achieved = design.bin_counts(full, edges)
+            rows = set(pd.read_csv(config.revision_path("designs", f"{'d_oracle' if arm == 'D-oracle' else 'd_p'}_r{r}"))
+                       ["pool_row"]) if arm.startswith("D") else set().union(*(
+                           set(pd.read_csv(config.revision_path("designs", f"{'seq_f' if arm == 'C-seqF' else 'seq_p'}_r{r}_b{b}"))["pool_row"])
+                           for b in (1, 2, 3)))
+            entry["arms"][arm] = {
+                "achieved": achieved.tolist(), "intended": intended.tolist(),
+                "sum_abs_dev": int(np.abs(achieved - intended).sum()),
+                "zones_train": zone_counts(full), "zones_added": zone_counts(added["FOS"]),
+                "below_0_5": int((added["FOS"] < 0.5).sum()), "above_6": int((added["FOS"] > 6).sum()),
+                "overlap_C_oracle": len(rows & oracle), "overlap_C_logP": len(rows & logp)}
+            if arm.startswith("C-seq"):
+                entry["arms"][arm]["shortfall"] = [meta[f"{'seq_f' if arm == 'C-seqF' else 'seq_p'}_r{r}_b{b}"]
+                                                   ["shortfall"] for b in (1, 2, 3)]
+        per_r.append(entry)
+    b_mean = np.mean(b_zone, axis=0)
+    a = json.loads(density.revision_metrics_path().read_text())["density"]["estimates"]["pooled"]["a"]
+    prediction = {}
+    for arm in ("D-oracle", "D-P"):
+        ratios = [[np.log(e["arms"][arm]["zones_train"][z] / b_mean[z]) if e["arms"][arm]["zones_train"][z] else None
+                   for z in range(len(ZONES))] for e in per_r]
+        prediction[arm] = {"predicted_log_ratio_vs_B": [[None if x is None else float(-a * x) for x in row]
+                                                         for row in ratios]}
+    # The decision-range prediction per cell: the predicted squared zone errors on [0.5, 1)
+    # and [1, 2), each B's mean zone error times exp(predicted log ratio, median over r),
+    # weighted by the test set's share of decision-range points in the zone.
+    values = json.loads(config.replication_metrics_path().read_text())["values"]
+    for arm in prediction:
+        med = np.median(np.array(prediction[arm]["predicted_log_ratio_vs_B"], dtype=float), axis=0)
+        cells = {}
+        for family in config.REP_FAMILIES:
+            for test in config.TEST_ROLES:
+                bs = [v for v in values if v["arm"] == "B" and v["family"] == family and v["test"] == test
+                      and v["realization"] >= 1]
+                e = {z: np.mean([[x for x in v["zones"] if x["zone"] == z][0]["log_rmse"] for v in bs])
+                     for z in ("0.5–1", "1–2")}
+                n = {z: [x for x in bs[0]["zones"] if x["zone"] == z][0]["n"] for z in ("0.5–1", "1–2")}
+                e_dr = np.mean([v["subsets"]["decision-range"]["log_rmse"] for v in bs])
+                w = {z: n[z] / (n["0.5–1"] + n["1–2"]) for z in n}
+                pred = np.sqrt(w["0.5–1"] * (e["0.5–1"] * np.exp(med[1])) ** 2
+                               + w["1–2"] * (e["1–2"] * np.exp(med[2])) ** 2)
+                cells[f"{family}/{test}"] = {"B_mean_decision_range": float(e_dr),
+                                             "predicted_decision_range": float(pred),
+                                             "predicted_log_ratio": float(np.log(pred / e_dr))}
+        prediction[arm]["decision_range"] = cells
+    return {"realizations": per_r, "B_zone_train_mean": b_mean.tolist(), "a_pooled": a,
+            "zones": [list(z) for z in ZONES], "density_prediction": prediction,
+            "note": "training data only, apart from B's existing zone errors used for the "
+                    "decision-range combination; committed before any fit of a new arm"}
