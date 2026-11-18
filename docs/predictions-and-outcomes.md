@@ -420,3 +420,131 @@ stage 1 as a finding of the frozen-screener control.
 The draw streams were also fixed at this point, before any draw: C-seqF and C-seqP share
 theirs, so their first batches, screened by the same seed-trained RF against the same
 deficit, are the same rows (`revision_pool.STREAM`).
+
+### Clarification 1 (2026-11-18, before any arm was evaluated on the large sets): the bins of T-stratL
+
+§6 asks for "30 points per selection bin … 15 bins" and does not name the bin type. The user
+chose the 15 geometric selection bins of the selection range, the bins on which C-log allocates,
+as "selection bins" is used in §8.4 (`revision_large`, commit d822f60). The alternative, the 15
+equal-width bins of the fixed T-strat, was set aside. Only the source's counts per bin were read
+before the choice (geometric: 92 to 570 per bin; equal-width: 76 to 745), so no bin was short.
+
+### Outcome (recorded 2026-11-19)
+
+Results are in `outputs/metrics/revision.json`. The commits are:
+- the density exponent, 763cc4a;
+- stage 1 and the density prediction, 7d5aa4a;
+- the fixed-set fits, a4089a1;
+- the seed study, a9612c9;
+- the robustness checks, b4878c3;
+- the large test sets, d822f60;
+- the bootstrap, d6435df.
+
+§8.1, the independent retuning, and §9, the GP, have not been run yet. Their outcome will be
+added here.
+
+**§3, the density exponent** (fixed before any D point was drawn): a = 0.583 [0.534, 0.640]
+pooled, 0.559 for RF and 0.607 for GBM.
+
+**§2, the D arms against B on the decision range** (fixed test sets, Welch, r1..r5):
+
+| Arm | Level | Gate | Cells below 0 |
+|---|---|---|---|
+| D-P | **2** | 2/4 | rf/natural −0.0195, rf/stratified −0.0230 |
+| D-oracle | 2 | 2/4 | rf/natural −0.0224, rf/stratified −0.0220 |
+| D₀-P | 0 | 4/4 | every interval above 0 |
+| D₀-oracle | 0 | 3/4 | every interval above 0 |
+
+- **Declared reading.** D-P is below level 3. Under §2, "no demonstrated gain" therefore
+  extends to a target placed on the decision range, in this design. The title is not
+  revisited on this ground.
+- **The price, as predicted.** Against B, D-P has:
+  - a lower error on [0.5, 1) in all four cells;
+  - an error on [1, 2) that is unchanged, with the interval containing 0 in three cells and
+    above 0 in GBM/natural;
+  - a higher error on [2, 6) and ≥ 6 in all four cells.
+- **D-P against C-logP** (paired): −0.0178 [−0.0330, −0.0027] for RF/natural and −0.0265
+  [−0.0415, −0.0116] for RF/stratified. Both GBM intervals contain 0.
+
+**§3, the density prediction for D-P.**
+
+| Zone | Direction | Calibration |
+|---|---|---|
+| [0.5, 1) | met | met |
+| [1, 2) | not met | met |
+| [2, 6) | met | not met |
+| < 0.5 | met | not met |
+| ≥ 6 | met | not met |
+| Decision range | met | met |
+
+For [1, 2) the prediction is −0.007, essentially 0, so its sign carries little. The
+calibration fails where the error rises: B's error there grows by more than the exponent
+predicts. For D-oracle, the direction is met in 4 of 5 zones (not for FOS < 0.5) and the
+calibration in 2 of 5.
+
+**§4, the frozen-screener control.** Levels against B: C-seqF 1 (gate 4/4) and C-seqP 1
+(gate 3/4). Paired contrasts on the decision range:
+- C-seqF − C-logP: every interval contains 0. The deficit update shows no effect.
+- C-seqP − C-seqF: RF/natural −0.0035 [−0.0064, −0.0006]; the other three cells contain 0.
+- C-seq − C-seqP: every interval contains 0.
+
+The shortfall is the one recorded in Deviation 1.
+
+**§5, the seed study** (five seeds, paired):
+- **Prediction met.** C-logP_s passes the relocation gate in 3/4 cells. Level 1.
+- **D-P_s:** level 2 (rf/natural −0.0142 [−0.0237, −0.0047]; gbm/stratified −0.0034
+  [−0.0063, −0.0005]); gate 4/4.
+- **C₀-logP_s and D₀-P_s:** level 0.
+
+**§6, the large test sets.** T-natL has 5,000 points, 1,608 of them on the decision range.
+T-stratL has 450, with 254 on the decision range and none outside [0.5, 6]. The refits
+reproduce the stored predictions on the fixed sets exactly, with a maximum absolute difference
+of 0. Levels, fixed → large:
+
+| Arm | Fixed → large |
+|---|---|
+| D-oracle | 2 → **3** |
+| D-P, C-oracle | 2 → 2 |
+| C-log, C-logG, C-logP, C-seq, C-seqF, C-seqP | 1 → 2 |
+| Every ablation except D₀-oracle | 0 → 0 |
+| D₀-oracle | 0 → 1 |
+
+- **Where the verdicts differ.** Most differences are in the gbm/T-stratL cell, where every
+  budget arm's interval lies below 0. T-stratL is uniform in log(FOS) over the selection
+  range, which is the C arms' target.
+- **The gate on the large sets.** It passes in 3–4/4 cells for every C arm and in 1/4 for
+  D-oracle.
+- **Reading.** Under §6, a verdict that differs between the fixed and the large sets is
+  reported as such, with neither preferred. The fixed sets stay the primary ones. D-P does
+  not reach level 3 on the large sets either.
+
+**§7, the two-level bootstrap** (10,000 replicates, beside the Welch interval).
+- **Fixed sets.** The bootstrap interval is a median 1.27 times as wide as the Welch interval
+  (range 0.84 to 3.63). Both RF cells of C-oracle then contain 0. Every interval of a C arm
+  contains 0 or lies above it. The two RF cells of D-P and of D-oracle stay below 0.
+- **Large sets.** The bootstrap interval is a median 0.91 times as wide as the Welch interval.
+  Its verdicts agree with Welch's in every cell but one, C-log's rf/T-stratL cell, which goes
+  below 0.
+- **Limit.** With five realizations, the realization level is coarse. This is stated with the
+  interval.
+
+**§8.2–8.6, the robustness checks** (fixed sets):
+- **General.** No arm reaches level 3 under any check.
+- **8.2, three features:** 4/72 verdicts differ. C-log and C-logG go to level 2. The gate
+  differs in 5 cells.
+- **8.3, crest entries dropped from training** (about 8% of each set): 5/72 verdicts differ.
+  C-log goes to level 2. C-oracle's rf/natural cell goes from below 0 to containing 0. The
+  gate differs in 4 cells.
+- **8.4, reweighting.**
+  - B-wC and B-wD against B: all eight intervals contain 0.
+  - B-wD against D-P: above 0 in 3/4 cells, so D-P has the lower decision-range log-RMSE.
+  - B-wC against C-logP: every interval contains 0.
+- **8.5, size-matched ablations:** no ablation has a lower log-RMSE than A. 25 of 36 intervals
+  lie above 0, and the rest contain 0.
+- **8.6, alternative ranges:** every level is the same as the baseline, except D₀-P and
+  D₀-oracle, which go from 0 to 1 on [2/3, 1.5).
+
+**Correction: crest entries.** With the check's criterion, |Center_Y − H| < 0.01 H, the crest
+entries are 2,523 of the 30,250 unique analyses, 8.3%. The "about 12%" in
+`docs/crest-entry-check/RESULTS.md`, and the "one in eight" in the submitted paper, were
+wrong. The record is left as it is, and the paper now says "one in twelve".
