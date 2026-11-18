@@ -154,6 +154,20 @@ SEEDS = {
     # Declared 2026-11-09 for the curated deposit's FOS baseline (random_state of
     # its one estimator), before the baseline was run.
     "benchmark_baseline": 20261109,
+    # Declared 2026-11-18 in docs/revision-declaration.md (tag revision-declared),
+    # before any revision set was drawn or solved: §5 the seed study, four new LHS
+    # seeds each with its own continued LHS; §6 the large test sets.
+    "rev_seed_lhs_1": 20261118,
+    "rev_seed_lhs_2": 20261119,
+    "rev_seed_lhs_3": 20261120,
+    "rev_seed_lhs_4": 20261121,
+    "rev_extension_lhs_1": 20261122,
+    "rev_extension_lhs_2": 20261123,
+    "rev_extension_lhs_3": 20261124,
+    "rev_extension_lhs_4": 20261125,
+    "rev_test_natural_large": 20261126,
+    "rev_test_stratified_large_source": 20261127,
+    "rev_test_stratified_large_selection": 20261128,
 }
 
 
@@ -558,6 +572,33 @@ ORACLE_DENSITY_RATIO = 1.10
 #   expected reading of a null or small effect.
 
 
+# --- the revision (docs/revision-declaration.md, tag revision-declared) -----------------
+# Additive only: nothing above changes, and every revision set, fit and metric has its
+# own files. The solved sets of §5 (seed study) and §6 (large test sets), in generation
+# order; each is disjoint from every existing design and every earlier revision set, a
+# point within MIN_DISTANCE being dropped (not replaced) and counted.
+REV_SEEDS = 4
+REV_SEED_N = 300
+REV_TEST_NATURAL_N = 5_000
+REV_TEST_STRAT_SOURCE_N = 6_000
+REV_TEST_STRAT_PER_BIN = 30
+# Large sets are solved in parts of this size, each recorded on its own, so that an
+# interrupted run loses at most one part.
+REV_SOLVE_CHUNK = 1_000
+
+
+def rev_solved_sets() -> tuple[tuple[str, int, str], ...]:
+    """(key, n, SEEDS key) of every solved revision set, in generation order."""
+    sets = []
+    for s in range(1, REV_SEEDS + 1):
+        sets.append((f"seed_s{s}", REV_SEED_N, f"rev_seed_lhs_{s}"))
+        sets.append((f"extension_s{s}", REV_SEED_N, f"rev_extension_lhs_{s}"))
+    sets.append(("test_natural_large", REV_TEST_NATURAL_N, "rev_test_natural_large"))
+    sets.append(("test_stratified_large_source", REV_TEST_STRAT_SOURCE_N,
+                 "rev_test_stratified_large_source"))
+    return tuple(sets)
+
+
 # --- fingerprints -------------------------------------------------------------------
 
 def _digest(payload) -> str:
@@ -649,6 +690,15 @@ def replication_path(stage: str, key: str) -> Path:
 def pool_path(stage: str, chunk: int) -> Path:
     """stage: designs | results | final; chunk is 1-based."""
     return ROOT / "data" / "pool" / stage / f"pool_c{chunk:03d}.csv"
+
+
+def revision_path(stage: str, key: str) -> Path:
+    """stage: designs | results | final."""
+    return ROOT / "data" / "revision" / stage / f"{key}.csv"
+
+
+def revision_metadata_path() -> Path:
+    return ROOT / "data" / "revision" / "run_metadata.json"
 
 
 def replication_fit_path(family: str, realization: str) -> Path:

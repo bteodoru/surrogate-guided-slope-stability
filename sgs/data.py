@@ -223,8 +223,10 @@ def _parsed(path: Path) -> dict | None:
     return meta if isinstance(meta, dict) else None
 
 
-def read_metadata() -> dict:
-    path = config.metadata_path()
+def read_metadata(path=None) -> dict:
+    """The run metadata; ``path`` names another metadata file (the revision's), and
+    defaults to ``config.metadata_path()``."""
+    path = Path(path) if path is not None else config.metadata_path()
     if not path.exists():
         return {}
     meta = _parsed(path)
@@ -278,16 +280,16 @@ def _back_up(path: Path) -> None:
         pass
 
 
-def record(section: str, key: str, entry: dict) -> None:
+def record(section: str, key: str, entry: dict, path=None) -> None:
     """Set ``run_metadata.json[section][key] = entry`` and write the file.
 
     Power-cut safe: the previous good file is kept as ``run_metadata.json.bak``
     and both writes are fsynced, so an interrupted run never loses more than
     the entry being written.
     """
-    meta = read_metadata()
+    path = Path(path) if path is not None else config.metadata_path()
+    meta = read_metadata(path)
     meta.setdefault(section, {})[key] = entry
-    path = config.metadata_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = json.dumps(meta, indent=2, sort_keys=True, default=_json_default) + "\n"
     _back_up(path)

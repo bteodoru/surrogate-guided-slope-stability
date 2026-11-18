@@ -10,6 +10,7 @@
   sgs structural      optional; descriptive density-and-error artifacts from the replications
   sgs curate          optional; the curated deposit (unique analyses, membership, splits), from data/
   sgs benchmark       optional; the curated deposit's FOS baseline, from data/curated/
+  sgs revision        optional; the revision's solved sets, into data/revision/
   sgs all             generate, fit, evaluate, report
   sgs inspect         rerun one stored row and draw it with xslope's plots
 
@@ -152,6 +153,17 @@ def _pool(args):
     pool.run(chunks=args.chunks, workers=args.workers)
 
 
+def _revision(args):
+    from sgs import revision
+    if args.status:
+        print(revision.format_status(revision.status()))
+        return
+    if args.workers > 2:
+        print(f"warning: --workers {args.workers}; the standing preference for xslope is at most 2",
+              file=sys.stderr)
+    revision.generate_all(workers=args.workers)
+
+
 def _structural(args):
     from sgs import structural
     structural.run()
@@ -230,6 +242,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--status", action="store_true",
                    help="read-only: counts per sub-pool and bin, platforms, and the rule's state")
     p.set_defaults(handler=_pool)
+    p = sub.add_parser("revision", help="optional: design and solve the revision's sets "
+                                        "(docs/revision-declaration.md) into data/revision/")
+    p.add_argument("--workers", type=int, default=1, help="solver processes")
+    p.add_argument("--status", action="store_true", help="read-only: which parts are solved")
+    p.set_defaults(handler=_revision)
     p = sub.add_parser("inspect", help="rerun one stored row and draw it with xslope's plots")
     p.add_argument("--role", choices=tuple(config.ROLES), required=True)
     p.add_argument("--row", type=int, required=True, help="1-based row, in design order")

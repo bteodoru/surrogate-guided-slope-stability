@@ -26,6 +26,9 @@ def test_every_declared_seed_has_a_user():
     used |= {"screener_fit", "screener_cv", "protocol_cv_split", "protocol_estimator",
              "bootstrap_resampling", "learning_curve_subsampling", "replication_design",
              "pool_design", "benchmark_baseline"}
+    used |= {seed_key for _, _, seed_key in config.rev_solved_sets()}
+    # the within-bin draw of the large stratified test set, from its solved source
+    used |= {"rev_test_stratified_large_selection"}
     assert used == set(config.SEEDS)
 
 
