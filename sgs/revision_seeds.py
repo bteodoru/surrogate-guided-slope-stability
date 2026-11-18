@@ -22,7 +22,7 @@ ARMS = ("B", "C-logP", "C0-logP", "D-P", "D0-P")
 PAIRED = (("C-logP", "B"), ("D-P", "B"), ("C0-logP", "B"), ("D0-P", "B"),
           ("C-logP", "C0-logP"), ("D-P", "D0-P"), ("D-P", "C-logP"))
 LEVEL_ARMS = ("C-logP", "D-P", "C0-logP", "D0-P")
-SEED_42_UNIT = 5          # seed 42, its r1 sets
+UNIT_OF_42 = 5          # seed 42, its r1 sets
 
 
 def fit_path(family: str, s: int):
@@ -88,7 +88,7 @@ def units() -> dict:
                 raise models.StaleFit(f"{fit_path(family, s).name} is stale; run the seed fits")
             out[(family, s)] = stored
         old = r1[(family, 1)]
-        out[(family, SEED_42_UNIT)] = {"test_ids": old["test_ids"],
+        out[(family, UNIT_OF_42)] = {"test_ids": old["test_ids"],
                                        "arms": {a: old["arms"][a] for a in ARMS}}
     return out
 
@@ -126,7 +126,7 @@ def run() -> dict:
         bins=tuple(design.bin_edges_log(config.N_BINS, config.SELECTION_RANGE)),
         selection_range=config.SELECTION_RANGE, decision_range=config.DECISION_RANGE, level=config.REP_CI,
         welch=(), paired=PAIRED, interactions=())
-    entry = {"units": {"1-4": "new seeds s1..s4 (rev_seed_lhs_s)", str(SEED_42_UNIT): "seed 42, r1 sets"},
+    entry = {"units": {"1-4": "new seeds s1..s4 (rev_seed_lhs_s)", str(UNIT_OF_42): "seed 42, r1 sets"},
              "comparisons": result["comparisons"], "values": result["values"], "readings": readings(result)}
     density.write("seed_study", entry)
     return entry
