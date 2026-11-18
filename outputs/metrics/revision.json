@@ -1,0 +1,32 @@
+{
+  "density": {
+    "estimates": {
+      "gbm": {
+        "a": 0.6067667442756481,
+        "ci95": [
+          0.5567029444598287,
+          0.6754849438978892
+        ],
+        "n_obs": 336
+      },
+      "pooled": {
+        "a": 0.5830904071855578,
+        "ci95": [
+          0.5341412184742994,
+          0.639647196010786
+        ],
+        "n_obs": 672
+      },
+      "rf": {
+        "a": 0.5594140700954652,
+        "ci95": [
+          0.5202020150867432,
+          0.6034763568999889
+        ],
+        "n_obs": 336
+      }
+    },
+    "n_obs": 672,
+    "procedure": "The density model of the revision (docs/revision-declaration.md \u00a73).\n\nPer learner x test cell, ln E_Z = alpha_{Z,cell} - a ln n_Z, with E_Z the log-RMSE on\nevaluation zone Z ([lo, hi)), n_Z the training points in Z, and the slope a common to\nevery zone and cell. Fitted by ordinary least squares on results that already exist:\nthe replicated arms r1..r5 (and A, the seed alone, once: it is the same in every\nrealization), the zones [0.5, 1), [1, 2) and [2, 6). Reported pooled and per learner,\neach with a 95% percentile interval from a bootstrap over realizations.\n\nReads ``outputs/metrics/replications.json`` for the zone errors and the stored\nreplication fits for the training FOS; writes the ``density`` entry of\n``outputs/metrics/revision.json``. Nothing here reads a revision set."
+  }
+}

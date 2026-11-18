@@ -168,6 +168,8 @@ SEEDS = {
     "rev_test_natural_large": 20261126,
     "rev_test_stratified_large_source": 20261127,
     "rev_test_stratified_large_selection": 20261128,
+    # §3: the bootstrap over realizations of the density exponent.
+    "rev_density_bootstrap": 20261129,
 }
 
 
