@@ -173,6 +173,8 @@ SEEDS = {
     # §2 and §4: the within-bin draws of the pool-backed revision sets, a SeedSequence
     # keyed on (strategy, realization, batch) (sgs/revision_pool.py).
     "rev_pool_design": 20261130,
+    # §7: the two-level bootstrap (realizations per arm, test points stratified by zone).
+    "rev_bootstrap_two_level": 20261131,
 }
 
 
@@ -595,6 +597,8 @@ REV_D_ALLOCATION = (102, 85, 72, 41)
 # Large sets are solved in parts of this size, each recorded on its own, so that an
 # interrupted run loses at most one part.
 REV_SOLVE_CHUNK = 1_000
+# §7: replicates of the two-level bootstrap, percentile interval at REP_CI.
+REV_BOOTSTRAP_N = 10_000
 
 
 def rev_solved_sets() -> tuple[tuple[str, int, str], ...]:
