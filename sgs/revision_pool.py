@@ -27,7 +27,8 @@ from sgs import config, data, design, pool, solver
 from sgs.revision import RevisionError
 
 SECTION = "pool_sets"
-STRATEGIES = ("d-oracle", "d-p", "seq-f", "seq-p")
+# Appended only: a strategy's index keys its draw stream.
+STRATEGIES = ("d-oracle", "d-p", "seq-f", "seq-p", "logp-seed", "dp-seed")
 # C-seqF and C-seqP share their draw stream, so their first batches (both screened by the
 # seed's RF, against the same deficit) are the same rows, and the two differ only from
 # the retraining on.
@@ -146,6 +147,45 @@ def build_designs() -> dict[str, tuple[pd.DataFrame, dict]]:
                      "screener_trained_on": "seed" if strategy == "seq-f" or b == 1
                      else f"seed + batches 1..{b - 1}"})
     return out
+
+
+def build_seed_designs() -> dict[str, tuple[pd.DataFrame, dict]]:
+    """§5: for each new seed s, C-logP_s and D-P_s drawn on predicted FOS from the whole
+    pool, with the screener trained on seed s and each allocation recomputed from seed s's
+    deficit; pool rows within MIN_DISTANCE of seed s are excluded. A short bin takes every
+    point it has; the shortfall is recorded and not redistributed (as declared)."""
+    from sgs import revision
+    rows, stop, _ = verified_rows()
+    base = {"stop_k": stop["k"], "chunks_sha256": stop["chunks_sha256"], "platform": stop["platform"]}
+    out = {}
+    for s in range(1, config.REV_SEEDS + 1):
+        seed = revision.load_set(f"seed_s{s}")
+        model, diag = design.fit_screener(data.add_features(seed), config.SCREENER["family"])
+        keep = design.nearest_distance(rows, seed) > config.MIN_DISTANCE
+        cand = rows.loc[keep].reset_index(drop=True)
+        pred = design.predict_fos(model, cand)
+        fos = seed["FOS"].to_numpy(float)
+        for strategy, edges in (("logp-seed", sel_edges()), ("dp-seed", d_edges())):
+            have = design.bin_counts(fos, edges)
+            requested = design.deficit_allocation(have, config.REP_EXTENSION)
+            avail = design.bin_counts(pred, edges)
+            alloc = np.minimum(requested, avail)
+            index, bins = design.select_in_bins(pred, edges, alloc, stream(strategy, s))
+            chosen = cand.iloc[index]
+            key = f"{'logp' if strategy == 'logp-seed' else 'dp'}_s{s}"
+            out[key] = (_as_design(chosen, bins, pred[index]),
+                        {**base, "strategy": strategy, "seed_set": f"seed_s{s}", "batch": 0,
+                         "column": "FOS_pred (screener trained on seed s)", "edges": edges.tolist(),
+                         "trained_counts": have.tolist(), "requested": requested.tolist(),
+                         "added": alloc.tolist(), "shortfall": int(requested.sum() - alloc.sum()),
+                         "n_pool_excluded_near_seed": int((~keep).sum()), "screener": diag,
+                         "seed_sha256": data.sha256_file(config.revision_path("final", f"seed_s{s}"))})
+    return out
+
+
+def generate_seed_sets() -> None:
+    for key, (frame, info) in build_seed_designs().items():
+        copy_set(key, frame, info)
 
 
 def _paths(key: str) -> dict:
