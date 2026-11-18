@@ -175,6 +175,8 @@ SEEDS = {
     "rev_pool_design": 20261130,
     # §7: the two-level bootstrap (realizations per arm, test points stratified by zone).
     "rev_bootstrap_two_level": 20261131,
+    # §9: the restarts of the Gaussian process's marginal-likelihood optimizer.
+    "rev_gp_restarts": 20261201,
 }
 
 

@@ -29,7 +29,8 @@ def test_every_declared_seed_has_a_user():
     used |= {seed_key for _, _, seed_key in config.rev_solved_sets()}
     # the within-bin draw of the large stratified test set, from its solved source
     used |= {"rev_test_stratified_large_selection", "rev_density_bootstrap",
-             "rev_pool_design", "rev_bootstrap_two_level"}
+             "rev_pool_design", "rev_bootstrap_two_level",
+             "rev_gp_restarts"}
     assert used == set(config.SEEDS)
 
 
