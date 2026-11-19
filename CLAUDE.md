@@ -264,7 +264,8 @@ release of this code used for the paper is archived on Zenodo through the
 GitHub integration (`.zenodo.json`), and the repository with its full history
 on Software Heritage; both identifiers are in the paper's Data Availability
 Statement. For the MAKE revision:
-data version 1.1 (adds `data/revision/`, 43 650 analyses in all), reserved DOI
-10.5281/zenodo.24374247, published only on the author's request; code release 1.2.0 adds
+data version 1.1 (adds `data/revision/`, 43 650 analyses in all), DOI
+10.5281/zenodo.24374247, published 2026-11-19; the paper cites the concept DOIs (data
+10.5281/zenodo.23618252, code 10.5281/zenodo.23727658) with the version named; code release 1.2.0 adds
 the revision's code. The history is never rewritten: the supplementary material cites
 commits by hash.
