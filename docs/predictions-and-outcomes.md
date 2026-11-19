@@ -496,7 +496,7 @@ The shortfall is the one recorded in Deviation 1.
   [−0.0063, −0.0005]); gate 4/4.
 - **C₀-logP_s and D₀-P_s:** level 0.
 
-**§6, the large test sets.** T-natL has 5,000 points, 1,608 of them on the decision range.
+**§6, the large test sets.** T-natL has 5,000 points, 2,158 of them on the decision range.
 T-stratL has 450, with 254 on the decision range and none outside [0.5, 6]. The refits
 reproduce the stored predictions on the fixed sets exactly, with a maximum absolute difference
 of 0. Levels, fixed → large:
@@ -539,7 +539,7 @@ of 0. Levels, fixed → large:
   - B-wC and B-wD against B: all eight intervals contain 0.
   - B-wD against D-P: above 0 in 3/4 cells, so D-P has the lower decision-range log-RMSE.
   - B-wC against C-logP: every interval contains 0.
-- **8.5, size-matched ablations:** no ablation has a lower log-RMSE than A. 25 of 36 intervals
+- **8.5, size-matched ablations:** no ablation has a lower log-RMSE than A. 24 of 36 intervals
   lie above 0, and the rest contain 0.
 - **8.6, alternative ranges:** every level is the same as the baseline, except D₀-P and
   D₀-oracle, which go from 0 to 1 on [2/3, 1.5).
@@ -590,3 +590,5 @@ of the 2 test sets (L −0.15, H −0.00 on natural; L +0.30, H +0.03 on stratif
   min_samples_leaf (3–5).
 - **C-log against B under GBM on the natural set:** +0.0071 [+0.0012, +0.0130], above 0, as in
   the baseline.
+
+**Corrections to this outcome record (2026-11-19, from the metrics, while writing the Results):** T-natL's decision range holds 2,158 points, not 1,608 (1,608 is its [1, 2) zone); the size-matched check has 24, not 25, of 36 intervals above 0. Both are now corrected above.

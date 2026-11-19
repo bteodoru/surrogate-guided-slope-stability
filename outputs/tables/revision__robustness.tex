@@ -1,0 +1,41 @@
+\begin{table}[htbp]
+\centering
+\small
+\caption{Robustness checks on the fixed test sets. Top: each arm's level against B on the decision range under the baseline, the independent retuning, the three governing variables and the training sets without crest entries (in brackets, the number of cells whose verdict differs from the baseline), and on the two alternative decision ranges. Bottom: density reweighting, decision-range log-RMSE differences (superscript $<$ or $>$: the interval lies entirely below or above 0).}
+\label{tab:rev:robustness}
+\begin{tabular}{lccccc}
+\toprule
+Arm & baseline & retuned & three variables & no crest entries & $[2/3, 1.5)$ / $[0.4, 2.5)$ \\
+\midrule
+C-log & 1 & 1 & 2 (2) & 2 (2) & 1 / 1 \\
+C$_0$-log & 0 & 0 & 0 (0) & 0 (0) & 0 / 0 \\
+C-seq & 1 & 1 & 1 (0) & 1 (0) & 1 / 1 \\
+C$_0$-seq & 0 & 0 & 0 (0) & 0 (0) & 0 / 0 \\
+C-logG & 1 & -- & 2 (1) & 1 (0) & 1 / 1 \\
+C$_0$-logG & 0 & -- & 0 (0) & 0 (0) & 0 / 0 \\
+C-oracle & 2 & -- & 2 (0) & 2 (1) & 2 / 2 \\
+C$_0$-oracle & 0 & -- & 0 (0) & 0 (0) & 0 / 0 \\
+C-logP & 1 & -- & 1 (0) & 1 (0) & 1 / 1 \\
+C$_0$-logP & 0 & -- & 0 (0) & 0 (0) & 0 / 0 \\
+C-seqF & 1 & -- & 1 (0) & 1 (0) & 1 / 1 \\
+C$_0$-seqF & 0 & -- & 0 (0) & 0 (0) & 0 / 0 \\
+C-seqP & 1 & -- & 1 (0) & 1 (0) & 1 / 1 \\
+C$_0$-seqP & 0 & -- & 0 (0) & 0 (0) & 0 / 0 \\
+D-oracle & 2 & -- & 2 (0) & 2 (1) & 2 / 2 \\
+D$_0$-oracle & 0 & -- & 0 (0) & 0 (0) & 1 / 0 \\
+D-P & 2 & -- & 2 (1) & 2 (1) & 2 / 2 \\
+D$_0$-P & 0 & -- & 0 (0) & 0 (0) & 1 / 0 \\
+\bottomrule
+\end{tabular}
+\par\medskip
+\begin{tabular}{lcccc}
+\toprule
+ & GBM nat. & GBM str. & RF nat. & RF str. \\
+\midrule
+B-wC $-$ B & $+$0.0043 & $+$0.0013 & $+$0.0099 & $+$0.0072 \\
+B-wD $-$ B & $+$0.0056 & $+$0.0001 & $+$0.0043 & $+$0.0009 \\
+B-wC $-$ C-logP & $+$0.0008 & $+$0.0090 & $+$0.0116 & $+$0.0037 \\
+B-wD $-$ D-P & $+$0.0065$^{>}$ & $+$0.0109 & $+$0.0238$^{>}$ & $+$0.0239$^{>}$ \\
+\bottomrule
+\end{tabular}
+\end{table}

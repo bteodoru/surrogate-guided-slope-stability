@@ -1,0 +1,33 @@
+\begin{table}[htbp]
+\centering
+\small
+\setlength{\tabcolsep}{3.5pt}
+\caption{Every arm against B, across the analyses: the level on the decision range (3: interval entirely below 0 in every cell; 2: in at least one cell; 1: a negative mean in at least one cell; 0: otherwise), with the number of cells whose interval lies entirely below 0 in brackets, and the number of cells in which the relocation gate passes. Fixed: the fixed test sets, Welch intervals over $r_1$--$r_5$ (the declared readings); bootstrap: the same contrasts with the two-level bootstrap interval; large: T-natL and T-stratL, Welch; seeds: paired over the five seeds; GP: the Gaussian process on the fixed test sets, two cells. The ablations train on 300 points against B's 600 and are not budget arms.}
+\label{tab:rev:levels}
+\begin{tabular}{lccccc|cccc}
+\toprule
+ & \multicolumn{5}{c|}{Level against B (cells below 0)} & \multicolumn{4}{c}{Relocation gate} \\
+\cmidrule(lr){2-6} \cmidrule(lr){7-10}
+Arm & fixed & bootstrap & large & seeds & GP & fixed & large & seeds & GP \\
+\midrule
+C-log & 1 (0) & 1 (0) & 2 (1) & -- & 1 & 4/4 & 4/4 & -- & 0/2 \\
+C$_0$-log & 0 (0) & 0 (0) & 0 (0) & -- & 0 & 4/4 & 3/4 & -- & 0/2 \\
+C-seq & 1 (0) & 1 (0) & 2 (1) & -- & 1 & 4/4 & 4/4 & -- & 1/2 \\
+C$_0$-seq & 0 (0) & 0 (0) & 0 (0) & -- & 0 & 1/4 & 3/4 & -- & 0/2 \\
+C-logG & 1 (0) & 1 (0) & 2 (3) & -- & 1 & 3/4 & 4/4 & -- & 0/2 \\
+C$_0$-logG & 0 (0) & 0 (0) & 0 (0) & -- & 0 & 2/4 & 3/4 & -- & 0/2 \\
+C-oracle & 2 (2) & 1 (0) & 2 (3) & -- & 1 & 3/4 & 3/4 & -- & 0/2 \\
+C$_0$-oracle & 0 (0) & 0 (0) & 0 (0) & -- & 0 & 2/4 & 3/4 & -- & 1/2 \\
+C-logP & 1 (0) & 1 (0) & 2 (2) & 1 (0) & 1 & 3/4 & 4/4 & 3/4 & 1/2 \\
+C$_0$-logP & 0 (0) & 0 (0) & 0 (0) & 0 (0) & 0 & 2/4 & 3/4 & 0/4 & 0/2 \\
+C-seqF & 1 (0) & 1 (0) & 2 (1) & -- & 1 & 4/4 & 4/4 & -- & 0/2 \\
+C$_0$-seqF & 0 (0) & 0 (0) & 0 (0) & -- & 0 & 2/4 & 3/4 & -- & 0/2 \\
+C-seqP & 1 (0) & 1 (0) & 2 (1) & -- & 1 & 3/4 & 4/4 & -- & 1/2 \\
+C$_0$-seqP & 0 (0) & 0 (0) & 0 (0) & -- & 0 & 2/4 & 3/4 & -- & 0/2 \\
+D-oracle & 2 (2) & 2 (2) & 3 (4) & -- & 2 & 2/4 & 1/4 & -- & 0/2 \\
+D$_0$-oracle & 0 (0) & 0 (0) & 1 (0) & -- & 0 & 3/4 & 4/4 & -- & 1/2 \\
+D-P & 2 (2) & 2 (2) & 2 (3) & 2 (2) & 1 & 2/4 & 3/4 & 4/4 & 0/2 \\
+D$_0$-P & 0 (0) & 0 (0) & 0 (0) & 0 (0) & 0 & 4/4 & 4/4 & 4/4 & 0/2 \\
+\bottomrule
+\end{tabular}
+\end{table}

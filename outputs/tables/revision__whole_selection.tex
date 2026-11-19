@@ -1,0 +1,33 @@
+\begin{table}[htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{2.5pt}
+\caption{The whole test set and the selection range: each arm's log-RMSE minus B's, mean over $r_1$--$r_5$, on the fixed test sets. Bold: the 95\% Welch interval excludes 0. The intervals are in the Supplementary material. The ablations train on 300 points against B's 600.}
+\label{tab:rev:whole-selection}
+\begin{tabular}{lcccc|cccc}
+\toprule
+ & \multicolumn{4}{c|}{Whole test set} & \multicolumn{4}{c}{Selection range, FOS $\in [0.5, 6]$} \\
+\cmidrule(lr){2-5} \cmidrule(lr){6-9}
+Arm & GBM nat. & GBM str. & RF nat. & RF str. & GBM nat. & GBM str. & RF nat. & RF str. \\
+\midrule
+C-log & \textbf{$+$0.0072} & $+$0.0000 & $-$0.0089 & \textbf{$-$0.0186} & \textbf{$+$0.0063} & $+$0.0025 & $+$0.0005 & $+$0.0005 \\
+C$_0$-log & \textbf{$+$0.1163} & \textbf{$+$0.0324} & \textbf{$+$0.0970} & \textbf{$+$0.0287} & \textbf{$+$0.0501} & \textbf{$+$0.0361} & \textbf{$+$0.0635} & \textbf{$+$0.0549} \\
+C-seq & \textbf{$+$0.0067} & $+$0.0042 & $+$0.0022 & $-$0.0088 & \textbf{$+$0.0046} & $+$0.0049 & $+$0.0091 & $+$0.0049 \\
+C$_0$-seq & \textbf{$+$0.1222} & \textbf{$+$0.0469} & \textbf{$+$0.1201} & \textbf{$+$0.0571} & \textbf{$+$0.0687} & \textbf{$+$0.0541} & \textbf{$+$0.0885} & \textbf{$+$0.0834} \\
+C-logG & \textbf{$+$0.0064} & $+$0.0025 & $+$0.0089 & $+$0.0098 & \textbf{$+$0.0036} & $+$0.0018 & $+$0.0028 & $+$0.0013 \\
+C$_0$-logG & \textbf{$+$0.1281} & \textbf{$+$0.0435} & \textbf{$+$0.1467} & \textbf{$+$0.0799} & \textbf{$+$0.0581} & \textbf{$+$0.0449} & \textbf{$+$0.0970} & \textbf{$+$0.0865} \\
+C-oracle & \textbf{$+$0.0073} & $+$0.0001 & $+$0.0077 & \textbf{$+$0.0133} & \textbf{$+$0.0032} & $-$0.0007 & $-$0.0025 & $-$0.0034 \\
+C$_0$-oracle & \textbf{$+$0.1169} & \textbf{$+$0.0450} & \textbf{$+$0.1431} & \textbf{$+$0.0739} & \textbf{$+$0.0496} & \textbf{$+$0.0381} & \textbf{$+$0.0689} & \textbf{$+$0.0604} \\
+C-logP & $+$0.0049 & $+$0.0008 & $-$0.0056 & \textbf{$-$0.0172} & $+$0.0035 & $+$0.0030 & $+$0.0044 & $+$0.0030 \\
+C$_0$-logP & \textbf{$+$0.1226} & \textbf{$+$0.0391} & \textbf{$+$0.1077} & \textbf{$+$0.0301} & \textbf{$+$0.0516} & \textbf{$+$0.0442} & \textbf{$+$0.0761} & \textbf{$+$0.0568} \\
+C-seqF & $+$0.0047 & $+$0.0011 & $-$0.0012 & \textbf{$-$0.0165} & \textbf{$+$0.0051} & $+$0.0041 & \textbf{$+$0.0123} & $+$0.0047 \\
+C$_0$-seqF & \textbf{$+$0.1219} & \textbf{$+$0.0463} & \textbf{$+$0.1173} & \textbf{$+$0.0454} & \textbf{$+$0.0690} & \textbf{$+$0.0534} & \textbf{$+$0.0990} & \textbf{$+$0.0803} \\
+C-seqP & \textbf{$+$0.0073} & $+$0.0051 & $+$0.0025 & $-$0.0121 & \textbf{$+$0.0072} & $+$0.0067 & \textbf{$+$0.0104} & $+$0.0017 \\
+C$_0$-seqP & \textbf{$+$0.1288} & \textbf{$+$0.0518} & \textbf{$+$0.1389} & \textbf{$+$0.0658} & \textbf{$+$0.0674} & \textbf{$+$0.0566} & \textbf{$+$0.1152} & \textbf{$+$0.0954} \\
+D-oracle & \textbf{$+$0.0114} & \textbf{$+$0.0076} & \textbf{$+$0.0203} & \textbf{$+$0.0350} & \textbf{$+$0.0062} & $+$0.0029 & \textbf{$+$0.0121} & \textbf{$+$0.0156} \\
+D$_0$-oracle & \textbf{$+$0.3799} & \textbf{$+$0.3229} & \textbf{$+$0.5671} & \textbf{$+$0.6758} & \textbf{$+$0.2216} & \textbf{$+$0.2729} & \textbf{$+$0.4225} & \textbf{$+$0.5496} \\
+D-P & \textbf{$+$0.0104} & $+$0.0066 & $+$0.0098 & \textbf{$+$0.0275} & \textbf{$+$0.0073} & $+$0.0041 & \textbf{$+$0.0130} & \textbf{$+$0.0107} \\
+D$_0$-P & \textbf{$+$0.4284} & \textbf{$+$0.4141} & \textbf{$+$0.5686} & \textbf{$+$0.6794} & \textbf{$+$0.2678} & \textbf{$+$0.3375} & \textbf{$+$0.4313} & \textbf{$+$0.5596} \\
+\bottomrule
+\end{tabular}
+\end{table}
