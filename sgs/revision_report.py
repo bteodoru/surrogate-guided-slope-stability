@@ -109,13 +109,39 @@ def whole_selection_table(rep, rev) -> str:
     return "\n".join([
         r"\begin{table}[htbp]", r"\centering", r"\footnotesize", r"\setlength{\tabcolsep}{2.5pt}",
         r"\caption{The whole test set and the selection range: each arm's log-RMSE minus B's, mean over "
-        r"$r_1$--$r_5$, on the fixed test sets. Bold: the 95\% Welch interval excludes 0. The intervals are in the "
-        r"Supplementary material. The ablations train on 300 points against B's 600.}",
+        r"$r_1$--$r_5$, on the fixed test sets. Bold: the 95\% Welch interval excludes 0. The intervals are in "
+        r"\cref{S-tab:rev:whole-selection-intervals}. The ablations train on 300 points against B's 600.}",
         r"\label{tab:rev:whole-selection}",
         r"\begin{tabular}{lcccc|cccc}", r"\toprule",
         r" & \multicolumn{4}{c|}{Whole test set} & \multicolumn{4}{c}{Selection range, FOS $\in [0.5, 6]$} \\",
         r"\cmidrule(lr){2-5} \cmidrule(lr){6-9}",
         f"Arm & {head} \\\\", r"\midrule", *rows, r"\bottomrule", r"\end{tabular}", r"\end{table}", ""])
+
+
+def _iv(d, ci) -> str:
+    return f"{d:+.4f} [{ci[0]:+.4f}, {ci[1]:+.4f}]".replace("-", "$-$").replace("+", "$+$")
+
+
+def whole_selection_intervals_table(rep, rev) -> str:
+    """The intervals behind tab:rev:whole-selection, every arm and ablation, for the supplement."""
+    comps = {(c["family"], c["test"], c["measure"], c["first"]): c
+             for c in rep["comparisons"] + rev["fixed_tests"]["comparisons"]
+             if c["second"] == "B" and c["scale"] == "log-rmse"}
+    rows = []
+    for arm in ARMS:
+        for f, t in CELLS:
+            cell = f"{f.upper()}, {t.split('-')[1]}"
+            vals = [comps.get((f, t, m, arm)) for m in ("all", "selection-range")]
+            txt = " & ".join("--" if c is None else _iv(c["diff"], c["ci"]) for c in vals)
+            rows.append(f"{_tex_arm(arm) if (f, t) == CELLS[0] else ''} & {cell} & {txt} \\\\")
+        rows.append(r"\addlinespace")
+    return "\n".join([
+        r"\begin{longtable}{llcc}",
+        r"\caption{The whole test set and the selection range: log-RMSE of every arm minus B's, mean over "
+        r"$r_1$--$r_5$ on the fixed test sets, with the 95\% Welch interval. The means are those of \cref{M-tab:rev:whole-selection}.}\label{tab:rev:whole-selection-intervals}\\",
+        r"\toprule", r"Arm & Cell & Whole test set & Selection range \\", r"\midrule", r"\endfirsthead",
+        r"\toprule", r"Arm & Cell & Whole test set & Selection range \\", r"\midrule", r"\endhead",
+        *rows[:-1], r"\bottomrule", r"\end{longtable}", ""])
 
 
 def decision_intervals_table(rep, rev) -> str:
@@ -213,6 +239,7 @@ def run() -> None:
     rep, rev = _load()
     _write("revision__levels", levels_table(rep, rev))
     _write("revision__whole_selection", whole_selection_table(rep, rev))
+    _write("revision__whole_selection_intervals", whole_selection_intervals_table(rep, rev))
     _write("revision__decision_intervals", decision_intervals_table(rep, rev))
     _write("revision__robustness", robustness_table(rep, rev))
     _write("revision__bias", bias_table(rep, rev))

@@ -592,3 +592,10 @@ of the 2 test sets (L −0.15, H −0.00 on natural; L +0.30, H +0.03 on stratif
   the baseline.
 
 **Corrections to this outcome record (2026-11-19, from the metrics, while writing the Results):** T-natL's decision range holds 2,158 points, not 1,608 (1,608 is its [1, 2) zone); the size-matched check has 24, not 25, of 36 intervals above 0. Both are now corrected above.
+
+**Corrections to this outcome record (2026-11-19, from the metrics, found by a verification of the reviewer responses; the text above is left as it was recorded):**
+- §7, fixed sets: the median width ratio of the bootstrap to the Welch interval is 1.26 (1.2598 over the 72 decision-range contrasts), not 1.27.
+- §7, large sets: the two intervals agree in 69 of the 72 cells, not in every cell but one. Besides C-log's rf/T-stratL cell (contains 0 → below 0), two ablations differ, both on T-stratL: C₀-log under RF (above 0 → contains 0) and D₀-P under GBM (contains 0 → above 0).
+- §8.2 and §8.3 name only some of the changed verdicts. Three features, the four: C-log rf/natural and C-logG rf/natural (contains 0 → below 0), D-P gbm/stratified (contains 0 → below 0), and C-log gbm/natural (above 0 → contains 0). Crest entries dropped, the five: C-log rf/stratified, D-P gbm/stratified and D-oracle gbm/stratified (contains 0 → below 0), C-log gbm/natural (above 0 → contains 0), and C-oracle rf/natural (below 0 → contains 0).
+- §8.5: "no ablation has a lower log-RMSE than A" holds for the intervals, not for every mean. D₀-oracle under GBM on the natural test set has a mean of −0.0067 against A, with an interval containing 0. No ablation has an interval below 0.
+- §8.1, GBM: max_iter is 8,000 in 24 of the 25 units and 4,000 in one (C₀-seq, r5); min_samples_leaf ranges over 2–5, not 3–5.
