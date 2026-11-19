@@ -232990,6 +232990,655 @@
       }
     ]
   },
+  "retune": {
+    "against_baseline": {
+      "C-log": {
+        "cells": {
+          "gbm/test-natural": {
+            "base_verdict": "above 0",
+            "gate": "holds",
+            "verdict": "holds",
+            "verdict_now": "above 0"
+          },
+          "gbm/test-stratified": {
+            "base_verdict": "contains 0",
+            "gate": "holds",
+            "verdict": "holds",
+            "verdict_now": "contains 0"
+          },
+          "rf/test-natural": {
+            "base_verdict": "contains 0",
+            "gate": "holds",
+            "verdict": "holds",
+            "verdict_now": "contains 0"
+          },
+          "rf/test-stratified": {
+            "base_verdict": "contains 0",
+            "gate": "holds",
+            "verdict": "holds",
+            "verdict_now": "contains 0"
+          }
+        },
+        "gate_passes": [
+          4,
+          4
+        ],
+        "level": [
+          1,
+          1
+        ]
+      },
+      "C-seq": {
+        "cells": {
+          "gbm/test-natural": {
+            "base_verdict": "contains 0",
+            "gate": "holds",
+            "verdict": "holds",
+            "verdict_now": "contains 0"
+          },
+          "gbm/test-stratified": {
+            "base_verdict": "contains 0",
+            "gate": "holds",
+            "verdict": "holds",
+            "verdict_now": "contains 0"
+          },
+          "rf/test-natural": {
+            "base_verdict": "contains 0",
+            "gate": "holds",
+            "verdict": "holds",
+            "verdict_now": "contains 0"
+          },
+          "rf/test-stratified": {
+            "base_verdict": "contains 0",
+            "gate": "holds",
+            "verdict": "holds",
+            "verdict_now": "contains 0"
+          }
+        },
+        "gate_passes": [
+          4,
+          4
+        ],
+        "level": [
+          1,
+          1
+        ]
+      },
+      "C0-log": {
+        "cells": {
+          "gbm/test-natural": {
+            "base_verdict": "above 0",
+            "gate": null,
+            "verdict": "holds",
+            "verdict_now": "above 0"
+          },
+          "gbm/test-stratified": {
+            "base_verdict": "above 0",
+            "gate": null,
+            "verdict": "holds",
+            "verdict_now": "above 0"
+          },
+          "rf/test-natural": {
+            "base_verdict": "above 0",
+            "gate": null,
+            "verdict": "holds",
+            "verdict_now": "above 0"
+          },
+          "rf/test-stratified": {
+            "base_verdict": "above 0",
+            "gate": null,
+            "verdict": "holds",
+            "verdict_now": "above 0"
+          }
+        },
+        "gate_passes": null,
+        "level": [
+          0,
+          0
+        ]
+      },
+      "C0-seq": {
+        "cells": {
+          "gbm/test-natural": {
+            "base_verdict": "above 0",
+            "gate": null,
+            "verdict": "holds",
+            "verdict_now": "above 0"
+          },
+          "gbm/test-stratified": {
+            "base_verdict": "above 0",
+            "gate": null,
+            "verdict": "holds",
+            "verdict_now": "above 0"
+          },
+          "rf/test-natural": {
+            "base_verdict": "above 0",
+            "gate": null,
+            "verdict": "holds",
+            "verdict_now": "above 0"
+          },
+          "rf/test-stratified": {
+            "base_verdict": "above 0",
+            "gate": null,
+            "verdict": "holds",
+            "verdict_now": "above 0"
+          }
+        },
+        "gate_passes": null,
+        "level": [
+          0,
+          0
+        ]
+      }
+    },
+    "best_cv_log_rmse": {
+      "gbm/B/r1": 0.05872220428200979,
+      "gbm/B/r2": 0.06165461987306962,
+      "gbm/B/r3": 0.05808039954805132,
+      "gbm/B/r4": 0.059406302143007975,
+      "gbm/B/r5": 0.06267163095516623,
+      "gbm/C-log/r1": 0.06674938977143197,
+      "gbm/C-log/r2": 0.06799776046252905,
+      "gbm/C-log/r3": 0.06628507104315083,
+      "gbm/C-log/r4": 0.06843224996959121,
+      "gbm/C-log/r5": 0.06436094130471408,
+      "gbm/C-seq/r1": 0.07009455351938475,
+      "gbm/C-seq/r2": 0.06779382438074238,
+      "gbm/C-seq/r3": 0.0685330622486949,
+      "gbm/C-seq/r4": 0.0648878850545233,
+      "gbm/C-seq/r5": 0.0629954087172858,
+      "gbm/C0-log/r1": 0.08831708089691284,
+      "gbm/C0-log/r2": 0.09646396618646651,
+      "gbm/C0-log/r3": 0.09051054396462786,
+      "gbm/C0-log/r4": 0.09369527416474313,
+      "gbm/C0-log/r5": 0.09400401518227217,
+      "gbm/C0-seq/r1": 0.10035023629786952,
+      "gbm/C0-seq/r2": 0.09638102212588247,
+      "gbm/C0-seq/r3": 0.09437870418623885,
+      "gbm/C0-seq/r4": 0.10363632647205896,
+      "gbm/C0-seq/r5": 0.0984851001690524,
+      "rf/B/r1": 0.11899767986269447,
+      "rf/B/r2": 0.12155604668434854,
+      "rf/B/r3": 0.12015934543261134,
+      "rf/B/r4": 0.11479248384978753,
+      "rf/B/r5": 0.1190084800947222,
+      "rf/C-log/r1": 0.122357475788144,
+      "rf/C-log/r2": 0.1234799382246331,
+      "rf/C-log/r3": 0.1214482008860694,
+      "rf/C-log/r4": 0.12270451398092612,
+      "rf/C-log/r5": 0.1302139286738157,
+      "rf/C-seq/r1": 0.1315713924259561,
+      "rf/C-seq/r2": 0.12189246704949078,
+      "rf/C-seq/r3": 0.12923593501949387,
+      "rf/C-seq/r4": 0.11490615393928523,
+      "rf/C-seq/r5": 0.12317258603519246,
+      "rf/C0-log/r1": 0.15468507537698906,
+      "rf/C0-log/r2": 0.16874017618333442,
+      "rf/C0-log/r3": 0.17062931217010954,
+      "rf/C0-log/r4": 0.1732069591537637,
+      "rf/C0-log/r5": 0.1642550105641456,
+      "rf/C0-seq/r1": 0.17486458364799565,
+      "rf/C0-seq/r2": 0.17434896168236272,
+      "rf/C0-seq/r3": 0.1721607293517133,
+      "rf/C0-seq/r4": 0.1637816526891098,
+      "rf/C0-seq/r5": 0.1631658760794529
+    },
+    "best_params": {
+      "gbm/B/r1": {
+        "learning_rate": 0.03,
+        "max_iter": 8000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 2
+      },
+      "gbm/B/r2": {
+        "learning_rate": 0.06,
+        "max_iter": 8000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 3
+      },
+      "gbm/B/r3": {
+        "learning_rate": 0.03,
+        "max_iter": 8000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 2
+      },
+      "gbm/B/r4": {
+        "learning_rate": 0.06,
+        "max_iter": 8000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 3
+      },
+      "gbm/B/r5": {
+        "learning_rate": 0.06,
+        "max_iter": 8000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 5
+      },
+      "gbm/C-log/r1": {
+        "learning_rate": 0.1,
+        "max_iter": 8000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 2
+      },
+      "gbm/C-log/r2": {
+        "learning_rate": 0.1,
+        "max_iter": 8000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 3
+      },
+      "gbm/C-log/r3": {
+        "learning_rate": 0.06,
+        "max_iter": 8000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 3
+      },
+      "gbm/C-log/r4": {
+        "learning_rate": 0.1,
+        "max_iter": 8000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 3
+      },
+      "gbm/C-log/r5": {
+        "learning_rate": 0.1,
+        "max_iter": 8000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 3
+      },
+      "gbm/C-seq/r1": {
+        "learning_rate": 0.06,
+        "max_iter": 8000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 3
+      },
+      "gbm/C-seq/r2": {
+        "learning_rate": 0.03,
+        "max_iter": 8000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 5
+      },
+      "gbm/C-seq/r3": {
+        "learning_rate": 0.06,
+        "max_iter": 8000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 2
+      },
+      "gbm/C-seq/r4": {
+        "learning_rate": 0.03,
+        "max_iter": 8000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 3
+      },
+      "gbm/C-seq/r5": {
+        "learning_rate": 0.06,
+        "max_iter": 8000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 2
+      },
+      "gbm/C0-log/r1": {
+        "learning_rate": 0.06,
+        "max_iter": 8000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 3
+      },
+      "gbm/C0-log/r2": {
+        "learning_rate": 0.1,
+        "max_iter": 8000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 5
+      },
+      "gbm/C0-log/r3": {
+        "learning_rate": 0.03,
+        "max_iter": 8000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 5
+      },
+      "gbm/C0-log/r4": {
+        "learning_rate": 0.1,
+        "max_iter": 8000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 5
+      },
+      "gbm/C0-log/r5": {
+        "learning_rate": 0.03,
+        "max_iter": 8000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 5
+      },
+      "gbm/C0-seq/r1": {
+        "learning_rate": 0.03,
+        "max_iter": 8000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 5
+      },
+      "gbm/C0-seq/r2": {
+        "learning_rate": 0.06,
+        "max_iter": 8000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 5
+      },
+      "gbm/C0-seq/r3": {
+        "learning_rate": 0.1,
+        "max_iter": 8000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 5
+      },
+      "gbm/C0-seq/r4": {
+        "learning_rate": 0.03,
+        "max_iter": 8000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 5
+      },
+      "gbm/C0-seq/r5": {
+        "learning_rate": 0.06,
+        "max_iter": 4000,
+        "max_leaf_nodes": 3,
+        "min_samples_leaf": 3
+      },
+      "rf/B/r1": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      },
+      "rf/B/r2": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      },
+      "rf/B/r3": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      },
+      "rf/B/r4": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      },
+      "rf/B/r5": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      },
+      "rf/C-log/r1": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      },
+      "rf/C-log/r2": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      },
+      "rf/C-log/r3": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      },
+      "rf/C-log/r4": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      },
+      "rf/C-log/r5": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      },
+      "rf/C-seq/r1": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      },
+      "rf/C-seq/r2": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      },
+      "rf/C-seq/r3": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      },
+      "rf/C-seq/r4": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      },
+      "rf/C-seq/r5": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      },
+      "rf/C0-log/r1": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      },
+      "rf/C0-log/r2": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      },
+      "rf/C0-log/r3": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      },
+      "rf/C0-log/r4": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      },
+      "rf/C0-log/r5": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      },
+      "rf/C0-seq/r1": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      },
+      "rf/C0-seq/r2": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      },
+      "rf/C0-seq/r3": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      },
+      "rf/C0-seq/r4": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      },
+      "rf/C0-seq/r5": {
+        "max_features": 1.0,
+        "min_samples_leaf": 1
+      }
+    },
+    "n_jobs": 5,
+    "readings": {
+      "C-log": {
+        "cells": {
+          "gbm/test-natural": {
+            "H": 0.250125669191752,
+            "L": -0.18738446491137897,
+            "ci": [
+              0.0011955699807268544,
+              0.013001619337756898
+            ],
+            "diff": 0.007098594659241876,
+            "gate": true,
+            "verdict": "above 0"
+          },
+          "gbm/test-stratified": {
+            "H": 0.15302355108046023,
+            "L": -0.3233245549928777,
+            "ci": [
+              -0.018290265650032653,
+              0.009164846751676918
+            ],
+            "diff": -0.004562709449177867,
+            "gate": true,
+            "verdict": "contains 0"
+          },
+          "rf/test-natural": {
+            "H": 0.12696636819578308,
+            "L": -0.43323001657751853,
+            "ci": [
+              -0.019849622291544314,
+              0.002084127931232291
+            ],
+            "diff": -0.008882747180156012,
+            "gate": true,
+            "verdict": "contains 0"
+          },
+          "rf/test-stratified": {
+            "H": 0.15359098948674949,
+            "L": -0.2259275479724739,
+            "ci": [
+              -0.01706888222041715,
+              0.006036370477326566
+            ],
+            "diff": -0.005516255871545292,
+            "gate": true,
+            "verdict": "contains 0"
+          }
+        },
+        "gate_passes": 4,
+        "level": 1
+      },
+      "C-seq": {
+        "cells": {
+          "gbm/test-natural": {
+            "H": 0.24563093996092256,
+            "L": -0.39156692423301404,
+            "ci": [
+              -0.00498415120067651,
+              0.010598045853825802
+            ],
+            "diff": 0.0028069473265746464,
+            "gate": true,
+            "verdict": "contains 0"
+          },
+          "gbm/test-stratified": {
+            "H": 0.10036270338688248,
+            "L": -0.10208092760451562,
+            "ci": [
+              -0.015256750637006985,
+              0.01067954067406655
+            ],
+            "diff": -0.0022886049814702172,
+            "gate": true,
+            "verdict": "contains 0"
+          },
+          "rf/test-natural": {
+            "H": 0.21907549977652302,
+            "L": -0.2934309191557119,
+            "ci": [
+              -0.01663417521249791,
+              0.020056771064518752
+            ],
+            "diff": 0.0017112979260104216,
+            "gate": true,
+            "verdict": "contains 0"
+          },
+          "rf/test-stratified": {
+            "H": 0.18408359335438262,
+            "L": -0.27096082538920624,
+            "ci": [
+              -0.016932183161477394,
+              0.012449371057614084
+            ],
+            "diff": -0.0022414060519316548,
+            "gate": true,
+            "verdict": "contains 0"
+          }
+        },
+        "gate_passes": 4,
+        "level": 1
+      },
+      "C0-log": {
+        "cells": {
+          "gbm/test-natural": {
+            "H": 0.798745935363872,
+            "L": 0.02514624840726682,
+            "ci": [
+              0.035746073194590756,
+              0.04820296269664306
+            ],
+            "diff": 0.04197451794561691,
+            "gate": false,
+            "verdict": "above 0"
+          },
+          "gbm/test-stratified": {
+            "H": 0.6468239134477838,
+            "L": 0.09319811083816772,
+            "ci": [
+              0.01612689702629198,
+              0.045806945311650096
+            ],
+            "diff": 0.03096692116897104,
+            "gate": false,
+            "verdict": "above 0"
+          },
+          "rf/test-natural": {
+            "H": 0.6738508631352003,
+            "L": -0.3706756256727718,
+            "ci": [
+              0.03003859502308097,
+              0.06600979215800644
+            ],
+            "diff": 0.048024193590543704,
+            "gate": true,
+            "verdict": "above 0"
+          },
+          "rf/test-stratified": {
+            "H": 0.8653547232889777,
+            "L": -0.14427693821824292,
+            "ci": [
+              0.036928029257961764,
+              0.09845628898392964
+            ],
+            "diff": 0.0676921591209457,
+            "gate": true,
+            "verdict": "above 0"
+          }
+        },
+        "gate_passes": 2,
+        "level": 0
+      },
+      "C0-seq": {
+        "cells": {
+          "gbm/test-natural": {
+            "H": 0.9944899809511236,
+            "L": 0.20006565293585912,
+            "ci": [
+              0.039591405493082495,
+              0.08617036089760338
+            ],
+            "diff": 0.06288088319534293,
+            "gate": false,
+            "verdict": "above 0"
+          },
+          "gbm/test-stratified": {
+            "H": 0.8742056355680553,
+            "L": 0.3123365907485775,
+            "ci": [
+              0.044531991604622755,
+              0.07297805013651291
+            ],
+            "diff": 0.05875502087056783,
+            "gate": false,
+            "verdict": "above 0"
+          },
+          "rf/test-natural": {
+            "H": 0.9116621520244165,
+            "L": -0.09821571035426392,
+            "ci": [
+              0.05573091706622596,
+              0.11873294248267588
+            ],
+            "diff": 0.08723192977445092,
+            "gate": true,
+            "verdict": "above 0"
+          },
+          "rf/test-stratified": {
+            "H": 1.2344629506001326,
+            "L": 0.06522874460739929,
+            "ci": [
+              0.0724298926278088,
+              0.15181856135608873
+            ],
+            "diff": 0.11212422699194877,
+            "gate": false,
+            "verdict": "above 0"
+          }
+        },
+        "gate_passes": 1,
+        "level": 0
+      }
+    }
+  },
   "robustness": {
     "alternative_ranges": {
       "[0.4, 2.5)": {

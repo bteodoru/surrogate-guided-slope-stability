@@ -576,6 +576,17 @@ of the 2 test sets (L −0.15, H −0.00 on natural; L +0.30, H +0.03 on stratif
   a property observed with the tree ensembles. The GP-versus-tree comparison is horizontal. It
   is reported only as a scale, never as a ranking claim.
 
-**§8.1, the independent retuning:** stopped on 2026-11-19 at the user's request, after the 25
-RF units and before any GBM unit. Nothing was read. It is resumed only with the user's
-agreement.
+**§8.1, the independent retuning** (code 15c6a8d). The run was stopped on 2026-11-19 after the
+25 RF units, with nothing read, and resumed with the user's agreement the same day. It covers
+50 grid searches: B, C-log, C-seq, C₀-log and C₀-seq, r1..r5, both families.
+
+- **Every reading holds.** None of the 16 decision-range verdicts against B differs from the
+  LC_PARAMS baseline, and no gate differs. The levels are unchanged: C-log 1, C-seq 1, and 0
+  for both ablations.
+- **RF.** The grid selects max_features 1.0 and min_samples_leaf 1 in all 25 units. These are
+  the LC_PARAMS, so the RF fits are the baseline's.
+- **GBM.** The grid selects max_leaf_nodes 3 and max_iter 8,000 in every unit. max_iter 8,000
+  is the declared plateau at the grid's edge. learning_rate varies (0.03–0.10), and so does
+  min_samples_leaf (3–5).
+- **C-log against B under GBM on the natural set:** +0.0071 [+0.0012, +0.0130], above 0, as in
+  the baseline.
