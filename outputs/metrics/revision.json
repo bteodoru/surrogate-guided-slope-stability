@@ -282071,6 +282071,3069 @@
       }
     ]
   },
+  "signed_bias": {
+    "means": {
+      "gbm/test-natural/B/0.5\u20131": 0.011742212054780862,
+      "gbm/test-natural/B/1\u20132": -0.004114907712677937,
+      "gbm/test-natural/B/2\u20136": -0.010315028272042346,
+      "gbm/test-natural/B/FOS < 0.5": 0.08738183842976767,
+      "gbm/test-natural/B/FOS \u2265 6": -0.03007054263172119,
+      "gbm/test-natural/C-log/0.5\u20131": -0.006356508971137427,
+      "gbm/test-natural/C-log/1\u20132": -0.0034678690111731103,
+      "gbm/test-natural/C-log/2\u20136": -0.008942884559558679,
+      "gbm/test-natural/C-log/FOS < 0.5": 0.0764629524085602,
+      "gbm/test-natural/C-log/FOS \u2265 6": -0.06045699600432295,
+      "gbm/test-natural/C-logG/0.5\u20131": -0.000801885728906359,
+      "gbm/test-natural/C-logG/1\u20132": -0.006157003914419343,
+      "gbm/test-natural/C-logG/2\u20136": -0.00970584453222015,
+      "gbm/test-natural/C-logG/FOS < 0.5": 0.10154286587005076,
+      "gbm/test-natural/C-logG/FOS \u2265 6": -0.045304000076157876,
+      "gbm/test-natural/C-logP/0.5\u20131": 0.006159848446943655,
+      "gbm/test-natural/C-logP/1\u20132": -0.0001729836546394044,
+      "gbm/test-natural/C-logP/2\u20136": -0.009643707245329893,
+      "gbm/test-natural/C-logP/FOS < 0.5": 0.08814906902134087,
+      "gbm/test-natural/C-logP/FOS \u2265 6": -0.05051481164310294,
+      "gbm/test-natural/C-oracle/0.5\u20131": -0.00029439432269851164,
+      "gbm/test-natural/C-oracle/1\u20132": -0.005852364701186726,
+      "gbm/test-natural/C-oracle/2\u20136": -0.008306596584377463,
+      "gbm/test-natural/C-oracle/FOS < 0.5": 0.10031414858010683,
+      "gbm/test-natural/C-oracle/FOS \u2265 6": -0.05546249888999456,
+      "gbm/test-natural/C-seq/0.5\u20131": 0.0004352969023126298,
+      "gbm/test-natural/C-seq/1\u20132": -0.0026466657448235096,
+      "gbm/test-natural/C-seq/2\u20136": -0.00868312864153627,
+      "gbm/test-natural/C-seq/FOS < 0.5": 0.08053214396010212,
+      "gbm/test-natural/C-seq/FOS \u2265 6": -0.0472122805291896,
+      "gbm/test-natural/C-seqF/0.5\u20131": 0.003695529670121301,
+      "gbm/test-natural/C-seqF/1\u20132": -0.0010036010033229546,
+      "gbm/test-natural/C-seqF/2\u20136": -0.008905090865304346,
+      "gbm/test-natural/C-seqF/FOS < 0.5": 0.06711199209222608,
+      "gbm/test-natural/C-seqF/FOS \u2265 6": -0.0378510264843125,
+      "gbm/test-natural/C-seqP/0.5\u20131": -0.0006909803505161149,
+      "gbm/test-natural/C-seqP/1\u20132": -0.0032552937568446744,
+      "gbm/test-natural/C-seqP/2\u20136": -0.009130888123325659,
+      "gbm/test-natural/C-seqP/FOS < 0.5": 0.07349037053415038,
+      "gbm/test-natural/C-seqP/FOS \u2265 6": -0.045529312603888004,
+      "gbm/test-natural/C0-log/0.5\u20131": -0.0032007378252271587,
+      "gbm/test-natural/C0-log/1\u20132": -0.014972543734484778,
+      "gbm/test-natural/C0-log/2\u20136": -0.021131183577576734,
+      "gbm/test-natural/C0-log/FOS < 0.5": 0.11890469615041999,
+      "gbm/test-natural/C0-log/FOS \u2265 6": -0.34023737265293735,
+      "gbm/test-natural/C0-logG/0.5\u20131": -0.004020046801041059,
+      "gbm/test-natural/C0-logG/1\u20132": -0.017037519590380627,
+      "gbm/test-natural/C0-logG/2\u20136": -0.022348690232093824,
+      "gbm/test-natural/C0-logG/FOS < 0.5": 0.21374902681302305,
+      "gbm/test-natural/C0-logG/FOS \u2265 6": -0.38526014353599203,
+      "gbm/test-natural/C0-logP/0.5\u20131": -0.00460773436786497,
+      "gbm/test-natural/C0-logP/1\u20132": -0.010334990071679165,
+      "gbm/test-natural/C0-logP/2\u20136": -0.01819762675281169,
+      "gbm/test-natural/C0-logP/FOS < 0.5": 0.12159160773339814,
+      "gbm/test-natural/C0-logP/FOS \u2265 6": -0.37407397389506436,
+      "gbm/test-natural/C0-oracle/0.5\u20131": -0.008221991636534257,
+      "gbm/test-natural/C0-oracle/1\u20132": -0.02452167459704547,
+      "gbm/test-natural/C0-oracle/2\u20136": -0.011406389820109844,
+      "gbm/test-natural/C0-oracle/FOS < 0.5": 0.20801492670845767,
+      "gbm/test-natural/C0-oracle/FOS \u2265 6": -0.3586596017954081,
+      "gbm/test-natural/C0-seq/0.5\u20131": -0.0015110074841931506,
+      "gbm/test-natural/C0-seq/1\u20132": -0.0033949330138106663,
+      "gbm/test-natural/C0-seq/2\u20136": -0.001140415245967937,
+      "gbm/test-natural/C0-seq/FOS < 0.5": 0.13917258617956096,
+      "gbm/test-natural/C0-seq/FOS \u2265 6": -0.32945332306020647,
+      "gbm/test-natural/C0-seqF/0.5\u20131": -0.015517444484508387,
+      "gbm/test-natural/C0-seqF/1\u20132": -0.011548318272829643,
+      "gbm/test-natural/C0-seqF/2\u20136": -0.02885615641892403,
+      "gbm/test-natural/C0-seqF/FOS < 0.5": 0.12896032832420495,
+      "gbm/test-natural/C0-seqF/FOS \u2265 6": -0.32269216184695226,
+      "gbm/test-natural/C0-seqP/0.5\u20131": -0.011973100821134348,
+      "gbm/test-natural/C0-seqP/1\u20132": -0.007519316942747161,
+      "gbm/test-natural/C0-seqP/2\u20136": -0.01740902518126109,
+      "gbm/test-natural/C0-seqP/FOS < 0.5": 0.13576520879402015,
+      "gbm/test-natural/C0-seqP/FOS \u2265 6": -0.36198689198009176,
+      "gbm/test-natural/D-P/0.5\u20131": -0.0019441458183310934,
+      "gbm/test-natural/D-P/1\u20132": -0.0025349422411984463,
+      "gbm/test-natural/D-P/2\u20136": -0.02210494227453779,
+      "gbm/test-natural/D-P/FOS < 0.5": 0.07814852713945974,
+      "gbm/test-natural/D-P/FOS \u2265 6": -0.06607896957942373,
+      "gbm/test-natural/D-oracle/0.5\u20131": 0.0007840341144946278,
+      "gbm/test-natural/D-oracle/1\u20132": -0.008432710978712666,
+      "gbm/test-natural/D-oracle/2\u20136": -0.0178287929298809,
+      "gbm/test-natural/D-oracle/FOS < 0.5": 0.1036708590399951,
+      "gbm/test-natural/D-oracle/FOS \u2265 6": -0.04955906777810555,
+      "gbm/test-natural/D0-P/0.5\u20131": 0.001701903054313891,
+      "gbm/test-natural/D0-P/1\u20132": -0.0380727174902344,
+      "gbm/test-natural/D0-P/2\u20136": -0.3292807356940789,
+      "gbm/test-natural/D0-P/FOS < 0.5": 0.139305469148938,
+      "gbm/test-natural/D0-P/FOS \u2265 6": -1.2643139894142863,
+      "gbm/test-natural/D0-oracle/0.5\u20131": -0.0021334702860319847,
+      "gbm/test-natural/D0-oracle/1\u20132": -0.033654528442303856,
+      "gbm/test-natural/D0-oracle/2\u20136": -0.2304075286807154,
+      "gbm/test-natural/D0-oracle/FOS < 0.5": 0.26600516005630886,
+      "gbm/test-natural/D0-oracle/FOS \u2265 6": -1.1128905204276656,
+      "gbm/test-stratified/B/0.5\u20131": 0.023593297099195366,
+      "gbm/test-stratified/B/1\u20132": 0.005245310847337902,
+      "gbm/test-stratified/B/2\u20136": -0.00984325664937793,
+      "gbm/test-stratified/B/FOS < 0.5": -0.016255038389185794,
+      "gbm/test-stratified/B/FOS \u2265 6": -0.03450288100588765,
+      "gbm/test-stratified/C-log/0.5\u20131": 0.006861171361394608,
+      "gbm/test-stratified/C-log/1\u20132": -0.01086673400779854,
+      "gbm/test-stratified/C-log/2\u20136": -0.00175267084986453,
+      "gbm/test-stratified/C-log/FOS < 0.5": -0.02197444839508276,
+      "gbm/test-stratified/C-log/FOS \u2265 6": -0.010371179958999801,
+      "gbm/test-stratified/C-logG/0.5\u20131": 0.009137267026230208,
+      "gbm/test-stratified/C-logG/1\u20132": 0.0023526963316994253,
+      "gbm/test-stratified/C-logG/2\u20136": -0.00788230262175858,
+      "gbm/test-stratified/C-logG/FOS < 0.5": 0.03922337049533685,
+      "gbm/test-stratified/C-logG/FOS \u2265 6": -0.02579070479450299,
+      "gbm/test-stratified/C-logP/0.5\u20131": -0.008770762021476647,
+      "gbm/test-stratified/C-logP/1\u20132": -0.004541264162204065,
+      "gbm/test-stratified/C-logP/2\u20136": -0.007499649750388047,
+      "gbm/test-stratified/C-logP/FOS < 0.5": 0.001161005174589519,
+      "gbm/test-stratified/C-logP/FOS \u2265 6": -0.016412337233677157,
+      "gbm/test-stratified/C-oracle/0.5\u20131": 0.00734251138415371,
+      "gbm/test-stratified/C-oracle/1\u20132": -0.003347400262538635,
+      "gbm/test-stratified/C-oracle/2\u20136": -0.003520327089317369,
+      "gbm/test-stratified/C-oracle/FOS < 0.5": 0.036902894702760605,
+      "gbm/test-stratified/C-oracle/FOS \u2265 6": -0.0232706891045144,
+      "gbm/test-stratified/C-seq/0.5\u20131": 0.01690078766502565,
+      "gbm/test-stratified/C-seq/1\u20132": -0.004416235481412431,
+      "gbm/test-stratified/C-seq/2\u20136": -0.004480683412018419,
+      "gbm/test-stratified/C-seq/FOS < 0.5": -0.0017425576590117022,
+      "gbm/test-stratified/C-seq/FOS \u2265 6": -0.011215294741513638,
+      "gbm/test-stratified/C-seqF/0.5\u20131": 0.014108448434032295,
+      "gbm/test-stratified/C-seqF/1\u20132": -0.00941244310758016,
+      "gbm/test-stratified/C-seqF/2\u20136": -0.005177442814659693,
+      "gbm/test-stratified/C-seqF/FOS < 0.5": 0.024612219786570126,
+      "gbm/test-stratified/C-seqF/FOS \u2265 6": -0.00213126376312174,
+      "gbm/test-stratified/C-seqP/0.5\u20131": 0.014075226841079152,
+      "gbm/test-stratified/C-seqP/1\u20132": -0.007436725343251631,
+      "gbm/test-stratified/C-seqP/2\u20136": -0.006093562809610725,
+      "gbm/test-stratified/C-seqP/FOS < 0.5": 0.0060431965801680185,
+      "gbm/test-stratified/C-seqP/FOS \u2265 6": -0.011551177364305183,
+      "gbm/test-stratified/C0-log/0.5\u20131": 0.001512109178913669,
+      "gbm/test-stratified/C0-log/1\u20132": -0.02798442635191582,
+      "gbm/test-stratified/C0-log/2\u20136": -0.01309503070947326,
+      "gbm/test-stratified/C0-log/FOS < 0.5": -0.01856575647363811,
+      "gbm/test-stratified/C0-log/FOS \u2265 6": -0.029246024807234393,
+      "gbm/test-stratified/C0-logG/0.5\u20131": 0.011313126778985143,
+      "gbm/test-stratified/C0-logG/1\u20132": -0.030428813611351767,
+      "gbm/test-stratified/C0-logG/2\u20136": -0.013352623111148789,
+      "gbm/test-stratified/C0-logG/FOS < 0.5": 0.1029014113850244,
+      "gbm/test-stratified/C0-logG/FOS \u2265 6": -0.07826124115544805,
+      "gbm/test-stratified/C0-logP/0.5\u20131": 0.006484635719994749,
+      "gbm/test-stratified/C0-logP/1\u20132": -0.026290994444973514,
+      "gbm/test-stratified/C0-logP/2\u20136": -0.005644104702729409,
+      "gbm/test-stratified/C0-logP/FOS < 0.5": 0.029579068286006927,
+      "gbm/test-stratified/C0-logP/FOS \u2265 6": -0.047060796395488436,
+      "gbm/test-stratified/C0-oracle/0.5\u20131": 0.014755822658843972,
+      "gbm/test-stratified/C0-oracle/1\u20132": -0.02587192980346728,
+      "gbm/test-stratified/C0-oracle/2\u20136": -0.0006864909980734211,
+      "gbm/test-stratified/C0-oracle/FOS < 0.5": 0.11945552840292425,
+      "gbm/test-stratified/C0-oracle/FOS \u2265 6": -0.10545596677445206,
+      "gbm/test-stratified/C0-seq/0.5\u20131": 0.004909806083594289,
+      "gbm/test-stratified/C0-seq/1\u20132": 0.008039897837129183,
+      "gbm/test-stratified/C0-seq/2\u20136": 0.010603561037134541,
+      "gbm/test-stratified/C0-seq/FOS < 0.5": 0.03912751720755887,
+      "gbm/test-stratified/C0-seq/FOS \u2265 6": -0.023874755350577676,
+      "gbm/test-stratified/C0-seqF/0.5\u20131": -0.004133989812253124,
+      "gbm/test-stratified/C0-seqF/1\u20132": -0.01971658872265667,
+      "gbm/test-stratified/C0-seqF/2\u20136": -0.007479188122626032,
+      "gbm/test-stratified/C0-seqF/FOS < 0.5": 0.01755451268000721,
+      "gbm/test-stratified/C0-seqF/FOS \u2265 6": -0.027180525277734575,
+      "gbm/test-stratified/C0-seqP/0.5\u20131": 0.015550739011950343,
+      "gbm/test-stratified/C0-seqP/1\u20132": -0.02000102546954462,
+      "gbm/test-stratified/C0-seqP/2\u20136": -0.008225965040765173,
+      "gbm/test-stratified/C0-seqP/FOS < 0.5": 0.04215238892204809,
+      "gbm/test-stratified/C0-seqP/FOS \u2265 6": -0.051484828106833316,
+      "gbm/test-stratified/D-P/0.5\u20131": -0.0064922575193127625,
+      "gbm/test-stratified/D-P/1\u20132": -0.009142563241918311,
+      "gbm/test-stratified/D-P/2\u20136": -0.015302210543033276,
+      "gbm/test-stratified/D-P/FOS < 0.5": 0.016540203047318902,
+      "gbm/test-stratified/D-P/FOS \u2265 6": -0.0398092050433483,
+      "gbm/test-stratified/D-oracle/0.5\u20131": 0.006813414872417682,
+      "gbm/test-stratified/D-oracle/1\u20132": -0.011496103283512044,
+      "gbm/test-stratified/D-oracle/2\u20136": -0.013991245371417887,
+      "gbm/test-stratified/D-oracle/FOS < 0.5": 0.03117139935663854,
+      "gbm/test-stratified/D-oracle/FOS \u2265 6": -0.03488095331848372,
+      "gbm/test-stratified/D0-P/0.5\u20131": -0.004180691282126088,
+      "gbm/test-stratified/D0-P/1\u20132": -0.053078627344688614,
+      "gbm/test-stratified/D0-P/2\u20136": -0.36871189360084694,
+      "gbm/test-stratified/D0-P/FOS < 0.5": 0.03547005945824131,
+      "gbm/test-stratified/D0-P/FOS \u2265 6": -0.7608247616492212,
+      "gbm/test-stratified/D0-oracle/0.5\u20131": 0.011889816574095624,
+      "gbm/test-stratified/D0-oracle/1\u20132": -0.04653891851119178,
+      "gbm/test-stratified/D0-oracle/2\u20136": -0.26144970425812164,
+      "gbm/test-stratified/D0-oracle/FOS < 0.5": 0.14097821541173913,
+      "gbm/test-stratified/D0-oracle/FOS \u2265 6": -0.5402762236244966,
+      "rf/test-natural/B/0.5\u20131": 0.09499500759938817,
+      "rf/test-natural/B/1\u20132": -0.0018975615401806028,
+      "rf/test-natural/B/2\u20136": -0.026694023355988566,
+      "rf/test-natural/B/FOS < 0.5": 0.32846908348271386,
+      "rf/test-natural/B/FOS \u2265 6": -0.04589200238153238,
+      "rf/test-natural/C-log/0.5\u20131": 0.04070688034523658,
+      "rf/test-natural/C-log/1\u20132": -0.011756544001160451,
+      "rf/test-natural/C-log/2\u20136": -0.023234428857583728,
+      "rf/test-natural/C-log/FOS < 0.5": 0.26918076114990036,
+      "rf/test-natural/C-log/FOS \u2265 6": -0.008927379719082678,
+      "rf/test-natural/C-logG/0.5\u20131": 0.021529048242688247,
+      "rf/test-natural/C-logG/1\u20132": -0.0134557624824219,
+      "rf/test-natural/C-logG/2\u20136": -0.025849887575783465,
+      "rf/test-natural/C-logG/FOS < 0.5": 0.37763377373152685,
+      "rf/test-natural/C-logG/FOS \u2265 6": -0.04259304698998252,
+      "rf/test-natural/C-logP/0.5\u20131": 0.05115200025004592,
+      "rf/test-natural/C-logP/1\u20132": -0.005155384177733362,
+      "rf/test-natural/C-logP/2\u20136": -0.023989282157789327,
+      "rf/test-natural/C-logP/FOS < 0.5": 0.2858574999768243,
+      "rf/test-natural/C-logP/FOS \u2265 6": -0.004575777020190954,
+      "rf/test-natural/C-oracle/0.5\u20131": 0.02025512058062331,
+      "rf/test-natural/C-oracle/1\u20132": -0.019903636259084298,
+      "rf/test-natural/C-oracle/2\u20136": -0.020806932005419033,
+      "rf/test-natural/C-oracle/FOS < 0.5": 0.39419901963704584,
+      "rf/test-natural/C-oracle/FOS \u2265 6": -0.06378689077504678,
+      "rf/test-natural/C-seq/0.5\u20131": 0.04782802663592285,
+      "rf/test-natural/C-seq/1\u20132": -0.007270670106689095,
+      "rf/test-natural/C-seq/2\u20136": -0.02791217483449036,
+      "rf/test-natural/C-seq/FOS < 0.5": 0.31323684674980756,
+      "rf/test-natural/C-seq/FOS \u2265 6": -0.01428132394867907,
+      "rf/test-natural/C-seqF/0.5\u20131": 0.0476348901159952,
+      "rf/test-natural/C-seqF/1\u20132": -0.008785590247405124,
+      "rf/test-natural/C-seqF/2\u20136": -0.022789303312528285,
+      "rf/test-natural/C-seqF/FOS < 0.5": 0.26729948453945895,
+      "rf/test-natural/C-seqF/FOS \u2265 6": -0.008531360198173585,
+      "rf/test-natural/C-seqP/0.5\u20131": 0.03900573488899925,
+      "rf/test-natural/C-seqP/1\u20132": -0.007730062064758949,
+      "rf/test-natural/C-seqP/2\u20136": -0.02632906067202262,
+      "rf/test-natural/C-seqP/FOS < 0.5": 0.3042693782681118,
+      "rf/test-natural/C-seqP/FOS \u2265 6": -0.011588821102133615,
+      "rf/test-natural/C0-log/0.5\u20131": 0.008472105117428005,
+      "rf/test-natural/C0-log/1\u20132": -0.025741448293465724,
+      "rf/test-natural/C0-log/2\u20136": -0.035357017861216825,
+      "rf/test-natural/C0-log/FOS < 0.5": 0.2983936990903596,
+      "rf/test-natural/C0-log/FOS \u2265 6": -0.4038644427654197,
+      "rf/test-natural/C0-logG/0.5\u20131": -0.0016270113879969475,
+      "rf/test-natural/C0-logG/1\u20132": -0.04927623715168112,
+      "rf/test-natural/C0-logG/2\u20136": -0.030047905102628763,
+      "rf/test-natural/C0-logG/FOS < 0.5": 0.45653360343379584,
+      "rf/test-natural/C0-logG/FOS \u2265 6": -0.5212251020856524,
+      "rf/test-natural/C0-logP/0.5\u20131": 0.012969322712984671,
+      "rf/test-natural/C0-logP/1\u20132": -0.00034407979037193257,
+      "rf/test-natural/C0-logP/2\u20136": -0.047967907268039164,
+      "rf/test-natural/C0-logP/FOS < 0.5": 0.2968002400017745,
+      "rf/test-natural/C0-logP/FOS \u2265 6": -0.41191278317367813,
+      "rf/test-natural/C0-oracle/0.5\u20131": 0.0016884730520992414,
+      "rf/test-natural/C0-oracle/1\u20132": -0.04146269776160273,
+      "rf/test-natural/C0-oracle/2\u20136": -0.007361332129392986,
+      "rf/test-natural/C0-oracle/FOS < 0.5": 0.563061390093303,
+      "rf/test-natural/C0-oracle/FOS \u2265 6": -0.5548940714146091,
+      "rf/test-natural/C0-seq/0.5\u20131": 0.017998229166557887,
+      "rf/test-natural/C0-seq/1\u20132": -0.014619711079099883,
+      "rf/test-natural/C0-seq/2\u20136": -0.003208973405742166,
+      "rf/test-natural/C0-seq/FOS < 0.5": 0.34017207103195873,
+      "rf/test-natural/C0-seq/FOS \u2265 6": -0.43607167459719476,
+      "rf/test-natural/C0-seqF/0.5\u20131": -0.00045979055375273796,
+      "rf/test-natural/C0-seqF/1\u20132": -0.0336061781518557,
+      "rf/test-natural/C0-seqF/2\u20136": -0.03868447277053376,
+      "rf/test-natural/C0-seqF/FOS < 0.5": 0.2683297818079514,
+      "rf/test-natural/C0-seqF/FOS \u2265 6": -0.38059815056487084,
+      "rf/test-natural/C0-seqP/0.5\u20131": -0.0058617889939132205,
+      "rf/test-natural/C0-seqP/1\u20132": -0.032542836440122555,
+      "rf/test-natural/C0-seqP/2\u20136": -0.028437809610251098,
+      "rf/test-natural/C0-seqP/FOS < 0.5": 0.32817964486945245,
+      "rf/test-natural/C0-seqP/FOS \u2265 6": -0.4311642479409429,
+      "rf/test-natural/D-P/0.5\u20131": 0.028242856138639288,
+      "rf/test-natural/D-P/1\u20132": -0.016882848677647427,
+      "rf/test-natural/D-P/2\u20136": -0.039958940426475686,
+      "rf/test-natural/D-P/FOS < 0.5": 0.2684595990198969,
+      "rf/test-natural/D-P/FOS \u2265 6": -0.05915841946162644,
+      "rf/test-natural/D-oracle/0.5\u20131": 0.018157565050477976,
+      "rf/test-natural/D-oracle/1\u20132": -0.0274258807837639,
+      "rf/test-natural/D-oracle/2\u20136": -0.049206294723210565,
+      "rf/test-natural/D-oracle/FOS < 0.5": 0.40162839371986453,
+      "rf/test-natural/D-oracle/FOS \u2265 6": -0.058433161811753134,
+      "rf/test-natural/D0-P/0.5\u20131": 0.01090325157251514,
+      "rf/test-natural/D0-P/1\u20132": -0.10187785900335619,
+      "rf/test-natural/D0-P/2\u20136": -0.6561033947642056,
+      "rf/test-natural/D0-P/FOS < 0.5": 0.281700021698176,
+      "rf/test-natural/D0-P/FOS \u2265 6": -1.66434788586039,
+      "rf/test-natural/D0-oracle/0.5\u20131": 0.013963158692343464,
+      "rf/test-natural/D0-oracle/1\u20132": -0.11263709348432502,
+      "rf/test-natural/D0-oracle/2\u20136": -0.6427014051112108,
+      "rf/test-natural/D0-oracle/FOS < 0.5": 0.564701963334211,
+      "rf/test-natural/D0-oracle/FOS \u2265 6": -1.6493512850683527,
+      "rf/test-stratified/B/0.5\u20131": 0.10893969216045048,
+      "rf/test-stratified/B/1\u20132": 0.01603750147497563,
+      "rf/test-stratified/B/2\u20136": -0.018204897941826483,
+      "rf/test-stratified/B/FOS < 0.5": 0.1886598959693619,
+      "rf/test-stratified/B/FOS \u2265 6": -0.17911734960164566,
+      "rf/test-stratified/C-log/0.5\u20131": 0.0595478140874216,
+      "rf/test-stratified/C-log/1\u20132": 0.006320630627310161,
+      "rf/test-stratified/C-log/2\u20136": -0.02341353798218667,
+      "rf/test-stratified/C-log/FOS < 0.5": 0.03780755768462248,
+      "rf/test-stratified/C-log/FOS \u2265 6": -0.10590049440386455,
+      "rf/test-stratified/C-logG/0.5\u20131": 0.04062827505128122,
+      "rf/test-stratified/C-logG/1\u20132": 0.001789736678254289,
+      "rf/test-stratified/C-logG/2\u20136": -0.018832314689743224,
+      "rf/test-stratified/C-logG/FOS < 0.5": 0.15268886639626858,
+      "rf/test-stratified/C-logG/FOS \u2265 6": -0.2192200398231888,
+      "rf/test-stratified/C-logP/0.5\u20131": 0.06673471996797829,
+      "rf/test-stratified/C-logP/1\u20132": 0.019088820687346988,
+      "rf/test-stratified/C-logP/2\u20136": -0.02312036399844512,
+      "rf/test-stratified/C-logP/FOS < 0.5": 0.08201704475684271,
+      "rf/test-stratified/C-logP/FOS \u2265 6": -0.11329835855420223,
+      "rf/test-stratified/C-oracle/0.5\u20131": 0.04996713076760415,
+      "rf/test-stratified/C-oracle/1\u20132": 0.006009590082904927,
+      "rf/test-stratified/C-oracle/2\u20136": -0.014029673834580234,
+      "rf/test-stratified/C-oracle/FOS < 0.5": 0.220230610277177,
+      "rf/test-stratified/C-oracle/FOS \u2265 6": -0.23382867948299574,
+      "rf/test-stratified/C-seq/0.5\u20131": 0.043761163603246986,
+      "rf/test-stratified/C-seq/1\u20132": 0.0038821248041659645,
+      "rf/test-stratified/C-seq/2\u20136": -0.02366334575753439,
+      "rf/test-stratified/C-seq/FOS < 0.5": 0.13597398926464982,
+      "rf/test-stratified/C-seq/FOS \u2265 6": -0.12870078735263563,
+      "rf/test-stratified/C-seqF/0.5\u20131": 0.06706837824660403,
+      "rf/test-stratified/C-seqF/1\u20132": 0.01934492685391207,
+      "rf/test-stratified/C-seqF/2\u20136": -0.018052577005973267,
+      "rf/test-stratified/C-seqF/FOS < 0.5": 0.11563054679556535,
+      "rf/test-stratified/C-seqF/FOS \u2265 6": -0.0899448311873438,
+      "rf/test-stratified/C-seqP/0.5\u20131": 0.05908456123803879,
+      "rf/test-stratified/C-seqP/1\u20132": 0.010382177599582525,
+      "rf/test-stratified/C-seqP/2\u20136": -0.020549538018538434,
+      "rf/test-stratified/C-seqP/FOS < 0.5": 0.08577645049500389,
+      "rf/test-stratified/C-seqP/FOS \u2265 6": -0.13846618964845553,
+      "rf/test-stratified/C0-log/0.5\u20131": 0.03210792367497119,
+      "rf/test-stratified/C0-log/1\u20132": -0.038154972738115765,
+      "rf/test-stratified/C0-log/2\u20136": -0.026917651281362025,
+      "rf/test-stratified/C0-log/FOS < 0.5": -0.03733091215681894,
+      "rf/test-stratified/C0-log/FOS \u2265 6": -0.12378230530658292,
+      "rf/test-stratified/C0-logG/0.5\u20131": 0.029856863188396233,
+      "rf/test-stratified/C0-logG/1\u20132": -0.018743036840627496,
+      "rf/test-stratified/C0-logG/2\u20136": -0.01978012733130122,
+      "rf/test-stratified/C0-logG/FOS < 0.5": 0.19756688621672058,
+      "rf/test-stratified/C0-logG/FOS \u2265 6": -0.2603765217198644,
+      "rf/test-stratified/C0-logP/0.5\u20131": 0.05882559015414224,
+      "rf/test-stratified/C0-logP/1\u20132": -0.001323794676325718,
+      "rf/test-stratified/C0-logP/2\u20136": -0.027523658597898442,
+      "rf/test-stratified/C0-logP/FOS < 0.5": 0.037040250182673054,
+      "rf/test-stratified/C0-logP/FOS \u2265 6": -0.13159898595284975,
+      "rf/test-stratified/C0-oracle/0.5\u20131": 0.049834142605619275,
+      "rf/test-stratified/C0-oracle/1\u20132": -0.008945110095859415,
+      "rf/test-stratified/C0-oracle/2\u20136": 0.00479672334980462,
+      "rf/test-stratified/C0-oracle/FOS < 0.5": 0.2612662906772787,
+      "rf/test-stratified/C0-oracle/FOS \u2265 6": -0.30922801640015124,
+      "rf/test-stratified/C0-seq/0.5\u20131": 0.04057539432364455,
+      "rf/test-stratified/C0-seq/1\u20132": 0.012229638332015678,
+      "rf/test-stratified/C0-seq/2\u20136": 0.004313982719159957,
+      "rf/test-stratified/C0-seq/FOS < 0.5": 0.10459482444114485,
+      "rf/test-stratified/C0-seq/FOS \u2265 6": -0.15408345120840772,
+      "rf/test-stratified/C0-seqF/0.5\u20131": 0.04774661724807127,
+      "rf/test-stratified/C0-seqF/1\u20132": -0.012007652945765477,
+      "rf/test-stratified/C0-seqF/2\u20136": -0.012861262079677799,
+      "rf/test-stratified/C0-seqF/FOS < 0.5": 0.036319652080544794,
+      "rf/test-stratified/C0-seqF/FOS \u2265 6": -0.09544805441943216,
+      "rf/test-stratified/C0-seqP/0.5\u20131": 0.03880544028825983,
+      "rf/test-stratified/C0-seqP/1\u20132": -0.015341541694225922,
+      "rf/test-stratified/C0-seqP/2\u20136": -0.005666447637435401,
+      "rf/test-stratified/C0-seqP/FOS < 0.5": 0.08082957083429948,
+      "rf/test-stratified/C0-seqP/FOS \u2265 6": -0.16015009302767386,
+      "rf/test-stratified/D-P/0.5\u20131": 0.04646628956620359,
+      "rf/test-stratified/D-P/1\u20132": -0.002095477578590807,
+      "rf/test-stratified/D-P/2\u20136": -0.02717929002464724,
+      "rf/test-stratified/D-P/FOS < 0.5": 0.02169437726494518,
+      "rf/test-stratified/D-P/FOS \u2265 6": -0.2692612206905715,
+      "rf/test-stratified/D-oracle/0.5\u20131": 0.04297956673462666,
+      "rf/test-stratified/D-oracle/1\u20132": -0.018534829871712042,
+      "rf/test-stratified/D-oracle/2\u20136": -0.03913228293496626,
+      "rf/test-stratified/D-oracle/FOS < 0.5": 0.2134986326067859,
+      "rf/test-stratified/D-oracle/FOS \u2265 6": -0.274966436747618,
+      "rf/test-stratified/D0-P/0.5\u20131": 0.031696900516250175,
+      "rf/test-stratified/D0-P/1\u20132": -0.10673239709485069,
+      "rf/test-stratified/D0-P/2\u20136": -0.7133265326547108,
+      "rf/test-stratified/D0-P/FOS < 0.5": -0.007426595087641402,
+      "rf/test-stratified/D0-P/FOS \u2265 6": -1.3634402461407849,
+      "rf/test-stratified/D0-oracle/0.5\u20131": 0.047739590853339675,
+      "rf/test-stratified/D0-oracle/1\u20132": -0.10988125590453146,
+      "rf/test-stratified/D0-oracle/2\u20136": -0.6999997163871121,
+      "rf/test-stratified/D0-oracle/FOS < 0.5": 0.25820826599727387,
+      "rf/test-stratified/D0-oracle/FOS \u2265 6": -1.3719382216166534
+    },
+    "n_points": {
+      "test-natural": {
+        "0.5\u20131": 33,
+        "1\u20132": 94,
+        "2\u20136": 139,
+        "FOS < 0.5": 10,
+        "FOS \u2265 6": 24
+      },
+      "test-stratified": {
+        "0.5\u20131": 12,
+        "1\u20132": 24,
+        "2\u20136": 88,
+        "FOS < 0.5": 3,
+        "FOS \u2265 6": 23
+      }
+    },
+    "note": "post hoc, descriptive (R1.10); mean ln(pred/true) per zone; no test, no reading",
+    "per_realization": {
+      "gbm/test-natural/B/0.5\u20131": {
+        "r1": -0.002023615587801803,
+        "r2": 0.022691101456268167,
+        "r3": 0.005908645766375867,
+        "r4": 0.011778133822648671,
+        "r5": 0.02035679481641341
+      },
+      "gbm/test-natural/B/1\u20132": {
+        "r1": -0.0032202529552328068,
+        "r2": -0.005641802079454031,
+        "r3": -0.003404121083262307,
+        "r4": -0.006103604967053262,
+        "r5": -0.002204757478387277
+      },
+      "gbm/test-natural/B/2\u20136": {
+        "r1": -0.010486927289035016,
+        "r2": -0.012092230154770338,
+        "r3": -0.012168642680603123,
+        "r4": -0.004815604936942801,
+        "r5": -0.012011736298860447
+      },
+      "gbm/test-natural/B/FOS < 0.5": {
+        "r1": 0.08852076389850613,
+        "r2": 0.07793676419076316,
+        "r3": 0.07451328940198079,
+        "r4": 0.09474445474459323,
+        "r5": 0.10119391991299502
+      },
+      "gbm/test-natural/B/FOS \u2265 6": {
+        "r1": -0.035383081051228914,
+        "r2": -0.031200112907730032,
+        "r3": -0.013596307891429377,
+        "r4": -0.03772772696423151,
+        "r5": -0.03244548434398612
+      },
+      "gbm/test-natural/C-log/0.5\u20131": {
+        "r1": -0.007254277822568371,
+        "r2": -0.009667543668244023,
+        "r3": -0.005356849511718385,
+        "r4": 0.000934395393020689,
+        "r5": -0.010438269246177042
+      },
+      "gbm/test-natural/C-log/1\u20132": {
+        "r1": -0.005762144985962324,
+        "r2": -0.0024498271736536764,
+        "r3": 0.001289793375365455,
+        "r4": -0.002942490682385611,
+        "r5": -0.007474675589229394
+      },
+      "gbm/test-natural/C-log/2\u20136": {
+        "r1": -0.009768137561767339,
+        "r2": -0.01289070346038937,
+        "r3": -0.003394519012255157,
+        "r4": -0.010729520936398423,
+        "r5": -0.007931541826983106
+      },
+      "gbm/test-natural/C-log/FOS < 0.5": {
+        "r1": 0.11808504970292102,
+        "r2": 0.07034759048704957,
+        "r3": 0.055609324591630815,
+        "r4": 0.06000534292751808,
+        "r5": 0.07826745433368151
+      },
+      "gbm/test-natural/C-log/FOS \u2265 6": {
+        "r1": -0.0716838030639975,
+        "r2": -0.048844046102917114,
+        "r3": -0.06545615366303588,
+        "r4": -0.0629135870551374,
+        "r5": -0.05338739013652687
+      },
+      "gbm/test-natural/C-logG/0.5\u20131": {
+        "r1": 0.00492106907869461,
+        "r2": -0.0005339782952539171,
+        "r3": -0.007209129560759768,
+        "r4": -0.008486461044026537,
+        "r5": 0.007299071176813818
+      },
+      "gbm/test-natural/C-logG/1\u20132": {
+        "r1": -0.011166812664335488,
+        "r2": -0.0037013867379412286,
+        "r3": 0.0015960343487125977,
+        "r4": -0.006865176984908645,
+        "r5": -0.010647677533623954
+      },
+      "gbm/test-natural/C-logG/2\u20136": {
+        "r1": -0.004272407998899694,
+        "r2": -0.012014981171615178,
+        "r3": -0.008374015030554148,
+        "r4": -0.013108271253961887,
+        "r5": -0.010759547206069843
+      },
+      "gbm/test-natural/C-logG/FOS < 0.5": {
+        "r1": 0.11716841126882419,
+        "r2": 0.11987403693025984,
+        "r3": 0.07385720798439695,
+        "r4": 0.06831443538735991,
+        "r5": 0.1285002377794129
+      },
+      "gbm/test-natural/C-logG/FOS \u2265 6": {
+        "r1": -0.04810126768109046,
+        "r2": -0.03837360235380519,
+        "r3": -0.04812577286734024,
+        "r4": -0.04774484807650864,
+        "r5": -0.04417450940204485
+      },
+      "gbm/test-natural/C-logP/0.5\u20131": {
+        "r1": 0.009391463176672993,
+        "r2": -0.0048186036925159815,
+        "r3": 0.006585584250144097,
+        "r4": 0.008832927100139734,
+        "r5": 0.01080787140027743
+      },
+      "gbm/test-natural/C-logP/1\u20132": {
+        "r1": 0.0005316049358162812,
+        "r2": 0.00034414508690807993,
+        "r3": -0.003689063081045068,
+        "r4": -0.00031844441620666004,
+        "r5": 0.002266839201330345
+      },
+      "gbm/test-natural/C-logP/2\u20136": {
+        "r1": -0.0037627436129974803,
+        "r2": -0.012366294442663326,
+        "r3": -0.00759919395436572,
+        "r4": -0.008156113387307243,
+        "r5": -0.01633419082931569
+      },
+      "gbm/test-natural/C-logP/FOS < 0.5": {
+        "r1": 0.06974334636462302,
+        "r2": 0.0884302336899333,
+        "r3": 0.08825588004905663,
+        "r4": 0.08901237879012543,
+        "r5": 0.10530350621296596
+      },
+      "gbm/test-natural/C-logP/FOS \u2265 6": {
+        "r1": -0.04097258238166449,
+        "r2": -0.05193119509056806,
+        "r3": -0.0542055653729701,
+        "r4": -0.04443289218638612,
+        "r5": -0.061031823183925936
+      },
+      "gbm/test-natural/C-oracle/0.5\u20131": {
+        "r1": 0.005405949693056921,
+        "r2": -0.005386915762276277,
+        "r3": -0.001850280369525549,
+        "r4": -0.002902565837141079,
+        "r5": 0.0032618406623934255
+      },
+      "gbm/test-natural/C-oracle/1\u20132": {
+        "r1": -0.0016219828280619262,
+        "r2": -0.009145815642156543,
+        "r3": -0.007640079356215014,
+        "r4": -0.009675753070225997,
+        "r5": -0.0011781926092741494
+      },
+      "gbm/test-natural/C-oracle/2\u20136": {
+        "r1": -0.008073271779042003,
+        "r2": -0.005476387197102669,
+        "r3": -0.008608445916727343,
+        "r4": -0.005278678164485771,
+        "r5": -0.014096199864529532
+      },
+      "gbm/test-natural/C-oracle/FOS < 0.5": {
+        "r1": 0.0865033548505147,
+        "r2": 0.14028218997746317,
+        "r3": 0.10800463794996554,
+        "r4": 0.08118127206102896,
+        "r5": 0.0855992880615618
+      },
+      "gbm/test-natural/C-oracle/FOS \u2265 6": {
+        "r1": -0.03940389992622881,
+        "r2": -0.05640494917766553,
+        "r3": -0.049307184460286445,
+        "r4": -0.06462082124767632,
+        "r5": -0.0675756396381157
+      },
+      "gbm/test-natural/C-seq/0.5\u20131": {
+        "r1": 0.0026592555171937506,
+        "r2": -0.00453469246020946,
+        "r3": -0.0036457040425190894,
+        "r4": 0.0013084714635709658,
+        "r5": 0.006389154033526982
+      },
+      "gbm/test-natural/C-seq/1\u20132": {
+        "r1": -0.011403694409012467,
+        "r2": -0.0013040159431174478,
+        "r3": -0.00022852630431082854,
+        "r4": 0.0009603790752259761,
+        "r5": -0.0012574711429027808
+      },
+      "gbm/test-natural/C-seq/2\u20136": {
+        "r1": -0.006878718149625701,
+        "r2": -0.007267251546665507,
+        "r3": -0.012467248787099603,
+        "r4": -0.013489465450869898,
+        "r5": -0.003312959273420641
+      },
+      "gbm/test-natural/C-seq/FOS < 0.5": {
+        "r1": 0.07040851175196905,
+        "r2": 0.09808185779940334,
+        "r3": 0.09088355536472414,
+        "r4": 0.054427254352666835,
+        "r5": 0.08885954053174723
+      },
+      "gbm/test-natural/C-seq/FOS \u2265 6": {
+        "r1": -0.05655966413357488,
+        "r2": -0.06294651951488532,
+        "r3": -0.044512383890990694,
+        "r4": -0.012710561982322557,
+        "r5": -0.059332273124174516
+      },
+      "gbm/test-natural/C-seqF/0.5\u20131": {
+        "r1": 0.0038371933432357645,
+        "r2": 0.0020168682242331305,
+        "r3": -0.004360916152328184,
+        "r4": 0.015064967709903523,
+        "r5": 0.0019195352255622705
+      },
+      "gbm/test-natural/C-seqF/1\u20132": {
+        "r1": -0.00466151612368268,
+        "r2": 0.004466036020883215,
+        "r3": -0.004621925506892711,
+        "r4": -0.0032820299909426787,
+        "r5": 0.0030814305840200814
+      },
+      "gbm/test-natural/C-seqF/2\u20136": {
+        "r1": -0.00600639357954344,
+        "r2": -0.019541887935879104,
+        "r3": -0.0037195136804253318,
+        "r4": -0.004762055531096053,
+        "r5": -0.010495603599577805
+      },
+      "gbm/test-natural/C-seqF/FOS < 0.5": {
+        "r1": 0.08153832833250176,
+        "r2": 0.06484613412477079,
+        "r3": 0.0797340144195062,
+        "r4": 0.05297393565780543,
+        "r5": 0.05646754792654625
+      },
+      "gbm/test-natural/C-seqF/FOS \u2265 6": {
+        "r1": -0.014618347534389583,
+        "r2": -0.03944313791652091,
+        "r3": -0.052557736547971336,
+        "r4": -0.028952928809769005,
+        "r5": -0.053682981612911705
+      },
+      "gbm/test-natural/C-seqP/0.5\u20131": {
+        "r1": -0.010959866214622195,
+        "r2": 0.006412108750974686,
+        "r3": 0.003018227386759967,
+        "r4": -0.0008211219009881485,
+        "r5": -0.0011042497747048834
+      },
+      "gbm/test-natural/C-seqP/1\u20132": {
+        "r1": -0.0018207156882191764,
+        "r2": -0.0022708788422299473,
+        "r3": -0.0015604631965061714,
+        "r4": -0.011579761798285173,
+        "r5": 0.0009553507410170971
+      },
+      "gbm/test-natural/C-seqP/2\u20136": {
+        "r1": -0.005795948830885085,
+        "r2": -0.010881809125672997,
+        "r3": -0.013854469001623343,
+        "r4": -0.005010475405563214,
+        "r5": -0.01011173825288365
+      },
+      "gbm/test-natural/C-seqP/FOS < 0.5": {
+        "r1": 0.06788040027596151,
+        "r2": 0.06057947590803041,
+        "r3": 0.08972057090249644,
+        "r4": 0.08163478275457944,
+        "r5": 0.0676366228296841
+      },
+      "gbm/test-natural/C-seqP/FOS \u2265 6": {
+        "r1": -0.04098304994503873,
+        "r2": -0.06812596405547916,
+        "r3": -0.03968872738038646,
+        "r4": -0.03891524976225406,
+        "r5": -0.039933571876281625
+      },
+      "gbm/test-natural/C0-log/0.5\u20131": {
+        "r1": 0.00742123649830749,
+        "r2": -0.006189116526539262,
+        "r3": -0.015513289010163911,
+        "r4": -0.002184641734904448,
+        "r5": 0.00046212164716433435
+      },
+      "gbm/test-natural/C0-log/1\u20132": {
+        "r1": 0.0005075526892716861,
+        "r2": -0.01654290357232254,
+        "r3": -0.0191294498828323,
+        "r4": -0.009015031675884383,
+        "r5": -0.030682886230656355
+      },
+      "gbm/test-natural/C0-log/2\u20136": {
+        "r1": -0.029973348367460437,
+        "r2": -0.017741869746219475,
+        "r3": -0.004221432429738906,
+        "r4": -0.021502319470682804,
+        "r5": -0.03221694787378204
+      },
+      "gbm/test-natural/C0-log/FOS < 0.5": {
+        "r1": 0.1215599709957476,
+        "r2": 0.10367858404291774,
+        "r3": 0.15885989043305007,
+        "r4": 0.11633618684764993,
+        "r5": 0.09408884843273461
+      },
+      "gbm/test-natural/C0-log/FOS \u2265 6": {
+        "r1": -0.36472513376036814,
+        "r2": -0.3042799953798079,
+        "r3": -0.3404948715481975,
+        "r4": -0.32562280513743436,
+        "r5": -0.3660640574388789
+      },
+      "gbm/test-natural/C0-logG/0.5\u20131": {
+        "r1": 0.023977239320332293,
+        "r2": -0.009990208693487783,
+        "r3": -0.04095105558237276,
+        "r4": -0.00013722781689239492,
+        "r5": 0.007001018767215347
+      },
+      "gbm/test-natural/C0-logG/1\u20132": {
+        "r1": -0.012695723555517352,
+        "r2": -0.022964358270931767,
+        "r3": -0.011374934438425502,
+        "r4": -0.01914614453060033,
+        "r5": -0.019006437156428184
+      },
+      "gbm/test-natural/C0-logG/2\u20136": {
+        "r1": -0.01864747720534678,
+        "r2": -0.03684201231901992,
+        "r3": -0.028104186631882917,
+        "r4": -0.019269365995119542,
+        "r5": -0.008880409009099949
+      },
+      "gbm/test-natural/C0-logG/FOS < 0.5": {
+        "r1": 0.2367612345505025,
+        "r2": 0.2540876540784601,
+        "r3": 0.18458232134231292,
+        "r4": 0.17740168114015673,
+        "r5": 0.2159122429536831
+      },
+      "gbm/test-natural/C0-logG/FOS \u2265 6": {
+        "r1": -0.4185472056360658,
+        "r2": -0.4116190759677478,
+        "r3": -0.3423765572835637,
+        "r4": -0.38267910623791906,
+        "r5": -0.37107877255466365
+      },
+      "gbm/test-natural/C0-logP/0.5\u20131": {
+        "r1": -0.0014435581095913492,
+        "r2": -0.012885751632614264,
+        "r3": 0.002229668994195027,
+        "r4": 0.009807047690167525,
+        "r5": -0.020746078781481787
+      },
+      "gbm/test-natural/C0-logP/1\u20132": {
+        "r1": -0.0023697781739491827,
+        "r2": -0.018674320154958915,
+        "r3": -0.00660813896672867,
+        "r4": -0.006238338816617639,
+        "r5": -0.017784374246141422
+      },
+      "gbm/test-natural/C0-logP/2\u20136": {
+        "r1": -0.006235956505115294,
+        "r2": -0.017327423955118982,
+        "r3": -0.024413942106744666,
+        "r4": -0.018098676115284464,
+        "r5": -0.024912135081795038
+      },
+      "gbm/test-natural/C0-logP/FOS < 0.5": {
+        "r1": 0.15820665718075408,
+        "r2": 0.11040944213726411,
+        "r3": 0.13400284866911744,
+        "r4": 0.10823576278176206,
+        "r5": 0.09710332789809312
+      },
+      "gbm/test-natural/C0-logP/FOS \u2265 6": {
+        "r1": -0.3710045221021821,
+        "r2": -0.390068585732142,
+        "r3": -0.3841845657019596,
+        "r4": -0.3480785711124998,
+        "r5": -0.3770336248265384
+      },
+      "gbm/test-natural/C0-oracle/0.5\u20131": {
+        "r1": -0.01614678964605896,
+        "r2": -0.004227889386830427,
+        "r3": -0.012811147060942198,
+        "r4": -0.017578954082669435,
+        "r5": 0.009654821993829733
+      },
+      "gbm/test-natural/C0-oracle/1\u20132": {
+        "r1": -0.035195392352642844,
+        "r2": -0.03036578303381741,
+        "r3": -0.032850448310963315,
+        "r4": -0.029744905978371476,
+        "r5": 0.0055481566905677005
+      },
+      "gbm/test-natural/C0-oracle/2\u20136": {
+        "r1": -0.01809748536845602,
+        "r2": 0.002646566513544168,
+        "r3": -0.022661270739354363,
+        "r4": -0.01653050311350048,
+        "r5": -0.0023892563927825333
+      },
+      "gbm/test-natural/C0-oracle/FOS < 0.5": {
+        "r1": 0.21695088049953623,
+        "r2": 0.2161320824044637,
+        "r3": 0.22556287569670377,
+        "r4": 0.16796489682755805,
+        "r5": 0.21346389811402658
+      },
+      "gbm/test-natural/C0-oracle/FOS \u2265 6": {
+        "r1": -0.3858793435760653,
+        "r2": -0.36070976255893433,
+        "r3": -0.33603352240052997,
+        "r4": -0.3583326091531247,
+        "r5": -0.3523427712883865
+      },
+      "gbm/test-natural/C0-seq/0.5\u20131": {
+        "r1": 0.02594115259531526,
+        "r2": -0.01893929840100197,
+        "r3": -0.010673433455838896,
+        "r4": -0.00809432611351582,
+        "r5": 0.004210867954075674
+      },
+      "gbm/test-natural/C0-seq/1\u20132": {
+        "r1": 0.0023307317831126966,
+        "r2": 0.018155718305995307,
+        "r3": 0.0035170562992110285,
+        "r4": -0.016017975434304547,
+        "r5": -0.024960196023067815
+      },
+      "gbm/test-natural/C0-seq/2\u20136": {
+        "r1": -0.005217294370004375,
+        "r2": 0.01167104016854507,
+        "r3": -0.005772151283913058,
+        "r4": 0.01781861377534991,
+        "r5": -0.024202284519817232
+      },
+      "gbm/test-natural/C0-seq/FOS < 0.5": {
+        "r1": 0.11148022759616247,
+        "r2": 0.14066960212756116,
+        "r3": 0.12033296549335597,
+        "r4": 0.18849684395244054,
+        "r5": 0.13488329172828478
+      },
+      "gbm/test-natural/C0-seq/FOS \u2265 6": {
+        "r1": -0.3526305376701835,
+        "r2": -0.34081521681146415,
+        "r3": -0.33511123731823017,
+        "r4": -0.28060199145131076,
+        "r5": -0.33810763204984395
+      },
+      "gbm/test-natural/C0-seqF/0.5\u20131": {
+        "r1": -0.004133397059593034,
+        "r2": -0.027473228983951638,
+        "r3": -0.015035484210012764,
+        "r4": -0.0009497213655352235,
+        "r5": -0.029995390803449273
+      },
+      "gbm/test-natural/C0-seqF/1\u20132": {
+        "r1": -0.010174970887477073,
+        "r2": -0.03394239020095015,
+        "r3": -0.0060975968511791595,
+        "r4": -0.007565822552479849,
+        "r5": 3.918912793801189e-05
+      },
+      "gbm/test-natural/C0-seqF/2\u20136": {
+        "r1": -0.02459075555847907,
+        "r2": -0.04056649718403929,
+        "r3": -0.019431148366807857,
+        "r4": -0.01782672290090187,
+        "r5": -0.04186565808439204
+      },
+      "gbm/test-natural/C0-seqF/FOS < 0.5": {
+        "r1": 0.11979082347420118,
+        "r2": 0.09745187132097273,
+        "r3": 0.14442452942483716,
+        "r4": 0.16565946942642015,
+        "r5": 0.11747494797459346
+      },
+      "gbm/test-natural/C0-seqF/FOS \u2265 6": {
+        "r1": -0.3290656905121509,
+        "r2": -0.29884119195186376,
+        "r3": -0.32461282578379386,
+        "r4": -0.3752543632133875,
+        "r5": -0.28568673777356524
+      },
+      "gbm/test-natural/C0-seqP/0.5\u20131": {
+        "r1": -0.032382610333957056,
+        "r2": -0.004438419717004254,
+        "r3": -0.012429574188037536,
+        "r4": 0.005616658158035218,
+        "r5": -0.016231558024708118
+      },
+      "gbm/test-natural/C0-seqP/1\u20132": {
+        "r1": -0.02681852129863776,
+        "r2": -0.007770144237026032,
+        "r3": -0.016472116755973796,
+        "r4": -0.001885545477883105,
+        "r5": 0.015349743055784881
+      },
+      "gbm/test-natural/C0-seqP/2\u20136": {
+        "r1": -0.0051408008617195656,
+        "r2": -0.020629682149614567,
+        "r3": -0.05050722441227268,
+        "r4": -0.013506160478606847,
+        "r5": 0.002738741995908216
+      },
+      "gbm/test-natural/C0-seqP/FOS < 0.5": {
+        "r1": 0.15779884443561548,
+        "r2": 0.11843917592154629,
+        "r3": 0.14600057794738336,
+        "r4": 0.1360884964001348,
+        "r5": 0.12049894926542078
+      },
+      "gbm/test-natural/C0-seqP/FOS \u2265 6": {
+        "r1": -0.34549363799997074,
+        "r2": -0.36465229726710097,
+        "r3": -0.39901801762218736,
+        "r4": -0.37222970289447393,
+        "r5": -0.32854080411672565
+      },
+      "gbm/test-natural/D-P/0.5\u20131": {
+        "r1": -0.014172501563221033,
+        "r2": -0.0032036858994902097,
+        "r3": 0.0025243355477932825,
+        "r4": 0.004232856058912293,
+        "r5": 0.0008982667643502014
+      },
+      "gbm/test-natural/D-P/1\u20132": {
+        "r1": -0.008713796602638163,
+        "r2": -0.0019631059532911476,
+        "r3": -0.00046944074845283715,
+        "r4": -0.0037178319839224366,
+        "r5": 0.0021894640823123517
+      },
+      "gbm/test-natural/D-P/2\u20136": {
+        "r1": -0.025638642810959806,
+        "r2": -0.02384309099858045,
+        "r3": -0.020771229095250542,
+        "r4": -0.017819407608772906,
+        "r5": -0.022452340859125255
+      },
+      "gbm/test-natural/D-P/FOS < 0.5": {
+        "r1": 0.07078291625127765,
+        "r2": 0.08061143436369694,
+        "r3": 0.07084587117744558,
+        "r4": 0.08272145475907014,
+        "r5": 0.08578095914580841
+      },
+      "gbm/test-natural/D-P/FOS \u2265 6": {
+        "r1": -0.07500340421577668,
+        "r2": -0.05371367588946683,
+        "r3": -0.07472243925857434,
+        "r4": -0.05130476291436579,
+        "r5": -0.07565056561893498
+      },
+      "gbm/test-natural/D-oracle/0.5\u20131": {
+        "r1": -0.008191816713110476,
+        "r2": 0.00199384666673823,
+        "r3": 0.002843826507070977,
+        "r4": -0.0026006444926550327,
+        "r5": 0.009874958604429442
+      },
+      "gbm/test-natural/D-oracle/1\u20132": {
+        "r1": -0.010235745519953862,
+        "r2": -0.016543210803677877,
+        "r3": -0.007930498477487233,
+        "r4": -0.0019909522464540987,
+        "r5": -0.0054631478459902655
+      },
+      "gbm/test-natural/D-oracle/2\u20136": {
+        "r1": -0.02004699648878809,
+        "r2": -0.014321432185680372,
+        "r3": -0.019734751268540324,
+        "r4": -0.01823114651956815,
+        "r5": -0.01680963818682758
+      },
+      "gbm/test-natural/D-oracle/FOS < 0.5": {
+        "r1": 0.13814709997577423,
+        "r2": 0.15302636995458951,
+        "r3": 0.0782214485382918,
+        "r4": 0.04320552002796822,
+        "r5": 0.1057538567033516
+      },
+      "gbm/test-natural/D-oracle/FOS \u2265 6": {
+        "r1": -0.04608983548505378,
+        "r2": -0.04178306862422915,
+        "r3": -0.07079215880872876,
+        "r4": -0.05436676701729278,
+        "r5": -0.03476350895522327
+      },
+      "gbm/test-natural/D0-P/0.5\u20131": {
+        "r1": -0.007760706647628199,
+        "r2": 0.010540360489261883,
+        "r3": -0.01630012790726819,
+        "r4": 0.013686270024999964,
+        "r5": 0.008343719312203996
+      },
+      "gbm/test-natural/D0-P/1\u20132": {
+        "r1": -0.04278182496048977,
+        "r2": -0.03082050118066457,
+        "r3": -0.03618923539855393,
+        "r4": -0.03816758892847015,
+        "r5": -0.04240443698299357
+      },
+      "gbm/test-natural/D0-P/2\u20136": {
+        "r1": -0.35396719831394713,
+        "r2": -0.32124852473865073,
+        "r3": -0.2934206330219767,
+        "r4": -0.3705051377203107,
+        "r5": -0.3072621846755095
+      },
+      "gbm/test-natural/D0-P/FOS < 0.5": {
+        "r1": 0.14380225909283184,
+        "r2": 0.11942480986060684,
+        "r3": 0.17124018616493267,
+        "r4": 0.1555429552667965,
+        "r5": 0.10651713535952216
+      },
+      "gbm/test-natural/D0-P/FOS \u2265 6": {
+        "r1": -1.330915561554048,
+        "r2": -1.2519452678823992,
+        "r3": -1.1847414813138195,
+        "r4": -1.3207494884859496,
+        "r5": -1.2332181478352153
+      },
+      "gbm/test-natural/D0-oracle/0.5\u20131": {
+        "r1": -0.011354514701217724,
+        "r2": 0.001644788572325319,
+        "r3": 0.0025696599319282192,
+        "r4": -0.009492458654066088,
+        "r5": 0.005965173420870354
+      },
+      "gbm/test-natural/D0-oracle/1\u20132": {
+        "r1": -0.04437412841100151,
+        "r2": -0.033426175835842814,
+        "r3": -0.03188927747329594,
+        "r4": -0.028285575915587634,
+        "r5": -0.03029748457579136
+      },
+      "gbm/test-natural/D0-oracle/2\u20136": {
+        "r1": -0.2633792232945489,
+        "r2": -0.27867232845133955,
+        "r3": -0.2202731494562607,
+        "r4": -0.18578698026808904,
+        "r5": -0.20392596193333895
+      },
+      "gbm/test-natural/D0-oracle/FOS < 0.5": {
+        "r1": 0.2845527928869088,
+        "r2": 0.2654173343735618,
+        "r3": 0.23563189221750594,
+        "r4": 0.26201930607251367,
+        "r5": 0.2824044747310541
+      },
+      "gbm/test-natural/D0-oracle/FOS \u2265 6": {
+        "r1": -1.147210615351545,
+        "r2": -1.231852917794437,
+        "r3": -1.0931584038825104,
+        "r4": -1.0353875017133936,
+        "r5": -1.0568431633964421
+      },
+      "gbm/test-stratified/B/0.5\u20131": {
+        "r1": 0.0018000521136524034,
+        "r2": 0.03807680826465603,
+        "r3": 0.033804555265068134,
+        "r4": 0.024781605369184875,
+        "r5": 0.019503464483415375
+      },
+      "gbm/test-stratified/B/1\u20132": {
+        "r1": 0.0002995417327042686,
+        "r2": 0.0017782232200790025,
+        "r3": 0.007121910692215777,
+        "r4": 0.0017566271352095694,
+        "r5": 0.015270251456480892
+      },
+      "gbm/test-stratified/B/2\u20136": {
+        "r1": -0.011491099171420766,
+        "r2": -0.0013371391861701774,
+        "r3": -0.013967118270904827,
+        "r4": -0.007456095779271136,
+        "r5": -0.014964830839122745
+      },
+      "gbm/test-stratified/B/FOS < 0.5": {
+        "r1": -0.04641045409622561,
+        "r2": 0.047811658098620376,
+        "r3": -0.08012633010088364,
+        "r4": -0.0102508220009107,
+        "r5": 0.007700756153470605
+      },
+      "gbm/test-stratified/B/FOS \u2265 6": {
+        "r1": -0.03336765127449885,
+        "r2": -0.02780750816489584,
+        "r3": -0.02414618349947047,
+        "r4": -0.04543207265298318,
+        "r5": -0.041760989437589935
+      },
+      "gbm/test-stratified/C-log/0.5\u20131": {
+        "r1": 0.006639114989028053,
+        "r2": 0.0083012669243613,
+        "r3": 0.00029478555738202936,
+        "r4": 0.0022790547777750713,
+        "r5": 0.016791634558426586
+      },
+      "gbm/test-stratified/C-log/1\u20132": {
+        "r1": -0.013065341832561994,
+        "r2": -0.014142348673022281,
+        "r3": -0.007594058512375987,
+        "r4": -0.01243303374021181,
+        "r5": -0.007098887280820626
+      },
+      "gbm/test-stratified/C-log/2\u20136": {
+        "r1": -0.006912965339754582,
+        "r2": -0.00900906878392339,
+        "r3": 0.005633084493945672,
+        "r4": -0.0025145465383874786,
+        "r5": 0.004040141918797127
+      },
+      "gbm/test-stratified/C-log/FOS < 0.5": {
+        "r1": -0.005869106746381377,
+        "r2": -0.018006940228582485,
+        "r3": -0.035285935929197,
+        "r4": -0.02044878993382749,
+        "r5": -0.030261469137425445
+      },
+      "gbm/test-stratified/C-log/FOS \u2265 6": {
+        "r1": -0.002105780408246981,
+        "r2": -0.0064526708885121855,
+        "r3": -0.0240476487697312,
+        "r4": -0.00503212078226869,
+        "r5": -0.01421767894623995
+      },
+      "gbm/test-stratified/C-logG/0.5\u20131": {
+        "r1": 0.02407021909720115,
+        "r2": 0.012996945496100927,
+        "r3": 0.0025398449682347522,
+        "r4": -0.0027290762431055313,
+        "r5": 0.008808401812719743
+      },
+      "gbm/test-stratified/C-logG/1\u20132": {
+        "r1": 0.01120108526391663,
+        "r2": -0.005074257522103696,
+        "r3": 0.01202593934977259,
+        "r4": -0.007994559321973993,
+        "r5": 0.0016052738888855953
+      },
+      "gbm/test-stratified/C-logG/2\u20136": {
+        "r1": -0.008759685207194945,
+        "r2": -0.004156362432498797,
+        "r3": -0.006844207323188051,
+        "r4": -0.006326339349673692,
+        "r5": -0.013324918796237407
+      },
+      "gbm/test-stratified/C-logG/FOS < 0.5": {
+        "r1": 0.00993372723730763,
+        "r2": 0.038577109105458744,
+        "r3": 0.0588625984740514,
+        "r4": 0.025193931102683826,
+        "r5": 0.06354948655718264
+      },
+      "gbm/test-stratified/C-logG/FOS \u2265 6": {
+        "r1": -0.02899708162361478,
+        "r2": -0.009842331887682272,
+        "r3": -0.019476412760199346,
+        "r4": -0.03331526103034486,
+        "r5": -0.03732243667067369
+      },
+      "gbm/test-stratified/C-logP/0.5\u20131": {
+        "r1": -0.0008516882731258377,
+        "r2": -0.02075614290246888,
+        "r3": -0.009296998706403258,
+        "r4": -0.0024106682114047196,
+        "r5": -0.01053831201398054
+      },
+      "gbm/test-stratified/C-logP/1\u20132": {
+        "r1": -0.0029203232151357203,
+        "r2": -0.013207498065100626,
+        "r3": -0.005211245187180936,
+        "r4": 0.0013425244313131112,
+        "r5": -0.002709778774916155
+      },
+      "gbm/test-stratified/C-logP/2\u20136": {
+        "r1": -0.0037965418749515965,
+        "r2": 0.00066678859415472,
+        "r3": -0.010781210028046093,
+        "r4": -0.008881383856696484,
+        "r5": -0.014705901586400782
+      },
+      "gbm/test-stratified/C-logP/FOS < 0.5": {
+        "r1": -0.06548390729593273,
+        "r2": 0.01600643134972081,
+        "r3": 0.05094829080274913,
+        "r4": 0.004925187004321327,
+        "r5": -0.0005909759879109425
+      },
+      "gbm/test-stratified/C-logP/FOS \u2265 6": {
+        "r1": -0.01492673598782019,
+        "r2": -0.01548055851267929,
+        "r3": -0.00784960484764653,
+        "r4": -0.007495086394280494,
+        "r5": -0.03630970042595928
+      },
+      "gbm/test-stratified/C-oracle/0.5\u20131": {
+        "r1": 0.0009314877978866872,
+        "r2": 0.006570200591333439,
+        "r3": -0.01195170051743937,
+        "r4": 0.017040238698258228,
+        "r5": 0.024122330350729564
+      },
+      "gbm/test-stratified/C-oracle/1\u20132": {
+        "r1": -0.009434966888845183,
+        "r2": 0.004133947815736282,
+        "r3": -0.02008180891678007,
+        "r4": -0.0026751395675093334,
+        "r5": 0.011320966244705133
+      },
+      "gbm/test-stratified/C-oracle/2\u20136": {
+        "r1": -0.001277672191852293,
+        "r2": -0.00030157159237016506,
+        "r3": -0.00235043620195324,
+        "r4": -0.006395354962138458,
+        "r5": -0.007276600498272689
+      },
+      "gbm/test-stratified/C-oracle/FOS < 0.5": {
+        "r1": 0.029310464786740455,
+        "r2": 0.07454601326634461,
+        "r3": 0.004214586617710542,
+        "r4": 0.05769643892412002,
+        "r5": 0.018746969918887375
+      },
+      "gbm/test-stratified/C-oracle/FOS \u2265 6": {
+        "r1": -0.03693672459438861,
+        "r2": -0.01585047040115371,
+        "r3": -0.017077747589251215,
+        "r4": -0.02618508109792556,
+        "r5": -0.020303421839852925
+      },
+      "gbm/test-stratified/C-seq/0.5\u20131": {
+        "r1": 0.01692804798114523,
+        "r2": 0.009873050744949033,
+        "r3": 0.022082522011038108,
+        "r4": 0.023184208762932756,
+        "r5": 0.012436108825063118
+      },
+      "gbm/test-stratified/C-seq/1\u20132": {
+        "r1": -0.0021712366645028533,
+        "r2": -0.010345289700768036,
+        "r3": -0.014541739295795048,
+        "r4": 0.009144847935770353,
+        "r5": -0.004167759681766575
+      },
+      "gbm/test-stratified/C-seq/2\u20136": {
+        "r1": -0.003460102361175267,
+        "r2": -0.005193348457974134,
+        "r3": -0.015443752292936142,
+        "r4": -0.004213960029344277,
+        "r5": 0.005907746081337728
+      },
+      "gbm/test-stratified/C-seq/FOS < 0.5": {
+        "r1": 0.03603053947427041,
+        "r2": 0.004532785329941019,
+        "r3": 0.021594153971793966,
+        "r4": -0.019529305532762938,
+        "r5": -0.05134096153830096
+      },
+      "gbm/test-stratified/C-seq/FOS \u2265 6": {
+        "r1": -0.011427656857439739,
+        "r2": -0.010649610604677083,
+        "r3": -0.02239752206722279,
+        "r4": -0.010737216511300083,
+        "r5": -0.000864467666928492
+      },
+      "gbm/test-stratified/C-seqF/0.5\u20131": {
+        "r1": 0.011940502197103395,
+        "r2": -0.007713630591879746,
+        "r3": 0.024805710916992435,
+        "r4": 0.028729792687882245,
+        "r5": 0.012779866960063134
+      },
+      "gbm/test-stratified/C-seqF/1\u20132": {
+        "r1": -0.015662257485312827,
+        "r2": -0.014046832151312449,
+        "r3": -0.0032662716251585663,
+        "r4": 0.004248846249857702,
+        "r5": -0.018335700525974663
+      },
+      "gbm/test-stratified/C-seqF/2\u20136": {
+        "r1": -0.00885602861466795,
+        "r2": -0.006168537679271154,
+        "r3": -0.0011236674795041862,
+        "r4": -0.00526857331522967,
+        "r5": -0.004470406984625502
+      },
+      "gbm/test-stratified/C-seqF/FOS < 0.5": {
+        "r1": 0.04950601537477409,
+        "r2": 0.017904917566278603,
+        "r3": 0.03912704367881822,
+        "r4": 0.01649911007369498,
+        "r5": 2.401223928474687e-05
+      },
+      "gbm/test-stratified/C-seqF/FOS \u2265 6": {
+        "r1": -0.010645479737832638,
+        "r2": -0.008827687238578666,
+        "r3": 0.0064419605063458455,
+        "r4": -0.007229455792409091,
+        "r5": 0.009604343446865851
+      },
+      "gbm/test-stratified/C-seqP/0.5\u20131": {
+        "r1": 0.029511817102947535,
+        "r2": 0.006255101748171825,
+        "r3": 0.01242427748319354,
+        "r4": 0.004096629656509265,
+        "r5": 0.018088308214573592
+      },
+      "gbm/test-stratified/C-seqP/1\u20132": {
+        "r1": -0.007597169350900691,
+        "r2": 0.002361160055704733,
+        "r3": 0.00041287267070709105,
+        "r4": -0.029850996708554314,
+        "r5": -0.0025094933832149747
+      },
+      "gbm/test-stratified/C-seqP/2\u20136": {
+        "r1": -0.006646342879907679,
+        "r2": -0.008082205373578299,
+        "r3": -0.008033522503738568,
+        "r4": 0.0018156328342750973,
+        "r5": -0.009521376125104177
+      },
+      "gbm/test-stratified/C-seqP/FOS < 0.5": {
+        "r1": 0.01720374712705221,
+        "r2": 0.015407924426527718,
+        "r3": 0.005242120595817082,
+        "r4": 0.007019435534085679,
+        "r5": -0.014657244782642596
+      },
+      "gbm/test-stratified/C-seqP/FOS \u2265 6": {
+        "r1": -0.027882329439304368,
+        "r2": -0.025675574412040617,
+        "r3": -0.0036263107693159445,
+        "r4": -0.00022036701932300667,
+        "r5": -0.0003513051815419821
+      },
+      "gbm/test-stratified/C0-log/0.5\u20131": {
+        "r1": -0.014675920088657287,
+        "r2": -0.02194924044031596,
+        "r3": 0.01920383207441263,
+        "r4": -0.014250784623205457,
+        "r5": 0.03923265897233442
+      },
+      "gbm/test-stratified/C0-log/1\u20132": {
+        "r1": -0.01149443906667221,
+        "r2": -0.05374268737565612,
+        "r3": -0.030385083186311574,
+        "r4": -0.037329474827207075,
+        "r5": -0.006970447303732102
+      },
+      "gbm/test-stratified/C0-log/2\u20136": {
+        "r1": -0.027772144991106976,
+        "r2": -0.012049087454101336,
+        "r3": 0.0016880575653004297,
+        "r4": -0.009079250729947376,
+        "r5": -0.018262727937511047
+      },
+      "gbm/test-stratified/C0-log/FOS < 0.5": {
+        "r1": -0.043995275610542284,
+        "r2": -0.0027492943852911607,
+        "r3": 0.002414880078936557,
+        "r4": -0.038698634571419185,
+        "r5": -0.009800457879874479
+      },
+      "gbm/test-stratified/C0-log/FOS \u2265 6": {
+        "r1": -0.039306165104107824,
+        "r2": -0.025791169959166343,
+        "r3": -0.03329322348549317,
+        "r4": -0.02934615829340248,
+        "r5": -0.01849340719400217
+      },
+      "gbm/test-stratified/C0-logG/0.5\u20131": {
+        "r1": 0.025584097094843102,
+        "r2": 0.0053197658249080695,
+        "r3": 0.004498760505437657,
+        "r4": -0.007397595323431265,
+        "r5": 0.02856060579316816
+      },
+      "gbm/test-stratified/C0-logG/1\u20132": {
+        "r1": -0.012989243317542332,
+        "r2": -0.04982889336446119,
+        "r3": -0.03610942576788537,
+        "r4": -0.023728367856889126,
+        "r5": -0.029488137749980835
+      },
+      "gbm/test-stratified/C0-logG/2\u20136": {
+        "r1": -0.01971948145118032,
+        "r2": -0.019124859195582378,
+        "r3": -0.014158944676055961,
+        "r4": -0.013056798989258938,
+        "r5": -0.0007030312436663521
+      },
+      "gbm/test-stratified/C0-logG/FOS < 0.5": {
+        "r1": 0.12675988715956463,
+        "r2": 0.10625320159860381,
+        "r3": 0.05990333056026842,
+        "r4": 0.10073110645076144,
+        "r5": 0.12085953115592364
+      },
+      "gbm/test-stratified/C0-logG/FOS \u2265 6": {
+        "r1": -0.07735707606315007,
+        "r2": -0.06169011021699366,
+        "r3": -0.08006536685889022,
+        "r4": -0.08361652279581513,
+        "r5": -0.08857712984239116
+      },
+      "gbm/test-stratified/C0-logP/0.5\u20131": {
+        "r1": 0.03759819115356586,
+        "r2": -0.02425864439876917,
+        "r3": 0.019218148534819443,
+        "r4": 0.010195678308392044,
+        "r5": -0.01033019499803444
+      },
+      "gbm/test-stratified/C0-logP/1\u20132": {
+        "r1": -0.01613318909479965,
+        "r2": -0.04692113413789689,
+        "r3": -0.0316159430596061,
+        "r4": -0.004489954833441134,
+        "r5": -0.03229475109912382
+      },
+      "gbm/test-stratified/C0-logP/2\u20136": {
+        "r1": 0.007632794610259422,
+        "r2": 0.0023289340532364577,
+        "r3": -0.01728012778743707,
+        "r4": -0.013111908997766764,
+        "r5": -0.00779021539193909
+      },
+      "gbm/test-stratified/C0-logP/FOS < 0.5": {
+        "r1": 0.047569736251982735,
+        "r2": 0.0338186548302736,
+        "r3": 0.025080107429446368,
+        "r4": 0.06954338425630635,
+        "r5": -0.02811654133797441
+      },
+      "gbm/test-stratified/C0-logP/FOS \u2265 6": {
+        "r1": -0.047174488158018925,
+        "r2": -0.03683738822315576,
+        "r3": -0.04479073116641266,
+        "r4": -0.05518211394781698,
+        "r5": -0.05131926048203783
+      },
+      "gbm/test-stratified/C0-oracle/0.5\u20131": {
+        "r1": 0.022063328562357255,
+        "r2": -0.003366115388660849,
+        "r3": -0.009440237889069192,
+        "r4": 0.039455583699825714,
+        "r5": 0.025066554309766943
+      },
+      "gbm/test-stratified/C0-oracle/1\u20132": {
+        "r1": -0.04678447486014234,
+        "r2": -0.028933724720728127,
+        "r3": -0.027099791406304405,
+        "r4": -0.025269211712445783,
+        "r5": -0.0012724463177157432
+      },
+      "gbm/test-stratified/C0-oracle/2\u20136": {
+        "r1": 0.004096150982241562,
+        "r2": 0.012985184579503846,
+        "r3": -0.015906517459722585,
+        "r4": -0.012576474873992355,
+        "r5": 0.007969201781602424
+      },
+      "gbm/test-stratified/C0-oracle/FOS < 0.5": {
+        "r1": 0.10574142699780374,
+        "r2": 0.15397349133875682,
+        "r3": 0.09076761411588984,
+        "r4": 0.1438504981221327,
+        "r5": 0.10294461144003819
+      },
+      "gbm/test-stratified/C0-oracle/FOS \u2265 6": {
+        "r1": -0.1272815556445801,
+        "r2": -0.09677616693919522,
+        "r3": -0.09966814454135071,
+        "r4": -0.10411097430973883,
+        "r5": -0.09944299243739547
+      },
+      "gbm/test-stratified/C0-seq/0.5\u20131": {
+        "r1": 0.01401490190515183,
+        "r2": -0.022218206238713345,
+        "r3": -0.0017770906479130817,
+        "r4": 0.02257813516041532,
+        "r5": 0.01195129023903072
+      },
+      "gbm/test-stratified/C0-seq/1\u20132": {
+        "r1": -0.007617023682005433,
+        "r2": 0.03359176328912751,
+        "r3": 0.0064354443570031694,
+        "r4": 0.018098095607292822,
+        "r5": -0.010308790385772156
+      },
+      "gbm/test-stratified/C0-seq/2\u20136": {
+        "r1": 0.004077719688041866,
+        "r2": 0.02431996844599341,
+        "r3": 0.0013481655441255637,
+        "r4": 0.029209910902440947,
+        "r5": -0.005937959394929077
+      },
+      "gbm/test-stratified/C0-seq/FOS < 0.5": {
+        "r1": 0.051549329175170244,
+        "r2": 0.12414950504889545,
+        "r3": 0.018684626116847427,
+        "r4": -0.0013237298319254038,
+        "r5": 0.002577855528806678
+      },
+      "gbm/test-stratified/C0-seq/FOS \u2265 6": {
+        "r1": -0.020156278631043006,
+        "r2": -0.0492761059151522,
+        "r3": -0.011414570676536607,
+        "r4": -0.02086986119364317,
+        "r5": -0.017656960336513393
+      },
+      "gbm/test-stratified/C0-seqF/0.5\u20131": {
+        "r1": -0.018366867182696908,
+        "r2": -0.03728581078326054,
+        "r3": 0.016237369193722134,
+        "r4": 0.024445234661152046,
+        "r5": -0.005699874950182353
+      },
+      "gbm/test-stratified/C0-seqF/1\u20132": {
+        "r1": -0.020865827232382787,
+        "r2": -0.03509917511422931,
+        "r3": -0.001976976363832266,
+        "r4": -0.003357684146588786,
+        "r5": -0.03728328075625018
+      },
+      "gbm/test-stratified/C0-seqF/2\u20136": {
+        "r1": -0.0015414609268490345,
+        "r2": -0.016281398125678827,
+        "r3": -0.0024150079822117744,
+        "r4": -0.007525207785107,
+        "r5": -0.009632865793283523
+      },
+      "gbm/test-stratified/C0-seqF/FOS < 0.5": {
+        "r1": 0.07926501059118525,
+        "r2": 0.03273908934486098,
+        "r3": -0.02972493799955724,
+        "r4": 0.04901876728847371,
+        "r5": -0.04352536582492663
+      },
+      "gbm/test-stratified/C0-seqF/FOS \u2265 6": {
+        "r1": -0.01080587289920509,
+        "r2": -0.02956880004355231,
+        "r3": -0.005951400856959843,
+        "r4": -0.05601186491243474,
+        "r5": -0.033564687676520884
+      },
+      "gbm/test-stratified/C0-seqP/0.5\u20131": {
+        "r1": 0.018928821920021658,
+        "r2": 0.0016781947322729422,
+        "r3": 0.029501233791228723,
+        "r4": 0.01141654795180748,
+        "r5": 0.016228896664420917
+      },
+      "gbm/test-stratified/C0-seqP/1\u20132": {
+        "r1": -0.036870030697538525,
+        "r2": -0.014394246818578467,
+        "r3": -0.03363181575986795,
+        "r4": -0.028104494995673163,
+        "r5": 0.012995460923934997
+      },
+      "gbm/test-stratified/C0-seqP/2\u20136": {
+        "r1": 0.0046528455966183225,
+        "r2": -0.024952290502801636,
+        "r3": -0.023702235357689217,
+        "r4": -0.0041010303853842595,
+        "r5": 0.006972885445430924
+      },
+      "gbm/test-stratified/C0-seqP/FOS < 0.5": {
+        "r1": 0.058612352472903397,
+        "r2": 0.05290235899013048,
+        "r3": 0.010757033370445243,
+        "r4": 0.09029861811698996,
+        "r5": -0.0018084183402286198
+      },
+      "gbm/test-stratified/C0-seqP/FOS \u2265 6": {
+        "r1": -0.04225492516797327,
+        "r2": -0.07781064939501336,
+        "r3": -0.05724289427679957,
+        "r4": -0.02976782786049067,
+        "r5": -0.050347843833889676
+      },
+      "gbm/test-stratified/D-P/0.5\u20131": {
+        "r1": -0.005497498395199487,
+        "r2": -0.015013049919899204,
+        "r3": -0.0032939846115662675,
+        "r4": -0.006310957775061937,
+        "r5": -0.0023457968948369153
+      },
+      "gbm/test-stratified/D-P/1\u20132": {
+        "r1": -0.01505968798129268,
+        "r2": -0.015825967127807417,
+        "r3": -0.004438495853721025,
+        "r4": -0.0004791918059798969,
+        "r5": -0.00990947344079054
+      },
+      "gbm/test-stratified/D-P/2\u20136": {
+        "r1": -0.020232190818216974,
+        "r2": -0.013812106299089594,
+        "r3": -0.018105129013740492,
+        "r4": -0.006749582982748356,
+        "r5": -0.017612043601370964
+      },
+      "gbm/test-stratified/D-P/FOS < 0.5": {
+        "r1": 0.007035667851940816,
+        "r2": 0.027503129396042183,
+        "r3": -0.0013798675849060818,
+        "r4": 0.0092999167591981,
+        "r5": 0.0402421688143195
+      },
+      "gbm/test-stratified/D-P/FOS \u2265 6": {
+        "r1": -0.06504394545049165,
+        "r2": -0.022843849187005726,
+        "r3": -0.02202795357519997,
+        "r4": -0.0484675278966551,
+        "r5": -0.04066274910738903
+      },
+      "gbm/test-stratified/D-oracle/0.5\u20131": {
+        "r1": 0.0024839372890846944,
+        "r2": 0.006485710062875905,
+        "r3": 0.0017370377051811802,
+        "r4": 0.010068656589754208,
+        "r5": 0.013291732715192425
+      },
+      "gbm/test-stratified/D-oracle/1\u20132": {
+        "r1": -0.014248770257220295,
+        "r2": -0.013053601746408357,
+        "r3": -0.01020842877094908,
+        "r4": -0.008106552910381043,
+        "r5": -0.01186316273260144
+      },
+      "gbm/test-stratified/D-oracle/2\u20136": {
+        "r1": -0.011763739213467484,
+        "r2": -0.01603828401359723,
+        "r3": -0.019430814391999677,
+        "r4": -0.010156599005278431,
+        "r5": -0.012566790232746605
+      },
+      "gbm/test-stratified/D-oracle/FOS < 0.5": {
+        "r1": 0.07477821189185792,
+        "r2": 0.06516554097804142,
+        "r3": 0.052346253573114336,
+        "r4": -0.04362604526395208,
+        "r5": 0.00719303560413109
+      },
+      "gbm/test-stratified/D-oracle/FOS \u2265 6": {
+        "r1": -0.04797206220392323,
+        "r2": -0.021189974103324676,
+        "r3": -0.04818590920963112,
+        "r4": -0.028431619030369816,
+        "r5": -0.02862520204516977
+      },
+      "gbm/test-stratified/D0-P/0.5\u20131": {
+        "r1": 0.014406420629608147,
+        "r2": -0.029759637778871945,
+        "r3": -0.014461104681404957,
+        "r4": -0.0027257446756350414,
+        "r5": 0.011636610095673358
+      },
+      "gbm/test-stratified/D0-P/1\u20132": {
+        "r1": -0.06177211381881112,
+        "r2": -0.06853100167049057,
+        "r3": -0.03420599078429665,
+        "r4": -0.05947255659831313,
+        "r5": -0.04141147385153159
+      },
+      "gbm/test-stratified/D0-P/2\u20136": {
+        "r1": -0.38941485393676506,
+        "r2": -0.36605632938320104,
+        "r3": -0.32804590256255306,
+        "r4": -0.4128668337736032,
+        "r5": -0.3471755483481123
+      },
+      "gbm/test-stratified/D0-P/FOS < 0.5": {
+        "r1": 0.06441904740175018,
+        "r2": -0.02127050161703203,
+        "r3": 0.007605455186625146,
+        "r4": 0.05548755455432083,
+        "r5": 0.07110874176554245
+      },
+      "gbm/test-stratified/D0-P/FOS \u2265 6": {
+        "r1": -0.8111333602584578,
+        "r2": -0.7727124701178909,
+        "r3": -0.6579498929841519,
+        "r4": -0.8556420450852913,
+        "r5": -0.7066860398003145
+      },
+      "gbm/test-stratified/D0-oracle/0.5\u20131": {
+        "r1": 0.013005997359199198,
+        "r2": 0.024273423113686052,
+        "r3": 0.00964712019886451,
+        "r4": 0.00697781087435344,
+        "r5": 0.0055447313243749165
+      },
+      "gbm/test-stratified/D0-oracle/1\u20132": {
+        "r1": -0.04625464724986587,
+        "r2": -0.055687999692651785,
+        "r3": -0.034426152811149385,
+        "r4": -0.04406087833401764,
+        "r5": -0.052264914468274214
+      },
+      "gbm/test-stratified/D0-oracle/2\u20136": {
+        "r1": -0.28729517535546917,
+        "r2": -0.32490828336988076,
+        "r3": -0.24933018350118344,
+        "r4": -0.20673907142571313,
+        "r5": -0.23897580763836165
+      },
+      "gbm/test-stratified/D0-oracle/FOS < 0.5": {
+        "r1": 0.1452739419084628,
+        "r2": 0.10312456548314454,
+        "r3": 0.10634515895887951,
+        "r4": 0.1535898121297976,
+        "r5": 0.19655759857841124
+      },
+      "gbm/test-stratified/D0-oracle/FOS \u2265 6": {
+        "r1": -0.6419225444374556,
+        "r2": -0.6295592884319535,
+        "r3": -0.5224473876047276,
+        "r4": -0.4262765129977318,
+        "r5": -0.4811753846506143
+      },
+      "rf/test-natural/B/0.5\u20131": {
+        "r1": 0.08270523799861322,
+        "r2": 0.088687942607773,
+        "r3": 0.10010684472603942,
+        "r4": 0.11058211253803757,
+        "r5": 0.09289290012647762
+      },
+      "rf/test-natural/B/1\u20132": {
+        "r1": 0.0005631653946336019,
+        "r2": -0.010614789835459397,
+        "r3": -0.007374198207349688,
+        "r4": 0.008472057699987129,
+        "r5": -0.0005340427527146595
+      },
+      "rf/test-natural/B/2\u20136": {
+        "r1": -0.021655155271769425,
+        "r2": -0.02535615452409139,
+        "r3": -0.02963262273329944,
+        "r4": -0.026700934057219648,
+        "r5": -0.030125250193562932
+      },
+      "rf/test-natural/B/FOS < 0.5": {
+        "r1": 0.4101326436827283,
+        "r2": 0.2785559749524516,
+        "r3": 0.2887320222752091,
+        "r4": 0.38884196454139436,
+        "r5": 0.27608281196178586
+      },
+      "rf/test-natural/B/FOS \u2265 6": {
+        "r1": -0.043614911597374205,
+        "r2": -0.0016294469878384034,
+        "r3": -0.08247197644943689,
+        "r4": -0.07022810720429332,
+        "r5": -0.031515569668719094
+      },
+      "rf/test-natural/C-log/0.5\u20131": {
+        "r1": 0.05590569027221332,
+        "r2": 0.03975642078584816,
+        "r3": 0.052721426054076134,
+        "r4": 0.02688784368488151,
+        "r5": 0.02826302092916379
+      },
+      "rf/test-natural/C-log/1\u20132": {
+        "r1": -0.008110696285063437,
+        "r2": -0.013929310559690246,
+        "r3": -0.00022501433730709645,
+        "r4": -0.01845588209202678,
+        "r5": -0.018061816731714694
+      },
+      "rf/test-natural/C-log/2\u20136": {
+        "r1": -0.016983427376986746,
+        "r2": -0.019827986250227973,
+        "r3": -0.02629466464281008,
+        "r4": -0.02256212231763291,
+        "r5": -0.030503943700260935
+      },
+      "rf/test-natural/C-log/FOS < 0.5": {
+        "r1": 0.28768401520457143,
+        "r2": 0.22008643119597582,
+        "r3": 0.28055763901581876,
+        "r4": 0.2610182372445636,
+        "r5": 0.2965574830885722
+      },
+      "rf/test-natural/C-log/FOS \u2265 6": {
+        "r1": -0.008269653580297005,
+        "r2": 0.0013990340284652282,
+        "r3": -0.014122980004750346,
+        "r4": -0.019177358948198924,
+        "r5": -0.004465940090632346
+      },
+      "rf/test-natural/C-logG/0.5\u20131": {
+        "r1": 0.03858432659354367,
+        "r2": 0.01645736481326782,
+        "r3": 0.002100306114110973,
+        "r4": 0.01307631891009971,
+        "r5": 0.03742692478241905
+      },
+      "rf/test-natural/C-logG/1\u20132": {
+        "r1": -0.01861207814607075,
+        "r2": -0.016512186223081392,
+        "r3": -0.00638759339780855,
+        "r4": -0.012436766122565108,
+        "r5": -0.013330188522583714
+      },
+      "rf/test-natural/C-logG/2\u20136": {
+        "r1": -0.02789460106708888,
+        "r2": -0.020802965212694282,
+        "r3": -0.03370389482915046,
+        "r4": -0.018115332316638758,
+        "r5": -0.028732644453344947
+      },
+      "rf/test-natural/C-logG/FOS < 0.5": {
+        "r1": 0.4202543250184469,
+        "r2": 0.3643185478323975,
+        "r3": 0.3687814906043099,
+        "r4": 0.35596267082686534,
+        "r5": 0.37885183437561465
+      },
+      "rf/test-natural/C-logG/FOS \u2265 6": {
+        "r1": -0.049944410928923155,
+        "r2": -0.03482185700747973,
+        "r3": -0.05120049036753696,
+        "r4": -0.03880061716773823,
+        "r5": -0.03819785947823456
+      },
+      "rf/test-natural/C-logP/0.5\u20131": {
+        "r1": 0.06514739098359432,
+        "r2": 0.02198380457799702,
+        "r3": 0.06757212687468643,
+        "r4": 0.054837307270179395,
+        "r5": 0.046219371543772404
+      },
+      "rf/test-natural/C-logP/1\u20132": {
+        "r1": 0.0007396872825306941,
+        "r2": -0.0016672658591878609,
+        "r3": -0.016035854287526418,
+        "r4": 0.0006430433849542408,
+        "r5": -0.009456531409437464
+      },
+      "rf/test-natural/C-logP/2\u20136": {
+        "r1": -0.03523527739877275,
+        "r2": -0.015977736780405018,
+        "r3": -0.022420924128607647,
+        "r4": -0.02228862828575631,
+        "r5": -0.02402384419540491
+      },
+      "rf/test-natural/C-logP/FOS < 0.5": {
+        "r1": 0.2792776968712654,
+        "r2": 0.2477844417348202,
+        "r3": 0.3088413290318994,
+        "r4": 0.27519673156199576,
+        "r5": 0.3181873006841406
+      },
+      "rf/test-natural/C-logP/FOS \u2265 6": {
+        "r1": -0.010235807526025778,
+        "r2": -0.009795313049423394,
+        "r3": 0.0014509311487595998,
+        "r4": -0.0010783361292972596,
+        "r5": -0.0032203595449679426
+      },
+      "rf/test-natural/C-oracle/0.5\u20131": {
+        "r1": 0.03581176713778117,
+        "r2": 0.022590069056229737,
+        "r3": 0.012273877266296954,
+        "r4": 0.007521542367792764,
+        "r5": 0.023078347075015933
+      },
+      "rf/test-natural/C-oracle/1\u20132": {
+        "r1": -0.027332319292693422,
+        "r2": -0.02307131154939402,
+        "r3": -0.03193787865863229,
+        "r4": -0.01325076750594887,
+        "r5": -0.003925904288752877
+      },
+      "rf/test-natural/C-oracle/2\u20136": {
+        "r1": -0.020474931833946493,
+        "r2": -0.02525837170718609,
+        "r3": -0.02143613770895939,
+        "r4": -0.024150602377367415,
+        "r5": -0.012714616399635788
+      },
+      "rf/test-natural/C-oracle/FOS < 0.5": {
+        "r1": 0.42317713842424354,
+        "r2": 0.3785455008349398,
+        "r3": 0.42338613824034166,
+        "r4": 0.3565942563726757,
+        "r5": 0.38929206431302843
+      },
+      "rf/test-natural/C-oracle/FOS \u2265 6": {
+        "r1": -0.061083397524466655,
+        "r2": -0.06649001457713317,
+        "r3": -0.058447157463302556,
+        "r4": -0.06868736412129377,
+        "r5": -0.06422652018903771
+      },
+      "rf/test-natural/C-seq/0.5\u20131": {
+        "r1": 0.07031764102995804,
+        "r2": 0.032625267883430266,
+        "r3": 0.03678863245833494,
+        "r4": 0.0460273316499109,
+        "r5": 0.0533812601579801
+      },
+      "rf/test-natural/C-seq/1\u20132": {
+        "r1": -0.006100012614533026,
+        "r2": 0.0037957252787203096,
+        "r3": -0.014601262509795784,
+        "r4": -0.00829539534951286,
+        "r5": -0.011152405338324114
+      },
+      "rf/test-natural/C-seq/2\u20136": {
+        "r1": -0.02897898499387256,
+        "r2": -0.020337929606948878,
+        "r3": -0.027287781291674237,
+        "r4": -0.035247011303673526,
+        "r5": -0.027709166976282614
+      },
+      "rf/test-natural/C-seq/FOS < 0.5": {
+        "r1": 0.33511467774877474,
+        "r2": 0.34259564639182377,
+        "r3": 0.2755723110752189,
+        "r4": 0.30541978805453074,
+        "r5": 0.3074818104786895
+      },
+      "rf/test-natural/C-seq/FOS \u2265 6": {
+        "r1": -0.026804657853552506,
+        "r2": -0.014853485259138618,
+        "r3": -0.008937786891852392,
+        "r4": -0.010017475044773324,
+        "r5": -0.01079321469407852
+      },
+      "rf/test-natural/C-seqF/0.5\u20131": {
+        "r1": 0.07327007097498175,
+        "r2": 0.027654350900435047,
+        "r3": 0.03717121359362422,
+        "r4": 0.05299932993070709,
+        "r5": 0.04707948518022787
+      },
+      "rf/test-natural/C-seqF/1\u20132": {
+        "r1": -0.002371707752466906,
+        "r2": -0.01705513807392565,
+        "r3": -0.01682466012704195,
+        "r4": -0.0025878345262714706,
+        "r5": -0.005088610757319647
+      },
+      "rf/test-natural/C-seqF/2\u20136": {
+        "r1": -0.02593217053613731,
+        "r2": -0.022249740269161246,
+        "r3": -0.02437786434212417,
+        "r4": -0.016585785925982567,
+        "r5": -0.024800955489236127
+      },
+      "rf/test-natural/C-seqF/FOS < 0.5": {
+        "r1": 0.25804200570497204,
+        "r2": 0.2422782711872408,
+        "r3": 0.28658993889134177,
+        "r4": 0.305150891541962,
+        "r5": 0.2444363153717782
+      },
+      "rf/test-natural/C-seqF/FOS \u2265 6": {
+        "r1": 0.009104631856424579,
+        "r2": -0.0013838090041703999,
+        "r3": -0.02701944179551967,
+        "r4": -0.013120125281749747,
+        "r5": -0.01023805676585269
+      },
+      "rf/test-natural/C-seqP/0.5\u20131": {
+        "r1": 0.04792593999666808,
+        "r2": 0.037857364095897114,
+        "r3": 0.024772010364420685,
+        "r4": 0.05993506195386186,
+        "r5": 0.024538298034148493
+      },
+      "rf/test-natural/C-seqP/1\u20132": {
+        "r1": -0.014334263654187584,
+        "r2": -0.011411907044624657,
+        "r3": -0.010129506922672856,
+        "r4": 0.0005382267544796604,
+        "r5": -0.0033128594567893065
+      },
+      "rf/test-natural/C-seqP/2\u20136": {
+        "r1": -0.026704112832171053,
+        "r2": -0.023432166592632735,
+        "r3": -0.0334821663106037,
+        "r4": -0.023699025657274424,
+        "r5": -0.02432783196743116
+      },
+      "rf/test-natural/C-seqP/FOS < 0.5": {
+        "r1": 0.33528826374479237,
+        "r2": 0.2804424879224794,
+        "r3": 0.28530487868924753,
+        "r4": 0.3071137091584871,
+        "r5": 0.3131975518255525
+      },
+      "rf/test-natural/C-seqP/FOS \u2265 6": {
+        "r1": -0.001309951175155218,
+        "r2": -0.010025871335853724,
+        "r3": -0.017117323307641225,
+        "r4": -0.012002497564992566,
+        "r5": -0.017488462127025334
+      },
+      "rf/test-natural/C0-log/0.5\u20131": {
+        "r1": 0.010307409079947405,
+        "r2": 0.03170205991600136,
+        "r3": 0.019411180461241045,
+        "r4": -0.0004261253887773565,
+        "r5": -0.018633998481272434
+      },
+      "rf/test-natural/C0-log/1\u20132": {
+        "r1": -0.02746541963611729,
+        "r2": -0.002772699864717595,
+        "r3": 0.008283945869157183,
+        "r4": -0.04161030868620756,
+        "r5": -0.06514275914944335
+      },
+      "rf/test-natural/C0-log/2\u20136": {
+        "r1": -0.025610819996181824,
+        "r2": -0.014851508526009442,
+        "r3": -0.04777037628886727,
+        "r4": -0.03808494379209651,
+        "r5": -0.05046744070292907
+      },
+      "rf/test-natural/C0-log/FOS < 0.5": {
+        "r1": 0.30590905586740064,
+        "r2": 0.2632276267636545,
+        "r3": 0.31040148078992597,
+        "r4": 0.28340962341101106,
+        "r5": 0.3290207086198058
+      },
+      "rf/test-natural/C0-log/FOS \u2265 6": {
+        "r1": -0.4151631816662899,
+        "r2": -0.4045248465913425,
+        "r3": -0.40885419972811327,
+        "r4": -0.38462879900951,
+        "r5": -0.40615118683184287
+      },
+      "rf/test-natural/C0-logG/0.5\u20131": {
+        "r1": 0.03102435776569147,
+        "r2": -0.02128005427345435,
+        "r3": -0.02264697016636455,
+        "r4": -0.003635593169279243,
+        "r5": 0.008403202903421933
+      },
+      "rf/test-natural/C0-logG/1\u20132": {
+        "r1": -0.053735847156909974,
+        "r2": -0.0741876394701889,
+        "r3": -0.018561330442578284,
+        "r4": -0.0457799164583778,
+        "r5": -0.05411645223035064
+      },
+      "rf/test-natural/C0-logG/2\u20136": {
+        "r1": -0.04586405118084019,
+        "r2": -0.042793516198407565,
+        "r3": -0.04662971371560101,
+        "r4": 0.01423472393394615,
+        "r5": -0.029186968352241185
+      },
+      "rf/test-natural/C0-logG/FOS < 0.5": {
+        "r1": 0.48431358426702253,
+        "r2": 0.41617547554511136,
+        "r3": 0.45606817400918576,
+        "r4": 0.443341381347543,
+        "r5": 0.48276940200011637
+      },
+      "rf/test-natural/C0-logG/FOS \u2265 6": {
+        "r1": -0.6112305060310845,
+        "r2": -0.4958869367304653,
+        "r3": -0.4908635230604705,
+        "r4": -0.5084543011228916,
+        "r5": -0.4996902434833504
+      },
+      "rf/test-natural/C0-logP/0.5\u20131": {
+        "r1": 0.0218889720916036,
+        "r2": 0.005530728470155347,
+        "r3": 0.013545447935298969,
+        "r4": 0.02401883672197587,
+        "r5": -0.0001373716541104331
+      },
+      "rf/test-natural/C0-logP/1\u20132": {
+        "r1": 0.015164081701437617,
+        "r2": -0.035666161051517105,
+        "r3": -0.013903497493835055,
+        "r4": 0.037734973393210434,
+        "r5": -0.005049795501155555
+      },
+      "rf/test-natural/C0-logP/2\u20136": {
+        "r1": -0.05893175277301717,
+        "r2": -0.03856814678728936,
+        "r3": -0.06193508360039412,
+        "r4": -0.01641444902912955,
+        "r5": -0.06399010415036561
+      },
+      "rf/test-natural/C0-logP/FOS < 0.5": {
+        "r1": 0.2922747036980841,
+        "r2": 0.2570621071690804,
+        "r3": 0.32497954661571177,
+        "r4": 0.29301740406997684,
+        "r5": 0.3166674384560196
+      },
+      "rf/test-natural/C0-logP/FOS \u2265 6": {
+        "r1": -0.45561642171413447,
+        "r2": -0.43151229378394484,
+        "r3": -0.41112144405067674,
+        "r4": -0.3608649557849828,
+        "r5": -0.40044880053465204
+      },
+      "rf/test-natural/C0-oracle/0.5\u20131": {
+        "r1": 0.010553800414265698,
+        "r2": 0.020375152313852136,
+        "r3": -0.013215771957810148,
+        "r4": -0.01279645819783471,
+        "r5": 0.0035256426880232333
+      },
+      "rf/test-natural/C0-oracle/1\u20132": {
+        "r1": -0.0644233863252155,
+        "r2": -0.00474488335631605,
+        "r3": -0.08063714814198557,
+        "r4": -0.026611854266941057,
+        "r5": -0.030896216717555457
+      },
+      "rf/test-natural/C0-oracle/2\u20136": {
+        "r1": -0.02610435588442019,
+        "r2": 0.014401995963431651,
+        "r3": -0.02820312563063684,
+        "r4": -0.01875719395644338,
+        "r5": 0.021856018861103825
+      },
+      "rf/test-natural/C0-oracle/FOS < 0.5": {
+        "r1": 0.567430281668367,
+        "r2": 0.5757902311941153,
+        "r3": 0.5593873082782949,
+        "r4": 0.5392179223234659,
+        "r5": 0.5734812070022721
+      },
+      "rf/test-natural/C0-oracle/FOS \u2265 6": {
+        "r1": -0.5546670297631985,
+        "r2": -0.6029119357977718,
+        "r3": -0.5427646155226088,
+        "r4": -0.5398404078567736,
+        "r5": -0.5342863681326925
+      },
+      "rf/test-natural/C0-seq/0.5\u20131": {
+        "r1": 0.06706768808175846,
+        "r2": 0.02384142352145357,
+        "r3": 0.002098147820185266,
+        "r4": 0.0035315336020793333,
+        "r5": -0.006547647192687187
+      },
+      "rf/test-natural/C0-seq/1\u20132": {
+        "r1": -0.010442814088675895,
+        "r2": 0.05364745541140437,
+        "r3": -0.034652122151976446,
+        "r4": -0.034236779288198675,
+        "r5": -0.047414295278052784
+      },
+      "rf/test-natural/C0-seq/2\u20136": {
+        "r1": -0.0013445465850254906,
+        "r2": 0.029295268342694858,
+        "r3": -0.007680549595924573,
+        "r4": -0.009167361514593417,
+        "r5": -0.02714767767586221
+      },
+      "rf/test-natural/C0-seq/FOS < 0.5": {
+        "r1": 0.374190354199443,
+        "r2": 0.3632409806194463,
+        "r3": 0.2943999048646742,
+        "r4": 0.33623492518669656,
+        "r5": 0.3327941902895336
+      },
+      "rf/test-natural/C0-seq/FOS \u2265 6": {
+        "r1": -0.4846478029488252,
+        "r2": -0.4213164476511375,
+        "r3": -0.40641489119887914,
+        "r4": -0.421905157459402,
+        "r5": -0.4460740737277297
+      },
+      "rf/test-natural/C0-seqF/0.5\u20131": {
+        "r1": 0.03578015418209235,
+        "r2": -0.04374869992356039,
+        "r3": -0.004600533537725435,
+        "r4": 0.00485958874146015,
+        "r5": 0.0054105377689696345
+      },
+      "rf/test-natural/C0-seqF/1\u20132": {
+        "r1": -0.033807779591909566,
+        "r2": -0.07413679148156048,
+        "r3": -0.02584378121414543,
+        "r4": -0.012114192466313543,
+        "r5": -0.022128346005349478
+      },
+      "rf/test-natural/C0-seqF/2\u20136": {
+        "r1": -0.03630963739723753,
+        "r2": -0.050355661865695574,
+        "r3": -0.03204618710121123,
+        "r4": -0.030765067017235574,
+        "r5": -0.04394581047128889
+      },
+      "rf/test-natural/C0-seqF/FOS < 0.5": {
+        "r1": 0.2668556138662965,
+        "r2": 0.2474705314672705,
+        "r3": 0.2912044936830086,
+        "r4": 0.30332183203944435,
+        "r5": 0.23279643798373698
+      },
+      "rf/test-natural/C0-seqF/FOS \u2265 6": {
+        "r1": -0.37692401323684427,
+        "r2": -0.3636579202313463,
+        "r3": -0.40270878079809364,
+        "r4": -0.3665607005494989,
+        "r5": -0.39313933800857104
+      },
+      "rf/test-natural/C0-seqP/0.5\u20131": {
+        "r1": 0.004307262976653444,
+        "r2": 0.0019526141334230884,
+        "r3": -0.04311421792554028,
+        "r4": 0.021529795096130292,
+        "r5": -0.01398439925023265
+      },
+      "rf/test-natural/C0-seqP/1\u20132": {
+        "r1": -0.028776831764960795,
+        "r2": -0.03340154915862493,
+        "r3": -0.056155394627252796,
+        "r4": -0.01245102111247558,
+        "r5": -0.031929385537298696
+      },
+      "rf/test-natural/C0-seqP/2\u20136": {
+        "r1": -0.021462304474324758,
+        "r2": -0.019597545650268635,
+        "r3": -0.115104730877716,
+        "r4": 0.016142284211902842,
+        "r5": -0.0021667512608489277
+      },
+      "rf/test-natural/C0-seqP/FOS < 0.5": {
+        "r1": 0.3642384095789595,
+        "r2": 0.30721429042809467,
+        "r3": 0.2894262548170601,
+        "r4": 0.3576271615069836,
+        "r5": 0.32239210801616447
+      },
+      "rf/test-natural/C0-seqP/FOS \u2265 6": {
+        "r1": -0.4409568902470505,
+        "r2": -0.4252095150034581,
+        "r3": -0.4267479896427447,
+        "r4": -0.4210094914482787,
+        "r5": -0.44189735336318203
+      },
+      "rf/test-natural/D-P/0.5\u20131": {
+        "r1": 0.02845287359034593,
+        "r2": 0.027972150181904167,
+        "r3": 0.025629253026621186,
+        "r4": 0.029305551959648655,
+        "r5": 0.0298544519346765
+      },
+      "rf/test-natural/D-P/1\u20132": {
+        "r1": -0.013828616297292914,
+        "r2": -0.017579450285824822,
+        "r3": -0.02093446486349159,
+        "r4": -0.014072319236810057,
+        "r5": -0.01799939270481777
+      },
+      "rf/test-natural/D-P/2\u20136": {
+        "r1": -0.04141861976690833,
+        "r2": -0.03661597213949641,
+        "r3": -0.038739829543396116,
+        "r4": -0.04268518902485793,
+        "r5": -0.040335091657719646
+      },
+      "rf/test-natural/D-P/FOS < 0.5": {
+        "r1": 0.2628703948362736,
+        "r2": 0.22201575118366618,
+        "r3": 0.315510472701159,
+        "r4": 0.28251174085733577,
+        "r5": 0.25938963552105015
+      },
+      "rf/test-natural/D-P/FOS \u2265 6": {
+        "r1": -0.0587633702842526,
+        "r2": -0.060316178801055866,
+        "r3": -0.05912331185803638,
+        "r4": -0.05891894592814075,
+        "r5": -0.0586702904366466
+      },
+      "rf/test-natural/D-oracle/0.5\u20131": {
+        "r1": 0.011789638908624243,
+        "r2": 0.021023822021347022,
+        "r3": 0.02339383382559198,
+        "r4": 0.013566234459659847,
+        "r5": 0.021014296037166792
+      },
+      "rf/test-natural/D-oracle/1\u20132": {
+        "r1": -0.02823244870753701,
+        "r2": -0.02531530450076838,
+        "r3": -0.02638684195677157,
+        "r4": -0.021497671966340844,
+        "r5": -0.03569713678740168
+      },
+      "rf/test-natural/D-oracle/2\u20136": {
+        "r1": -0.04820402715036062,
+        "r2": -0.05085843046444904,
+        "r3": -0.050735502448544224,
+        "r4": -0.04759229477411918,
+        "r5": -0.048641218778579735
+      },
+      "rf/test-natural/D-oracle/FOS < 0.5": {
+        "r1": 0.4261846891880047,
+        "r2": 0.3937226578285068,
+        "r3": 0.443009771176927,
+        "r4": 0.34881772797604815,
+        "r5": 0.3964071224298358
+      },
+      "rf/test-natural/D-oracle/FOS \u2265 6": {
+        "r1": -0.05990449984059726,
+        "r2": -0.05919914750179581,
+        "r3": -0.05772020911356679,
+        "r4": -0.057280261975583606,
+        "r5": -0.05806169062722217
+      },
+      "rf/test-natural/D0-P/0.5\u20131": {
+        "r1": 0.004162344261409849,
+        "r2": 0.004232269954841881,
+        "r3": 0.011568735677563592,
+        "r4": 0.016502506172164737,
+        "r5": 0.018050401796595648
+      },
+      "rf/test-natural/D0-P/1\u20132": {
+        "r1": -0.0991535776959081,
+        "r2": -0.09551025564780256,
+        "r3": -0.1205533050548361,
+        "r4": -0.1000259755554249,
+        "r5": -0.09414618106280932
+      },
+      "rf/test-natural/D0-P/2\u20136": {
+        "r1": -0.6613638445056189,
+        "r2": -0.6455110960739405,
+        "r3": -0.6512919492354069,
+        "r4": -0.6931970944856495,
+        "r5": -0.6291529895204123
+      },
+      "rf/test-natural/D0-P/FOS < 0.5": {
+        "r1": 0.27834685848149787,
+        "r2": 0.22168826591020602,
+        "r3": 0.32479487629810666,
+        "r4": 0.31077360363970985,
+        "r5": 0.27289650416135947
+      },
+      "rf/test-natural/D0-P/FOS \u2265 6": {
+        "r1": -1.6663195316359758,
+        "r2": -1.6538633582023394,
+        "r3": -1.6509431326702304,
+        "r4": -1.717400060022169,
+        "r5": -1.6332133467712353
+      },
+      "rf/test-natural/D0-oracle/0.5\u20131": {
+        "r1": 0.0028436881048384557,
+        "r2": 0.016103595309357083,
+        "r3": 0.016158535277093867,
+        "r4": 0.013552390717905372,
+        "r5": 0.021157584052522545
+      },
+      "rf/test-natural/D0-oracle/1\u20132": {
+        "r1": -0.10401838474411049,
+        "r2": -0.12134589816985104,
+        "r3": -0.10587116643469421,
+        "r4": -0.11462756858303494,
+        "r5": -0.11732244948993441
+      },
+      "rf/test-natural/D0-oracle/2\u20136": {
+        "r1": -0.6412500723082498,
+        "r2": -0.6653026541347714,
+        "r3": -0.6327438310953654,
+        "r4": -0.6368960109548615,
+        "r5": -0.6373144570628054
+      },
+      "rf/test-natural/D0-oracle/FOS < 0.5": {
+        "r1": 0.5632905310257336,
+        "r2": 0.594805576380763,
+        "r3": 0.5549128641281131,
+        "r4": 0.530970049221421,
+        "r5": 0.5795307959150242
+      },
+      "rf/test-natural/D0-oracle/FOS \u2265 6": {
+        "r1": -1.6590817439872012,
+        "r2": -1.673473447317918,
+        "r3": -1.647634609608583,
+        "r4": -1.6318089805493645,
+        "r5": -1.6347576438786955
+      },
+      "rf/test-stratified/B/0.5\u20131": {
+        "r1": 0.08075673749116674,
+        "r2": 0.128278884557842,
+        "r3": 0.09385701071702568,
+        "r4": 0.11788835625077183,
+        "r5": 0.12391747178544617
+      },
+      "rf/test-stratified/B/1\u20132": {
+        "r1": 0.019159962664843527,
+        "r2": 0.018621997845456068,
+        "r3": 0.0011006166733136616,
+        "r4": 0.01705768953725945,
+        "r5": 0.024247240654005436
+      },
+      "rf/test-stratified/B/2\u20136": {
+        "r1": -0.01660482470014479,
+        "r2": -0.014237791116553019,
+        "r3": -0.019021108469921402,
+        "r4": -0.010885541940528582,
+        "r5": -0.030275223481984623
+      },
+      "rf/test-stratified/B/FOS < 0.5": {
+        "r1": 0.21962220921330533,
+        "r2": 0.14665397120111281,
+        "r3": 0.3143049263664463,
+        "r4": 0.2054990168606133,
+        "r5": 0.05721935620533162
+      },
+      "rf/test-stratified/B/FOS \u2265 6": {
+        "r1": -0.1690545429376776,
+        "r2": -0.12605824392417528,
+        "r3": -0.19704060859086692,
+        "r4": -0.21539267671236553,
+        "r5": -0.188040675843143
+      },
+      "rf/test-stratified/C-log/0.5\u20131": {
+        "r1": 0.07396301697437836,
+        "r2": 0.05429898054647236,
+        "r3": 0.07497715390806033,
+        "r4": 0.03510189483009465,
+        "r5": 0.05939802417810234
+      },
+      "rf/test-stratified/C-log/1\u20132": {
+        "r1": 0.009243041340120202,
+        "r2": -0.0006271279019088733,
+        "r3": 0.015071584511116662,
+        "r4": 0.01696201903684234,
+        "r5": -0.009046363849619519
+      },
+      "rf/test-stratified/C-log/2\u20136": {
+        "r1": -0.02511570223467018,
+        "r2": -0.012713336319681324,
+        "r3": -0.031791414320213256,
+        "r4": -0.02457718643790888,
+        "r5": -0.022870050598459715
+      },
+      "rf/test-stratified/C-log/FOS < 0.5": {
+        "r1": 0.05338539967691095,
+        "r2": -0.09837345825696443,
+        "r3": 0.13191136452287494,
+        "r4": 0.010165807862429122,
+        "r5": 0.09194867461786181
+      },
+      "rf/test-stratified/C-log/FOS \u2265 6": {
+        "r1": -0.08945385210295469,
+        "r2": -0.09425887996884313,
+        "r3": -0.12017990251246606,
+        "r4": -0.12624559504258015,
+        "r5": -0.09936424239247874
+      },
+      "rf/test-stratified/C-logG/0.5\u20131": {
+        "r1": 0.07616840505338567,
+        "r2": 0.013188396846170174,
+        "r3": 0.04854349409755615,
+        "r4": 0.018618129979788248,
+        "r5": 0.04662294927950585
+      },
+      "rf/test-stratified/C-logG/1\u20132": {
+        "r1": 0.013703119049543203,
+        "r2": -0.0032547788853069877,
+        "r3": 0.001365933227214208,
+        "r4": 0.008788687788590273,
+        "r5": -0.011654277788769249
+      },
+      "rf/test-stratified/C-logG/2\u20136": {
+        "r1": -0.01258736512713138,
+        "r2": -0.010974191388518045,
+        "r3": -0.02824267181021619,
+        "r4": -0.015105995633683401,
+        "r5": -0.027251349489167097
+      },
+      "rf/test-stratified/C-logG/FOS < 0.5": {
+        "r1": 0.14026329850583466,
+        "r2": 0.18805969762206723,
+        "r3": 0.11795096235530535,
+        "r4": 0.1592750212904549,
+        "r5": 0.15789535220768072
+      },
+      "rf/test-stratified/C-logG/FOS \u2265 6": {
+        "r1": -0.23551525806841409,
+        "r2": -0.1956414658561129,
+        "r3": -0.2179586671644856,
+        "r4": -0.23173364747821168,
+        "r5": -0.2152511605487198
+      },
+      "rf/test-stratified/C-logP/0.5\u20131": {
+        "r1": 0.07997945050101994,
+        "r2": 0.03677141141641755,
+        "r3": 0.08457288078167463,
+        "r4": 0.06884675920860805,
+        "r5": 0.0635030979321713
+      },
+      "rf/test-stratified/C-logP/1\u20132": {
+        "r1": 0.015945221772443254,
+        "r2": 0.005356504555245341,
+        "r3": 0.017490846870783092,
+        "r4": 0.037154425224909214,
+        "r5": 0.01949710501335404
+      },
+      "rf/test-stratified/C-logP/2\u20136": {
+        "r1": -0.03336501390495949,
+        "r2": -0.0050932203103576,
+        "r3": -0.020113201914992485,
+        "r4": -0.03809361310130477,
+        "r5": -0.018936770760611267
+      },
+      "rf/test-stratified/C-logP/FOS < 0.5": {
+        "r1": 0.007317065835127774,
+        "r2": 0.023308815276964986,
+        "r3": 0.13886624745141593,
+        "r4": 0.10634251628321424,
+        "r5": 0.1342505789374906
+      },
+      "rf/test-stratified/C-logP/FOS \u2265 6": {
+        "r1": -0.11966786748820527,
+        "r2": -0.10872638150407632,
+        "r3": -0.10457824441654096,
+        "r4": -0.11866176259656633,
+        "r5": -0.1148575367656223
+      },
+      "rf/test-stratified/C-oracle/0.5\u20131": {
+        "r1": 0.0346453200763853,
+        "r2": 0.0567662193111625,
+        "r3": 0.028477209797478423,
+        "r4": 0.06925627115370092,
+        "r5": 0.0606906334992936
+      },
+      "rf/test-stratified/C-oracle/1\u20132": {
+        "r1": 0.011524790657546241,
+        "r2": 0.004195615843167066,
+        "r3": -0.016310670984596636,
+        "r4": 0.006942449084427475,
+        "r5": 0.02369576581398049
+      },
+      "rf/test-stratified/C-oracle/2\u20136": {
+        "r1": -0.012814816037774556,
+        "r2": -0.012633457322769054,
+        "r3": -0.01971794473881632,
+        "r4": -0.017627636047790593,
+        "r5": -0.00735451502575064
+      },
+      "rf/test-stratified/C-oracle/FOS < 0.5": {
+        "r1": 0.21610279986693218,
+        "r2": 0.19522961351036305,
+        "r3": 0.21808687160267484,
+        "r4": 0.22852657193901296,
+        "r5": 0.2432071944669021
+      },
+      "rf/test-stratified/C-oracle/FOS \u2265 6": {
+        "r1": -0.21667038388010923,
+        "r2": -0.25492682205555106,
+        "r3": -0.22901203723049857,
+        "r4": -0.2341365465649711,
+        "r5": -0.23439760768384885
+      },
+      "rf/test-stratified/C-seq/0.5\u20131": {
+        "r1": 0.017959242454345683,
+        "r2": 0.03599904749651866,
+        "r3": 0.0333216640752386,
+        "r4": 0.07108336552284965,
+        "r5": 0.06044249846728234
+      },
+      "rf/test-stratified/C-seq/1\u20132": {
+        "r1": 0.01202112398018213,
+        "r2": 0.0008288438787029014,
+        "r3": -0.00047721421868277453,
+        "r4": 0.00485057071221917,
+        "r5": 0.002187299668408396
+      },
+      "rf/test-stratified/C-seq/2\u20136": {
+        "r1": -0.021330359259271972,
+        "r2": -0.021156813823370087,
+        "r3": -0.024831833814037377,
+        "r4": -0.023414210912532176,
+        "r5": -0.027583510978460336
+      },
+      "rf/test-stratified/C-seq/FOS < 0.5": {
+        "r1": 0.2429016631387466,
+        "r2": 0.18091129503752534,
+        "r3": 0.07461749479561586,
+        "r4": 0.09107380083788054,
+        "r5": 0.09036569251348066
+      },
+      "rf/test-stratified/C-seq/FOS \u2265 6": {
+        "r1": -0.16701976599289076,
+        "r2": -0.12310753049715764,
+        "r3": -0.13790967126216738,
+        "r4": -0.10825641209962188,
+        "r5": -0.1072105569113404
+      },
+      "rf/test-stratified/C-seqF/0.5\u20131": {
+        "r1": 0.06992154242653437,
+        "r2": 0.021305585624749542,
+        "r3": 0.09818767919490173,
+        "r4": 0.058064043487060624,
+        "r5": 0.08786304049977384
+      },
+      "rf/test-stratified/C-seqF/1\u20132": {
+        "r1": 0.03308924213760956,
+        "r2": 0.01966245853284102,
+        "r3": 0.027798347647652048,
+        "r4": 0.01578089633522741,
+        "r5": 0.0003936896162303136
+      },
+      "rf/test-stratified/C-seqF/2\u20136": {
+        "r1": -0.032055617698902486,
+        "r2": -0.015420648031329183,
+        "r3": -0.01721028641009579,
+        "r4": -0.01847529125944416,
+        "r5": -0.007101041630094721
+      },
+      "rf/test-stratified/C-seqF/FOS < 0.5": {
+        "r1": 0.18180577937953282,
+        "r2": 0.0827825909828612,
+        "r3": 0.03931041108663826,
+        "r4": 0.19725536149498715,
+        "r5": 0.07699859103380736
+      },
+      "rf/test-stratified/C-seqF/FOS \u2265 6": {
+        "r1": -0.07846831708445219,
+        "r2": -0.08445853815680708,
+        "r3": -0.08580220450459004,
+        "r4": -0.09221014493726072,
+        "r5": -0.10878495125360897
+      },
+      "rf/test-stratified/C-seqP/0.5\u20131": {
+        "r1": 0.056238981632251744,
+        "r2": 0.05973566199721986,
+        "r3": 0.0695398419559133,
+        "r4": 0.05826255993160889,
+        "r5": 0.05164576067320015
+      },
+      "rf/test-stratified/C-seqP/1\u20132": {
+        "r1": 0.007555337988733664,
+        "r2": 0.0017038618819605826,
+        "r3": 0.028845537280722495,
+        "r4": 0.011041195097061841,
+        "r5": 0.002764955749434045
+      },
+      "rf/test-stratified/C-seqP/2\u20136": {
+        "r1": -0.016394524968627196,
+        "r2": -0.019986877854696602,
+        "r3": -0.024488431410565933,
+        "r4": -0.025747746285041374,
+        "r5": -0.016130109573761067
+      },
+      "rf/test-stratified/C-seqP/FOS < 0.5": {
+        "r1": 0.10366495084369126,
+        "r2": 0.0698287150947695,
+        "r3": 0.06624991547968498,
+        "r4": 0.17654880641365664,
+        "r5": 0.01258986464321705
+      },
+      "rf/test-stratified/C-seqP/FOS \u2265 6": {
+        "r1": -0.1205024209781109,
+        "r2": -0.15196507236820864,
+        "r3": -0.1429006058051557,
+        "r4": -0.13879468998951924,
+        "r5": -0.1381681591012832
+      },
+      "rf/test-stratified/C0-log/0.5\u20131": {
+        "r1": 0.03911445242851427,
+        "r2": 0.044678612902721106,
+        "r3": 0.04335743362015887,
+        "r4": 0.006455341431510736,
+        "r5": 0.026933777991950958
+      },
+      "rf/test-stratified/C0-log/1\u20132": {
+        "r1": -2.973233605899998e-05,
+        "r2": -0.027732581888689378,
+        "r3": -0.05598046239295662,
+        "r4": -0.04567455831484965,
+        "r5": -0.061357528758024193
+      },
+      "rf/test-stratified/C0-log/2\u20136": {
+        "r1": -0.029353563180810224,
+        "r2": -0.0035657657217387285,
+        "r3": -0.04014574272464227,
+        "r4": -0.030976685154247997,
+        "r5": -0.030546499625370902
+      },
+      "rf/test-stratified/C0-log/FOS < 0.5": {
+        "r1": -0.042605387156408936,
+        "r2": -0.14554258965685365,
+        "r3": -0.007362829330159422,
+        "r4": -0.07149598148484176,
+        "r5": 0.08035222684416911
+      },
+      "rf/test-stratified/C0-log/FOS \u2265 6": {
+        "r1": -0.11585690166376068,
+        "r2": -0.10866194272063595,
+        "r3": -0.13021993990924002,
+        "r4": -0.14044147459608947,
+        "r5": -0.12373126764318851
+      },
+      "rf/test-stratified/C0-logG/0.5\u20131": {
+        "r1": 0.07019734380323944,
+        "r2": 0.0040570967216976145,
+        "r3": 0.03372982218314006,
+        "r4": 0.003591194254956314,
+        "r5": 0.03770885897894774
+      },
+      "rf/test-stratified/C0-logG/1\u20132": {
+        "r1": 0.030947228924161976,
+        "r2": -0.06487690455289345,
+        "r3": -0.041593981124257474,
+        "r4": 0.005892610365359437,
+        "r5": -0.024084137815507955
+      },
+      "rf/test-stratified/C0-logG/2\u20136": {
+        "r1": -0.02437321563288498,
+        "r2": -0.01479504818481231,
+        "r3": -0.039937025708069,
+        "r4": 0.009171642311031262,
+        "r5": -0.028966989441771077
+      },
+      "rf/test-stratified/C0-logG/FOS < 0.5": {
+        "r1": 0.13679400194894184,
+        "r2": 0.2526233109940384,
+        "r3": 0.1371201958948203,
+        "r4": 0.21546951660748545,
+        "r5": 0.24582740563831698
+      },
+      "rf/test-stratified/C0-logG/FOS \u2265 6": {
+        "r1": -0.272910561927967,
+        "r2": -0.22670332554658382,
+        "r3": -0.25339357345702784,
+        "r4": -0.2784880071216084,
+        "r5": -0.2703871405461349
+      },
+      "rf/test-stratified/C0-logP/0.5\u20131": {
+        "r1": 0.08023507386452071,
+        "r2": 0.033735421950187056,
+        "r3": 0.07634311036821319,
+        "r4": 0.05057896485620772,
+        "r5": 0.053235379731582544
+      },
+      "rf/test-stratified/C0-logP/1\u20132": {
+        "r1": 0.03127762677264596,
+        "r2": -0.05475493392740798,
+        "r3": 0.0059715805229486095,
+        "r4": 0.01846323216317856,
+        "r5": -0.007576478912993734
+      },
+      "rf/test-stratified/C0-logP/2\u20136": {
+        "r1": -0.02750369556045604,
+        "r2": -0.011368034209488174,
+        "r3": -0.03382324736581315,
+        "r4": -0.02321310808667334,
+        "r5": -0.04171020776706149
+      },
+      "rf/test-stratified/C0-logP/FOS < 0.5": {
+        "r1": 0.0447161792487707,
+        "r2": -0.029228032707149226,
+        "r3": 0.036364305043105095,
+        "r4": 0.11039223047647619,
+        "r5": 0.02295656885216255
+      },
+      "rf/test-stratified/C0-logP/FOS \u2265 6": {
+        "r1": -0.1408090393062461,
+        "r2": -0.13321186929176654,
+        "r3": -0.12660276662962858,
+        "r4": -0.12541635302965748,
+        "r5": -0.13195490150695005
+      },
+      "rf/test-stratified/C0-oracle/0.5\u20131": {
+        "r1": 0.035099612450476235,
+        "r2": 0.08360851349718536,
+        "r3": 0.00797299115224133,
+        "r4": 0.06174659890019538,
+        "r5": 0.060742997027998076
+      },
+      "rf/test-stratified/C0-oracle/1\u20132": {
+        "r1": -0.004505338341661308,
+        "r2": 0.04762899209920513,
+        "r3": -0.07324962365917832,
+        "r4": -0.013056301208271476,
+        "r5": -0.0015432793693911033
+      },
+      "rf/test-stratified/C0-oracle/2\u20136": {
+        "r1": -0.02180839916277282,
+        "r2": 0.03021900138867339,
+        "r3": -0.0016018757281653854,
+        "r4": -0.004651012964892406,
+        "r5": 0.021825903216180317
+      },
+      "rf/test-stratified/C0-oracle/FOS < 0.5": {
+        "r1": 0.22255594585929872,
+        "r2": 0.2710614474728235,
+        "r3": 0.2341419708879983,
+        "r4": 0.2736426496238457,
+        "r5": 0.3049294395424272
+      },
+      "rf/test-stratified/C0-oracle/FOS \u2265 6": {
+        "r1": -0.29153473655646833,
+        "r2": -0.3204648986302855,
+        "r3": -0.30910477259262714,
+        "r4": -0.3104013422195118,
+        "r5": -0.3146343320018634
+      },
+      "rf/test-stratified/C0-seq/0.5\u20131": {
+        "r1": 0.00022438151465886216,
+        "r2": 0.06486330271034915,
+        "r3": 0.0369527192320541,
+        "r4": 0.05026309350177349,
+        "r5": 0.05057347465938714
+      },
+      "rf/test-stratified/C0-seq/1\u20132": {
+        "r1": 0.0325924990769119,
+        "r2": 0.07099003231211362,
+        "r3": -0.004845647358558598,
+        "r4": 0.008925248591587552,
+        "r5": -0.04651394096197608
+      },
+      "rf/test-stratified/C0-seq/2\u20136": {
+        "r1": 0.006132409178315173,
+        "r2": 0.018459481073759353,
+        "r3": 0.002166801951636488,
+        "r4": 0.007637568815443346,
+        "r5": -0.012826347423354567
+      },
+      "rf/test-stratified/C0-seq/FOS < 0.5": {
+        "r1": 0.21520852566412949,
+        "r2": 0.1730474569133145,
+        "r3": 0.01156225261054955,
+        "r4": 0.08393447169395224,
+        "r5": 0.03922141532377847
+      },
+      "rf/test-stratified/C0-seq/FOS \u2265 6": {
+        "r1": -0.20684389114196663,
+        "r2": -0.1408297490713574,
+        "r3": -0.1668317773948995,
+        "r4": -0.12179432652948528,
+        "r5": -0.13411751190432977
+      },
+      "rf/test-stratified/C0-seqF/0.5\u20131": {
+        "r1": 0.027755099870995382,
+        "r2": 0.019914314245058,
+        "r3": 0.09316365302792996,
+        "r4": 0.04575376505648807,
+        "r5": 0.05214625403988493
+      },
+      "rf/test-stratified/C0-seqF/1\u20132": {
+        "r1": 0.007896597419099696,
+        "r2": -0.039787357474825806,
+        "r3": 0.038801626503158944,
+        "r4": -0.02209602972644917,
+        "r5": -0.04485310144981105
+      },
+      "rf/test-stratified/C0-seqF/2\u20136": {
+        "r1": -0.0277689733747404,
+        "r2": -0.022873812928048364,
+        "r3": -0.006467315907151411,
+        "r4": -0.011019082820959968,
+        "r5": 0.003822874632511151
+      },
+      "rf/test-stratified/C0-seqF/FOS < 0.5": {
+        "r1": 0.09442410312365516,
+        "r2": -0.05163808589874077,
+        "r3": 0.021298942247415797,
+        "r4": 0.10815545095404692,
+        "r5": 0.009357849976346868
+      },
+      "rf/test-stratified/C0-seqF/FOS \u2265 6": {
+        "r1": -0.07511105857949421,
+        "r2": -0.09175197613134918,
+        "r3": -0.10166803110230123,
+        "r4": -0.10177268496898043,
+        "r5": -0.10693652131503571
+      },
+      "rf/test-stratified/C0-seqP/0.5\u20131": {
+        "r1": 0.0527443147999205,
+        "r2": 0.017281294744525336,
+        "r3": 0.05057053303579948,
+        "r4": 0.05118442059258164,
+        "r5": 0.022246638268472212
+      },
+      "rf/test-stratified/C0-seqP/1\u20132": {
+        "r1": -0.03236018857153652,
+        "r2": 4.332614632712034e-05,
+        "r3": -0.042259036595604926,
+        "r4": 0.017952760468245555,
+        "r5": -0.02008456991856083
+      },
+      "rf/test-stratified/C0-seqP/2\u20136": {
+        "r1": 0.007427585329469816,
+        "r2": 0.009496918960287554,
+        "r3": -0.06194555824166916,
+        "r4": 0.018260700497971724,
+        "r5": -0.0015718847332369381
+      },
+      "rf/test-stratified/C0-seqP/FOS < 0.5": {
+        "r1": 0.08917710251644523,
+        "r2": 0.06862668468309045,
+        "r3": 0.0843194536485068,
+        "r4": 0.13047128507344483,
+        "r5": 0.031553328250010074
+      },
+      "rf/test-stratified/C0-seqP/FOS \u2265 6": {
+        "r1": -0.14855201172460114,
+        "r2": -0.168918391638786,
+        "r3": -0.1693073480919409,
+        "r4": -0.15936777150069625,
+        "r5": -0.15460494218234488
+      },
+      "rf/test-stratified/D-P/0.5\u20131": {
+        "r1": 0.04577279218494473,
+        "r2": 0.03786615494825229,
+        "r3": 0.06950851801332943,
+        "r4": 0.037515551407246536,
+        "r5": 0.04166843127724498
+      },
+      "rf/test-stratified/D-P/1\u20132": {
+        "r1": -0.00453942574025265,
+        "r2": -0.011507172109991743,
+        "r3": 0.0012142934536573287,
+        "r4": -0.0034540150789846256,
+        "r5": 0.007808931582617654
+      },
+      "rf/test-stratified/D-P/2\u20136": {
+        "r1": -0.030383594071512476,
+        "r2": -0.024052561331225516,
+        "r3": -0.027107771298975302,
+        "r4": -0.028383063808146234,
+        "r5": -0.02596945961337667
+      },
+      "rf/test-stratified/D-P/FOS < 0.5": {
+        "r1": 0.050238606865435013,
+        "r2": -0.028092935726080872,
+        "r3": 0.04471012877818716,
+        "r4": 0.05940968932135934,
+        "r5": -0.017793602914174728
+      },
+      "rf/test-stratified/D-P/FOS \u2265 6": {
+        "r1": -0.2702967863079866,
+        "r2": -0.268562624715922,
+        "r3": -0.2690006074134732,
+        "r4": -0.26746907998233976,
+        "r5": -0.270977005033136
+      },
+      "rf/test-stratified/D-oracle/0.5\u20131": {
+        "r1": 0.036616037654249284,
+        "r2": 0.0559382637831354,
+        "r3": 0.03832945627487754,
+        "r4": 0.028840114442075047,
+        "r5": 0.05517396151879602
+      },
+      "rf/test-stratified/D-oracle/1\u20132": {
+        "r1": -0.02042177796041249,
+        "r2": -0.0160856385803085,
+        "r3": -0.018052845427868853,
+        "r4": -0.015134451651338,
+        "r5": -0.022979435738632356
+      },
+      "rf/test-stratified/D-oracle/2\u20136": {
+        "r1": -0.041238579977843116,
+        "r2": -0.03568291766686833,
+        "r3": -0.04214254718025908,
+        "r4": -0.03590169105561658,
+        "r5": -0.040695678794244176
+      },
+      "rf/test-stratified/D-oracle/FOS < 0.5": {
+        "r1": 0.19542394668719967,
+        "r2": 0.20925351298731298,
+        "r3": 0.20910677124367325,
+        "r4": 0.22215484771867908,
+        "r5": 0.23155408439706446
+      },
+      "rf/test-stratified/D-oracle/FOS \u2265 6": {
+        "r1": -0.27930529272886306,
+        "r2": -0.27360322715796753,
+        "r3": -0.2771005296236956,
+        "r4": -0.2713769245720978,
+        "r5": -0.27344620965546607
+      },
+      "rf/test-stratified/D0-P/0.5\u20131": {
+        "r1": 0.04344866035486159,
+        "r2": 0.0002076195106515318,
+        "r3": 0.04973429213094904,
+        "r4": 0.03163917960470888,
+        "r5": 0.033454750980079835
+      },
+      "rf/test-stratified/D0-P/1\u20132": {
+        "r1": -0.0941962058437905,
+        "r2": -0.1137028798806297,
+        "r3": -0.11451129432226219,
+        "r4": -0.12027711110415053,
+        "r5": -0.09097449432342063
+      },
+      "rf/test-stratified/D0-P/2\u20136": {
+        "r1": -0.7121537044160683,
+        "r2": -0.7023716973899516,
+        "r3": -0.7073471482766975,
+        "r4": -0.7545560481138726,
+        "r5": -0.6902040650769644
+      },
+      "rf/test-stratified/D0-P/FOS < 0.5": {
+        "r1": 0.06346753201473915,
+        "r2": -0.06151188770092882,
+        "r3": -0.027823673068839424,
+        "r4": 0.04151718049174029,
+        "r5": -0.0527821271749182
+      },
+      "rf/test-stratified/D0-P/FOS \u2265 6": {
+        "r1": -1.3504102046364694,
+        "r2": -1.356336925508504,
+        "r3": -1.3471868791326882,
+        "r4": -1.431204203826896,
+        "r5": -1.3320630175993673
+      },
+      "rf/test-stratified/D0-oracle/0.5\u20131": {
+        "r1": 0.025801351192674366,
+        "r2": 0.07037360649857947,
+        "r3": 0.049488379754171995,
+        "r4": 0.03186038627393042,
+        "r5": 0.06117423054734212
+      },
+      "rf/test-stratified/D0-oracle/1\u20132": {
+        "r1": -0.11614275766726416,
+        "r2": -0.11135230697315802,
+        "r3": -0.09089041351995623,
+        "r4": -0.11656896766377627,
+        "r5": -0.11445183369850254
+      },
+      "rf/test-stratified/D0-oracle/2\u20136": {
+        "r1": -0.6903508700101605,
+        "r2": -0.7257972824887609,
+        "r3": -0.6941574707375202,
+        "r4": -0.6877743444421008,
+        "r5": -0.7019186142570183
+      },
+      "rf/test-stratified/D0-oracle/FOS < 0.5": {
+        "r1": 0.23799432981093727,
+        "r2": 0.2713881384584747,
+        "r3": 0.22787141441267542,
+        "r4": 0.2621210568093398,
+        "r5": 0.2916663904949421
+      },
+      "rf/test-stratified/D0-oracle/FOS \u2265 6": {
+        "r1": -1.377409292847737,
+        "r2": -1.3850569426294237,
+        "r3": -1.3659928511933366,
+        "r4": -1.3574963591208118,
+        "r5": -1.3737356622919568
+      }
+    }
+  },
   "stage1": {
     "B_zone_train_mean": [
       15.8,

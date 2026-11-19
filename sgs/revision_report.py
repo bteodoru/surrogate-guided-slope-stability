@@ -185,9 +185,34 @@ def robustness_table(rep, rev) -> str:
         *rwrows, r"\bottomrule", r"\end{tabular}", r"\end{table}", ""])
 
 
+def bias_table(rep, rev) -> str:
+    m = rev["signed_bias"]["means"]
+    rows = []
+    for arm in ("B", *ARMS):
+        vals = []
+        for zone in ("0.5–1", "1–2"):
+            for f, t in CELLS:
+                vals.append(f"{m[f'{f}/{t}/{arm}/{zone}']:+.3f}".replace("-", "$-$").replace("+", "$+$"))
+        rows.append(f"{_tex_arm(arm)} & " + " & ".join(vals) + r" \\")
+    head = " & ".join(["GBM nat.", "GBM str.", "RF nat.", "RF str."] * 2)
+    return "\n".join([
+        r"\begin{table}[htbp]", r"\centering", r"\footnotesize", r"\setlength{\tabcolsep}{2.5pt}",
+        r"\caption{Signed bias on the two halves of the decision range: the mean of $\ln(\widehat{\mathrm{FOS}}/"
+        r"\mathrm{FOS})$ over the test points of the zone, mean over $r_1$--$r_5$, fixed test sets. A positive value "
+        r"is an over-prediction of the FOS, on the unconservative side. Post hoc and descriptive, added in revision; "
+        r"no test is made on it. The natural and stratified test sets hold 33 and 12 points on $[0.5, 1)$, and 94 and "
+        r"24 on $[1, 2)$.}",
+        r"\label{tab:rev:bias}",
+        r"\begin{tabular}{lcccc|cccc}", r"\toprule",
+        r" & \multicolumn{4}{c|}{$[0.5, 1)$} & \multicolumn{4}{c}{$[1, 2)$} \\",
+        r"\cmidrule(lr){2-5} \cmidrule(lr){6-9}",
+        f"Arm & {head} \\\\", r"\midrule", *rows, r"\bottomrule", r"\end{tabular}", r"\end{table}", ""])
+
+
 def run() -> None:
     rep, rev = _load()
     _write("revision__levels", levels_table(rep, rev))
     _write("revision__whole_selection", whole_selection_table(rep, rev))
     _write("revision__decision_intervals", decision_intervals_table(rep, rev))
     _write("revision__robustness", robustness_table(rep, rev))
+    _write("revision__bias", bias_table(rep, rev))
