@@ -23,6 +23,13 @@ improvement: the Welch interval entirely below 0 in one cell) but not level 3
 (all four cells), so "no demonstrated gain" stands (row C3,
 `docs/oracle-declaration.md` §9.3).
 
+The revision (see [The revision](#the-revision-make-round-1)) places the target on the
+decision range itself: D-P, the arm that could be used in practice, reaches level 2,
+not level 3, so "no demonstrated gain" extends to that target, in this design. The
+direction of relocation recurs over five LHS seeds and on two larger test sets. Under
+a Gaussian process fitted on the same sets, an order of magnitude more accurate,
+relocation is not observed: it is stated as a behaviour of the two tree ensembles.
+
 Data are generated with xslope 0.5.2 (Bishop's simplified method), homogeneous
 drained slopes without a water table.
 
@@ -126,12 +133,46 @@ generation path and refits nothing. Its procedure is declared in
 `docs/predictions-and-outcomes.md`, and what it may and may not claim is in
 `CLAUDE.md`.
 
+### The revision (MAKE, round 1)
+
+The further designs and checks of the manuscript's revision were declared in
+`docs/revision-declaration.md`, committed and tagged `revision-declared` before any
+of their sets was drawn or solved; the outcomes are appended to
+`docs/predictions-and-outcomes.md`. They add, without changing any earlier set, fit
+or result:
+
+- D-oracle and D-P, C-log's procedure with the target on the decision range, and
+  C-seqF and C-seqP, which decompose C-seq, all drawn from the solved reference
+  pool, with their ablations;
+- a seed study: four new LHS seeds, each with its own continued LHS, and C-logP and
+  D-P recomputed on each;
+- two larger test sets, T-natL (an LHS of 5 000) and T-stratL (30 points per
+  selection bin, on the solved FOS of a further LHS of 6 000);
+- a two-level bootstrap, the robustness checks (independent retuning, three
+  features, no crest entries in training, density reweighting of B, size-matched
+  ablations, two alternative decision ranges), a Gaussian process, and the signed
+  bias per zone (post hoc, descriptive).
+
+`sgs revision` designs and solves the new LHS sets into `data/revision/`
+(`--status` is read-only); the pool-backed sets are copied from the reference pool,
+not solved. The analyses have no command of their own: each module's `run()` writes
+its entry of `outputs/metrics/revision.json`, in the order of the declaration —
+`density`, `revision_pool` (`stage1`, `generate_all`, `generate_seed_sets`),
+`revision_fit`, `revision_seeds`, `revision_large`, `revision_bootstrap`,
+`revision_robust`, `revision_retune`, `revision_gp`, `revision_bias` — and
+`revision_report.run()` writes the tables `outputs/tables/revision__*.tex` from the
+metrics alone. Fits go to `artifacts/revision/`.
+
 ## Data
 
 The solved analyses are deposited on Zenodo,
 [10.5281/zenodo.23618253](https://doi.org/10.5281/zenodo.23618253): every set of
 the study, the replications and the reference pool, as designs, raw solver
-output and repaired final files. The CSV files are not tracked here. Download
+output and repaired final files. Version 1.1 of the deposit,
+[10.5281/zenodo.24374247](https://doi.org/10.5281/zenodo.24374247), adds the
+revision's sets under `data/revision/` (13 400 analyses, and the pool-backed sets
+copied from the reference pool), with their provenance in
+`data/revision/run_metadata.json`. The CSV files are not tracked here. Download
 `data.zip` and unzip it in the repository root. It holds only the CSV files and
 unpacks into `data/`, next to the tracked `data/README.md`, which describes the
 files, and `data/run_metadata.json`, whose SHA-256 hashes the commands check
@@ -163,7 +204,7 @@ Colab its first cell clones the repository, which already contains the metrics.
 
 The commit history records the order in which the study's declarations,
 designs and results were committed, and it is never rewritten. The tag `oracle-declared`
-marks the frozen oracle declaration.
+marks the frozen oracle declaration, and `revision-declared` the revision's.
 
 `CLAUDE.md` holds the working rules given to the AI coding assistant used in
 the study (Claude Code): terminology, the
@@ -172,7 +213,9 @@ disciplines of the analysis and the wording the results allow.
 ## Citing
 
 Cite the code by its Zenodo record and, when you use the data, the data
-deposit, [10.5281/zenodo.23618253](https://doi.org/10.5281/zenodo.23618253);
+deposit: version 1.1, [10.5281/zenodo.24374247](https://doi.org/10.5281/zenodo.24374247),
+for the revision's sets, or version 1.0,
+[10.5281/zenodo.23618253](https://doi.org/10.5281/zenodo.23618253), for the study as first submitted;
 `CITATION.cff` holds both. Each release of the code is archived on Zenodo, and
 the repository with its full history on Software Heritage.
 

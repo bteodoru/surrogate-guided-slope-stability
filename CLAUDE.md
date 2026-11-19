@@ -28,6 +28,11 @@ the oracle's stage 2 into account:
 - Known bin membership does not change the decision-range verdict. C-oracle
   reaches level 2 against B (the two RF cells), not level 3, so "no
   demonstrated gain" stands (row C3).
+- A target on the decision range itself does not change the verdict: D-P, the arm
+  that could be used in practice, reaches level 2 (the two RF cells), not level 3,
+  so "no demonstrated gain" extends to that target, in this design.
+- Relocation is a behaviour of the two tree ensembles. Under a Gaussian process
+  fitted on the same sets (an order of magnitude more accurate) it is not observed.
 
 The relocation therefore does not require that departure. Write it as "even
 when the intended density is met", never as "not caused by the screener".
@@ -43,7 +48,13 @@ the screener controls, causes or explains the departure.
 
 **The model is a measuring instrument, not an object of study.** The relevant
 comparison is always vertical (same learner, different sampling arm), never
-horizontal (RF vs. GBM on the same arm).
+horizontal (RF vs. GBM on the same arm). The tree ensembles are a fixed
+instrument, so that only the allocation changes between arms; never write that they are
+the better choice where the response is irregular. The Gaussian-process result keeps two
+readings open (a smooth learner does not follow its local training density; at an error
+of 0.5% little is left for the allocation to move); do not choose between them.
+Horizontal differences (RF about twice GBM's error, the GP a tenth of GBM's) are used
+only as scales, in "Practical significance".
 
 ## Data
 
@@ -109,13 +120,30 @@ declared text (stopping rule, predictions, readings, wording about the
 screener) is `docs/oracle-declaration.md`, frozen; the outcome is in
 `docs/predictions-and-outcomes.md`.
 
+**The revision (MAKE round 1).** Declared in `docs/revision-declaration.md`, tagged
+`revision-declared`, outcomes appended to `docs/predictions-and-outcomes.md`; code in
+`sgs/revision*.py` and `sgs/density.py`, results in `outputs/metrics/revision.json`,
+tables `outputs/tables/revision__*.tex`, data in `data/revision/` (additive only: no
+earlier set, fit or result changed). Pool arms D-oracle, D-P (C-log's procedure, the
+target water-filled over `REV_D_BINS` geometric bins on the decision range) and
+C-seqF, C-seqP (C-seq decomposed: frozen screener, then retrained), each with its
+ablation (D₀-oracle, D₀-P, C₀-seqF, C₀-seqP). Seed study: four new LHS seeds plus
+seed 42, arms C-logP_s and D-P_s, paired over seeds. The large test sets T-natL and
+T-stratL are read beside the fixed ones, which stay primary; verdicts that differ are
+reported as such, neither preferred. The two-level bootstrap is reported beside the
+Welch interval and no reading rests on it. The density model (ln E_Z = α − a ln n_Z,
+a = 0.583, fixed before any D point was drawn) gets the direction right; outside the
+decision range it overestimates the size of the change. The signed bias per zone is
+the one post hoc analysis, descriptive. The conformal intervals were removed from the
+paper (their code stays).
+
 The two test sets are two deployment scenarios, not two tests of the same
 thing. Both are disjoint from every other set by normalized distance;
 `data.validate_sets` asserts it before every fit and evaluation.
 
 ## Non-negotiable disciplines
 
-1. **Every C₀ variant (C₀, C₀-log, C₀-seq, C₀-logG, C₀-oracle, C₀-logP)
+1. **Every C₀ variant (C₀, C₀-log, C₀-seq, C₀-logG, C₀-oracle, C₀-logP, and the revision's D₀-oracle, D₀-P, C₀-seqF, C₀-seqP, C₀-logP_s, D₀-P_s)
    appears in every analysis**, including robustness checks. Omitting it is selective reporting.
 2. **No threshold misclassification analysis anywhere** — no false-stable
    counts, no FOS = 1.0 crossing metrics, no classification metrics. This is a
@@ -129,7 +157,7 @@ thing. Both are disjoint from every other set by normalized distance;
    in SciPy 1.18 they produce different designs.
 4. **No claim of model-agnosticism.** Two tuned tree ensembles support
    "consistent across two independently tuned tree-ensemble families" and
-   nothing stronger.
+   nothing stronger; under a Gaussian process relocation is not observed.
 5. **No formal conformal guarantee.** Residuals are nested-CV out-of-fold
    residuals from several fold models; test predictions come from a refit
    model. Call it _cross-conformal-style_ and report coverage empirically. A
@@ -235,5 +263,8 @@ are not deposited; `sgs fit` regenerates them from the deposited data. The
 release of this code used for the paper is archived on Zenodo through the
 GitHub integration (`.zenodo.json`), and the repository with its full history
 on Software Heritage; both identifiers are in the paper's Data Availability
-Statement. The history is never rewritten: the supplementary material cites
+Statement. For the MAKE revision:
+data version 1.1 (adds `data/revision/`, 43 650 analyses in all), reserved DOI
+10.5281/zenodo.24374247, published only on the author's request; code release 1.2.0 adds
+the revision's code. The history is never rewritten: the supplementary material cites
 commits by hash.
