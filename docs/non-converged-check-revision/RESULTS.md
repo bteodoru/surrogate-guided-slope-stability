@@ -9,7 +9,7 @@
 - **Reproduction.** At `max_iter = 50`, all eight reproduced the stored FOS to every printed digit.
 - **Nothing in `data/` was modified.** The output is `results.csv`. `sgs curate` reads it for the `FOS_converged` and `Converged_Max_Iter` columns of the curated deposit, version 1.1 (`curate.revision_reruns`).
 
-Run on 2026-11-20, at the user's request (Data review R1.3).
+Run on 2026-11-20, at the user's request.
 
 ## Results
 

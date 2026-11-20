@@ -177,7 +177,7 @@ SEEDS = {
     "rev_bootstrap_two_level": 20261131,
     # §9: the restarts of the Gaussian process's marginal-likelihood optimizer.
     "rev_gp_restarts": 20261201,
-    # Declared 2026-11-20 for version 1.1 of the curated deposit (Data, review R1.1), before
+    # Declared 2026-11-20 for version 1.1 of the curated deposit, before
     # the grouped split was drawn or any model was fitted on it: which cells of the grid in
     # the dimensionless space (CURATED_GROUPED_*) are held out.
     "curated_grouped_cells": 20261202,
@@ -606,7 +606,7 @@ REV_SOLVE_CHUNK = 1_000
 # §7: replicates of the two-level bootstrap, percentile interval at REP_CI.
 REV_BOOTSTRAP_N = 10_000
 
-# --- the curated deposit, version 1.1 (Data, review R1.1) ------------------------------
+# --- the curated deposit, version 1.1 ------------------------------------------------------
 # The grouped split: the dimensionless space (angle, phi, ln c/(gamma H)), each axis scaled
 # to [0, 1] by the bounds DOMAIN implies (ln c/(gamma H) from ln(c_min / (gamma_max H_max))
 # to ln(c_max / (gamma_min H_min))), is cut into CURATED_GROUPED_CELLS cells per axis; a
