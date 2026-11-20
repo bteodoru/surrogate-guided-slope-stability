@@ -110,12 +110,19 @@ def run_nearest_neighbour(sims: pd.DataFrame, splits: pd.DataFrame) -> dict:
             tree = cKDTree(coords[train])
             self_d = tree.query(coords[train], k=2)[0][:, 1]
             near = float(np.quantile(self_d, NEAR_QUANTILE))
-            entry = {"n_train": int(len(train)), "train_to_train": _quantiles(self_d), "tests": {}}
+            entry = {"n_train": int(len(train)), "train_to_train": {"min": float(self_d.min()), **_quantiles(self_d)},
+                     "near_quantile_distance": near, "tests": {}}
             for name, ids in tests.items():
                 test = position[ids].to_numpy()
                 d, j = tree.query(coords[test], k=1)
-                entry["tests"][name] = {"test_to_train": _quantiles(d),
+                gap = np.abs(np.log(fos[test] / fos[train][j]))
+                entry["tests"][name] = {"test_to_train": {"min": float(d.min()), **_quantiles(d)},
                                         "share_within_near_quantile": float(np.mean(d < near)),
+                                        "share_within_min_distance": float(np.mean(d <= config.MIN_DISTANCE)),
+                                        "median_abs_log_fos_gap": {"all": float(np.median(gap)),
+                                                                   "within_near_quantile":
+                                                                       float(np.median(gap[d < near]))
+                                                                       if (d < near).any() else None},
                                         "one_nn": _scores(fos[test], fos[train][j])}
             out["results"][space][task] = entry
     return out

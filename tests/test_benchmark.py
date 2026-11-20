@@ -43,8 +43,11 @@ def test_nearest_neighbour_distances_and_one_nn():
         assert fixed["n_train"] == 400
         q = fixed["train_to_train"]
         assert 0 < q["q05"] <= q["q50"] <= q["q95"]
+        assert q["min"] <= q["q05"] and fixed["near_quantile_distance"] == q["q05"]
         for r in fixed["tests"].values():
             assert 0 <= r["share_within_near_quantile"] <= 1
+            assert 0 <= r["share_within_min_distance"] <= r["share_within_near_quantile"]
+            assert r["median_abs_log_fos_gap"]["all"] >= 0
             assert r["one_nn"]["overall"]["log_rmse"] > 0
     # a training point is its own nearest neighbour only when queried as a test point
     sims2, splits2 = sims.copy(), splits.copy()
