@@ -23,7 +23,7 @@ improvement: the Welch interval entirely below 0 in one cell) but not level 3
 (all four cells), so "no demonstrated gain" stands (row C3,
 `docs/oracle-declaration.md` §9.3).
 
-The revision (see [The revision](#the-revision-make-round-1)) places the target on the
+The further designs and checks (see [Further designs and checks](#further-designs-and-checks)) place the target on the
 decision range itself: D-P, the arm that could be used in practice, reaches level 2,
 not level 3, so "no demonstrated gain" extends to that target, in this design. The
 direction of relocation recurs over five LHS seeds and on two larger test sets. Under
@@ -133,9 +133,9 @@ generation path and refits nothing. Its procedure is declared in
 `docs/predictions-and-outcomes.md`, and what it may and may not claim is in
 `CLAUDE.md`.
 
-### The revision (MAKE, round 1)
+### Further designs and checks
 
-The further designs and checks of the manuscript's revision were declared in
+The further designs and checks were declared in
 `docs/revision-declaration.md`, committed and tagged `revision-declared` before any
 of their sets was drawn or solved; the outcomes are appended to
 `docs/predictions-and-outcomes.md`. They add, without changing any earlier set, fit
@@ -170,7 +170,7 @@ The solved analyses are deposited on Zenodo,
 the study, the replications and the reference pool, as designs, raw solver
 output and repaired final files. Version 1.1 of the deposit,
 [10.5281/zenodo.24374247](https://doi.org/10.5281/zenodo.24374247), adds the
-revision's sets under `data/revision/` (13 400 analyses, and the pool-backed sets
+further sets under `data/revision/` (13 400 analyses, and the pool-backed sets
 copied from the reference pool), with their provenance in
 `data/revision/run_metadata.json`. The CSV files are not tracked here. Download
 `data.zip` and unzip it in the repository root. It holds only the CSV files and
@@ -204,7 +204,7 @@ Colab its first cell clones the repository, which already contains the metrics.
 
 The commit history records the order in which the study's declarations,
 designs and results were committed, and it is never rewritten. The tag `oracle-declared`
-marks the frozen oracle declaration, and `revision-declared` the revision's.
+marks the frozen oracle declaration, and `revision-declared` that of the further designs.
 
 `CLAUDE.md` holds the working rules given to the AI coding assistant used in
 the study (Claude Code): terminology, the
@@ -214,8 +214,8 @@ disciplines of the analysis and the wording the results allow.
 
 Cite the code by its Zenodo record and, when you use the data, the data
 deposit: version 1.1, [10.5281/zenodo.24374247](https://doi.org/10.5281/zenodo.24374247),
-for the revision's sets, or version 1.0,
-[10.5281/zenodo.23618253](https://doi.org/10.5281/zenodo.23618253), for the study as first submitted;
+for the further sets, or version 1.0,
+[10.5281/zenodo.23618253](https://doi.org/10.5281/zenodo.23618253), for the original sets;
 `CITATION.cff` holds both. Each release of the code is archived on Zenodo, and
 the repository with its full history on Software Heritage.
 
