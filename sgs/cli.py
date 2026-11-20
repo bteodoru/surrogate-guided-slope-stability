@@ -9,7 +9,7 @@
   sgs pool            optional; the reference pool, solved in chunks until its declared rule is met
   sgs structural      optional; descriptive density-and-error artifacts from the replications
   sgs curate          optional; the curated deposit (unique analyses, membership, splits), from data/
-  sgs benchmark       optional; the curated deposit's FOS baseline, from data/curated/
+  sgs benchmark       optional; the curated deposit's FOS baselines, from data/curated/
   sgs revision        optional; the revision's solved sets, into data/revision/
   sgs all             generate, fit, evaluate, report
   sgs inspect         rerun one stored row and draw it with xslope's plots
@@ -232,8 +232,8 @@ def build_parser() -> argparse.ArgumentParser:
             "from the replications; reads committed data only")
     command("curate", _curate, "optional: the curated deposit in data/curated/, read from data/ "
             "and checked against run_metadata.json")
-    command("benchmark", _benchmark, "optional: the curated deposit's FOS baseline (random forest, "
-            "library defaults), written to docs/curated-benchmark/")
+    command("benchmark", _benchmark, "optional: the curated deposit's FOS baselines (random forest, "
+            "library defaults; nearest-neighbour distances and 1-NN), written to docs/curated-benchmark/v1.1/")
     p = sub.add_parser("pool", help="optional: solve the reference pool in chunks, until the declared "
                                     "stopping rule is met (then it solves nothing more)")
     p.add_argument("--chunks", type=int, default=1,

@@ -31,6 +31,8 @@ def test_every_declared_seed_has_a_user():
     used |= {"rev_test_stratified_large_selection", "rev_density_bootstrap",
              "rev_pool_design", "rev_bootstrap_two_level",
              "rev_gp_restarts"}
+    # the held-out cells of the curated deposit's grouped split (curate.held_out_cells)
+    used |= {"curated_grouped_cells"}
     assert used == set(config.SEEDS)
 
 

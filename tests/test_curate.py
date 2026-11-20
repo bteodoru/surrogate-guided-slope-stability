@@ -18,7 +18,8 @@ def _row(values, *, fos="1.5", runtime="4.2", **membership):
                At_Boundary="False", Search_Converged="True", N_Circles_Tested="10",
                N_Valid_Surfaces="9", N_Unsolved="0")
     row.update({"source_file": "f.csv", "source_row": 0, "origin": "pool", "set": "pool",
-                "realization": None, "batch": None, "design": "uniform-iid", "is_copy": False})
+                "realization": None, "batch": None, "seed_index": None, "design": "uniform-iid",
+                "is_copy": False})
     row.update(membership)
     row["simulation_id"] = curate.simulation_id(values)
     return row
@@ -60,7 +61,7 @@ def test_copies_and_repeated_runs_collapse_to_one_simulation():
                  _row(POOL[0], set="guided-oracle", origin="replication", is_copy=True, runtime="9.9"),
                  _row(POOL[1], set="guided-log", origin="replication", runtime="7.0"),
                  *_tests())
-    tables = curate.build(rows)
+    tables = curate.build(rows, reruns={})
     assert len(tables["simulations"]) == 4
     assert len(tables["membership"]) == 6
     checks = tables["checks"]
@@ -78,21 +79,21 @@ def test_rows_of_one_simulation_must_agree_on_outputs():
     rows = _rows(_row(POOL[0]), _row(POOL[0], fos="1.6", set="guided-log", origin="replication"),
                  *_tests())
     with pytest.raises(curate.CurateError, match="disagree on"):
-        curate.build(rows)
+        curate.build(rows, reruns={})
 
 
 def test_a_copy_without_a_solver_run_is_refused():
     rows = _rows(_row(POOL[0]), _row(POOL[1], set="guided-oracle", origin="replication", is_copy=True),
                  *_tests())
     with pytest.raises(curate.CurateError, match="no solver run"):
-        curate.build(rows)
+        curate.build(rows, reruns={})
 
 
 def test_a_non_test_point_near_a_test_set_is_refused():
     near = tuple(np.array(NATURAL) + 1e-4)       # a distinct id, well inside MIN_DISTANCE
     rows = _rows(_row(POOL[0]), _row(near, set="guided-log", origin="replication"), *_tests())
     with pytest.raises(curate.CurateError, match="not disjoint"):
-        curate.build(rows)
+        curate.build(rows, reruns={})
 
 
 def test_a_file_that_differs_from_the_recorded_hash_is_refused(root):
@@ -100,7 +101,7 @@ def test_a_file_that_differs_from_the_recorded_hash_is_refused(root):
     path.parent.mkdir(parents=True)
     pd.DataFrame([_row(POOL[0])])[data.FINAL_COLUMNS].to_csv(path, index=False)
     entry = {"path": path, "origin": "pool", "set": "pool", "realization": None, "batch": None,
-             "design": "uniform-iid", "is_copy": False, "sha256": "0" * 64}
+             "seed_index": None, "design": "uniform-iid", "is_copy": False, "sha256": "0" * 64}
     with pytest.raises(curate.CurateError, match="SHA-256"):
         curate.read_sources([entry])
     entry["sha256"] = data.sha256_file(path)
@@ -110,7 +111,7 @@ def test_a_file_that_differs_from_the_recorded_hash_is_refused(root):
 def test_every_dictionary_entry_names_a_real_column():
     dictionary = curate.data_dictionary()
     rows = _rows(_row(POOL[0]), _row(POOL[1]), *_tests())
-    tables = curate.build(rows)
+    tables = curate.build(rows, reruns={})
     for name in ("simulations", "membership", "splits"):
         assert dictionary.loc[dictionary["table"] == name, "column"].tolist() == list(tables[name].columns)
 
@@ -118,7 +119,7 @@ def test_every_dictionary_entry_names_a_real_column():
 def test_written_deposit_round_trips(root):
     pytest.importorskip("pyarrow")
     rows = _rows(_row(POOL[0]), _row(POOL[1]), *_tests())
-    tables = curate.build(rows)
+    tables = curate.build(rows, reruns={})
     entries = [{"path": root / "data" / "final" / "x.csv", "sha256": "0" * 64}]
     provenance = curate.write(tables, entries, curate.out_dir())
     base = curate.out_dir()
@@ -148,11 +149,20 @@ def published():
 
 
 def test_published_counts(published):
-    assert len(published["membership"]) == 33_250
-    assert len(published["simulations"]) == 30_237
-    assert published["checks"]["copied_rows"] == 3_000
-    assert published["checks"]["solver_runs"] == 30_250
+    assert len(published["membership"]) == 55_500
+    assert len(published["simulations"]) == 43_637
+    assert published["checks"]["copied_rows"] == 11_850
+    assert published["checks"]["solver_runs"] == 43_650
     assert len(published["checks"]["repeated_solver_runs"]) == 13
+    # version 1.0 is a part of version 1.1, unchanged in its counts
+    old = published["membership"]["origin"] != "revision"
+    assert old.sum() == 33_250
+    assert published["membership"].loc[old, "simulation_id"].nunique() == 30_237
+    assert (published["membership"].loc[old & published["membership"]["is_copy"]].shape[0]) == 3_000
+    revision = published["membership"].loc[~old]
+    assert (~revision["is_copy"]).sum() == 13_400       # the revision's solved analyses
+    assert not set(revision.loc[~revision["is_copy"], "simulation_id"]) & set(
+        published["membership"].loc[old, "simulation_id"])
     sets = published["membership"].groupby("simulation_id")["set"].agg(frozenset)
     repeated = [p["simulation_id"] for p in published["checks"]["repeated_solver_runs"]]
     # all within C-log / C-logG, which share one candidate pool by design
@@ -165,17 +175,19 @@ def test_published_coverage(published):
     assert set(published["membership"]["simulation_id"]) == set(sims)
     assert published["splits"]["simulation_id"].tolist() == sims.tolist()
     assert published["splits"]["split"].value_counts().to_dict() == {
-        "train": 22_000, "unassigned": 7_787, "test-natural": 300, "test-stratified": 150}
+        "train": 22_000, "unassigned": 16_187, "test-natural-large": 5_000, "test-natural": 300,
+        "test-stratified": 150}
 
 
 def test_published_test_sets_are_disjoint_from_every_other_simulation(published):
     dis = published["checks"]["disjointness"]
-    for test in config.TEST_ROLES:
-        assert dis[f"non_test__{test}"]["n"] == 29_787
+    for test in curate.TEST_SPLITS:
+        assert dis[f"non_test__{test}"]["n"] == 38_187
         assert dis[f"non_test__{test}"]["min_normalized_distance"] > config.MIN_DISTANCE
         assert dis[f"train__{test}"]["min_normalized_distance"] > config.MIN_DISTANCE
-    between = dis["__".join(config.TEST_ROLES)]["min_normalized_distance"]
-    assert between > config.MIN_DISTANCE
+    for i, first in enumerate(curate.TEST_SPLITS):
+        for second in curate.TEST_SPLITS[i + 1:]:
+            assert dis[f"{first}__{second}"]["min_normalized_distance"] > config.MIN_DISTANCE
 
 
 def test_published_ids_are_reproducible_from_the_written_csv(published, tmp_path):
@@ -223,3 +235,169 @@ def test_published_arm_table_follows_the_arm_registry(published):
     assert rows[("replication", "guided-oracle")] == "C-oracle, C0-oracle"
     assert "C0-oracle" not in rows[("fixed", "seed")]
     assert len(rows) == published["membership"][["origin", "set"]].drop_duplicates().shape[0]
+
+
+# --- version 1.1: derived columns, the grouped split, the revision's sets -----------------
+
+def test_tension_fields_parse_the_one_warning_xslope_writes():
+    warnings = pd.Series(["", "base tension on 2 of 30 slices (worst N' = -3.3 at slice 30)",
+                          "base tension on 1 of 31 slices (worst N' = -0.0 at slice 1)"])
+    out = curate.tension_fields(warnings)
+    assert out["Tension_Slices"].tolist() == ["0", "2", "1"]
+    assert out["N_Slices"].tolist() == ["", "30", "31"]
+    assert out["Min_Normal_Force"].tolist() == ["", "-3.3", "-0.0"]
+    assert out["Min_Normal_Force_Slice"].tolist() == ["", "30", "1"]
+    with pytest.raises(curate.CurateError, match="other than"):
+        curate.tension_fields(pd.Series(["base tension on 2 of 30 slices; something else"]))
+
+
+def _derived(rows, reruns):
+    tables = curate.build(rows, reruns=reruns)
+    return tables["simulations"].set_index("simulation_id"), tables["checks"]["derived_columns"]
+
+
+def test_crest_entry_follows_the_centre_height():
+    crest = _row(POOL[0], H="10.0", Center_Y="10.09")       # |10.09 - 10| / 10 < 0.01
+    clear = _row(POOL[1], H="10.0", Center_Y="10.2")
+    sims, summary = _derived(_rows(crest, clear, *_tests()), {})
+    assert sims.loc[crest["simulation_id"], "Crest_Entry"] == "True"
+    assert sims.loc[clear["simulation_id"], "Crest_Entry"] == "False"
+    assert summary["crest_entry"]["n"] == 1
+
+
+def test_a_rerun_fills_the_converged_value_and_leaves_fos_alone():
+    flagged = _row(POOL[0], fos="2.5", Search_Converged="False", source_file="data/x.csv", source_row=3)
+    other = _row(POOL[1], Search_Converged="False", source_file="data/x.csv", source_row=4)
+    reruns = {("data/x.csv", 3): ("2.5", "2.49", 200)}
+    sims, summary = _derived(_rows(flagged, other, *_tests()), reruns)
+    row = sims.loc[flagged["simulation_id"]]
+    assert (row["FOS"], row["FOS_converged"], row["Converged_Max_Iter"]) == ("2.5", "2.49", "200")
+    assert sims.loc[other["simulation_id"], "FOS_converged"] == ""
+    assert summary["non_converged"]["without_converged_value"] == ["data/x.csv:4"]
+    with pytest.raises(curate.CurateError, match="not the recorded"):
+        _derived(_rows(flagged, other, *_tests()), {("data/x.csv", 3): ("2.6", "2.49", 200)})
+    converged = _row(POOL[0], fos="2.5", source_file="data/x.csv", source_row=3)
+    with pytest.raises(curate.CurateError, match="not the recorded"):
+        _derived(_rows(converged, *_tests()), reruns)
+
+
+def test_dimensionless_bounds_follow_the_domain():
+    d = config.DOMAIN
+    corners = pd.DataFrame({"H": [d["H"][1], d["H"][0]], "angle": [d["angle"][0], d["angle"][1]],
+                            "phi": [d["phi"][0], d["phi"][1]], "c": [d["c"][0], d["c"][1]],
+                            "gamma": [d["gamma"][1], d["gamma"][0]]})
+    assert np.allclose(curate.dimensionless_unit(corners), [[0, 0, 0], [1, 1, 1]])
+    k = config.CURATED_GROUPED_CELLS
+    assert curate.cell_ids(np.array([[0, 0, 0], [1, 1, 1]], dtype=float)).tolist() == [0, k ** 3 - 1]
+    with pytest.raises(curate.CurateError, match="outside"):
+        curate.cell_ids(np.array([[0, 0, 1.01]]))
+
+
+def test_held_out_cells_are_deterministic_and_follow_their_seed_key(monkeypatch):
+    first, second = curate.held_out_cells(), curate.held_out_cells()
+    assert first.tolist() == second.tolist()
+    n_cells = config.CURATED_GROUPED_CELLS ** 3
+    assert len(first) == round(config.CURATED_GROUPED_SHARE * n_cells) == len(set(first.tolist()))
+    assert first.min() >= 0 and first.max() < n_cells
+    monkeypatch.setitem(config.SEEDS, "curated_grouped_cells", config.SEEDS["curated_grouped_cells"] + 1)
+    assert curate.held_out_cells().tolist() != first.tolist()
+
+
+def test_the_grouped_split_covers_the_pool_only_and_never_shares_a_cell():
+    rng = np.random.default_rng(0)
+    lo = np.array([config.DOMAIN[c][0] for c in curate.INPUTS])
+    hi = np.array([config.DOMAIN[c][1] for c in curate.INPUTS])
+    points = lo + rng.random((400, len(lo))) * (hi - lo)
+    rows = _rows(*[_row(tuple(p)) for p in points],
+                 _row(tuple(lo + 0.37 * (hi - lo)), set="guided-log", origin="replication"), *_tests())
+    splits = curate.build(rows, reruns={})["splits"]
+    pool = splits["split"] == "train"
+    assert set(splits.loc[pool, "split_grouped"]) == {"train", "test"}
+    assert (splits.loc[~pool, "split_grouped"] == "unassigned").all()
+    held = set(curate.held_out_cells().tolist())
+    test_cells = set(splits.loc[splits["split_grouped"] == "test", "cell_id"])
+    train_cells = set(splits.loc[splits["split_grouped"] == "train", "cell_id"])
+    assert test_cells <= held and not (train_cells & held) and not (test_cells & train_cells)
+
+
+def test_a_subset_file_is_read_from_the_rows_it_names(root):
+    source = [_row(POOL[0], set="src"), _row(POOL[1], set="src")]
+    frame = pd.DataFrame(source)
+    derived = frame.iloc[[1]][data.FINAL_COLUMNS].copy()
+    derived.insert(0, "row_id", ["rev:src:1"])
+    derived["H"] = repr(float(derived["H"].iat[0]) * (1 + 2e-16))     # a last-digit difference
+    path = root / "derived.csv"
+    derived.to_csv(path, index=False)
+    entry = {"path": path, "subset_of": "src", "row_prefix": "rev:src:", "origin": "revision",
+             "set": "sub", "realization": None, "batch": None, "seed_index": None,
+             "design": "stratified-solved", "is_copy": True}
+    picked = curate._subset_rows(entry, [frame])
+    assert picked["H"].tolist() == [source[1]["H"]]                     # the source's own strings
+    assert picked["source_row"].tolist() == [0] and picked["set"].tolist() == ["sub"]
+    derived["FOS"] = "9.9"
+    derived.to_csv(path, index=False)
+    with pytest.raises(curate.CurateError, match="outputs differ"):
+        curate._subset_rows(entry, [frame])
+
+
+def test_published_derived_columns(published):
+    summary = published["checks"]["derived_columns"]
+    assert summary["crest_entry"]["n"] == 3_645
+    assert summary["tension"]["n_with_tension"] == 33_560
+    conv = summary["non_converged"]
+    # 22 in docs/non-converged-check.md, 8 in docs/non-converged-check-revision/
+    assert (conv["n"], conv["with_converged_value"]) == (30, 30)
+    assert conv["max_relative_change"] < 7e-4
+    assert conv["without_converged_value"] == []
+    assert len(curate.revision_reruns()) == 8
+    sims = published["simulations"]
+    flagged = sims["Search_Converged"] == "False"
+    assert ((sims["FOS_converged"] != "") <= flagged).all()
+
+
+def test_published_grouped_split(published):
+    grouped = published["checks"]["grouped_split"]
+    assert grouped["n"] == {"train": 17_227, "test": 4_773, "unassigned": 21_637}
+    assert grouped["pool_per_cell"]["empty"] == 0
+    splits = published["splits"]
+    assert ((splits["split_grouped"] != "unassigned") == (splits["split"] == "train")).all()
+
+
+def test_published_revision_sets_follow_their_records(published):
+    mem = published["membership"]
+    revision = mem.loc[mem["origin"] == "revision"]
+    counts = revision.groupby("set").size().to_dict()
+    assert counts["seed-study-seed"] == counts["seed-study-lhs-extension"] == 1_200
+    assert counts["test-natural-large"] == 5_000 and counts["test-stratified-large-source"] == 6_000
+    assert counts["test-stratified-large"] == 450
+    strat = revision.loc[revision["set"] == "test-stratified-large", "simulation_id"]
+    source = revision.loc[revision["set"] == "test-stratified-large-source", "simulation_id"]
+    assert set(strat) <= set(source)
+    pool = set(mem.loc[mem["set"] == "pool", "simulation_id"])
+    assert set(revision.loc[revision["design"] == "pool-selection", "simulation_id"]) <= pool
+    seeds = revision.loc[revision["set"].str.startswith("seed-study"), "seed_index"]
+    assert sorted(seeds.unique().tolist()) == [1, 2, 3, 4]
+
+
+def _rerun_csv(path, rows):
+    fields = ["file", "row", "max_iter", "fos", "converged", "stored_fos"]
+    pd.DataFrame(rows, columns=fields).to_csv(path, index=False)
+    return path
+
+
+def test_revision_reruns_take_the_first_converged_limit(tmp_path):
+    rows = [("f.csv", 3, 50, "1.000500", "False", "1.000500"), ("f.csv", 3, 100, "1.000400", "False", "1.000500"),
+            ("f.csv", 3, 200, "1.000100", "True", "1.000500"), ("f.csv", 3, 400, "1.000100", "True", "1.000500"),
+            ("g.csv", 1, 50, "2.000000", "False", "2.000000"), ("g.csv", 1, 400, "1.999000", "False", "2.000000")]
+    out = curate.revision_reruns(_rerun_csv(tmp_path / "r.csv", rows))
+    assert out == {("f.csv", 3): ("1.000500", "1.000100", 200)}       # g.csv never converged: left out
+
+
+def test_revision_reruns_refuse_a_moving_or_unreproduced_value(tmp_path):
+    moving = [("f.csv", 3, 50, "1.0005", "False", "1.0005"), ("f.csv", 3, 100, "1.0001", "True", "1.0005"),
+              ("f.csv", 3, 200, "1.0000", "True", "1.0005")]
+    with pytest.raises(curate.CurateError, match="changes after"):
+        curate.revision_reruns(_rerun_csv(tmp_path / "a.csv", moving))
+    unreproduced = [("f.csv", 3, 50, "1.0004", "False", "1.0005"), ("f.csv", 3, 100, "1.0001", "True", "1.0005")]
+    with pytest.raises(curate.CurateError, match="does not reproduce"):
+        curate.revision_reruns(_rerun_csv(tmp_path / "b.csv", unreproduced))

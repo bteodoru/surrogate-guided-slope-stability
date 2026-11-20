@@ -1,0 +1,33 @@
+file,row,max_iter,fos,converged,n_circles_tested,warnings,runtime_s,stored_fos,platform
+data/revision/final/test_natural_large_p02.csv,271,50,2.693436,False,3282,base tension on 1 of 32 slices (worst N' = -0.0 at slice 32),11.011,2.693436,Darwin arm64
+data/revision/final/test_natural_large_p02.csv,271,100,2.693435,True,3354,base tension on 1 of 32 slices (worst N' = -0.0 at slice 32),11.223,2.693436,Darwin arm64
+data/revision/final/test_natural_large_p02.csv,271,200,2.693435,True,3354,base tension on 1 of 32 slices (worst N' = -0.0 at slice 32),11.288,2.693436,Darwin arm64
+data/revision/final/test_natural_large_p02.csv,271,400,2.693435,True,3354,base tension on 1 of 32 slices (worst N' = -0.0 at slice 32),11.28,2.693436,Darwin arm64
+data/revision/final/test_natural_large_p03.csv,37,50,1.477627,False,3297,,10.645,1.477627,Darwin arm64
+data/revision/final/test_natural_large_p03.csv,37,100,1.477617,True,3501,,11.158,1.477627,Darwin arm64
+data/revision/final/test_natural_large_p03.csv,37,200,1.477617,True,3501,,10.158,1.477627,Darwin arm64
+data/revision/final/test_natural_large_p03.csv,37,400,1.477617,True,3501,,10.119,1.477627,Darwin arm64
+data/revision/final/test_natural_large_p03.csv,580,50,4.799390,False,3312,,10.547,4.79939,Darwin arm64
+data/revision/final/test_natural_large_p03.csv,580,100,4.799356,True,3552,,11.256,4.79939,Darwin arm64
+data/revision/final/test_natural_large_p03.csv,580,200,4.799356,True,3552,,10.376,4.79939,Darwin arm64
+data/revision/final/test_natural_large_p03.csv,580,400,4.799356,True,3552,,10.352,4.79939,Darwin arm64
+data/revision/final/test_natural_large_p04.csv,245,50,2.574162,False,3319,,10.722,2.574162,Darwin arm64
+data/revision/final/test_natural_large_p04.csv,245,100,2.574151,True,3511,,11.548,2.574162,Darwin arm64
+data/revision/final/test_natural_large_p04.csv,245,200,2.574151,True,3511,,10.239,2.574162,Darwin arm64
+data/revision/final/test_natural_large_p04.csv,245,400,2.574151,True,3511,,9.904,2.574162,Darwin arm64
+data/revision/final/test_stratified_large_source_p01.csv,478,50,3.050992,False,3277,base tension on 1 of 32 slices (worst N' = -0.0 at slice 32),9.256,3.050992,Darwin arm64
+data/revision/final/test_stratified_large_source_p01.csv,478,100,3.050956,True,3662,base tension on 1 of 31 slices (worst N' = -0.0 at slice 31),10.334,3.050992,Darwin arm64
+data/revision/final/test_stratified_large_source_p01.csv,478,200,3.050956,True,3662,base tension on 1 of 31 slices (worst N' = -0.0 at slice 31),10.444,3.050992,Darwin arm64
+data/revision/final/test_stratified_large_source_p01.csv,478,400,3.050956,True,3662,base tension on 1 of 31 slices (worst N' = -0.0 at slice 31),10.818,3.050992,Darwin arm64
+data/revision/final/test_stratified_large_source_p01.csv,593,50,0.542444,False,3265,,10.48,0.542444,Darwin arm64
+data/revision/final/test_stratified_large_source_p01.csv,593,100,0.542315,True,4321,,13.184,0.542444,Darwin arm64
+data/revision/final/test_stratified_large_source_p01.csv,593,200,0.542315,True,4321,,13.552,0.542444,Darwin arm64
+data/revision/final/test_stratified_large_source_p01.csv,593,400,0.542315,True,4321,,13.434,0.542444,Darwin arm64
+data/revision/final/test_stratified_large_source_p01.csv,682,50,2.347521,False,3249,,9.426,2.347521,Darwin arm64
+data/revision/final/test_stratified_large_source_p01.csv,682,100,2.347411,True,4448,,13.055,2.347521,Darwin arm64
+data/revision/final/test_stratified_large_source_p01.csv,682,200,2.347411,True,4448,,12.736,2.347521,Darwin arm64
+data/revision/final/test_stratified_large_source_p01.csv,682,400,2.347411,True,4448,,12.548,2.347521,Darwin arm64
+data/revision/final/test_stratified_large_source_p03.csv,112,50,0.619243,False,2621,,8.456,0.619243,Darwin arm64
+data/revision/final/test_stratified_large_source_p03.csv,112,100,0.618968,True,2983,,9.886,0.619243,Darwin arm64
+data/revision/final/test_stratified_large_source_p03.csv,112,200,0.618968,True,2983,,9.872,0.619243,Darwin arm64
+data/revision/final/test_stratified_large_source_p03.csv,112,400,0.618968,True,2983,,9.164,0.619243,Darwin arm64
