@@ -275,11 +275,11 @@
     "simulations_sha256": "3e49f33cb69cfc8e88b9e37ad7080fe94a303b04a3980958d5340ade76176414",
     "splits_sha256": "8d2e8b6c8a30f88d22f70ad5470a37c1be6f5ac374315389cb8a8416b647cdd3",
     "curated_version": "1.1",
-    "curated_at_commit": "43ae5546369846e06e734a81456c8f154a8e9be3"
+    "curated_at_commit": "86685f940a5efed549dcfae20327f3b359236c9a"
   },
   "code": {
-    "commit": "43ae5546369846e06e734a81456c8f154a8e9be3",
-    "describe": "v1.2.0-11-g43ae554",
+    "commit": "86685f940a5efed549dcfae20327f3b359236c9a",
+    "describe": "v1.2.0-16-g86685f9",
     "dirty": false
   },
   "environment": {
