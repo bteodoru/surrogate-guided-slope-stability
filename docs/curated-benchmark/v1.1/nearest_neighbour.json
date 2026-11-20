@@ -702,11 +702,11 @@
     "simulations_sha256": "3e49f33cb69cfc8e88b9e37ad7080fe94a303b04a3980958d5340ade76176414",
     "splits_sha256": "8d2e8b6c8a30f88d22f70ad5470a37c1be6f5ac374315389cb8a8416b647cdd3",
     "curated_version": "1.1",
-    "curated_at_commit": "3568ae31eb768b6ef35d866b3ac90dc6f92f1189"
+    "curated_at_commit": "cc8afc6132f0a80401fc531891706024ce4e051d"
   },
   "code": {
-    "commit": "9fcfdef4b979ba70cf19ebddf04eb5574ed11a50",
-    "describe": "v1.2.0-3-g9fcfdef",
+    "commit": "cc8afc6132f0a80401fc531891706024ce4e051d",
+    "describe": "v1.2.0-5-gcc8afc6",
     "dirty": false
   },
   "environment": {
