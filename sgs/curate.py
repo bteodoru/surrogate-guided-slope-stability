@@ -690,7 +690,10 @@ def write(tables: dict, entries: list[dict], target: Path) -> dict:
     (target / "LICENSE").write_text(LICENSE)
     (target / "README.md").write_text(readme(tables))
 
-    files = sorted(p for p in target.rglob("*") if p.is_file() and p.name != "provenance.json")
+    # Hidden files (a .DS_Store left by the file manager, for one) are not part of the deposit, and the
+    # version 1.0 provenance listed one that was never uploaded; they are left out of the record.
+    files = sorted(p for p in target.rglob("*") if p.is_file() and p.name != "provenance.json"
+                   and not any(part.startswith(".") for part in p.relative_to(target).parts))
     provenance = {
         "version": CURATED_VERSION,
         "derived_from": f"https://doi.org/{SOURCE_DOI}",

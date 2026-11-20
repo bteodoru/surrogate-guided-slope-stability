@@ -121,6 +121,9 @@ def test_written_deposit_round_trips(root):
     rows = _rows(_row(POOL[0]), _row(POOL[1]), *_tests())
     tables = curate.build(rows, reruns={})
     entries = [{"path": root / "data" / "final" / "x.csv", "sha256": "0" * 64}]
+    (curate.out_dir() / "data").mkdir(parents=True, exist_ok=True)
+    (curate.out_dir() / ".DS_Store").write_bytes(b"x")            # a hidden file is not recorded
+    (curate.out_dir() / "data" / ".DS_Store").write_bytes(b"x")
     provenance = curate.write(tables, entries, curate.out_dir())
     base = curate.out_dir()
     csv = pd.read_csv(base / "data" / "simulations.csv", float_precision="round_trip")
@@ -130,6 +133,7 @@ def test_written_deposit_round_trips(root):
     assert parquet["FOS"].dtype == float and parquet["At_Boundary"].dtype == bool
     assert parquet["simulation_id"].tolist() == csv["simulation_id"].tolist()
     recorded = {f["path"]: f["sha256"] for f in provenance["files"]}
+    assert not any(path.split("/")[-1].startswith(".") for path in recorded)
     assert recorded["data/simulations.parquet"] == data.sha256_file(base / "data" / "simulations.parquet")
     assert json.loads((base / "metadata" / "provenance.json").read_text())["relation"] == "IsDerivedFrom"
 
