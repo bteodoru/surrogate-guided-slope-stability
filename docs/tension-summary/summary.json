@@ -1,0 +1,119 @@
+{
+  "definition": "quarters of each input over all simulations (pd.qcut, 4 bins, right-closed); share of analyses with Tension_Slices > 0; median Min_Normal_Force among them",
+  "n_simulations": 43637,
+  "n_with_tension": 33560,
+  "by_quartile": {
+    "angle": [
+      {
+        "quarter": 1,
+        "lo": 10.00120151067932,
+        "hi": 24.158223246115867,
+        "n": 10910,
+        "share_with_tension": 0.2633363886342805,
+        "median_min_normal_force_kN_per_m": -5.2
+      },
+      {
+        "quarter": 2,
+        "lo": 24.158223246115867,
+        "hi": 38.24604117710015,
+        "n": 10909,
+        "share_with_tension": 0.8529654413786781,
+        "median_min_normal_force_kN_per_m": -19.3
+      },
+      {
+        "quarter": 3,
+        "lo": 38.24604117710015,
+        "hi": 51.757945659508565,
+        "n": 10909,
+        "share_with_tension": 0.9670913924282702,
+        "median_min_normal_force_kN_per_m": -32.2
+      },
+      {
+        "quarter": 4,
+        "lo": 51.757945659508565,
+        "hi": 64.99785170634578,
+        "n": 10909,
+        "share_with_tension": 0.992941607846732,
+        "median_min_normal_force_kN_per_m": -44.3
+      }
+    ],
+    "c": [
+      {
+        "quarter": 1,
+        "lo": 1.0003799882965663,
+        "hi": 17.680913359338863,
+        "n": 10910,
+        "share_with_tension": 0.6401466544454629,
+        "median_min_normal_force_kN_per_m": -8.3
+      },
+      {
+        "quarter": 2,
+        "lo": 17.680913359338863,
+        "hi": 36.25650509951829,
+        "n": 10909,
+        "share_with_tension": 0.7841232010266752,
+        "median_min_normal_force_kN_per_m": -24.0
+      },
+      {
+        "quarter": 3,
+        "lo": 36.25650509951829,
+        "hi": 55.79496092380633,
+        "n": 10909,
+        "share_with_tension": 0.8206985058208819,
+        "median_min_normal_force_kN_per_m": -37.8
+      },
+      {
+        "quarter": 4,
+        "lo": 55.79496092380633,
+        "hi": 74.99648388494491,
+        "n": 10909,
+        "share_with_tension": 0.8313319277660647,
+        "median_min_normal_force_kN_per_m": -52.7
+      }
+    ],
+    "H": [
+      {
+        "quarter": 1,
+        "lo": 1.0002834085256709,
+        "hi": 7.093601199189669,
+        "n": 10910,
+        "share_with_tension": 0.8391384051329056,
+        "median_min_normal_force_kN_per_m": -7.7
+      },
+      {
+        "quarter": 2,
+        "lo": 7.093601199189669,
+        "hi": 13.17261293790867,
+        "n": 10909,
+        "share_with_tension": 0.7783481529012741,
+        "median_min_normal_force_kN_per_m": -28.7
+      },
+      {
+        "quarter": 3,
+        "lo": 13.17261293790867,
+        "hi": 19.126677422151612,
+        "n": 10909,
+        "share_with_tension": 0.7446145384544871,
+        "median_min_normal_force_kN_per_m": -45.6
+      },
+      {
+        "quarter": 4,
+        "lo": 19.126677422151612,
+        "hi": 24.99953985484461,
+        "n": 10909,
+        "share_with_tension": 0.7141809515079293,
+        "median_min_normal_force_kN_per_m": -64.3
+      }
+    ]
+  },
+  "deposit": {
+    "simulations_sha256": "3e49f33cb69cfc8e88b9e37ad7080fe94a303b04a3980958d5340ade76176414",
+    "curated_version": "1.1",
+    "curated_at_commit": "7cacce262f376de2d3bf085f271245ae8023c3b9"
+  },
+  "code": {
+    "commit": "7cacce262f376de2d3bf085f271245ae8023c3b9",
+    "describe": "v1.2.0-7-g7cacce2",
+    "dirty": false
+  }
+}
