@@ -120,7 +120,7 @@ declared text (stopping rule, predictions, readings, wording about the
 screener) is `docs/oracle-declaration.md`, frozen; the outcome is in
 `docs/predictions-and-outcomes.md`.
 
-**The revision (MAKE round 1).** Declared in `docs/revision-declaration.md`, tagged
+**The research article's revision.** Declared in `docs/revision-declaration.md`, tagged
 `revision-declared`, outcomes appended to `docs/predictions-and-outcomes.md`; code in
 `sgs/revision*.py` and `sgs/density.py`, results in `outputs/metrics/revision.json`,
 tables `outputs/tables/revision__*.tex`, data in `data/revision/` (additive only: no
@@ -263,7 +263,7 @@ are not deposited; `sgs fit` regenerates them from the deposited data. The
 release of this code used for the paper is archived on Zenodo through the
 GitHub integration (`.zenodo.json`), and the repository with its full history
 on Software Heritage; both identifiers are in the paper's Data Availability
-Statement. For the MAKE revision:
+Statement. For the research article's revision:
 data version 1.1 (adds `data/revision/`, 43 650 analyses in all), DOI
 10.5281/zenodo.24374247, published 2026-11-19; the paper cites the concept DOIs (data
 10.5281/zenodo.23618252, code 10.5281/zenodo.23727658) with the version named; code release 1.2.0 adds

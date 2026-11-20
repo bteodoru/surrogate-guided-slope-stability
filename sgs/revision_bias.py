@@ -1,6 +1,6 @@
-"""Signed bias per reporting zone, the regression analogue of a false-safe count (R1.10).
+"""Signed bias per reporting zone, the regression analogue of a false-safe count.
 
-Post hoc and descriptive, added in revision at a reviewer's request and declared as such:
+Post hoc and descriptive, added in the research article's revision and declared as such:
 the mean of ln(predicted / true FOS) over the test points of each zone, per arm, learner,
 test set and realization r1..r5, on the fixed test sets, from the stored replication and
 revision fits. A positive value is an over-prediction of the FOS (unconservative), a
