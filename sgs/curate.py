@@ -37,12 +37,12 @@ SOURCE_VERSION = "1.1"
 SOURCE_V10_DOI = "10.5281/zenodo.23618253"      # version 1.0, the files outside data/revision/
 SOURCE_CONCEPT_DOI = "10.5281/zenodo.23618252"  # all versions of the source deposit
 CURATED_VERSION = "1.1"
-CURATED_DOI = None                               # version 1.1 of this deposit: reserved with its Zenodo draft
+CURATED_DOI = "10.5281/zenodo.24405957"          # version 1.1 of this deposit (reserved with its Zenodo draft)
 CURATED_V10_DOI = "10.5281/zenodo.24088012"      # version 1.0 (published 2026-11-09)
 CURATED_CONCEPT_DOI = "10.5281/zenodo.24088011"  # all versions of this deposit
 CODE_DOI = "10.5281/zenodo.23727658"          # concept DOI of the code (all versions)
 CODE_RELEASE = "v1.3.0"
-CODE_RELEASE_DOI = None                          # the version DOI of CODE_RELEASE, once archived
+CODE_RELEASE_DOI = None                          # version DOI of CODE_RELEASE; the README then cites the concept DOI only
 
 # The id recipe, stated once; the README prints it from here.
 ID_COLUMNS = ("H", "angle", "phi", "c", "gamma")
@@ -913,11 +913,11 @@ def readme(tables: dict) -> str:
         id_digits=ID_DIGITS, id_margin=ID_ULP_MARGIN,
         source=SOURCE_DOI, source_v10=SOURCE_V10_DOI, source_concept=SOURCE_CONCEPT_DOI,
         source_version=SOURCE_VERSION, version=CURATED_VERSION,
-        curated=(f"doi:{CURATED_DOI}" if CURATED_DOI else "version DOI to be added when the version is reserved"),
+        curated=f"doi:{CURATED_DOI}",
         curated_v10=CURATED_V10_DOI, curated_concept=CURATED_CONCEPT_DOI,
         release=CODE_RELEASE, code_doi=CODE_DOI,
-        release_doi=(f"doi:{CODE_RELEASE_DOI}" if CODE_RELEASE_DOI
-                     else "version DOI to be added when the release is archived"))
+        release_dois=(f"doi:{CODE_RELEASE_DOI}; all versions: doi:{CODE_DOI}" if CODE_RELEASE_DOI
+                      else f"all versions: doi:{CODE_DOI}"))
 
 
 README = """\
@@ -1101,7 +1101,7 @@ slopes).
 ## Code and regeneration
 
 This deposit is produced by `sgs curate` in https://github.com/bteodoru/surrogate-guided-slope-stability,
-release {release} ({release_doi}; all versions: doi:{code_doi}). Unpack the `data.zip` of version
+release {release} ({release_dois}). Unpack the `data.zip` of version
 {source_version} of the source deposit in the repository root, then:
 
     python3.14 -m venv .venv

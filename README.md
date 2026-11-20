@@ -178,6 +178,13 @@ unpacks into `data/`, next to the tracked `data/README.md`, which describes the
 files, and `data/run_metadata.json`, whose SHA-256 hashes the commands check
 before they use a file.
 
+A curated deposit of the same analyses, written by `sgs curate` (one table of distinct
+simulations, a membership table and fixed splits) with `sgs benchmark` as its baseline, is on
+Zenodo as well: version 1.1, [10.5281/zenodo.24405957](https://doi.org/10.5281/zenodo.24405957),
+built from version 1.1 of the source deposit, and version 1.0,
+[10.5281/zenodo.24088012](https://doi.org/10.5281/zenodo.24088012), built from version 1.0
+(all versions: [10.5281/zenodo.24088011](https://doi.org/10.5281/zenodo.24088011)).
+
 The guided designs depend on the computing platform: the screener's predictions,
 and with them the points it selects, differ between x86 and arm64 processors. A
 rerun of `sgs generate` on another platform therefore gives different guided
@@ -216,7 +223,10 @@ Cite the code by its Zenodo record and, when you use the data, the data
 deposit: version 1.1, [10.5281/zenodo.24374247](https://doi.org/10.5281/zenodo.24374247),
 for the further sets, or version 1.0,
 [10.5281/zenodo.23618253](https://doi.org/10.5281/zenodo.23618253), for the original sets;
-`CITATION.cff` holds both. Each release of the code is archived on Zenodo, and
+and, when you use the curated deposit, its version 1.1,
+[10.5281/zenodo.24405957](https://doi.org/10.5281/zenodo.24405957), or version 1.0,
+[10.5281/zenodo.24088012](https://doi.org/10.5281/zenodo.24088012);
+`CITATION.cff` holds all four. Each release of the code is archived on Zenodo, and
 the repository with its full history on Software Heritage.
 
 ## License
