@@ -419,3 +419,14 @@ def test_tension_by_quartile_counts_shares_and_medians():
     assert [r["share_with_tension"] for r in angle] == [0.5, 0.5, 1.0, 1.0]
     assert [r["median_min_normal_force_kN_per_m"] for r in angle] == [-1.0, -3.0, -3.0, -7.0]
     assert out["c"][0]["median_min_normal_force_kN_per_m"] == -7.0      # c runs the other way
+
+
+def test_two_distinct_simulations_within_min_distance_are_refused():
+    near = tuple(np.array(POOL[0]) + 1e-4)       # a distinct id, inside MIN_DISTANCE of a pool point
+    rows = _rows(_row(POOL[0]), _row(near), _row(POOL[1]), *_tests())
+    with pytest.raises(curate.CurateError, match="distinct simulations"):
+        curate.build(rows, reruns={})
+
+
+def test_published_distinct_simulations_are_separated(published):
+    assert published["checks"]["separation"]["min_normalized_distance"] > config.MIN_DISTANCE

@@ -325,6 +325,7 @@ def build(rows: pd.DataFrame, reruns: dict | None = None) -> dict:
     splits = split.rename("split").reset_index()
     splits["cell_id"], splits["split_grouped"], checks["grouped_split"] = grouped_split(simulations, splits)
     checks["disjointness"] = disjointness(simulations, splits)
+    checks["separation"] = separation(simulations)
     checks["id_stability"] = stable_ids(simulations)
     return {"simulations": simulations, "membership": membership, "splits": splits, "checks": checks}
 
@@ -352,6 +353,19 @@ def disjointness(simulations: pd.DataFrame, splits: pd.DataFrame) -> dict:
             out[f"{first}__{second}"] = {"min_normalized_distance": closest}
     out["threshold"] = config.MIN_DISTANCE
     return out
+
+
+def separation(simulations: pd.DataFrame) -> dict:
+    """The smallest normalized distance between two distinct simulations; it must exceed
+    config.MIN_DISTANCE, the distance under which two points count as the same (the identifier
+    argument of the README rests on it)."""
+    if len(simulations) < 2:
+        return {"min_normalized_distance": None, "threshold": config.MIN_DISTANCE}
+    x = data.normalize(simulations[INPUTS].astype(float))
+    closest = float(cKDTree(x).query(x, k=2)[0][:, 1].min())
+    if closest <= config.MIN_DISTANCE:
+        raise CurateError(f"two distinct simulations lie {closest:.2e} apart, within MIN_DISTANCE")
+    return {"min_normalized_distance": closest, "threshold": config.MIN_DISTANCE}
 
 
 # --- the grouped split (version 1.1) ----------------------------------------------------------
