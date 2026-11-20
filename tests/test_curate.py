@@ -405,3 +405,17 @@ def test_revision_reruns_refuse_a_moving_or_unreproduced_value(tmp_path):
     unreproduced = [("f.csv", 3, 50, "1.0004", "False", "1.0005"), ("f.csv", 3, 100, "1.0001", "True", "1.0005")]
     with pytest.raises(curate.CurateError, match="does not reproduce"):
         curate.revision_reruns(_rerun_csv(tmp_path / "b.csv", unreproduced))
+
+
+def test_tension_by_quartile_counts_shares_and_medians():
+    n = 8
+    frame = pd.DataFrame({"angle": np.arange(n, dtype=float), "c": np.arange(n, dtype=float)[::-1],
+                          "H": np.ones(n) + np.arange(n),
+                          "Tension_Slices": ["0", "1", "0", "2", "1", "1", "3", "2"],
+                          "Min_Normal_Force": ["", "-1.0", "", "-3.0", "-2.0", "-4.0", "-6.0", "-8.0"]})
+    out = curate.tension_by_quartile(frame)
+    angle = out["angle"]
+    assert [r["n"] for r in angle] == [2, 2, 2, 2]
+    assert [r["share_with_tension"] for r in angle] == [0.5, 0.5, 1.0, 1.0]
+    assert [r["median_min_normal_force_kN_per_m"] for r in angle] == [-1.0, -3.0, -3.0, -7.0]
+    assert out["c"][0]["median_min_normal_force_kN_per_m"] == -7.0      # c runs the other way

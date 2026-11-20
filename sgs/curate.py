@@ -499,6 +499,26 @@ def tension_fields(warnings: pd.Series) -> pd.DataFrame:
                         index=warnings.index)
 
 
+def tension_by_quartile(simulations: pd.DataFrame, columns=("angle", "c", "H")) -> dict:
+    """Base tension by quarter of an input over all simulations (quartiles by pd.qcut, right-closed):
+    the share of analyses with base tension and the median Min_Normal_Force among them (kN/m)."""
+    tension = simulations["Tension_Slices"].astype(int) > 0
+    worst = pd.to_numeric(simulations["Min_Normal_Force"], errors="coerce")
+    out = {}
+    for column in columns:
+        quarter, edges = pd.qcut(simulations[column].astype(float), 4, labels=False, retbins=True,
+                                 duplicates="drop")     # fewer bins only on tiny or tied data
+        rows = []
+        for q in range(len(edges) - 1):
+            inside = quarter == q
+            rows.append({"quarter": q + 1, "lo": float(edges[q]), "hi": float(edges[q + 1]),
+                         "n": int(inside.sum()), "share_with_tension": float(tension[inside].mean()),
+                         "median_min_normal_force_kN_per_m": (float(worst[inside & tension].median())
+                                                              if (inside & tension).any() else None)})
+        out[column] = rows
+    return out
+
+
 def derived_columns(simulations: pd.DataFrame, membership: pd.DataFrame,
                     reruns: dict) -> tuple[pd.DataFrame, dict]:
     """The version 1.1 columns, as strings like the rest of the CSV, and their summary."""
@@ -538,7 +558,8 @@ def derived_columns(simulations: pd.DataFrame, membership: pd.DataFrame,
                                                     (("min", 0.0), ("q05", 0.05), ("median", 0.5),
                                                      ("q95", 0.95), ("max", 1.0))},
                     "slice_of_worst": {str(k): int(v) for k, v in
-                                       out.loc[tension > 0, "Min_Normal_Force_Slice"].value_counts().items()}},
+                                       out.loc[tension > 0, "Min_Normal_Force_Slice"].value_counts().items()},
+                    "by_quartile": tension_by_quartile(pd.concat([simulations[INPUTS], out], axis=1))},
         "non_converged": {"n": int(flagged.sum()), "with_converged_value": int((converged != "").sum()),
                           "max_relative_change": float(delta.abs().max()) if len(delta) else None,
                           "without_converged_value": [f"{f}:{r}" for f, r in
