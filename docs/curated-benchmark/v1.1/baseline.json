@@ -278,8 +278,8 @@
     "curated_at_commit": "3568ae31eb768b6ef35d866b3ac90dc6f92f1189"
   },
   "code": {
-    "commit": "3568ae31eb768b6ef35d866b3ac90dc6f92f1189",
-    "describe": "v1.2.0-1-g3568ae3",
+    "commit": "9fcfdef4b979ba70cf19ebddf04eb5574ed11a50",
+    "describe": "v1.2.0-3-g9fcfdef",
     "dirty": false
   },
   "environment": {
